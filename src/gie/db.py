@@ -32,6 +32,8 @@ def connect(
     con.execute("INSTALL spatial; LOAD spatial;")
     con.execute("INSTALL azure; LOAD azure;")
     con.execute("INSTALL h3 FROM community; LOAD h3;")
+    # No terminal progress bar — these connections run inside web apps and scripts.
+    con.execute("SET enable_progress_bar = false;")
 
     # SAS-token auth via a DuckDB azure secret. The token is read from the
     # environment in config; it is interpolated here (DuckDB does not bind

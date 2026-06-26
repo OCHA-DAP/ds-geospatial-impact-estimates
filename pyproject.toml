@@ -36,10 +36,10 @@ streamlit = [
     "streamlit>=1.40",
     "pydeck>=0.9",
 ]
-# Front-end candidate B: Panel/Solara + Lonboard (interactive GeoArrow rendering).
-panel = [
-    "panel>=1.5",
-    "lonboard>=0.11",
+# Front-end candidate B: Solara + Lonboard (interactive GeoArrow rendering).
+lonboard = [
+    "lonboard>=0.16",
+    "solara>=1.44",
 ]
 etl = [
     "ocha-stratus>=0.1.7",
