@@ -76,15 +76,18 @@ class Settings:
             f"SharedAccessSignature={self.sas_token(write=write)}"
         )
 
-    def az_path(self, layer: Literal["bronze", "silver", "gold"], *parts: str) -> str:
-        """Build an ``az://`` path the DuckDB azure extension understands."""
+    def blob_path(self, layer: Literal["bronze", "silver", "gold"], *parts: str) -> str:
+        """Path within the container (no ``az://``/container) — for stratus writes."""
         prefix = {
             "bronze": self.bronze_prefix,
             "silver": self.silver_prefix,
             "gold": self.gold_prefix,
         }[layer]
-        path = "/".join([self.project_prefix, prefix, *parts])
-        return f"az://{self.container}/{path}"
+        return "/".join([self.project_prefix, prefix, *parts])
+
+    def az_path(self, layer: Literal["bronze", "silver", "gold"], *parts: str) -> str:
+        """Build an ``az://`` path the DuckDB azure extension understands."""
+        return f"az://{self.container}/{self.blob_path(layer, *parts)}"
 
 
 def load_settings(stage: Stage | None = None) -> Settings:

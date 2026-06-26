@@ -41,6 +41,9 @@ panel = [
     "panel>=1.5",
     "lonboard>=0.11",
 ]
+etl = [
+    "ocha-stratus>=0.1.7",
+]
 
 [tool.uv]
 default-groups = ["dev"]
