@@ -5,6 +5,7 @@ Auto-maintained by the pipeline loaders — a human-readable record of what is i
 | source | layer | dataset | path | detail | status | updated |
 | --- | --- | --- | --- | --- | --- | --- |
 | codab | bronze | OCHA CODAB admin boundaries — VEN (FieldMaps) | ds-geospatial-impact-estimates/bronze/source=codab/adm0=VE | adm0=2; adm1=25; adm2=336; adm3=1135; EPSG:4326 | ingested | 2026-06-26 |
+| common | gold | Common-model damage facts (Overture base) | ds-geospatial-impact-estimates/gold/model=common/adm0=VE/facts.parquet | 6,228 rows; sources MS + CEMS on Overture base; exposed/damaged/fraction | ingested | 2026-06-26 |
 | copernicus_ems | bronze | Copernicus EMS EMSR884 — Venezuela earthquake damage products | ds-geospatial-impact-estimates/bronze/source=copernicus_ems/code=EMSR884 | 4 delivered, 12 pending; GRA/GRM; idempotent poll | ingesting | 2026-06-26 |
 | copernicus_ems | gold | CEMS EMSR884 damage facts | ds-geospatial-impact-estimates/gold/source=copernicus_ems/adm0=VE/damage_facts.parquet | 182 fact rows; h3 + adm0-3; damage_features + damaged_area_m2 | ingesting | 2026-06-26 |
 | copernicus_ems | silver | CEMS EMSR884 damage grading (builtUpA) | ds-geospatial-impact-estimates/silver/source=copernicus_ems/adm0=VE/builtup_damage.parquet | 189 graded blocks; EMS grade + class; EPSG:4326 | ingesting | 2026-06-26 |
