@@ -18,7 +18,7 @@ from __future__ import annotations
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import db
+from gie import db, ledger
 from gie.config import DEFAULT_H3_RESOLUTION, load_settings
 
 SOURCE = "microsoft"
@@ -108,6 +108,14 @@ def main() -> None:
         df, gold, stage=STAGE, container_name=settings.container, compression="zstd"
     )
     print(f"gold <- {gold}")
+
+    ledger.record(
+        source=SOURCE,
+        layer="gold",
+        dataset="Damage facts — Catia La Mar",
+        path=gold,
+        detail=f"{len(df):,} fact rows; h3 + adm0-3; metrics buildings/damaged/fraction",
+    )
 
 
 if __name__ == "__main__":

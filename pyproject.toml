@@ -36,11 +36,15 @@ api = [
 ]
 # One-time ingestion loaders only (not the runtime query path; see ADR-0003).
 etl = [
+    "ocha-lens",
     "ocha-stratus>=0.1.7",
 ]
 
 [tool.uv]
 default-groups = ["dev"]
+
+[tool.uv.sources]
+ocha-lens = { git = "https://github.com/OCHA-DAP/ocha-lens.git", rev = "160a92a167b427e519fa21b69bbac330367a8a5b" }
 
 [build-system]
 requires = ["hatchling"]

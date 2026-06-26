@@ -17,6 +17,7 @@ from pathlib import Path
 import geopandas as gpd
 import ocha_stratus as stratus
 
+from gie import ledger
 from gie.config import load_settings
 
 HDX_GPKG_URL = (
@@ -57,6 +58,15 @@ def main() -> None:
             gdf, silver, stage=STAGE, container_name=settings.container, compression="zstd"
         )
         print(f"silver <- {silver}  ({len(gdf):,} footprints, EPSG:4326)")
+
+        ledger.record(
+            SOURCE, "bronze", "Building footprints — Catia La Mar (raw GPKG)",
+            bronze, "GeoPackage as received from HDX (CC-BY)",
+        )
+        ledger.record(
+            SOURCE, "silver", "Building footprints — Catia La Mar", silver,
+            f"{len(gdf):,} footprints; binary damaged + damage_pct; EPSG:4326",
+        )
 
 
 if __name__ == "__main__":
