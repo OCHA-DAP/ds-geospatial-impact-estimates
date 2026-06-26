@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# uv / virtualenv
+.venv/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local data scratch (lake lives in Azure Blob, not git)
+data/
+*.duckdb
+*.duckdb.wal
+*.parquet
+*.pmtiles
+*.tif
+*.tiff
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

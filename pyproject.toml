@@ -1,0 +1,69 @@
+[project]
+name = "ds-geospatial-impact-estimates"
+version = "0.1.0"
+description = "Viewer and harmonization layer for multi-source, satellite-derived damage exposure estimates."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+dependencies = [
+    # Data engine: DuckDB reads/writes GeoParquet directly on Azure Blob and is
+    # both ETL and serving engine for v1 (see docs/decisions/0002).
+    # The spatial / azure / h3 DuckDB extensions are installed at runtime, not via pip.
+    "duckdb>=1.1",
+    # Vector / raster handling on the Python side.
+    "geopandas>=1.0",
+    "shapely>=2.0",
+    "pyarrow>=17",
+    "h3>=4.1",
+    "pandas>=2.2",
+    # Azure auth for the DuckDB azure extension's credential chain.
+    "azure-identity>=1.19",
+    "python-dotenv>=1.0",
+]
+
+# Spike front ends are split into groups so the two candidates install
+# independently (see docs/decisions — rendering/shell ADR pending spike).
+[dependency-groups]
+dev = [
+    "ruff>=0.7",
+    "pytest>=8.3",
+    "mypy>=1.13",
+    "ipykernel>=6.29",
+    "pre-commit>=4.0",
+]
+# Front-end candidate A: Streamlit + pydeck (first-class st.pydeck_chart).
+streamlit = [
+    "streamlit>=1.40",
+    "pydeck>=0.9",
+]
+# Front-end candidate B: Panel/Solara + Lonboard (interactive GeoArrow rendering).
+panel = [
+    "panel>=1.5",
+    "lonboard>=0.11",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gie"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.13"
+packages = ["gie"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
