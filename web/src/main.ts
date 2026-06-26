@@ -44,7 +44,13 @@ map.addControl(overlay as any);
 function damageColor(t: number | null | undefined): RGBA {
   if (t == null || Number.isNaN(t)) return [200, 200, 200, 35];
   const f = Math.max(0, Math.min(1, t));
-  return [240, Math.round(220 * (1 - f)), Math.round(40 * (1 - f)), 205];
+  // pale cream (low) -> orange -> deep red (high)
+  return [Math.round(250 - 28 * f), Math.round(244 - 214 * f), Math.round(208 - 188 * f), 210];
+}
+// pseudo-log (log1p) lift so low values separate clearly from zero
+function lift(t: number): number {
+  const k = 12;
+  return Math.log1p(k * Math.max(0, Math.min(1, t))) / Math.log1p(k);
 }
 function metricValue(p: any, metric: string): number | null {
   if (metric === "damage_rate_detected")
@@ -55,9 +61,11 @@ function metricValue(p: any, metric: string): number | null {
 }
 function metricColor(metric: string, value: number | null | undefined, max: number): RGBA {
   if (value == null || Number.isNaN(value)) return [200, 200, 200, 35];
-  if (metric === "coverage_fraction") return damageColor(1 - Math.max(0, Math.min(1, value)));
-  if (metric.startsWith("damage_rate")) return damageColor(Math.max(0, Math.min(1, value)));
-  return damageColor(max ? value / max : 0);
+  let t: number;
+  if (metric === "coverage_fraction") t = 1 - Math.max(0, Math.min(1, value));
+  else if (metric.startsWith("damage_rate")) t = Math.max(0, Math.min(1, value));
+  else t = max ? value / max : 0;
+  return damageColor(lift(t));
 }
 function nativeColor(source: string, p: any): RGBA {
   if (source === "microsoft") return p.damaged ? [220, 30, 30, 205] : [120, 128, 140, 70];
@@ -220,7 +228,7 @@ function buildLayers() {
 
 function renderLegend() {
   const meta = METRICS.find((x) => x.key === state.metric);
-  const stops = [0, 0.25, 0.5, 0.75, 1].map(damageColor);
+  const stops = [0, 0.15, 0.35, 0.6, 1].map((t) => damageColor(lift(t)));
   const grad = `linear-gradient(90deg, ${stops.map((c) => `rgb(${c[0]},${c[1]},${c[2]})`).join(",")})`;
   const [lo, hi] = state.metric === "coverage_fraction" ? ["full", "partial"] : ["low", "high"];
   document.getElementById("legend")!.innerHTML =
