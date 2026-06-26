@@ -11,7 +11,7 @@
 
     <div id="panel" class="floating">
       <h1>Damage Exposure</h1>
-      <p class="sub">Venezuela earthquake (EMSR884) · common building base (Overture)</p>
+      <p class="sub">Venezuela earthquake (EMSR884)</p>
 
       <div class="group">
         <div class="label">Sources</div>
@@ -19,14 +19,23 @@
       </div>
 
       <div class="group">
+        <div class="label">Building view</div>
+        <select id="view">
+          <option value="overture" selected>Overture base</option>
+          <option value="native">Native data</option>
+        </select>
+      </div>
+
+      <div class="group">
         <div class="label">Show</div>
         <label><input type="checkbox" data-layer="admin" checked /> Admin aggregation</label>
         <label><input type="checkbox" data-layer="buildings" /> Buildings</label>
+        <label><input type="checkbox" data-layer="extent" checked /> Coverage extent</label>
         <label><input type="checkbox" data-layer="h3" /> H3 hexagons</label>
       </div>
 
       <div class="group">
-        <div class="label">Colour by</div>
+        <div class="label">Colour aggregation by</div>
         <select id="metric"></select>
       </div>
 

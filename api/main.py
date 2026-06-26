@@ -16,7 +16,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from gie.serving import list_sources, load_buildings, load_common_admin, load_common_h3
+from gie.serving import (
+    list_sources,
+    load_buildings,
+    load_common_admin,
+    load_common_h3,
+    load_native,
+    load_source_extent,
+)
 
 app = FastAPI(title="Damage Exposure API")
 app.add_middleware(
@@ -48,12 +55,22 @@ def _buildings_json(source: str, adm0: str) -> str:
     return load_buildings(source, adm0).to_json(orient="records")
 
 
+@lru_cache(maxsize=8)
+def _native_json(source: str, adm0: str) -> str:
+    return load_native(source, adm0).to_json()
+
+
+@lru_cache(maxsize=8)
+def _extent_json(source: str, adm0: str) -> str:
+    return load_source_extent(source, adm0).to_json()
+
+
 # Metrics available on the common model, in display order (label shown in the UI).
 METRICS = [
-    {"key": "damaged_detected", "label": "Damaged (detected)"},
-    {"key": "damaged_extrapolated", "label": "Damaged (extrapolated)"},
-    {"key": "coverage_fraction", "label": "Coverage", "unit": "fraction"},
-    {"key": "exposed_buildings", "label": "Buildings exposed"},
+    {"key": "damaged_detected", "label": "Damaged buildings"},
+    {"key": "damaged_extrapolated", "label": "Damaged buildings (estimated)"},
+    {"key": "coverage_fraction", "label": "Coverage"},
+    {"key": "exposed_buildings", "label": "Total buildings"},
 ]
 
 
@@ -75,3 +92,13 @@ def common_admin(level: int, source: str, adm0: str = "VE") -> Response:
 @app.get("/api/buildings")
 def buildings(source: str, adm0: str = "VE") -> Response:
     return _json(_buildings_json(source, adm0))
+
+
+@app.get("/api/native")
+def native(source: str, adm0: str = "VE") -> Response:
+    return _json(_native_json(source, adm0))
+
+
+@app.get("/api/extent")
+def extent(source: str, adm0: str = "VE") -> Response:
+    return _json(_extent_json(source, adm0))

@@ -181,6 +181,63 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     ).df()
 
 
+def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
+    """The area a source analysed, as a labelling outline.
+
+    Microsoft -> bounding box of its footprints; CEMS -> convex hull of each
+    analysed-extent AOI. Light enough to always draw, and it tells you at a
+    glance which region each source covers (and where they overlap).
+    """
+    from shapely.geometry import box
+
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    if source == "microsoft":
+        ms = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet")
+        x0, x1, y0, y1 = con.execute(
+            f"""SELECT min(ST_XMin(geometry)), max(ST_XMax(geometry)),
+                       min(ST_YMin(geometry)), max(ST_YMax(geometry))
+                FROM read_parquet('{ms}')"""
+        ).fetchone()
+        return gpd.GeoDataFrame(
+            {"source": [source]}, geometry=[box(x0, y0, x1, y1)], crs="EPSG:4326"
+        )
+
+    ext = settings.az_path(
+        "silver", "source=copernicus_ems", f"adm0={adm0}", "analysed_extent.parquet"
+    )
+    df = con.execute(
+        f"""SELECT ST_AsWKB(ST_ConvexHull(ST_Union_Agg(geometry))) AS wkb
+            FROM read_parquet('{ext}') GROUP BY src_zip"""
+    ).df()
+    geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
+    return gpd.GeoDataFrame({"source": [source] * len(geom)}, geometry=geom, crs="EPSG:4326")
+
+
+def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
+    """Each source's own damage geometry (the 'native data' view).
+
+    Microsoft -> footprints with a binary damaged flag; CEMS -> damage-grade
+    polygons with the EMS grade. Distinct geometries that overlay cleanly and
+    show what each source actually mapped, vs the Overture-base view.
+    """
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    if source == "microsoft":
+        path = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet")
+        cols = "damaged"
+    else:
+        path = settings.az_path(
+            "silver", "source=copernicus_ems", f"adm0={adm0}", "builtup_damage.parquet"
+        )
+        cols = "ems_grade, damage_class"
+    df = con.execute(
+        f"SELECT {cols}, ST_AsWKB(geometry) AS wkb FROM read_parquet('{path}')"
+    ).df()
+    geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
+    return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
+
+
 def damage_colors(
     fractions, *, na: tuple[int, int, int, int] = (200, 200, 200, 40)
 ) -> np.ndarray:

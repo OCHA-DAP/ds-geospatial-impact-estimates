@@ -11,18 +11,25 @@ const SOURCE_LABEL: Record<string, string> = {
   microsoft: "Microsoft",
   copernicus_ems: "Copernicus EMS",
 };
+const SOURCE_COLOR: Record<string, [number, number, number]> = {
+  microsoft: [40, 110, 205],
+  copernicus_ems: [235, 125, 20],
+};
 
 const state = {
   sources: new Set<string>(),
-  metric: "damaged_detected",
+  view: "overture", // "overture" | "native"
+  metric: "damage_rate_detected",
   adminLevel: 3,
-  show: { admin: true, buildings: false, h3: false } as Record<string, boolean>,
+  show: { admin: true, buildings: false, extent: true, h3: false } as Record<string, boolean>,
 };
 
 let METRICS: { key: string; label: string }[] = [];
-const adminCache = new Map<string, any>(); // `${source}:${level}`
+const adminCache = new Map<string, any>();
 const h3Cache = new Map<string, any[]>();
 const buildingsCache = new Map<string, any[]>();
+const nativeCache = new Map<string, any>();
+const extentCache = new Map<string, any>();
 
 const map = new maplibregl.Map({
   container: "map",
@@ -39,8 +46,6 @@ function damageColor(t: number | null | undefined): RGBA {
   const f = Math.max(0, Math.min(1, t));
   return [240, Math.round(220 * (1 - f)), Math.round(40 * (1 - f)), 205];
 }
-// Derived rate metrics (damaged / exposed) are computed client-side from the
-// per-unit properties, so colour reflects damage intensity, not unit size.
 function metricValue(p: any, metric: string): number | null {
   if (metric === "damage_rate_detected")
     return p.exposed_buildings ? p.damaged_detected / p.exposed_buildings : null;
@@ -53,6 +58,11 @@ function metricColor(metric: string, value: number | null | undefined, max: numb
   if (metric === "coverage_fraction") return damageColor(1 - Math.max(0, Math.min(1, value)));
   if (metric.startsWith("damage_rate")) return damageColor(Math.max(0, Math.min(1, value)));
   return damageColor(max ? value / max : 0);
+}
+function nativeColor(source: string, p: any): RGBA {
+  if (source === "microsoft") return p.damaged ? [220, 30, 30, 205] : [120, 128, 140, 70];
+  const cls = p.damage_class; // CEMS: 1 possibly .. 3 destroyed
+  return cls == null ? [225, 60, 40, 200] : damageColor(Math.max(0.25, cls / 3));
 }
 const maxBy = (arr: any[], get: (x: any) => number) =>
   Math.max(1, ...arr.map(get).filter((v) => !Number.isNaN(v)));
@@ -72,8 +82,8 @@ const hideTip = () => {
 const num = (n: any) => (n == null || Number.isNaN(n) ? "—" : Math.round(n).toLocaleString());
 const pct = (n: any) => (n == null || Number.isNaN(n) ? "—" : `${(100 * n).toFixed(0)}%`);
 const tip = (name: string, p: any) =>
-  `<b>${name}</b><br>exposed: ${num(p.exposed_buildings)}<br>coverage: ${pct(p.coverage_fraction)}<br>` +
-  `damaged (detected): ${num(p.damaged_detected)}<br>damaged (extrapolated): ${num(p.damaged_extrapolated)}`;
+  `<b>${name}</b><br>total buildings: ${num(p.exposed_buildings)}<br>coverage: ${pct(p.coverage_fraction)}<br>` +
+  `damaged: ${num(p.damaged_detected)}<br>damaged (est.): ${num(p.damaged_extrapolated)}`;
 
 // --- layers ------------------------------------------------------------------
 function buildLayers() {
@@ -88,7 +98,7 @@ function buildLayers() {
   const h3All = sources.flatMap((s) => (h3Cache.get(s) ?? []).filter(hasCov));
   const hMax = maxBy(h3All, (r) => metricValue(r, m) ?? 0);
 
-  // admin choropleths (each source painted only where it has coverage -> no overlap)
+  // admin aggregation (common model, shared by both views)
   for (const s of sources) {
     if (!state.show.admin) break;
     const data = adminCache.get(`${s}:${state.adminLevel}`);
@@ -113,7 +123,7 @@ function buildLayers() {
     );
   }
 
-  // h3
+  // h3 (common)
   for (const s of sources) {
     if (!state.show.h3) break;
     const rows = (h3Cache.get(s) ?? []).filter(hasCov);
@@ -125,8 +135,6 @@ function buildLayers() {
         pickable: true,
         extruded: false,
         opacity: 0.6,
-        filled: true,
-        stroked: false,
         getHexagon: (d: any) => d.h3,
         getFillColor: (d: any) => metricColor(m, metricValue(d, m), hMax),
         updateTriggers: { getFillColor: [m, hMax] },
@@ -136,31 +144,73 @@ function buildLayers() {
     );
   }
 
-  // buildings: faint grey = exposed (assessed, undamaged), bold red = damaged on top
+  // building-level: Overture points OR native geometry
   for (const s of sources) {
     if (!state.show.buildings) break;
-    const pts = buildingsCache.get(s);
-    if (!pts) continue;
+    if (state.view === "overture") {
+      const pts = buildingsCache.get(s);
+      if (!pts) continue;
+      layers.push(
+        new ScatterplotLayer({
+          id: `bld-exposed-${s}`,
+          data: pts.filter((d: any) => !d.damaged),
+          getPosition: (d: any) => [d.lon, d.lat],
+          getRadius: 5,
+          radiusMinPixels: 0.6,
+          radiusMaxPixels: 3,
+          getFillColor: [110, 118, 130, 85],
+        }),
+        new ScatterplotLayer({
+          id: `bld-damaged-${s}`,
+          data: pts.filter((d: any) => d.damaged),
+          getPosition: (d: any) => [d.lon, d.lat],
+          getRadius: 9,
+          radiusMinPixels: 1.6,
+          radiusMaxPixels: 6,
+          getFillColor: [230, 20, 20, 240],
+        }),
+      );
+    } else {
+      const nat = nativeCache.get(s);
+      if (!nat) continue;
+      layers.push(
+        new GeoJsonLayer({
+          id: `native-${s}`,
+          data: nat,
+          pickable: true,
+          filled: true,
+          stroked: false,
+          getFillColor: (f: any) => nativeColor(s, f.properties),
+          onHover: (info: any) =>
+            info.object
+              ? showTip(
+                  info.x,
+                  info.y,
+                  s === "microsoft"
+                    ? `Microsoft footprint<br>damaged: ${info.object.properties.damaged ? "yes" : "no"}`
+                    : `Copernicus EMS<br>grade: ${info.object.properties.ems_grade}`,
+                )
+              : hideTip(),
+        }),
+      );
+    }
+  }
+
+  // source coverage extent (AOI bbox / convex hull), labelled by source colour
+  for (const s of sources) {
+    if (!state.show.extent) break;
+    const ext = extentCache.get(s);
+    if (!ext) continue;
+    const c = SOURCE_COLOR[s] ?? [80, 80, 80];
     layers.push(
-      new ScatterplotLayer({
-        id: `bld-exposed-${s}`,
-        data: pts.filter((d: any) => !d.damaged),
-        getPosition: (d: any) => [d.lon, d.lat],
-        getRadius: 5,
-        radiusMinPixels: 0.6,
-        radiusMaxPixels: 3,
-        getFillColor: [110, 118, 130, 85],
-      }),
-    );
-    layers.push(
-      new ScatterplotLayer({
-        id: `bld-damaged-${s}`,
-        data: pts.filter((d: any) => d.damaged),
-        getPosition: (d: any) => [d.lon, d.lat],
-        getRadius: 9,
-        radiusMinPixels: 1.6,
-        radiusMaxPixels: 6,
-        getFillColor: [230, 20, 20, 240],
+      new GeoJsonLayer({
+        id: `extent-${s}`,
+        data: ext,
+        filled: true,
+        stroked: true,
+        getFillColor: [...c, 12] as any,
+        getLineColor: [...c, 235] as any,
+        lineWidthMinPixels: 2,
       }),
     );
   }
@@ -174,7 +224,7 @@ function renderLegend() {
   const grad = `linear-gradient(90deg, ${stops.map((c) => `rgb(${c[0]},${c[1]},${c[2]})`).join(",")})`;
   const [lo, hi] = state.metric === "coverage_fraction" ? ["full", "partial"] : ["low", "high"];
   document.getElementById("legend")!.innerHTML =
-    `<div class="title">${meta?.label ?? state.metric}</div>` +
+    `<div class="title">Aggregation · ${meta?.label ?? state.metric}</div>` +
     `<div class="bar" style="background:${grad}"></div>` +
     `<div class="ticks"><span>${lo}</span><span>${hi}</span></div>`;
 }
@@ -182,19 +232,21 @@ function renderLegend() {
 // --- data --------------------------------------------------------------------
 async function ensureAdmin(source: string, level: number) {
   const k = `${source}:${level}`;
-  if (!adminCache.has(k)) {
+  if (!adminCache.has(k))
     adminCache.set(k, await fetch(`/api/common/admin/${level}?source=${source}`).then((r) => r.json()));
-  }
 }
 async function ensureH3(source: string) {
-  if (!h3Cache.has(source)) {
-    h3Cache.set(source, await fetch(`/api/common/h3?source=${source}`).then((r) => r.json()));
-  }
+  if (!h3Cache.has(source)) h3Cache.set(source, await fetch(`/api/common/h3?source=${source}`).then((r) => r.json()));
 }
 async function ensureBuildings(source: string) {
-  if (!buildingsCache.has(source)) {
+  if (!buildingsCache.has(source))
     buildingsCache.set(source, await fetch(`/api/buildings?source=${source}`).then((r) => r.json()));
-  }
+}
+async function ensureNative(source: string) {
+  if (!nativeCache.has(source)) nativeCache.set(source, await fetch(`/api/native?source=${source}`).then((r) => r.json()));
+}
+async function ensureExtent(source: string) {
+  if (!extentCache.has(source)) extentCache.set(source, await fetch(`/api/extent?source=${source}`).then((r) => r.json()));
 }
 
 async function refresh() {
@@ -205,13 +257,14 @@ async function refresh() {
     for (const s of state.sources) {
       if (state.show.admin) tasks.push(ensureAdmin(s, state.adminLevel));
       if (state.show.h3) tasks.push(ensureH3(s));
-      if (state.show.buildings) tasks.push(ensureBuildings(s));
+      if (state.show.buildings) tasks.push(state.view === "overture" ? ensureBuildings(s) : ensureNative(s));
+      if (state.show.extent) tasks.push(ensureExtent(s));
     }
     await Promise.all(tasks);
     buildLayers();
     renderLegend();
     const srcs = [...state.sources].map((s) => SOURCE_LABEL[s] ?? s).join(" + ") || "none";
-    status.textContent = `${srcs} · adm${state.adminLevel}`;
+    status.textContent = `${srcs} · ${state.view} · adm${state.adminLevel}`;
   } catch (e) {
     status.textContent = `Failed to load: ${e}`;
   }
@@ -223,20 +276,20 @@ const el = (id: string) => document.getElementById(id)!;
 async function init() {
   const meta = await fetch("/api/sources").then((r) => r.json());
   const sources: string[] = meta.sources;
-  // Prepend client-side rate metrics so colour can mean intensity, not unit size.
   METRICS = [
     { key: "damage_rate_detected", label: "Damage rate (detected)" },
-    { key: "damage_rate_extrapolated", label: "Damage rate (extrapolated)" },
+    { key: "damage_rate_extrapolated", label: "Damage rate (estimated)" },
     ...meta.metrics,
   ];
   state.sources = new Set(sources);
 
   el("sources").innerHTML = sources
-    .map((s) => `<label><input type="checkbox" data-source="${s}" checked /> ${SOURCE_LABEL[s] ?? s}</label>`)
+    .map((s) => {
+      const c = SOURCE_COLOR[s] ?? [120, 120, 120];
+      return `<label><span class="swatch" style="background:rgb(${c.join(",")})"></span><input type="checkbox" data-source="${s}" checked /> ${SOURCE_LABEL[s] ?? s}</label>`;
+    })
     .join("");
-  (el("metric") as HTMLSelectElement).innerHTML = METRICS.map(
-    (m) => `<option value="${m.key}">${m.label}</option>`,
-  ).join("");
+  (el("metric") as HTMLSelectElement).innerHTML = METRICS.map((x) => `<option value="${x.key}">${x.label}</option>`).join("");
   state.metric = "damage_rate_detected";
   (el("metric") as HTMLSelectElement).value = state.metric;
 
@@ -257,6 +310,10 @@ async function init() {
   state.metric = (el("metric") as HTMLSelectElement).value;
   buildLayers();
   renderLegend();
+});
+(el("view") as HTMLSelectElement).addEventListener("change", async () => {
+  state.view = (el("view") as HTMLSelectElement).value;
+  await refresh();
 });
 (el("adminLevel") as HTMLSelectElement).addEventListener("change", async () => {
   state.adminLevel = Number((el("adminLevel") as HTMLSelectElement).value);
