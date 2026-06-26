@@ -16,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from gie.serving import list_sources, load_common_admin, load_common_h3, load_footprints
+from gie.serving import list_sources, load_buildings, load_common_admin, load_common_h3
 
 app = FastAPI(title="Damage Exposure API")
 app.add_middleware(
@@ -44,8 +44,8 @@ def _common_admin_json(level: int, source: str, adm0: str) -> str:
 
 
 @lru_cache(maxsize=8)
-def _footprints_json(source: str, adm0: str) -> str:
-    return load_footprints(source, adm0).to_json()
+def _buildings_json(source: str, adm0: str) -> str:
+    return load_buildings(source, adm0).to_json(orient="records")
 
 
 # Metrics available on the common model, in display order (label shown in the UI).
@@ -72,6 +72,6 @@ def common_admin(level: int, source: str, adm0: str = "VE") -> Response:
     return _json(_common_admin_json(level, source, adm0))
 
 
-@app.get("/api/footprints")
-def footprints(source: str = "microsoft", adm0: str = "VE") -> Response:
-    return _json(_footprints_json(source, adm0))
+@app.get("/api/buildings")
+def buildings(source: str, adm0: str = "VE") -> Response:
+    return _json(_buildings_json(source, adm0))

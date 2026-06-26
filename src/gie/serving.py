@@ -155,6 +155,32 @@ def load_common_admin(
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
+def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+    """Overture base buildings (as points) the source assessed, with a damaged flag.
+
+    Geometry stays in the Overture silver; we join the persisted per-building
+    flags by id and return only buildings inside the source's coverage extent.
+    """
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    base = settings.az_path(
+        "silver", "source=overture", f"adm0={adm0}", "region=*", "buildings.parquet"
+    )
+    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
+    dmg = "ms_dmg" if source == "microsoft" else "cems_dmg"
+    seen = "ms_analysed" if source == "microsoft" else "cems_analysed"
+    return con.execute(
+        f"""
+        SELECT round(ST_X(ST_Centroid(b.geometry)), 6) AS lon,
+               round(ST_Y(ST_Centroid(b.geometry)), 6) AS lat,
+               f.{dmg}::INT AS damaged
+        FROM read_parquet('{base}', hive_partitioning=true) b
+        JOIN read_parquet('{flags}') f USING (id)
+        WHERE f.{seen}
+        """
+    ).df()
+
+
 def damage_colors(
     fractions, *, na: tuple[int, int, int, int] = (200, 200, 200, 40)
 ) -> np.ndarray:

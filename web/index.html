@@ -14,8 +14,15 @@
       <p class="sub">Venezuela earthquake (EMSR884) · common building base (Overture)</p>
 
       <div class="group">
-        <div class="label">Source</div>
-        <select id="source"></select>
+        <div class="label">Sources</div>
+        <div id="sources"></div>
+      </div>
+
+      <div class="group">
+        <div class="label">Show</div>
+        <label><input type="checkbox" data-layer="admin" checked /> Admin aggregation</label>
+        <label><input type="checkbox" data-layer="buildings" /> Buildings</label>
+        <label><input type="checkbox" data-layer="h3" /> H3 hexagons</label>
       </div>
 
       <div class="group">
@@ -31,13 +38,6 @@
           <option value="2">Admin 2</option>
           <option value="3" selected>Admin 3</option>
         </select>
-      </div>
-
-      <div class="group">
-        <div class="label">Layers</div>
-        <label><input type="checkbox" data-layer="admin" checked /> Admin units</label>
-        <label><input type="checkbox" data-layer="h3" /> H3 hexagons</label>
-        <label><input type="checkbox" data-layer="footprints" /> Building footprints</label>
       </div>
 
       <div id="status" class="status">Loading…</div>

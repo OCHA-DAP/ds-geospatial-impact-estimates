@@ -2,23 +2,27 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 import maplibregl from "maplibre-gl";
 import { MapboxOverlay } from "@deck.gl/mapbox";
-import { GeoJsonLayer } from "@deck.gl/layers";
+import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
 
 type RGBA = [number, number, number, number];
 
-const state = {
-  source: "microsoft",
-  metric: "damaged_detected",
-  adminLevel: 3,
-  show: { admin: true, h3: false, footprints: false },
+const SOURCE_LABEL: Record<string, string> = {
+  microsoft: "Microsoft",
+  copernicus_ems: "Copernicus EMS",
 };
 
-let SOURCES: string[] = [];
+const state = {
+  sources: new Set<string>(),
+  metric: "damaged_detected",
+  adminLevel: 3,
+  show: { admin: true, buildings: false, h3: false } as Record<string, boolean>,
+};
+
 let METRICS: { key: string; label: string }[] = [];
-const adminCache = new Map<string, any>(); // `${source}:${level}` -> GeoJSON
-const h3Cache = new Map<string, any[]>(); // source -> rows
-let footprints: any = null;
+const adminCache = new Map<string, any>(); // `${source}:${level}`
+const h3Cache = new Map<string, any[]>();
+const buildingsCache = new Map<string, any[]>();
 
 const map = new maplibregl.Map({
   container: "map",
@@ -29,20 +33,30 @@ const map = new maplibregl.Map({
 const overlay = new MapboxOverlay({ interleaved: false, layers: [] });
 map.addControl(overlay as any);
 
-// --- colour: sequential yellow -> dark red; null -> faint grey ---------------
+// --- colour ------------------------------------------------------------------
 function damageColor(t: number | null | undefined): RGBA {
   if (t == null || Number.isNaN(t)) return [200, 200, 200, 35];
   const f = Math.max(0, Math.min(1, t));
   return [240, Math.round(220 * (1 - f)), Math.round(40 * (1 - f)), 205];
 }
+// Derived rate metrics (damaged / exposed) are computed client-side from the
+// per-unit properties, so colour reflects damage intensity, not unit size.
+function metricValue(p: any, metric: string): number | null {
+  if (metric === "damage_rate_detected")
+    return p.exposed_buildings ? p.damaged_detected / p.exposed_buildings : null;
+  if (metric === "damage_rate_extrapolated")
+    return p.exposed_buildings ? (p.damaged_extrapolated ?? 0) / p.exposed_buildings : null;
+  return p[metric];
+}
 function metricColor(metric: string, value: number | null | undefined, max: number): RGBA {
   if (value == null || Number.isNaN(value)) return [200, 200, 200, 35];
-  // coverage: highlight INCOMPLETE coverage (partial glows red, full fades)
   if (metric === "coverage_fraction") return damageColor(1 - Math.max(0, Math.min(1, value)));
+  if (metric.startsWith("damage_rate")) return damageColor(Math.max(0, Math.min(1, value)));
   return damageColor(max ? value / max : 0);
 }
 const maxBy = (arr: any[], get: (x: any) => number) =>
   Math.max(1, ...arr.map(get).filter((v) => !Number.isNaN(v)));
+const hasCov = (p: any) => (p?.coverage_fraction ?? 0) > 0;
 
 // --- tooltip -----------------------------------------------------------------
 const tooltip = document.getElementById("tooltip")!;
@@ -57,80 +71,96 @@ const hideTip = () => {
 };
 const num = (n: any) => (n == null || Number.isNaN(n) ? "—" : Math.round(n).toLocaleString());
 const pct = (n: any) => (n == null || Number.isNaN(n) ? "—" : `${(100 * n).toFixed(0)}%`);
-
-function tip(name: string | null, p: any): string {
-  return (
-    (name ? `<b>${name}</b><br>` : "") +
-    `exposed: ${num(p.exposed_buildings)}<br>` +
-    `coverage: ${pct(p.coverage_fraction)}<br>` +
-    `damaged (detected): ${num(p.damaged_detected)}<br>` +
-    `damaged (extrapolated): ${num(p.damaged_extrapolated)}`
-  );
-}
+const tip = (name: string, p: any) =>
+  `<b>${name}</b><br>exposed: ${num(p.exposed_buildings)}<br>coverage: ${pct(p.coverage_fraction)}<br>` +
+  `damaged (detected): ${num(p.damaged_detected)}<br>damaged (extrapolated): ${num(p.damaged_extrapolated)}`;
 
 // --- layers ------------------------------------------------------------------
 function buildLayers() {
   const m = state.metric;
+  const sources = [...state.sources];
   const layers: any[] = [];
 
-  const admin = adminCache.get(`${state.source}:${state.adminLevel}`);
-  if (state.show.admin && admin) {
-    const amax = maxBy(admin.features, (f) => f.properties[m] ?? 0);
+  const adminFeats = sources.flatMap((s) =>
+    (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []).filter((f: any) => hasCov(f.properties)),
+  );
+  const aMax = maxBy(adminFeats, (f) => metricValue(f.properties, m) ?? 0);
+  const h3All = sources.flatMap((s) => (h3Cache.get(s) ?? []).filter(hasCov));
+  const hMax = maxBy(h3All, (r) => metricValue(r, m) ?? 0);
+
+  // admin choropleths (each source painted only where it has coverage -> no overlap)
+  for (const s of sources) {
+    if (!state.show.admin) break;
+    const data = adminCache.get(`${s}:${state.adminLevel}`);
+    if (!data) continue;
     layers.push(
       new GeoJsonLayer({
-        id: `admin-${state.source}-${state.adminLevel}`,
-        data: admin,
+        id: `admin-${s}-${state.adminLevel}`,
+        data: { type: "FeatureCollection", features: data.features.filter((f: any) => hasCov(f.properties)) },
         pickable: true,
         filled: true,
         stroked: true,
         opacity: 0.6,
         getLineColor: [55, 65, 80, 200],
         lineWidthMinPixels: 1,
-        getFillColor: (f: any) => metricColor(m, f.properties[m], amax),
-        updateTriggers: { getFillColor: [m, state.source, state.adminLevel] },
+        getFillColor: (f: any) => metricColor(m, metricValue(f.properties, m), aMax),
+        updateTriggers: { getFillColor: [m, state.adminLevel, aMax] },
         onHover: (info: any) =>
           info.object
-            ? showTip(info.x, info.y, tip(info.object.properties.unit_name, info.object.properties))
+            ? showTip(info.x, info.y, tip(`${info.object.properties.unit_name} · ${SOURCE_LABEL[s] ?? s}`, info.object.properties))
             : hideTip(),
       }),
     );
   }
 
-  const h3 = h3Cache.get(state.source);
-  if (state.show.h3 && h3) {
-    const hmax = maxBy(h3, (d) => d[m] ?? 0);
+  // h3
+  for (const s of sources) {
+    if (!state.show.h3) break;
+    const rows = (h3Cache.get(s) ?? []).filter(hasCov);
+    if (!rows.length) continue;
     layers.push(
       new H3HexagonLayer({
-        id: `h3-${state.source}`,
-        data: h3,
+        id: `h3-${s}`,
+        data: rows,
         pickable: true,
         extruded: false,
-        opacity: 0.62,
+        opacity: 0.6,
         filled: true,
         stroked: false,
         getHexagon: (d: any) => d.h3,
-        getFillColor: (d: any) => metricColor(m, d[m], hmax),
-        updateTriggers: { getFillColor: [m, state.source] },
+        getFillColor: (d: any) => metricColor(m, metricValue(d, m), hMax),
+        updateTriggers: { getFillColor: [m, hMax] },
         onHover: (info: any) =>
-          info.object ? showTip(info.x, info.y, tip(null, info.object)) : hideTip(),
+          info.object ? showTip(info.x, info.y, tip(SOURCE_LABEL[s] ?? s, info.object)) : hideTip(),
       }),
     );
   }
 
-  if (state.show.footprints && footprints) {
+  // buildings: faint grey = exposed (assessed, undamaged), bold red = damaged on top
+  for (const s of sources) {
+    if (!state.show.buildings) break;
+    const pts = buildingsCache.get(s);
+    if (!pts) continue;
     layers.push(
-      new GeoJsonLayer({
-        id: "footprints",
-        data: footprints,
-        pickable: true,
-        filled: true,
-        stroked: false,
-        getFillColor: (f: any) =>
-          f.properties.damaged ? [200, 30, 30, 235] : [20, 20, 20, 210],
-        onHover: (info: any) =>
-          info.object
-            ? showTip(info.x, info.y, `Building<br>damaged: ${info.object.properties.damaged ? "yes" : "no"}`)
-            : hideTip(),
+      new ScatterplotLayer({
+        id: `bld-exposed-${s}`,
+        data: pts.filter((d: any) => !d.damaged),
+        getPosition: (d: any) => [d.lon, d.lat],
+        getRadius: 5,
+        radiusMinPixels: 0.6,
+        radiusMaxPixels: 3,
+        getFillColor: [110, 118, 130, 85],
+      }),
+    );
+    layers.push(
+      new ScatterplotLayer({
+        id: `bld-damaged-${s}`,
+        data: pts.filter((d: any) => d.damaged),
+        getPosition: (d: any) => [d.lon, d.lat],
+        getRadius: 9,
+        radiusMinPixels: 1.6,
+        radiusMaxPixels: 6,
+        getFillColor: [230, 20, 20, 240],
       }),
     );
   }
@@ -155,71 +185,87 @@ async function ensureAdmin(source: string, level: number) {
   if (!adminCache.has(k)) {
     adminCache.set(k, await fetch(`/api/common/admin/${level}?source=${source}`).then((r) => r.json()));
   }
-  return adminCache.get(k);
 }
 async function ensureH3(source: string) {
   if (!h3Cache.has(source)) {
     h3Cache.set(source, await fetch(`/api/common/h3?source=${source}`).then((r) => r.json()));
   }
-  return h3Cache.get(source);
 }
-async function ensureFootprints() {
-  if (!footprints) footprints = await fetch("/api/footprints").then((r) => r.json());
-  return footprints;
+async function ensureBuildings(source: string) {
+  if (!buildingsCache.has(source)) {
+    buildingsCache.set(source, await fetch(`/api/buildings?source=${source}`).then((r) => r.json()));
+  }
 }
 
 async function refresh() {
   const status = document.getElementById("status")!;
+  status.textContent = "Loading…";
   try {
-    const tasks: Promise<any>[] = [ensureAdmin(state.source, state.adminLevel)];
-    if (state.show.h3) tasks.push(ensureH3(state.source));
-    if (state.show.footprints) tasks.push(ensureFootprints());
+    const tasks: Promise<any>[] = [];
+    for (const s of state.sources) {
+      if (state.show.admin) tasks.push(ensureAdmin(s, state.adminLevel));
+      if (state.show.h3) tasks.push(ensureH3(s));
+      if (state.show.buildings) tasks.push(ensureBuildings(s));
+    }
     await Promise.all(tasks);
-    const admin = adminCache.get(`${state.source}:${state.adminLevel}`);
-    status.textContent = `${state.source} · adm${state.adminLevel} · ${admin.features.length} units`;
     buildLayers();
+    renderLegend();
+    const srcs = [...state.sources].map((s) => SOURCE_LABEL[s] ?? s).join(" + ") || "none";
+    status.textContent = `${srcs} · adm${state.adminLevel}`;
   } catch (e) {
     status.textContent = `Failed to load: ${e}`;
   }
 }
 
 // --- init + wiring -----------------------------------------------------------
-const el = (id: string) => document.getElementById(id) as HTMLSelectElement;
+const el = (id: string) => document.getElementById(id)!;
 
 async function init() {
   const meta = await fetch("/api/sources").then((r) => r.json());
-  SOURCES = meta.sources;
-  METRICS = meta.metrics;
-  el("source").innerHTML = SOURCES.map((s) => `<option value="${s}">${s}</option>`).join("");
-  el("metric").innerHTML = METRICS.map((m) => `<option value="${m.key}">${m.label}</option>`).join("");
-  state.source = SOURCES.includes("microsoft") ? "microsoft" : SOURCES[0];
-  state.metric = METRICS[0].key;
-  el("source").value = state.source;
-  el("metric").value = state.metric;
+  const sources: string[] = meta.sources;
+  // Prepend client-side rate metrics so colour can mean intensity, not unit size.
+  METRICS = [
+    { key: "damage_rate_detected", label: "Damage rate (detected)" },
+    { key: "damage_rate_extrapolated", label: "Damage rate (extrapolated)" },
+    ...meta.metrics,
+  ];
+  state.sources = new Set(sources);
+
+  el("sources").innerHTML = sources
+    .map((s) => `<label><input type="checkbox" data-source="${s}" checked /> ${SOURCE_LABEL[s] ?? s}</label>`)
+    .join("");
+  (el("metric") as HTMLSelectElement).innerHTML = METRICS.map(
+    (m) => `<option value="${m.key}">${m.label}</option>`,
+  ).join("");
+  state.metric = "damage_rate_detected";
+  (el("metric") as HTMLSelectElement).value = state.metric;
+
+  el("sources")
+    .querySelectorAll<HTMLInputElement>("input[data-source]")
+    .forEach((box) =>
+      box.addEventListener("change", async () => {
+        if (box.checked) state.sources.add(box.dataset.source!);
+        else state.sources.delete(box.dataset.source!);
+        await refresh();
+      }),
+    );
+
   await refresh();
-  renderLegend();
 }
 
-el("source").addEventListener("change", async () => {
-  state.source = el("source").value;
-  await refresh();
-});
-el("metric").addEventListener("change", () => {
-  state.metric = el("metric").value;
+(el("metric") as HTMLSelectElement).addEventListener("change", () => {
+  state.metric = (el("metric") as HTMLSelectElement).value;
   buildLayers();
   renderLegend();
 });
-el("adminLevel").addEventListener("change", async () => {
-  state.adminLevel = Number(el("adminLevel").value);
-  await ensureAdmin(state.source, state.adminLevel);
-  buildLayers();
+(el("adminLevel") as HTMLSelectElement).addEventListener("change", async () => {
+  state.adminLevel = Number((el("adminLevel") as HTMLSelectElement).value);
+  await refresh();
 });
 document.querySelectorAll<HTMLInputElement>("input[data-layer]").forEach((box) =>
   box.addEventListener("change", async () => {
-    (state.show as any)[box.dataset.layer!] = box.checked;
-    if (box.checked && box.dataset.layer === "h3") await ensureH3(state.source);
-    if (box.checked && box.dataset.layer === "footprints") await ensureFootprints();
-    buildLayers();
+    state.show[box.dataset.layer!] = box.checked;
+    await refresh();
   }),
 );
 

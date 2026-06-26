@@ -38,9 +38,12 @@ METHOD = "common_overture_v1"
 ADM0 = "VE"
 STAGE = "dev"
 
-# (source, damaged-flag, analysed-buildings expression). MS covers everything.
+# (source, damaged-flag, analysed-buildings expression). Each source only
+# "analysed" within its own extent — MS within its footprint coverage, CEMS
+# within imageFootprint - notAnalysed. Outside that, the source has no data
+# (coverage 0), which is different from "assessed and found no damage".
 SOURCES = [
-    ("microsoft", "ms_dmg", "count(*)"),
+    ("microsoft", "ms_dmg", "sum(ms_analysed::INT)"),
     ("copernicus_ems", "cems_dmg", "sum(cems_analysed::INT)"),
 ]
 GRAINS = [
@@ -90,12 +93,24 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         cems_seen AS (
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{analysed}') e ON ST_Intersects(b.geom, e.geometry)
+        ),
+        ms_bbox AS (
+            SELECT min(ST_XMin(geometry)) x0, max(ST_XMax(geometry)) x1,
+                   min(ST_YMin(geometry)) y0, max(ST_YMax(geometry)) y1
+            FROM read_parquet('{ms}')
+        ),
+        ms_seen AS (
+            -- MS only assessed within its footprint extent (Catia La Mar);
+            -- elsewhere it has no data, not "zero damage".
+            SELECT b.id FROM base b, ms_bbox
+            WHERE ST_X(b.c) BETWEEN x0 AND x1 AND ST_Y(b.c) BETWEEN y0 AND y1
         )
         SELECT b.id,
             h3_h3_to_string(h3_latlng_to_cell(ST_Y(b.c), ST_X(b.c), {res})) AS h3,
             a.adm0_id, a.adm0_name, a.adm1_id, a.adm1_name,
             a.adm2_id, a.adm2_name, a.adm3_id, a.adm3_name,
             (b.id IN (SELECT id FROM ms_dmg)) AS ms_dmg,
+            (b.id IN (SELECT id FROM ms_seen)) AS ms_analysed,
             (b.id IN (SELECT id FROM cems_dmg)) AS cems_dmg,
             (b.id IN (SELECT id FROM cems_seen)) AS cems_analysed
         FROM base b
@@ -131,6 +146,18 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         """
     ).df()
     df["ingested_at"] = pd.Timestamp.now("UTC")
+
+    # Persist per-building damage/coverage flags for the building-level viewer
+    # layer (geometry stays in the Overture silver; we join by id at serve time).
+    flags = con.execute(
+        "SELECT id, ms_dmg, ms_analysed, cems_dmg, cems_analysed FROM located"
+    ).df()
+    fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
+    stratus.upload_parquet_to_blob(
+        flags, fpath, stage=STAGE, container_name=settings.container, compression="zstd"
+    )
+    print(f"building_flags <- {fpath} ({len(flags):,} buildings)")
+
     return df
 
 
