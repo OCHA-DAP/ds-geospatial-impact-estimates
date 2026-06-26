@@ -2,15 +2,26 @@
 
 The end-state of the harmonization model (ADR-0001): one shared exposure base
 (Overture buildings) onto which each damage source is projected, so all sources
-read in the same units — `buildings_damaged` / `exposed_buildings` /
-`damaged_fraction` per spatial unit. A base building is counted as damaged for a
-source if it intersects that source's damage geometry:
+read in the same units. A base building is counted as damaged for a source if it
+intersects that source's damage geometry:
 
   * Microsoft  -> intersects an MS footprint flagged damaged (binary)
   * Copernicus -> intersects a CEMS damage-grade polygon
 
-Output: gold/model=common — a long fact table the viewer reads to compare
-sources head-to-head on one consistent denominator.
+Coverage-aware (a source may only assess part of a unit — CEMS imagery/cloud):
+
+  exposed_buildings    base buildings in the unit
+  analysed_buildings   base buildings the source could actually assess
+                       (MS: all; CEMS: inside the AOI - not-analysed extent)
+  coverage_fraction    analysed / exposed  (how much of the unit was seen)
+  damaged_detected     damaged base buildings in the analysed area (a floor)
+  damaged_extrapolated (detected / analysed) * exposed  (observed rate applied
+                       to the whole unit; NULL where coverage is zero)
+
+Extrapolation assumes damage is spatially uniform — an estimate, not a
+measurement; the viewer should gate/flag it on coverage_fraction.
+
+Output: gold/model=common — a long fact table for cross-source comparison.
 
 Run: uv run --group etl python pipelines/harmonize_common.py
 """
@@ -27,7 +38,11 @@ METHOD = "common_overture_v1"
 ADM0 = "VE"
 STAGE = "dev"
 
-SOURCES = [("microsoft", "ms_dmg"), ("copernicus_ems", "cems_dmg")]
+# (source, damaged-flag, analysed-buildings expression). MS covers everything.
+SOURCES = [
+    ("microsoft", "ms_dmg", "count(*)"),
+    ("copernicus_ems", "cems_dmg", "sum(cems_analysed::INT)"),
+]
 GRAINS = [
     ("h3", "h3", None),
     ("adm0", "adm0_id", "adm0_name"),
@@ -35,6 +50,10 @@ GRAINS = [
     ("adm2", "adm2_id", "adm2_name"),
     ("adm3", "adm3_id", "adm3_name"),
 ]
+METRICS = (
+    "exposed_buildings, analysed_buildings, coverage_fraction, "
+    "damaged_detected, damaged_extrapolated"
+)
 
 
 def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
@@ -47,9 +66,11 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     cems = settings.az_path(
         "silver", "source=copernicus_ems", f"adm0={ADM0}", "builtup_damage.parquet"
     )
+    analysed = settings.az_path(
+        "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+    )
     adm3 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
 
-    # One pass: locate each base building (H3 + admin) and flag damage per source.
     con.execute(
         f"""
         CREATE TEMP TABLE located AS
@@ -65,20 +86,25 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         cems_dmg AS (
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{cems}') x ON ST_Intersects(b.geom, x.geometry)
+        ),
+        cems_seen AS (
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{analysed}') e ON ST_Intersects(b.geom, e.geometry)
         )
         SELECT b.id,
             h3_h3_to_string(h3_latlng_to_cell(ST_Y(b.c), ST_X(b.c), {res})) AS h3,
             a.adm0_id, a.adm0_name, a.adm1_id, a.adm1_name,
             a.adm2_id, a.adm2_name, a.adm3_id, a.adm3_name,
             (b.id IN (SELECT id FROM ms_dmg)) AS ms_dmg,
-            (b.id IN (SELECT id FROM cems_dmg)) AS cems_dmg
+            (b.id IN (SELECT id FROM cems_dmg)) AS cems_dmg,
+            (b.id IN (SELECT id FROM cems_seen)) AS cems_analysed
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
         """
     )
 
     selects = []
-    for src, flag in SOURCES:
+    for src, flag, analysed_expr in SOURCES:
         for unit_type, idcol, namecol in GRAINS:
             name_expr = "NULL" if namecol is None else f"any_value({namecol})"
             where = "" if unit_type == "h3" else f"WHERE {idcol} IS NOT NULL"
@@ -87,8 +113,12 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
                 SELECT '{src}' AS source, '{METHOD}' AS method, '{unit_type}' AS unit_type,
                        {idcol} AS unit_id, {name_expr} AS unit_name,
                        count(*)::DOUBLE AS exposed_buildings,
-                       sum({flag}::INT)::DOUBLE AS damaged_buildings,
-                       sum({flag}::INT) * 1.0 / count(*) AS damaged_fraction
+                       ({analysed_expr})::DOUBLE AS analysed_buildings,
+                       ({analysed_expr}) * 1.0 / count(*) AS coverage_fraction,
+                       sum({flag}::INT)::DOUBLE AS damaged_detected,
+                       CASE WHEN ({analysed_expr}) > 0
+                            THEN sum({flag}::INT) * 1.0 / ({analysed_expr}) * count(*)
+                            ELSE NULL END AS damaged_extrapolated
                 FROM located {where} GROUP BY {idcol}
                 """
             )
@@ -97,7 +127,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         f"""
         SELECT source, method, unit_type, unit_id, unit_name, metric, value
         FROM ( {union} )
-        UNPIVOT (value FOR metric IN (exposed_buildings, damaged_buildings, damaged_fraction))
+        UNPIVOT INCLUDE NULLS (value FOR metric IN ({METRICS}))
         """
     ).df()
     df["ingested_at"] = pd.Timestamp.now("UTC")
@@ -108,11 +138,18 @@ def main() -> None:
     settings = load_settings(STAGE)
     df = build_facts()
 
-    # Sanity: damaged buildings per source at adm3 (the comparison shape).
-    adm3 = df[(df.unit_type == "adm3") & (df.metric == "damaged_buildings") & (df.value > 0)]
-    summary = adm3.groupby("source").agg(units=("unit_id", "nunique"), damaged=("value", "sum"))
-    print("damaged buildings on the common Overture base, by source (adm3):")
-    print(summary.to_string())
+    # Sanity: CEMS coverage + detected vs extrapolated at adm3 (where it has data).
+    w = df[df.unit_type == "adm3"].pivot_table(
+        index=["source", "unit_name"], columns="metric", values="value"
+    )
+    cems = w.loc["copernicus_ems"]
+    cems = cems[cems["damaged_detected"] > 0].sort_values("damaged_detected", ascending=False)
+    print("CEMS adm3 — coverage shrinks detected; extrapolation lifts it to full unit:")
+    print(
+        cems[
+            ["exposed_buildings", "coverage_fraction", "damaged_detected", "damaged_extrapolated"]
+        ].round(2).head(6).to_string()
+    )
 
     gold = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet")
     stratus.upload_parquet_to_blob(
@@ -122,9 +159,9 @@ def main() -> None:
     ledger.record(
         "common",
         "gold",
-        "Common-model damage facts (Overture base)",
+        "Common-model damage facts (Overture base, coverage-aware)",
         gold,
-        f"{len(df):,} rows; sources MS + CEMS on Overture base; exposed/damaged/fraction",
+        f"{len(df):,} rows; exposed/analysed/coverage/detected/extrapolated per source",
     )
 
 
