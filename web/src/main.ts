@@ -85,28 +85,6 @@ function buildLayers() {
     );
   }
 
-  if (state.show.footprints && footprints) {
-    layers.push(
-      new GeoJsonLayer({
-        id: "footprints",
-        data: footprints,
-        pickable: true,
-        filled: true,
-        stroked: false,
-        getFillColor: (f: any) =>
-          f.properties.damaged ? [232, 36, 36, 190] : [90, 130, 200, 70],
-        onHover: (info: any) =>
-          info.object
-            ? showTip(
-                info.x,
-                info.y,
-                `Building<br>damaged: ${info.object.properties.damaged ? "yes" : "no"}`,
-              )
-            : hideTip(),
-      }),
-    );
-  }
-
   if (state.show.h3 && h3.length) {
     const m = state.metric;
     const max = maxOf(h3, m, (d) => d[m] ?? 0);
@@ -133,6 +111,30 @@ function buildLayers() {
                 `Hex · buildings: ${num(info.object.buildings_total)}<br>` +
                   `damaged: ${num(info.object.buildings_damaged)} ` +
                   `(${pct(info.object.damaged_fraction)})`,
+              )
+            : hideTip(),
+      }),
+    );
+  }
+
+  // Footprints render last so they sit on top of the hexes; dark fill (damaged
+  // in red) so individual buildings read clearly against the choropleth.
+  if (state.show.footprints && footprints) {
+    layers.push(
+      new GeoJsonLayer({
+        id: "footprints",
+        data: footprints,
+        pickable: true,
+        filled: true,
+        stroked: false,
+        getFillColor: (f: any) =>
+          f.properties.damaged ? [200, 30, 30, 235] : [20, 20, 20, 210],
+        onHover: (info: any) =>
+          info.object
+            ? showTip(
+                info.x,
+                info.y,
+                `Building<br>damaged: ${info.object.properties.damaged ? "yes" : "no"}`,
               )
             : hideTip(),
       }),
