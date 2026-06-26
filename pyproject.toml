@@ -21,8 +21,6 @@ dependencies = [
     "python-dotenv>=1.0",
 ]
 
-# Spike front ends are split into groups so the two candidates install
-# independently (see docs/decisions — rendering/shell ADR pending spike).
 [dependency-groups]
 dev = [
     "ruff>=0.7",
@@ -31,16 +29,12 @@ dev = [
     "ipykernel>=6.29",
     "pre-commit>=4.0",
 ]
-# Front-end candidate A: Streamlit + pydeck (first-class st.pydeck_chart).
-streamlit = [
-    "streamlit>=1.40",
-    "pydeck>=0.9",
+# FastAPI serving layer for the deck.gl + MapLibre front end (ADR-0004).
+api = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
 ]
-# Front-end candidate B: Solara + Lonboard (interactive GeoArrow rendering).
-lonboard = [
-    "lonboard>=0.16",
-    "solara>=1.44",
-]
+# One-time ingestion loaders only (not the runtime query path; see ADR-0003).
 etl = [
     "ocha-stratus>=0.1.7",
 ]

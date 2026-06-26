@@ -1,9 +1,7 @@
-"""Serving queries shared by the spike front ends.
+"""Serving queries for the viewer's API.
 
-Both viewers read the same gold damage-fact table (and CODAB geometry) through
-DuckDB over blob, so the only difference between them is the rendering library.
-Keeping the queries here means the Streamlit/pydeck and Solara/Lonboard apps
-stay thin and provably consume identical data.
+All reads go through DuckDB over blob (cloud-optimized). The FastAPI layer
+(api/) turns these into GeoJSON/JSON for the deck.gl + MapLibre front end.
 """
 
 from __future__ import annotations
@@ -16,13 +14,17 @@ from gie import db
 from gie.config import load_settings
 
 
+def _gold(settings, source: str, adm0: str) -> str:
+    return settings.az_path("gold", f"source={source}", f"adm0={adm0}", "damage_facts.parquet")
+
+
 def load_h3_damage(
     source: str = "microsoft", adm0: str = "VE", stage: str = "dev"
 ) -> pd.DataFrame:
     """Per-H3-cell damage metrics (wide), for the hexagon layer."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", f"source={source}", f"adm0={adm0}", "damage_facts.parquet")
+    gold = _gold(settings, source, adm0)
     return con.execute(
         f"""
         SELECT unit_id AS h3,
@@ -35,34 +37,63 @@ def load_h3_damage(
     ).df()
 
 
-def load_adm2_damage(
-    source: str = "microsoft", adm0: str = "VE", stage: str = "dev"
+def load_admin_damage(
+    level: int = 3, source: str = "microsoft", adm0: str = "VE", stage: str = "dev"
 ) -> gpd.GeoDataFrame:
-    """All adm2 polygons for the country, left-joined to damage facts.
+    """Admin units at ``level`` joined to damage facts.
 
-    Units without data keep null metrics (rendered as 'no data'), so the result
-    is a proper choropleth with context around the affected municipality.
+    For adm3 we return every parroquia within the affected municipalities
+    (siblings render as 'no data' for context); for adm1/adm2, only affected
+    units. Result carries geometry + metrics for a choropleth.
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", f"source={source}", f"adm0={adm0}", "damage_facts.parquet")
-    adm2 = settings.az_path("bronze", "source=codab", f"adm0={adm0}", "adm2.parquet")
+    gold = _gold(settings, source, adm0)
+    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet")
+    idcol, namecol = f"adm{level}_id", f"adm{level}_name"
+
+    if level >= 3:
+        # parroquias within affected municipalities (context around the data)
+        where = (
+            f"a.adm2_id IN (SELECT DISTINCT unit_id "
+            f"FROM read_parquet('{gold}') WHERE unit_type='adm2')"
+        )
+    else:
+        where = "f.buildings_total IS NOT NULL"  # affected units only
+
     df = con.execute(
         f"""
         WITH facts AS (
-            SELECT unit_id AS adm2_id,
+            SELECT unit_id AS {idcol},
                 max(value) FILTER (WHERE metric='buildings_total')   AS buildings_total,
                 max(value) FILTER (WHERE metric='buildings_damaged') AS buildings_damaged,
                 max(value) FILTER (WHERE metric='damaged_fraction')  AS damaged_fraction
-            FROM read_parquet('{gold}') WHERE unit_type='adm2' GROUP BY unit_id
+            FROM read_parquet('{gold}') WHERE unit_type='adm{level}' GROUP BY unit_id
         )
-        SELECT a.adm2_id, a.adm2_name, ST_AsWKB(a.geometry) AS wkb,
+        SELECT a.{idcol} AS unit_id, a.{namecol} AS unit_name, ST_AsWKB(a.geometry) AS wkb,
                f.buildings_total, f.buildings_damaged, f.damaged_fraction
-        FROM read_parquet('{adm2}') a
-        LEFT JOIN facts f USING (adm2_id)
+        FROM read_parquet('{adm}') a
+        LEFT JOIN facts f USING ({idcol})
+        WHERE {where}
         """
     ).df()
-    # DuckDB returns BLOBs as bytearray; shapely.from_wkb needs bytes.
+    geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
+    return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
+
+
+def load_footprints(
+    source: str = "microsoft", adm0: str = "VE", stage: str = "dev"
+) -> gpd.GeoDataFrame:
+    """Raw building footprints with damage attributes, for the footprint layer."""
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    silver = settings.az_path("silver", f"source={source}", f"adm0={adm0}", "footprints.parquet")
+    df = con.execute(
+        f"""
+        SELECT damaged, damage_pct_10m, ST_AsWKB(geometry) AS wkb
+        FROM read_parquet('{silver}')
+        """
+    ).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
@@ -70,10 +101,7 @@ def load_adm2_damage(
 def damage_colors(
     fractions, *, na: tuple[int, int, int, int] = (200, 200, 200, 40)
 ) -> np.ndarray:
-    """Map a damaged-fraction series (0..1, NaN allowed) to an RGBA uint8 array.
-
-    Sequential yellow -> dark red; NaN renders as faint grey ('no data').
-    """
+    """Map a damaged-fraction series (0..1, NaN allowed) to an RGBA uint8 array."""
     f = np.asarray(fractions, dtype="float64")
     out = np.empty((len(f), 4), dtype="uint8")
     valid = ~np.isnan(f)

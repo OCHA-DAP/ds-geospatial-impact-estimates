@@ -1,0 +1,50 @@
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --panel-bg: rgba(255, 255, 255, 0.94);
+  --ink: #1c2430;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+#map { position: absolute; inset: 0; }
+
+/* Floating panels over the map. */
+.floating {
+  position: absolute;
+  z-index: 2;
+  background: var(--panel-bg);
+  color: var(--ink);
+  border-radius: 10px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+#panel {
+  top: 16px;
+  left: 16px;
+  width: 248px;
+  padding: 14px 16px;
+}
+#panel h1 { font-size: 16px; margin: 0 0 2px; }
+#panel .sub { font-size: 11px; color: #5d6b7a; margin: 0 0 12px; }
+.group { margin-bottom: 12px; }
+.group .label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: #6b7a8a; margin-bottom: 6px;
+}
+.group label { display: block; font-size: 13px; padding: 2px 0; cursor: pointer; }
+.status { font-size: 11px; color: #5d6b7a; border-top: 1px solid #e3e8ee; padding-top: 8px; }
+
+#legend {
+  bottom: 16px; left: 16px; padding: 10px 12px; width: 200px; font-size: 11px;
+}
+#legend .title { font-weight: 600; margin-bottom: 6px; }
+#legend .bar { height: 10px; border-radius: 3px; margin: 4px 0; }
+#legend .ticks { display: flex; justify-content: space-between; color: #5d6b7a; }
+
+#tooltip {
+  position: absolute; z-index: 3; display: none; pointer-events: none;
+  background: rgba(20, 26, 34, 0.92); color: #fff; font-size: 12px;
+  padding: 6px 9px; border-radius: 6px; max-width: 220px; line-height: 1.35;
+}
+#tooltip b { font-size: 12.5px; }
