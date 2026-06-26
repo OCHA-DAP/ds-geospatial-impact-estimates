@@ -98,6 +98,63 @@ def load_footprints(
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
+# --- common-model (gold/model=common) readers ------------------------------
+_COMMON_PIVOT = """
+    max(value) FILTER (WHERE metric='exposed_buildings')    AS exposed_buildings,
+    max(value) FILTER (WHERE metric='analysed_buildings')   AS analysed_buildings,
+    max(value) FILTER (WHERE metric='coverage_fraction')    AS coverage_fraction,
+    max(value) FILTER (WHERE metric='damaged_detected')     AS damaged_detected,
+    max(value) FILTER (WHERE metric='damaged_extrapolated') AS damaged_extrapolated
+"""
+
+
+def list_sources(adm0: str = "VE", stage: str = "dev") -> list[str]:
+    """Distinct damage sources present in the common-model gold."""
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
+    rows = con.execute(
+        f"SELECT DISTINCT source FROM read_parquet('{gold}') ORDER BY source"
+    ).fetchall()
+    return [r[0] for r in rows]
+
+
+def load_common_h3(source: str, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+    """Per-H3-cell common-model metrics for one source."""
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
+    return con.execute(
+        f"SELECT unit_id AS h3, {_COMMON_PIVOT} FROM read_parquet('{gold}') "
+        f"WHERE unit_type='h3' AND source='{source}' GROUP BY unit_id"
+    ).df()
+
+
+def load_common_admin(
+    level: int, source: str, adm0: str = "VE", stage: str = "dev"
+) -> gpd.GeoDataFrame:
+    """Admin units (with geometry) joined to one source's common-model metrics."""
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
+    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet")
+    idcol = f"adm{level}_id"
+    df = con.execute(
+        f"""
+        WITH facts AS (
+            SELECT unit_id AS {idcol}, {_COMMON_PIVOT}
+            FROM read_parquet('{gold}')
+            WHERE unit_type='adm{level}' AND source='{source}' GROUP BY unit_id
+        )
+        SELECT a.{idcol} AS unit_id, a.adm{level}_name AS unit_name,
+               ST_AsWKB(a.geometry) AS wkb, f.* EXCLUDE ({idcol})
+        FROM read_parquet('{adm}') a JOIN facts f USING ({idcol})
+        """
+    ).df()
+    geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
+    return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
+
+
 def damage_colors(
     fractions, *, na: tuple[int, int, int, int] = (200, 200, 200, 40)
 ) -> np.ndarray:
