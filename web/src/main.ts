@@ -10,10 +10,12 @@ type RGBA = [number, number, number, number];
 
 const state = {
   metric: "damaged_fraction" as Metric,
-  show: { adm3: true, h3: true, footprints: false },
+  adminLevel: 3,
+  show: { admin: true, h3: true, footprints: false },
 };
 
-let adm3: any = null;
+// Admin GeoJSON is fetched per level on demand and cached.
+const adminCache = new Map<number, any>();
 let h3: any[] = [];
 let footprints: any = null;
 
@@ -57,15 +59,17 @@ const pct = (n: any) =>
 function buildLayers() {
   const layers: any[] = [];
 
-  if (state.show.adm3 && adm3) {
+  const admin = adminCache.get(state.adminLevel);
+  if (state.show.admin && admin) {
     layers.push(
       new GeoJsonLayer({
-        id: "adm3",
-        data: adm3,
+        // id varies by level so deck re-renders on level change
+        id: `admin-${state.adminLevel}`,
+        data: admin,
         pickable: true,
         filled: true,
         stroked: true,
-        opacity: 0.4,
+        opacity: 0.45,
         getLineColor: [55, 65, 80, 200],
         lineWidthMinPixels: 1,
         getFillColor: (f: any) => damageColor(f.properties.damaged_fraction),
@@ -158,18 +162,26 @@ function renderLegend() {
 }
 
 // --- data + wiring -----------------------------------------------------------
+async function fetchAdmin(level: number) {
+  if (!adminCache.has(level)) {
+    adminCache.set(level, await fetch(`/api/admin/${level}`).then((r) => r.json()));
+  }
+  return adminCache.get(level);
+}
+
 async function load() {
   const status = document.getElementById("status")!;
   try {
     const [a, hx, fp] = await Promise.all([
-      fetch("/api/admin/3").then((r) => r.json()),
+      fetchAdmin(state.adminLevel),
       fetch("/api/h3").then((r) => r.json()),
       fetch("/api/footprints").then((r) => r.json()),
     ]);
-    adm3 = a;
     h3 = hx;
     footprints = fp;
-    status.textContent = `${h3.length} hexes · ${a.features.length} parroquias · ${fp.features.length.toLocaleString()} footprints`;
+    status.textContent =
+      `${h3.length} hexes · ${a.features.length} adm${state.adminLevel} · ` +
+      `${fp.features.length.toLocaleString()} footprints`;
     buildLayers();
     renderLegend();
   } catch (e) {
@@ -189,6 +201,15 @@ document.querySelectorAll<HTMLInputElement>('input[name="metric"]').forEach((el)
       state.metric = el.value as Metric;
       buildLayers();
       renderLegend();
+    }
+  }),
+);
+document.querySelectorAll<HTMLInputElement>('input[name="adminLevel"]').forEach((el) =>
+  el.addEventListener("change", async () => {
+    if (el.checked) {
+      state.adminLevel = Number(el.value);
+      await fetchAdmin(state.adminLevel);
+      buildLayers();
     }
   }),
 );

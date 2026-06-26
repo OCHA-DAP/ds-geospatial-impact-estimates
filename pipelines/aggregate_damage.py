@@ -45,7 +45,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         "count(*)::DOUBLE, sum(damaged)::DOUBLE, "
         "sum(damaged) * 1.0 / count(*), avg(damage_pct_10m) "
         f"FROM joined WHERE {lvl}_id IS NOT NULL GROUP BY {lvl}_id"
-        for lvl in ("adm1", "adm2", "adm3")
+        for lvl in ("adm0", "adm1", "adm2", "adm3")
     )
     sql = f"""
     WITH pts AS (
@@ -59,7 +59,8 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     ),
     joined AS (
         SELECT p.damaged, p.damage_pct_10m, p.h3,
-               a.adm1_id, a.adm1_name, a.adm2_id, a.adm2_name, a.adm3_id, a.adm3_name
+               a.adm0_id, a.adm0_name, a.adm1_id, a.adm1_name,
+               a.adm2_id, a.adm2_name, a.adm3_id, a.adm3_name
         FROM cells p
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(p.c, a.geometry)
     ),
@@ -89,7 +90,10 @@ def main() -> None:
 
     # Quick sanity summary.
     n_h3 = df[df.unit_type == "h3"].unit_id.nunique()
-    counts = {lvl: df[df.unit_type == lvl].unit_id.nunique() for lvl in ("adm1", "adm2", "adm3")}
+    counts = {
+        lvl: df[df.unit_type == lvl].unit_id.nunique()
+        for lvl in ("adm0", "adm1", "adm2", "adm3")
+    }
     adm3 = (
         df[(df.unit_type == "adm3") & (df.metric == "buildings_total")]
         .sort_values("value", ascending=False)
