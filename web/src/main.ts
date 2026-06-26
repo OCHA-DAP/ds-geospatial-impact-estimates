@@ -11,7 +11,8 @@ type RGBA = [number, number, number, number];
 const state = {
   metric: "damaged_fraction" as Metric,
   adminLevel: 3,
-  show: { admin: true, h3: true, footprints: false },
+  // hexes off by default so the admin choropleth reads cleanly on load
+  show: { admin: true, h3: false, footprints: false },
 };
 
 // Admin GeoJSON is fetched per level on demand and cached.
@@ -61,6 +62,8 @@ function buildLayers() {
 
   const admin = adminCache.get(state.adminLevel);
   if (state.show.admin && admin) {
+    const m = state.metric;
+    const amax = maxOf(admin.features, m, (f: any) => f.properties[m] ?? 0);
     layers.push(
       new GeoJsonLayer({
         // id varies by level so deck re-renders on level change
@@ -69,11 +72,14 @@ function buildLayers() {
         pickable: true,
         filled: true,
         stroked: true,
-        opacity: 0.45,
+        opacity: 0.6,
         getLineColor: [55, 65, 80, 200],
         lineWidthMinPixels: 1,
-        getFillColor: (f: any) => damageColor(f.properties.damaged_fraction),
-        updateTriggers: { getFillColor: [state.metric] },
+        getFillColor: (f: any) =>
+          m === "damaged_fraction"
+            ? damageColor(f.properties.damaged_fraction)
+            : damageColor((f.properties[m] ?? 0) / amax),
+        updateTriggers: { getFillColor: [m, state.adminLevel] },
         onHover: (info: any) =>
           info.object
             ? showTip(
@@ -204,14 +210,11 @@ document.querySelectorAll<HTMLInputElement>('input[name="metric"]').forEach((el)
     }
   }),
 );
-document.querySelectorAll<HTMLInputElement>('input[name="adminLevel"]').forEach((el) =>
-  el.addEventListener("change", async () => {
-    if (el.checked) {
-      state.adminLevel = Number(el.value);
-      await fetchAdmin(state.adminLevel);
-      buildLayers();
-    }
-  }),
-);
+const adminSelect = document.getElementById("adminLevel") as HTMLSelectElement;
+adminSelect.addEventListener("change", async () => {
+  state.adminLevel = Number(adminSelect.value);
+  await fetchAdmin(state.adminLevel);
+  buildLayers();
+});
 
 map.on("load", load);

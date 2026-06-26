@@ -33,6 +33,10 @@ html, body { margin: 0; height: 100%; }
   color: #6b7a8a; margin-bottom: 6px;
 }
 .group label { display: block; font-size: 13px; padding: 2px 0; cursor: pointer; }
+#panel select {
+  width: 100%; padding: 5px 8px; font-size: 13px; cursor: pointer;
+  border: 1px solid #cfd6de; border-radius: 6px; background: #fff; color: var(--ink);
+}
 .status { font-size: 11px; color: #5d6b7a; border-top: 1px solid #e3e8ee; padding-top: 8px; }
 
 #legend {

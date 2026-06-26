@@ -16,16 +16,18 @@
       <div class="group">
         <div class="label">Layers</div>
         <label><input type="checkbox" data-layer="admin" checked /> Admin units</label>
-        <label><input type="checkbox" data-layer="h3" checked /> H3 hexagons</label>
+        <label><input type="checkbox" data-layer="h3" /> H3 hexagons</label>
         <label><input type="checkbox" data-layer="footprints" /> Building footprints</label>
       </div>
 
       <div class="group">
         <div class="label">Admin level</div>
-        <label><input type="radio" name="adminLevel" value="0" /> 0 · Country</label>
-        <label><input type="radio" name="adminLevel" value="1" /> 1 · State</label>
-        <label><input type="radio" name="adminLevel" value="2" /> 2 · Municipality</label>
-        <label><input type="radio" name="adminLevel" value="3" checked /> 3 · Parroquia</label>
+        <select id="adminLevel">
+          <option value="0">Admin 0</option>
+          <option value="1">Admin 1</option>
+          <option value="2">Admin 2</option>
+          <option value="3" selected>Admin 3</option>
+        </select>
       </div>
 
       <div class="group">
