@@ -105,7 +105,9 @@ const num = (n: any) => (n == null || Number.isNaN(n) ? "—" : Math.round(n).to
 const pct = (n: any) => (n == null || Number.isNaN(n) ? "—" : `${(100 * n).toFixed(0)}%`);
 const tip = (name: string, p: any) =>
   `<b>${name}</b><br>total buildings: ${num(p.exposed_buildings)}<br>coverage: ${pct(p.coverage_fraction)}<br>` +
-  `damaged: ${num(p.damaged_detected)}<br>damaged (est.): ${num(p.damaged_extrapolated)}`;
+  `damaged: ${num(p.damaged_detected)}<br>` +
+  `damage rate: ${pct(p.exposed_buildings ? p.damaged_detected / p.exposed_buildings : null)}<br>` +
+  `damaged (est.): ${num(p.damaged_extrapolated)}`;
 
 // --- layers ------------------------------------------------------------------
 function buildLayers() {
