@@ -53,38 +53,52 @@ def main() -> None:
         if b.endswith(".zip") and "GRA" in b
     ]
 
-    parts = []
+    analysed_parts, detail_parts = [], []
     for blob in zips:
         data = stratus.load_blob_data(blob, stage=STAGE, container_name=settings.container)
-        # imageFootprint = where imagery actually exists (the true coverage);
-        # areaOfInterest is only the planned extent and can be larger.
-        seen = _read_layer(data, "imageFootprintA")
-        if seen is None or len(seen) == 0:
-            seen = _read_layer(data, "areaOfInterestA")
-        if seen is None or len(seen) == 0:
+        # Valid analysed area = Area of Interest minus the Not-Analysed (cloud /
+        # no-imagery) parts within it.
+        aoi = _read_layer(data, "areaOfInterestA")
+        if aoi is None or len(aoi) == 0:
             continue
         not_analysed = _read_layer(data, "notAnalysedA")
-        analysed = seen[["geometry"]]
+        src = blob.split("/")[-1]
+
+        analysed = aoi[["geometry"]]
         if not_analysed is not None and len(not_analysed):
             analysed = gpd.overlay(analysed, not_analysed[["geometry"]], how="difference")
-        analysed = analysed.assign(src_zip=blob.split("/")[-1])
-        parts.append(analysed)
-        print(f"  {blob.split('/')[-1]}: analysed extent ready", flush=True)
+        analysed_parts.append(analysed.assign(src_zip=src))
 
-    gdf = gpd.GeoDataFrame(pd.concat(parts, ignore_index=True), crs="EPSG:4326")
+        # AOI + not-analysed shapes, kept for the native-view display
+        detail_parts.append(aoi[["geometry"]].assign(kind="aoi", src_zip=src))
+        if not_analysed is not None and len(not_analysed):
+            detail_parts.append(not_analysed[["geometry"]].assign(kind="not_analysed", src_zip=src))
+        print(f"  {src}: AOI - not-analysed ready", flush=True)
+
+    analysed_gdf = gpd.GeoDataFrame(pd.concat(analysed_parts, ignore_index=True), crs="EPSG:4326")
     out = settings.blob_path(
         "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet"
     )
     stratus.upload_parquet_to_blob(
-        gdf, out, stage=STAGE, container_name=settings.container, compression="zstd"
+        analysed_gdf, out, stage=STAGE, container_name=settings.container, compression="zstd"
     )
-    print(f"silver <- {out} ({len(gdf)} analysed polygons from {len(zips)} GRA products)")
+    print(f"silver <- {out} ({len(analysed_gdf)} analysed polygons from {len(zips)} products)")
+
+    detail_gdf = gpd.GeoDataFrame(pd.concat(detail_parts, ignore_index=True), crs="EPSG:4326")
+    dout = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "coverage_detail.parquet"
+    )
+    stratus.upload_parquet_to_blob(
+        detail_gdf, dout, stage=STAGE, container_name=settings.container, compression="zstd"
+    )
+    print(f"silver <- {dout} (AOI + not-analysed shapes for display)")
+
     ledger.record(
         SOURCE,
         "silver",
-        "CEMS analysed extent (AOI - not-analysed)",
+        "CEMS analysed extent (AOI - not-analysed) + coverage detail",
         out,
-        f"{len(gdf)} polygons; coverage mask for detected vs extrapolated",
+        f"{len(analysed_gdf)} analysed polygons; AOI/not-analysed shapes for display",
         status="ingesting",
     )
 

@@ -146,8 +146,6 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         UNPIVOT INCLUDE NULLS (value FOR metric IN ({METRICS}))
         """
     ).df()
-    df["ingested_at"] = pd.Timestamp.now("UTC")
-
     # Persist per-building damage/coverage flags for the building-level viewer
     # layer (geometry stays in the Overture silver; we join by id at serve time).
     flags = con.execute(
@@ -159,7 +157,58 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     )
     print(f"building_flags <- {fpath} ({len(flags):,} buildings)")
 
+    # areal coverage: polygon area of each source's valid extent per admin unit
+    df = pd.concat([df, _area_facts(con, settings)], ignore_index=True)
+    df["ingested_at"] = pd.Timestamp.now("UTC")
     return df
+
+
+def _area_facts(con, settings) -> pd.DataFrame:
+    """Area of each source's valid (analysed) extent within each admin unit.
+
+    Polygon area on the WGS84 spheroid (km^2), plus area coverage = that area
+    divided by the unit's own area. Distinct from the building-count coverage:
+    this is areal, the answer to "how much of the unit did each source image?".
+    """
+    sources = {
+        "microsoft": settings.az_path(
+            "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet"
+        ),
+        "copernicus_ems": settings.az_path(
+            "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+        ),
+    }
+    parts = []
+    for src, ext in sources.items():
+        for unit_type, idcol, namecol in GRAINS:
+            if namecol is None:  # skip h3
+                continue
+            adm = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", f"{unit_type}.parquet")
+            parts.append(
+                con.execute(
+                    f"""
+                    WITH u AS (
+                        SELECT ST_Union_Agg(ST_MakeValid(geometry)) AS g
+                        FROM read_parquet('{ext}')
+                    )
+                    SELECT '{src}' AS source, '{METHOD}' AS method, '{unit_type}' AS unit_type,
+                           a.{idcol} AS unit_id, a.{namecol} AS unit_name,
+                           ST_Area_Spheroid(ST_Intersection(u.g, ST_MakeValid(a.geometry)))
+                               / 1e6 AS analysed_area_km2,
+                           ST_Area_Spheroid(ST_MakeValid(a.geometry)) / 1e6 AS unit_area_km2
+                    FROM read_parquet('{adm}') a, u
+                    WHERE ST_Intersects(u.g, a.geometry)
+                    """
+                ).df()
+            )
+    df = pd.concat(parts, ignore_index=True)
+    df["area_coverage_fraction"] = df["analysed_area_km2"] / df["unit_area_km2"]
+    return df.melt(
+        id_vars=["source", "method", "unit_type", "unit_id", "unit_name"],
+        value_vars=["analysed_area_km2", "unit_area_km2", "area_coverage_fraction"],
+        var_name="metric",
+        value_name="value",
+    )
 
 
 def main() -> None:

@@ -100,11 +100,14 @@ def load_footprints(
 
 # --- common-model (gold/model=common) readers ------------------------------
 _COMMON_PIVOT = """
-    max(value) FILTER (WHERE metric='exposed_buildings')    AS exposed_buildings,
-    max(value) FILTER (WHERE metric='analysed_buildings')   AS analysed_buildings,
-    max(value) FILTER (WHERE metric='coverage_fraction')    AS coverage_fraction,
-    max(value) FILTER (WHERE metric='damaged_detected')     AS damaged_detected,
-    max(value) FILTER (WHERE metric='damaged_extrapolated') AS damaged_extrapolated
+    max(value) FILTER (WHERE metric='exposed_buildings')     AS exposed_buildings,
+    max(value) FILTER (WHERE metric='analysed_buildings')    AS analysed_buildings,
+    max(value) FILTER (WHERE metric='coverage_fraction')     AS coverage_fraction,
+    max(value) FILTER (WHERE metric='damaged_detected')      AS damaged_detected,
+    max(value) FILTER (WHERE metric='damaged_extrapolated')  AS damaged_extrapolated,
+    max(value) FILTER (WHERE metric='analysed_area_km2')     AS analysed_area_km2,
+    max(value) FILTER (WHERE metric='unit_area_km2')         AS unit_area_km2,
+    max(value) FILTER (WHERE metric='area_coverage_fraction') AS area_coverage_fraction
 """
 
 
