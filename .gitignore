@@ -33,3 +33,6 @@ data/
 .DS_Store
 .idea/
 .vscode/
+
+# Local-only notes (decide later where/whether to commit)
+docs/deployment.md
