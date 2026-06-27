@@ -32,6 +32,7 @@ dev = [
 # FastAPI serving layer for the deck.gl + MapLibre front end (ADR-0004).
 api = [
     "fastapi>=0.115",
+    "openpyxl>=3.1.5",
     "uvicorn[standard]>=0.32",
 ]
 # One-time ingestion loaders only (not the runtime query path; see ADR-0003).

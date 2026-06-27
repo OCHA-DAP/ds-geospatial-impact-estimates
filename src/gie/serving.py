@@ -158,6 +158,42 @@ def load_common_admin(
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
+def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+    """Tidy per-admin-unit, per-source damage table for spreadsheet export.
+
+    One row per (admin unit x source): building counts, damage fraction (damaged
+    / analysed valid-area buildings), and areal coverage. Full COD name hierarchy
+    for context. Sorted so a unit's sources sit on adjacent rows for comparison.
+    """
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
+    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet")
+    names = ", ".join(f"a.adm{i}_name" for i in range(1, level + 1))
+    return con.execute(
+        f"""
+        WITH f AS (
+            SELECT unit_id, source,
+                max(value) FILTER (WHERE metric='exposed_buildings')      AS total_buildings,
+                max(value) FILTER (WHERE metric='analysed_buildings')     AS analysed_buildings,
+                max(value) FILTER (WHERE metric='damaged_detected')       AS damaged,
+                max(value) FILTER (WHERE metric='damaged_extrapolated')   AS damaged_est_full_unit,
+                max(value) FILTER (WHERE metric='analysed_area_km2')      AS analysed_area_km2,
+                max(value) FILTER (WHERE metric='unit_area_km2')          AS unit_area_km2,
+                max(value) FILTER (WHERE metric='area_coverage_fraction') AS area_coverage_fraction
+            FROM read_parquet('{gold}') WHERE unit_type='adm{level}' GROUP BY unit_id, source
+        )
+        SELECT {names}, f.unit_id, f.source,
+               f.total_buildings, f.analysed_buildings, f.damaged,
+               f.damaged / nullif(f.analysed_buildings, 0) AS damage_fraction,
+               f.damaged_est_full_unit,
+               f.analysed_area_km2, f.unit_area_km2, f.area_coverage_fraction
+        FROM f JOIN read_parquet('{adm}') a ON a.adm{level}_id = f.unit_id
+        ORDER BY {names}, f.source
+        """
+    ).df()
+
+
 def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
     """Overture base buildings (as points) the source assessed, with a damaged flag.
 

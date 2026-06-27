@@ -10,8 +10,10 @@ Run: uv run --group api uvicorn api.main:app --reload --port 8077
 
 from __future__ import annotations
 
+import io
 from functools import lru_cache
 
+import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -22,6 +24,7 @@ from gie.serving import (
     load_buildings,
     load_common_admin,
     load_common_h3,
+    load_export,
     load_native,
     load_source_extent,
 )
@@ -113,3 +116,22 @@ def extent(source: str, adm0: str = "VE") -> Response:
 @app.get("/api/agreement")
 def agreement(adm0: str = "VE") -> Response:
     return _json(_agreement_json(adm0))
+
+
+@lru_cache(maxsize=1)
+def _export_xlsx(adm0: str) -> bytes:
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as xl:
+        for level in (1, 2, 3):
+            load_export(level, adm0).to_excel(xl, sheet_name=f"adm{level}", index=False)
+    return buf.getvalue()
+
+
+@app.get("/api/export.xlsx")
+def export_xlsx(adm0: str = "VE") -> Response:
+    """Per-admin-unit, per-source damage table — one sheet per admin level."""
+    return Response(
+        _export_xlsx(adm0),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=ve_damage_by_admin.xlsx"},
+    )
