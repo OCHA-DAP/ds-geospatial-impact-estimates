@@ -8,6 +8,10 @@ __pycache__/
 # uv / virtualenv
 .venv/
 
+# Build artifacts (generated from uv.lock / vite at deploy time)
+requirements.txt
+web/dist/
+
 # Environment / secrets
 .env
 .env.*
