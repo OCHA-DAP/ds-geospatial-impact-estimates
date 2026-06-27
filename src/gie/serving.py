@@ -194,6 +194,140 @@ def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFram
     ).df()
 
 
+# column -> (meaning / how it was derived), documented in the export README sheet
+_EXPORT_GLOSSARY = [
+    (
+        "adm1_name / adm2_name / adm3_name",
+        "OCHA COD administrative unit names — the hierarchy this row belongs to.",
+    ),
+    ("unit_id", "OCHA COD pcode of the admin unit."),
+    (
+        "source",
+        "Damage source: 'microsoft' (AI per-building damage on Microsoft footprints) or "
+        "'copernicus_ems' (Copernicus EMS rapid-mapping damage grades).",
+    ),
+    (
+        "total_buildings",
+        "Total buildings in the unit: Overture footprints whose centroid is inside it "
+        "(Overture = Microsoft ML + Google Open Buildings + OSM, deduplicated; pulled for "
+        "the full admin-1 state, so the count is complete). Identical for both sources.",
+    ),
+    (
+        "analysed_buildings",
+        "Of total_buildings, those inside the source's valid analysed area — where it "
+        "actually assessed. Copernicus: image footprint within the AOI, minus cloud / "
+        "no-data. Microsoft: its valid-area mask.",
+    ),
+    (
+        "pct_buildings_covered",
+        "analysed_buildings / total_buildings — share of the unit's buildings the source "
+        "was able to assess.",
+    ),
+    (
+        "damaged",
+        "Buildings the source flagged as damaged, within the analysed area. A building is "
+        "damaged if it intersects the source's damage geometry (Microsoft: a footprint "
+        "flagged damaged; Copernicus: a Possibly damaged / Damaged / Destroyed polygon).",
+    ),
+    (
+        "damage_fraction",
+        "damaged / analysed_buildings — the observed damage rate within the assessed area "
+        "(NOT over the whole unit).",
+    ),
+    (
+        "analysed_area_km2",
+        "Area (km², WGS84 spheroid) of the source's analysed extent that falls in the unit.",
+    ),
+    ("unit_area_km2", "The admin unit's own area (km², WGS84 spheroid)."),
+    (
+        "area_coverage_fraction",
+        "analysed_area_km2 / unit_area_km2 — share of the unit's land area the source imaged.",
+    ),
+]
+_EXPORT_CAVEATS = [
+    "Each row is ONE source's view of ONE unit. The two sources differ in coverage and "
+    "method — compare them within a unit.",
+    "damage_fraction is computed over the assessed area only; read it alongside "
+    "pct_buildings_covered and area_coverage_fraction to judge how representative it is.",
+    "Damage is binary per building (any grade counts as damaged); not severity-weighted.",
+    "The sources assessed different, sometimes non-overlapping areas; 'damaged' is a floor "
+    "— it counts only where the source actually looked (imagery, cloud-free).",
+    "Full-unit damage extrapolation is available in the viewer (gated to ≥25% coverage) but "
+    "is intentionally not included in this sheet.",
+    "The Overture base is pulled for the full extent of every admin-1 state that coverage "
+    "touches, so adm1/2/3 totals are complete; adm0 totals are not.",
+]
+
+
+def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
+    """Styled multi-sheet workbook: README (+ column glossary), adm1/2/3 data,
+    and caveats. Header styling mirrors the team's storm-exposure export."""
+    import io
+    from datetime import date
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    header_fill = PatternFill("solid", fgColor="55B284")
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    top = Alignment(vertical="top", wrap_text=True)
+
+    wb = Workbook()
+    rm = wb.active
+    rm.title = "README"
+    rm["A1"] = "Venezuela Earthquake — Building Damage Exposure by Admin Unit"
+    rm["A1"].font = Font(bold=True, size=20)
+    rm["A2"] = "Microsoft vs Copernicus EMS — buildings & damage aggregated to OCHA COD admin 1 / 2 / 3"
+    rm["A3"] = (
+        f"OCHA Centre for Humanitarian Data  ·  activation EMSR884  ·  "
+        f"generated {date.today().isoformat()}  ·  dev"
+    )
+    rm["A3"].font = Font(italic=True, color="5D6B7A")
+    rm["A5"] = "Columns — meaning & derivation"
+    rm["A5"].font = Font(bold=True, size=13)
+    for i, (col, desc) in enumerate(_EXPORT_GLOSSARY, 6):
+        rm[f"A{i}"], rm[f"B{i}"] = col, desc
+        rm[f"A{i}"].font = Font(bold=True)
+        rm[f"A{i}"].alignment = Alignment(vertical="top")
+        rm[f"B{i}"].alignment = top
+    rm.column_dimensions["A"].width = 30
+    rm.column_dimensions["B"].width = 95
+
+    pct = {"pct_buildings_covered", "damage_fraction", "area_coverage_fraction"}
+    for level in (1, 2, 3):
+        df = load_export(level, adm0, stage)
+        ws = wb.create_sheet(f"adm{level}")
+        ws.append(list(df.columns))
+        for _, row in df.iterrows():
+            ws.append([None if pd.isna(v) else v for v in row.tolist()])
+        for cell in ws[1]:
+            cell.fill, cell.font = header_fill, header_font
+        ws.freeze_panes = "A2"
+        ws.auto_filter.ref = ws.dimensions
+        for i, name in enumerate(df.columns, 1):
+            letter = get_column_letter(i)
+            ws.column_dimensions[letter].width = max(
+                len(name) + 2, 22 if name in ("unit_id", "source") else 14
+            )
+            fmt = "0.0%" if name in pct else ("0.00" if name.endswith("km2") else "#,##0")
+            if name not in ("source",) and "name" not in name and name != "unit_id":
+                for cell in ws[letter][1:]:
+                    cell.number_format = fmt
+
+    cv = wb.create_sheet("caveats")
+    cv["A1"] = "Caveats & interpretation"
+    cv["A1"].font = Font(bold=True, size=14)
+    for i, txt in enumerate(_EXPORT_CAVEATS, 3):
+        cv[f"A{i}"] = f"•  {txt}"
+        cv[f"A{i}"].alignment = top
+    cv.column_dimensions["A"].width = 115
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
 def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
     """Assessed buildings (as points) for one source, with a damaged flag.
 

@@ -10,22 +10,20 @@ Run: uv run --group api uvicorn api.main:app --reload --port 8077
 
 from __future__ import annotations
 
-import io
 from functools import lru_cache
 
-import pandas as pd
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
 from gie.serving import (
+    export_workbook,
     list_sources,
     load_agreement,
     load_buildings,
     load_common_admin,
     load_common_h3,
     load_coverage_detail,
-    load_export,
     load_native,
     load_source_extent,
 )
@@ -131,11 +129,7 @@ def coverage_detail(adm0: str = "VE") -> Response:
 
 @lru_cache(maxsize=1)
 def _export_xlsx(adm0: str) -> bytes:
-    buf = io.BytesIO()
-    with pd.ExcelWriter(buf, engine="openpyxl") as xl:
-        for level in (1, 2, 3):
-            load_export(level, adm0).to_excel(xl, sheet_name=f"adm{level}", index=False)
-    return buf.getvalue()
+    return export_workbook(adm0)
 
 
 @app.get("/api/export.xlsx")
