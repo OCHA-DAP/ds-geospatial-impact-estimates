@@ -370,7 +370,6 @@ async function ensureAgreement() {
 
 async function refresh() {
   const status = document.getElementById("status")!;
-  status.textContent = "Loading…";
   try {
     const tasks: Promise<any>[] = [];
     for (const s of state.sources) {
@@ -382,7 +381,25 @@ async function refresh() {
       if (state.show.extent && s === "copernicus_ems") tasks.push(ensureCoverageDetail());
     }
     if (state.show.buildings && state.view === "agreement") tasks.push(ensureAgreement());
-    await Promise.all(tasks);
+
+    const total = tasks.length;
+    let done = 0;
+    const tick = () => {
+      const pct = total ? (done / total) * 100 : 100;
+      status.innerHTML =
+        `<div class="load-row"><span>Loading…</span><span>${done}/${total}</span></div>` +
+        `<div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>`;
+    };
+    if (total) tick();
+    await Promise.all(
+      tasks.map((t) =>
+        t.then((r) => {
+          done++;
+          if (total) tick();
+          return r;
+        }),
+      ),
+    );
     buildLayers();
     renderLegend();
     const srcs = [...state.sources].map((s) => SOURCE_LABEL[s] ?? s).join(" + ") || "none";

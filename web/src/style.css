@@ -42,6 +42,9 @@ html, body { margin: 0; height: 100%; }
   border: 1px solid #cfd6de; border-radius: 6px; background: #fff; color: var(--ink);
 }
 .status { font-size: 11px; color: #5d6b7a; border-top: 1px solid #e3e8ee; padding-top: 8px; }
+#status .load-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+#status .pbar { height: 4px; background: #e3e8ee; border-radius: 2px; overflow: hidden; }
+#status .pfill { height: 100%; background: #2563cd; transition: width 0.2s ease; }
 
 #export {
   display: block; text-align: center; font-size: 12px; text-decoration: none;
