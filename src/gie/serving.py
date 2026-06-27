@@ -238,6 +238,40 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
+def load_agreement(adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+    """Per-building source-agreement category (MS vs CEMS) for the agreement map.
+
+    Where BOTH sources assessed a building (the overlap): both / ms_only /
+    cems_only / agree_none. Where only one looked: ms_area / cems_area. This is
+    the spatial Venn — it shows where the sources agree and, crucially, where
+    they disagree.
+    """
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    base = settings.az_path("silver", "source=overture", f"adm0={adm0}", "region=*", "*.parquet")
+    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
+    return con.execute(
+        f"""
+        WITH b AS (
+            SELECT id, geometry FROM read_parquet('{base}', hive_partitioning=true)
+            QUALIFY row_number() OVER (PARTITION BY id) = 1
+        )
+        SELECT round(ST_X(ST_Centroid(b.geometry)), 6) AS lon,
+               round(ST_Y(ST_Centroid(b.geometry)), 6) AS lat,
+               CASE
+                 WHEN f.ms_analysed AND f.cems_analysed THEN
+                   CASE WHEN f.ms_dmg AND f.cems_dmg THEN 'both'
+                        WHEN f.ms_dmg THEN 'ms_only'
+                        WHEN f.cems_dmg THEN 'cems_only'
+                        ELSE 'agree_none' END
+                 WHEN f.ms_analysed THEN 'ms_area'
+                 ELSE 'cems_area' END AS agreement
+        FROM b JOIN read_parquet('{flags}') f USING (id)
+        WHERE f.ms_analysed OR f.cems_analysed
+        """
+    ).df()
+
+
 def damage_colors(
     fractions, *, na: tuple[int, int, int, int] = (200, 200, 200, 40)
 ) -> np.ndarray:

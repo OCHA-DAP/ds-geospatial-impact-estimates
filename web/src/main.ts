@@ -30,6 +30,20 @@ const h3Cache = new Map<string, any[]>();
 const buildingsCache = new Map<string, any[]>();
 const nativeCache = new Map<string, any>();
 const extentCache = new Map<string, any>();
+let agreementData: any[] | null = null;
+
+// Source-agreement categories (the spatial Venn) — used by the "agreement" view.
+const AGREEMENT: Record<string, { label: string; color: [number, number, number] }> = {
+  both: { label: "Both damaged", color: [150, 25, 40] },
+  ms_only: { label: "Microsoft only", color: [40, 110, 205] },
+  cems_only: { label: "Copernicus only", color: [235, 125, 20] },
+  agree_none: { label: "Agree: undamaged", color: [165, 170, 178] },
+};
+function agreementColor(cat: string): RGBA {
+  const o = AGREEMENT[cat];
+  if (o) return [...o.color, cat === "agree_none" ? 110 : 235] as RGBA;
+  return cat === "ms_area" ? [40, 110, 205, 28] : [235, 125, 20, 28]; // single-source = faint
+}
 
 const map = new maplibregl.Map({
   container: "map",
@@ -152,9 +166,38 @@ function buildLayers() {
     );
   }
 
-  // building-level: Overture points OR native geometry
-  for (const s of sources) {
-    if (!state.show.buildings) break;
+  // agreement view: one combined layer — faint single-source context, bold overlap on top
+  if (state.show.buildings && state.view === "agreement" && agreementData) {
+    const overlap = new Set(["both", "ms_only", "cems_only", "agree_none"]);
+    layers.push(
+      new ScatterplotLayer({
+        id: "agree-context",
+        data: agreementData.filter((d: any) => !overlap.has(d.agreement)),
+        getPosition: (d: any) => [d.lon, d.lat],
+        getRadius: 5,
+        radiusMinPixels: 0.5,
+        radiusMaxPixels: 3,
+        getFillColor: (d: any) => agreementColor(d.agreement),
+      }),
+      new ScatterplotLayer({
+        id: "agree-overlap",
+        data: agreementData.filter((d: any) => overlap.has(d.agreement)),
+        getPosition: (d: any) => [d.lon, d.lat],
+        getRadius: 9,
+        radiusMinPixels: 1.6,
+        radiusMaxPixels: 6,
+        pickable: true,
+        getFillColor: (d: any) => agreementColor(d.agreement),
+        onHover: (info: any) =>
+          info.object
+            ? showTip(info.x, info.y, AGREEMENT[info.object.agreement]?.label ?? info.object.agreement)
+            : hideTip(),
+      }),
+    );
+  }
+
+  // building-level (Overture points or native geometry), per source
+  for (const s of state.view === "agreement" || !state.show.buildings ? [] : sources) {
     if (state.view === "overture") {
       const pts = buildingsCache.get(s);
       if (!pts) continue;
@@ -227,6 +270,21 @@ function buildLayers() {
 }
 
 function renderLegend() {
+  const lg = document.getElementById("legend")!;
+  if (state.view === "agreement" && agreementData) {
+    const c: Record<string, number> = {};
+    for (const p of agreementData) c[p.agreement] = (c[p.agreement] ?? 0) + 1;
+    const rows = ["both", "ms_only", "cems_only", "agree_none"]
+      .map((k) => {
+        const o = AGREEMENT[k];
+        return `<div class="key"><span class="swatch" style="background:rgb(${o.color.join(",")})"></span>${o.label} <b>${(c[k] ?? 0).toLocaleString()}</b></div>`;
+      })
+      .join("");
+    lg.innerHTML =
+      `<div class="title">Source agreement · overlap buildings</div>${rows}` +
+      `<div class="ticks">faint dots = only one source assessed</div>`;
+    return;
+  }
   const meta = METRICS.find((x) => x.key === state.metric);
   const stops = [0, 0.15, 0.35, 0.6, 1].map((t) => damageColor(lift(t)));
   const grad = `linear-gradient(90deg, ${stops.map((c) => `rgb(${c[0]},${c[1]},${c[2]})`).join(",")})`;
@@ -256,6 +314,9 @@ async function ensureNative(source: string) {
 async function ensureExtent(source: string) {
   if (!extentCache.has(source)) extentCache.set(source, await fetch(`/api/extent?source=${source}`).then((r) => r.json()));
 }
+async function ensureAgreement() {
+  if (!agreementData) agreementData = await fetch("/api/agreement").then((r) => r.json());
+}
 
 async function refresh() {
   const status = document.getElementById("status")!;
@@ -265,9 +326,11 @@ async function refresh() {
     for (const s of state.sources) {
       if (state.show.admin) tasks.push(ensureAdmin(s, state.adminLevel));
       if (state.show.h3) tasks.push(ensureH3(s));
-      if (state.show.buildings) tasks.push(state.view === "overture" ? ensureBuildings(s) : ensureNative(s));
+      if (state.show.buildings && state.view === "overture") tasks.push(ensureBuildings(s));
+      if (state.show.buildings && state.view === "native") tasks.push(ensureNative(s));
       if (state.show.extent) tasks.push(ensureExtent(s));
     }
+    if (state.show.buildings && state.view === "agreement") tasks.push(ensureAgreement());
     await Promise.all(tasks);
     buildLayers();
     renderLegend();

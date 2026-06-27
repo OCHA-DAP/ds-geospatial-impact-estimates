@@ -18,6 +18,7 @@ from fastapi.responses import Response
 
 from gie.serving import (
     list_sources,
+    load_agreement,
     load_buildings,
     load_common_admin,
     load_common_h3,
@@ -65,6 +66,11 @@ def _extent_json(source: str, adm0: str) -> str:
     return load_source_extent(source, adm0).to_json()
 
 
+@lru_cache(maxsize=2)
+def _agreement_json(adm0: str) -> str:
+    return load_agreement(adm0).to_json(orient="records")
+
+
 # Metrics available on the common model, in display order (label shown in the UI).
 METRICS = [
     {"key": "damaged_detected", "label": "Damaged buildings"},
@@ -102,3 +108,8 @@ def native(source: str, adm0: str = "VE") -> Response:
 @app.get("/api/extent")
 def extent(source: str, adm0: str = "VE") -> Response:
     return _json(_extent_json(source, adm0))
+
+
+@app.get("/api/agreement")
+def agreement(adm0: str = "VE") -> Response:
+    return _json(_agreement_json(adm0))

@@ -49,6 +49,8 @@ html, body { margin: 0; height: 100%; }
 #legend .title { font-weight: 600; margin-bottom: 6px; }
 #legend .bar { height: 10px; border-radius: 3px; margin: 4px 0; }
 #legend .ticks { display: flex; justify-content: space-between; color: #5d6b7a; }
+#legend .key { font-size: 11px; padding: 1px 0; }
+#legend .key b { float: right; }
 
 #tooltip {
   position: absolute; z-index: 3; display: none; pointer-events: none;
