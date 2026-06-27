@@ -72,6 +72,9 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     analysed = settings.az_path(
         "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
     )
+    ms_analysed = settings.az_path(
+        "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet"
+    )
     adm3 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
 
     con.execute(
@@ -97,16 +100,11 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{analysed}') e ON ST_Intersects(b.geom, e.geometry)
         ),
-        ms_bbox AS (
-            SELECT min(ST_XMin(geometry)) x0, max(ST_XMax(geometry)) x1,
-                   min(ST_YMin(geometry)) y0, max(ST_YMax(geometry)) y1
-            FROM read_parquet('{ms}')
-        ),
         ms_seen AS (
-            -- MS only assessed within its footprint extent (Catia La Mar);
-            -- elsewhere it has no data, not "zero damage".
-            SELECT b.id FROM base b, ms_bbox
-            WHERE ST_X(b.c) BETWEEN x0 AND x1 AND ST_Y(b.c) BETWEEN y0 AND y1
+            -- MS only assessed within its valid-area masks; elsewhere it has no
+            -- data, which is different from "assessed, zero damage".
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{ms_analysed}') e ON ST_Within(b.c, e.geometry)
         )
         SELECT b.id,
             h3_h3_to_string(h3_latlng_to_cell(ST_Y(b.c), ST_X(b.c), {res})) AS h3,

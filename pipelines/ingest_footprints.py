@@ -1,9 +1,14 @@
-"""One-time loader: Microsoft predicted building-damage footprints, Catia La Mar.
+"""One-time loader: Microsoft building-damage footprints + valid-area masks.
 
-Source: HDX "Venezuela Earthquakes: Building Damage Assessment in Catia La Mar"
-(CC-BY, attribution required). Stores the raw GeoPackage in bronze (audit
-trail) and writes a standardized EPSG:4326 GeoParquet to silver for DuckDB to
-query. Uses ocha-stratus for the one-time write only (see docs/decisions/0003).
+Each Venezuela-earthquake AOI on HDX (Catia La Mar, La Guaira East, Caraballeda
+East) ships a GeoPackage of per-building damage predictions (binary `damaged`
++ damage_pct) and a `valid_area_mask` GeoJSON — Microsoft's actual analysis
+extent (its coverage footprint, the analogue of CEMS's imageFootprint).
+
+We concatenate the footprints to silver, and the masks to a silver analysed
+extent that the common model uses as MS coverage (replacing the old bbox
+approximation, so MS gets honest coverage % and extrapolation like CEMS).
+Source: HDX, CC-BY. Uses ocha-stratus for the one-time write (ADR-0003).
 
 Run: uv run --group etl python pipelines/ingest_footprints.py
 """
@@ -16,57 +21,86 @@ from pathlib import Path
 
 import geopandas as gpd
 import ocha_stratus as stratus
+import pandas as pd
+import requests
 
 from gie import ledger
 from gie.config import load_settings
 
-HDX_GPKG_URL = (
-    "https://data.humdata.org/dataset/029efb88-3a8a-40d9-8aea-65477e6eb744/"
-    "resource/684fdeab-e4ac-4029-9ec9-891676b2ebfc/download/"
-    "predicted_damage_catia_la_mar_footprints.gpkg"
-)
+HDX = "https://data.humdata.org/api/3/action/package_show?id={}"
+# HDX dataset slug -> short AOI name
+MS_AOIS = {
+    "venezuela-earthquakes-catia-la-mar": "catia_la_mar",
+    "venezuela-earthquakes-building-damage-assessment-in-la-guaira": "la_guaira_east",
+    "venezuela-earthquakes-building-damage-assessment-in-caraballeda": "caraballeda_east",
+}
 SOURCE = "microsoft"
 ADM0 = "VE"
 STAGE = "dev"
 
 
+def _resources(slug: str) -> tuple[str, str]:
+    """(gpkg_url, valid_area_mask_url) for an HDX dataset."""
+    rs = requests.get(HDX.format(slug), timeout=60).json()["result"]["resources"]
+    gpkg = next(r["url"] for r in rs if r["format"] == "Geopackage")
+    mask = next(r["url"] for r in rs if r["format"] == "GeoJSON")
+    return gpkg, mask
+
+
 def main() -> None:
     settings = load_settings(STAGE)
-    with tempfile.TemporaryDirectory() as tmp:
-        local = Path(tmp) / "footprints.gpkg"
-        print(f"Downloading {HDX_GPKG_URL.rsplit('/', 1)[-1]} ...")
-        urllib.request.urlretrieve(HDX_GPKG_URL, local)  # noqa: S310 (trusted HDX URL)
+    foot_parts, mask_parts = [], []
 
-        # bronze: raw file, exactly as received (audit trail, never mutated).
-        bronze = settings.blob_path(
-            "bronze",
-            f"source={SOURCE}",
-            f"adm0={ADM0}",
-            "predicted_damage_catia_la_mar_footprints.gpkg",
-        )
-        stratus.upload_blob_data(
-            local.read_bytes(), bronze, stage=STAGE, container_name=settings.container
-        )
-        print(f"bronze <- {bronze}")
+    for slug, aoi in MS_AOIS.items():
+        gpkg_url, mask_url = _resources(slug)
+        with tempfile.TemporaryDirectory() as tmp:
+            gp = Path(tmp) / "f.gpkg"
+            mk = Path(tmp) / "m.geojson"
+            urllib.request.urlretrieve(gpkg_url, gp)  # noqa: S310 (trusted HDX)
+            urllib.request.urlretrieve(mask_url, mk)  # noqa: S310
 
-        # silver: standardized GeoParquet (EPSG:4326), zstd-compressed.
-        gdf = gpd.read_file(local).to_crs(4326)
-        silver = settings.blob_path(
-            "silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet"
-        )
-        stratus.upload_parquet_to_blob(
-            gdf, silver, stage=STAGE, container_name=settings.container, compression="zstd"
-        )
-        print(f"silver <- {silver}  ({len(gdf):,} footprints, EPSG:4326)")
+            for raw, name in ((gp, "footprints.gpkg"), (mk, "valid_area_mask.geojson")):
+                bronze = settings.blob_path(
+                    "bronze", f"source={SOURCE}", f"adm0={ADM0}", f"aoi={aoi}", name
+                )
+                stratus.upload_blob_data(
+                    raw.read_bytes(), bronze, stage=STAGE, container_name=settings.container
+                )
 
-        ledger.record(
-            SOURCE, "bronze", "Building footprints — Catia La Mar (raw GPKG)",
-            bronze, "GeoPackage as received from HDX (CC-BY)",
-        )
-        ledger.record(
-            SOURCE, "silver", "Building footprints — Catia La Mar", silver,
-            f"{len(gdf):,} footprints; binary damaged + damage_pct; EPSG:4326",
-        )
+            g = gpd.read_file(gp).to_crs(4326)
+            if "damage_pct_10m" not in g.columns:
+                g["damage_pct_10m"] = float("nan")
+            g["aoi"] = aoi
+            foot_parts.append(g[["damaged", "damage_pct_10m", "aoi", "geometry"]])
+
+            m = gpd.read_file(mk).to_crs(4326)
+            m["aoi"] = aoi
+            mask_parts.append(m[["aoi", "geometry"]])
+        print(f"  {aoi}: {len(g):,} footprints ({int(g['damaged'].sum())} damaged)", flush=True)
+
+    foot = gpd.GeoDataFrame(pd.concat(foot_parts, ignore_index=True), crs="EPSG:4326")
+    silver = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet")
+    stratus.upload_parquet_to_blob(
+        foot, silver, stage=STAGE, container_name=settings.container, compression="zstd"
+    )
+    print(f"silver <- {silver} ({len(foot):,} footprints across {len(MS_AOIS)} AOIs)")
+
+    masks = gpd.GeoDataFrame(pd.concat(mask_parts, ignore_index=True), crs="EPSG:4326")
+    msilver = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet"
+    )
+    stratus.upload_parquet_to_blob(
+        masks, msilver, stage=STAGE, container_name=settings.container, compression="zstd"
+    )
+    print(f"silver <- {msilver} ({len(masks)} valid-area masks)")
+
+    ledger.record(
+        SOURCE,
+        "silver",
+        "Building footprints — Catia La Mar + La Guaira + Caraballeda (HDX, CC-BY)",
+        silver,
+        f"{len(foot):,} footprints; {len(MS_AOIS)} AOIs; binary damaged + valid-area masks",
+    )
 
 
 if __name__ == "__main__":
