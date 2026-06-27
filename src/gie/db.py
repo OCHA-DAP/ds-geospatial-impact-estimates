@@ -12,9 +12,31 @@ and we introduce PostGIS.
 
 from __future__ import annotations
 
+import os
+
 import duckdb
 
 from gie.config import Settings, load_settings
+
+
+def _ensure_ca_bundle() -> None:
+    """Point the azure extension's HTTP client at a CA bundle.
+
+    The DuckDB ``azure`` extension talks to Blob over libcurl, which reads
+    ``CURL_CA_BUNDLE``. On minimal Linux hosts (e.g. Azure App Service) it can't
+    find the system trust store and TLS fails with "Problem with the SSL CA
+    cert"; ``certifi``'s bundle is always present in the environment. No-op
+    locally where the system store is already found.
+    """
+    if os.environ.get("CURL_CA_BUNDLE"):
+        return
+    try:
+        import certifi
+    except ImportError:
+        return
+    bundle = certifi.where()
+    os.environ.setdefault("CURL_CA_BUNDLE", bundle)
+    os.environ.setdefault("SSL_CERT_FILE", bundle)
 
 
 def connect(
@@ -27,6 +49,7 @@ def connect(
     ETL connections that upload to Blob (uses the write-scoped SAS token).
     """
     settings = settings or load_settings()
+    _ensure_ca_bundle()
     con = duckdb.connect()
 
     con.execute("INSTALL spatial; LOAD spatial;")
