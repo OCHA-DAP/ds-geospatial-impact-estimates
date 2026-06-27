@@ -67,8 +67,9 @@ function lift(t: number): number {
   return Math.log1p(k * Math.max(0, Math.min(1, t))) / Math.log1p(k);
 }
 function metricValue(p: any, metric: string): number | null {
+  // damage fraction = damaged / buildings in the source's VALID (analysed) area
   if (metric === "damage_rate_detected")
-    return p.exposed_buildings ? p.damaged_detected / p.exposed_buildings : null;
+    return p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null;
   if (metric === "damage_rate_extrapolated")
     return p.exposed_buildings ? (p.damaged_extrapolated ?? 0) / p.exposed_buildings : null;
   return p[metric];
@@ -105,9 +106,10 @@ const num = (n: any) => (n == null || Number.isNaN(n) ? "—" : Math.round(n).to
 const pct = (n: any) => (n == null || Number.isNaN(n) ? "—" : `${(100 * n).toFixed(0)}%`);
 const tip = (name: string, p: any) =>
   `<b>${name}</b><br>total buildings: ${num(p.exposed_buildings)}<br>coverage: ${pct(p.coverage_fraction)}<br>` +
+  `analysed: ${num(p.analysed_buildings)}<br>` +
   `damaged: ${num(p.damaged_detected)}<br>` +
-  `damage rate: ${pct(p.exposed_buildings ? p.damaged_detected / p.exposed_buildings : null)}<br>` +
-  `damaged (est.): ${num(p.damaged_extrapolated)}`;
+  `damage fraction: ${pct(p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null)}<br>` +
+  `damaged (est. full unit): ${num(p.damaged_extrapolated)}`;
 
 // --- layers ------------------------------------------------------------------
 function buildLayers() {
@@ -350,8 +352,7 @@ async function init() {
   const meta = await fetch("/api/sources").then((r) => r.json());
   const sources: string[] = meta.sources;
   METRICS = [
-    { key: "damage_rate_detected", label: "Damage rate (detected)" },
-    { key: "damage_rate_extrapolated", label: "Damage rate (estimated)" },
+    { key: "damage_rate_detected", label: "Damage fraction" },
     ...meta.metrics,
   ];
   state.sources = new Set(sources);
