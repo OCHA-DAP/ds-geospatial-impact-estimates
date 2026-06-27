@@ -164,7 +164,7 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
     base = settings.az_path(
-        "silver", "source=overture", f"adm0={adm0}", "region=*", "buildings.parquet"
+        "silver", "source=overture", f"adm0={adm0}", "region=*", "*.parquet"
     )
     flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
     dmg = "ms_dmg" if source == "microsoft" else "cems_dmg"

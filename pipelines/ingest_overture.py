@@ -31,24 +31,29 @@ ADM0 = "VE"
 STAGE = "dev"
 
 
-def _damage_bboxes(con, settings) -> list[tuple[str, float, float, float, float]]:
-    """(label, xmin, xmax, ymin, ymax) for the MS extent and each CEMS AOI."""
-    ms = settings.az_path("silver", "source=microsoft", f"adm0={ADM0}", "footprints.parquet")
-    cems = settings.az_path(
-        "silver", "source=copernicus_ems", f"adm0={ADM0}", "builtup_damage.parquet"
-    )
-    bb = (
-        "min(ST_XMin(geometry)), max(ST_XMax(geometry)), "
-        "min(ST_YMin(geometry)), max(ST_YMax(geometry))"
-    )
-    out: list[tuple[str, float, float, float, float]] = []
-    row = con.execute(f"SELECT {bb} FROM read_parquet('{ms}')").fetchone()
-    out.append(("microsoft", *row))
-    for r in con.execute(
-        f"SELECT aoi_name, {bb} FROM read_parquet('{cems}') GROUP BY aoi_name"
-    ).fetchall():
-        out.append((f"cems:{r[0]}", *r[1:]))
-    return out
+def _affected_adm1_bboxes(con, settings) -> list[tuple[str, float, float, float, float]]:
+    """(adm1_name, xmin, xmax, ymin, ymax) for every admin-1 state with damage.
+
+    Pulling Overture for the *full state extent* (not per-AOI) gives a stable,
+    complete building count for every affected admin unit — the correct
+    denominator for coverage and extrapolation. Keyed to affected adm1 so the
+    base does not shift as new AOIs deliver within the same states.
+    """
+    gold = settings.az_path("gold", "source=*", f"adm0={ADM0}", "damage_facts.parquet")
+    adm1 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm1.parquet")
+    rows = con.execute(
+        f"""
+        WITH affected AS (
+            SELECT DISTINCT unit_id AS adm1_id
+            FROM read_parquet('{gold}', hive_partitioning=true) WHERE unit_type='adm1'
+        )
+        SELECT a.adm1_name,
+               ST_XMin(a.geometry), ST_XMax(a.geometry),
+               ST_YMin(a.geometry), ST_YMax(a.geometry)
+        FROM read_parquet('{adm1}') a JOIN affected USING (adm1_id)
+        """
+    ).fetchall()
+    return [tuple(r) for r in rows]
 
 
 def _upload(gdf, blob, settings, tries: int = 4) -> bool:
@@ -71,12 +76,16 @@ def main() -> None:
     container = stratus.get_container_client(stage=STAGE, container_name=settings.container)
 
     total = 0
-    for label, x0, x1, y0, y1 in _damage_bboxes(con, settings):
-        region = label.split(":")[-1].strip().lower().replace(" ", "_")
-        blob = settings.blob_path(
-            "silver", "source=overture", f"adm0={ADM0}", f"region={region}", "buildings.parquet"
-        )
-        if container.get_blob_client(blob).exists():
+    chunk = 150_000  # keep each blob upload small enough to survive a flaky network
+    for label, x0, x1, y0, y1 in _affected_adm1_bboxes(con, settings):
+        region = label.strip().lower().replace(" ", "_")
+
+        def part_path(i: int, region: str = region) -> str:
+            return settings.blob_path(
+                "silver", "source=overture", f"adm0={ADM0}", f"region={region}", f"part-{i}.parquet"
+            )
+
+        if container.get_blob_client(part_path(0)).exists():
             print(f"  {label}: already present, skip", flush=True)
             continue
         t = time.time()
@@ -86,12 +95,15 @@ def main() -> None:
         ).df()
         geom = gpd.GeoSeries.from_wkb(d.pop("geometry").map(bytes), crs="EPSG:4326")
         gdf = gpd.GeoDataFrame(d, geometry=geom, crs="EPSG:4326")
-        if not _upload(gdf, blob, settings):
+        ok = all(
+            _upload(gdf.iloc[i : i + chunk], part_path(i // chunk), settings)
+            for i in range(0, len(gdf), chunk)
+        )
+        if not ok:
             print(f"  {label}: UPLOAD FAILED — re-run to retry this region", flush=True)
             continue
         total += len(gdf)
-        dt = time.time() - t
-        print(f"  {label}: {len(gdf):,} buildings -> region={region} ({dt:.0f}s)", flush=True)
+        print(f"  {label}: {len(gdf):,} buildings -> region={region} ({time.time() - t:.0f}s)", flush=True)
 
     ledger.record(
         "overture",

@@ -63,7 +63,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     settings = load_settings(STAGE)
     con = db.connect()
     base = settings.az_path(
-        "silver", "source=overture", f"adm0={ADM0}", "region=*", "buildings.parquet"
+        "silver", "source=overture", f"adm0={ADM0}", "region=*", "*.parquet"
     )
     ms = settings.az_path("silver", "source=microsoft", f"adm0={ADM0}", "footprints.parquet")
     cems = settings.az_path(
@@ -78,8 +78,11 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         f"""
         CREATE TEMP TABLE located AS
         WITH base AS (
+            -- dedup by building id: adm1 pulls overlap each other and the old
+            -- per-AOI pulls, so the same Overture building appears in >1 region
             SELECT id, geometry AS geom, ST_Centroid(geometry) AS c
             FROM read_parquet('{base}', hive_partitioning=true)
+            QUALIFY row_number() OVER (PARTITION BY id) = 1
         ),
         ms_dmg AS (
             SELECT DISTINCT b.id FROM base b
@@ -131,7 +134,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
                        ({analysed_expr})::DOUBLE AS analysed_buildings,
                        ({analysed_expr}) * 1.0 / count(*) AS coverage_fraction,
                        sum({flag}::INT)::DOUBLE AS damaged_detected,
-                       CASE WHEN ({analysed_expr}) > 0
+                       CASE WHEN ({analysed_expr}) >= 0.25 * count(*)
                             THEN sum({flag}::INT) * 1.0 / ({analysed_expr}) * count(*)
                             ELSE NULL END AS damaged_extrapolated
                 FROM located {where} GROUP BY {idcol}
