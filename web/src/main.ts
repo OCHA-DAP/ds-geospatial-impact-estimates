@@ -64,6 +64,30 @@ const map = new maplibregl.Map({
 const overlay = new MapboxOverlay({ interleaved: false, layers: [] });
 map.addControl(overlay as any);
 
+// Optional satellite basemap (Esri World Imagery), drawn under the place labels.
+const satEl = document.getElementById("satellite") as HTMLInputElement | null;
+function applySatellite() {
+  if (map.getLayer("satellite"))
+    map.setLayoutProperty("satellite", "visibility", satEl?.checked ? "visible" : "none");
+}
+map.on("load", () => {
+  map.addSource("satellite", {
+    type: "raster",
+    tiles: [
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    ],
+    tileSize: 256,
+    attribution: "Imagery © Esri, Maxar, Earthstar Geographics",
+  });
+  const firstSymbol = map.getStyle().layers?.find((l: any) => l.type === "symbol")?.id;
+  map.addLayer(
+    { id: "satellite", type: "raster", source: "satellite", layout: { visibility: "none" } },
+    firstSymbol,
+  );
+  applySatellite();
+});
+satEl?.addEventListener("change", applySatellite);
+
 // --- colour ------------------------------------------------------------------
 function damageColor(t: number | null | undefined): RGBA {
   if (t == null || Number.isNaN(t)) return [200, 200, 200, 35];
