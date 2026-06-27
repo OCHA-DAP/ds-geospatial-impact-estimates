@@ -229,7 +229,7 @@ function buildLayers() {
     } else {
       const nat = nativeCache.get(s);
       if (!nat) continue;
-      // CEMS: draw the AOI outline + not-analysed (cloud) gaps beneath the damage
+      // CEMS: draw the analysed area + not-analysed (cloud) gaps beneath the damage
       if (s === "copernicus_ems" && coverageDetailData) {
         const feats = (k: string): any => ({
           type: "FeatureCollection",
@@ -237,13 +237,17 @@ function buildLayers() {
         });
         layers.push(
           new GeoJsonLayer({
-            id: "cems-aoi",
-            data: feats("aoi"),
-            filled: false,
+            id: "cems-analysed",
+            data: feats("analysed"),
+            filled: true,
             stroked: true,
+            getFillColor: [235, 125, 20, 22],
             getLineColor: [235, 125, 20, 170],
             getLineWidth: 1.5,
             lineWidthUnits: "pixels",
+            pickable: true,
+            onHover: (info: any) =>
+              info.object ? showTip(info.x, info.y, "Analysed area (imagery, cloud removed)") : hideTip(),
           }),
           new GeoJsonLayer({
             id: "cems-not-analysed",

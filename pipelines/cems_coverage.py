@@ -1,13 +1,17 @@
 """Extract the CEMS analysed extent (coverage mask) -> silver.
 
 CEMS only assesses where it has cloud-free imagery, so its damage counts are a
-lower bound biased by coverage. The *analysed* extent per AOI is
-imageFootprint - notAnalysed (the imagery actually captured, minus the
-cloud/unusable parts; areaOfInterest is only the planned extent and can be
-larger). All these shapefiles live in the bronze GRA product zips. Downstream,
-the share of an admin unit's buildings inside this extent is its CEMS coverage,
-and the observed damage rate can be extrapolated to the rest of the unit
-(see harmonize_common).
+lower bound biased by coverage. The *analysed* extent per AOI is the image
+footprint clipped to the area of interest, minus the not-analysed parts:
+
+    (imageFootprintA INTERSECT areaOfInterestA) - notAnalysedA
+
+imageFootprintA alone is the whole satellite scene (far larger than the tasked
+area), so it is clipped to areaOfInterestA; notAnalysedA removes cloud / no-data
+holes. All these shapefiles live in the bronze GRA product zips. Downstream, the
+share of an admin unit's buildings inside this extent is its CEMS coverage, and
+the observed damage rate can be extrapolated to the rest of the unit (see
+harmonize_common).
 
 Run: uv run --group etl python pipelines/cems_coverage.py
 """
@@ -61,19 +65,25 @@ def main() -> None:
         aoi = _read_layer(data, "areaOfInterestA")
         if aoi is None or len(aoi) == 0:
             continue
+        ifp = _read_layer(data, "imageFootprintA")
         not_analysed = _read_layer(data, "notAnalysedA")
         src = blob.split("/")[-1]
 
+        # Image area actually analysed = image footprint clipped to the AOI (the
+        # footprint alone is the whole satellite scene, far larger than the
+        # tasked area), minus the not-analysed (cloud / no-data) parts within it.
         analysed = aoi[["geometry"]]
+        if ifp is not None and len(ifp):
+            analysed = gpd.overlay(analysed, ifp[["geometry"]], how="intersection")
         if not_analysed is not None and len(not_analysed):
             analysed = gpd.overlay(analysed, not_analysed[["geometry"]], how="difference")
         analysed_parts.append(analysed.assign(src_zip=src))
 
-        # AOI + not-analysed shapes, kept for the native-view display
-        detail_parts.append(aoi[["geometry"]].assign(kind="aoi", src_zip=src))
+        # the analysed shape + the cloud gaps, for the native-view display
+        detail_parts.append(analysed[["geometry"]].assign(kind="analysed", src_zip=src))
         if not_analysed is not None and len(not_analysed):
             detail_parts.append(not_analysed[["geometry"]].assign(kind="not_analysed", src_zip=src))
-        print(f"  {src}: AOI - not-analysed ready", flush=True)
+        print(f"  {src}: analysed = imageFootprint within AOI, minus cloud", flush=True)
 
     analysed_gdf = gpd.GeoDataFrame(pd.concat(analysed_parts, ignore_index=True), crs="EPSG:4326")
     out = settings.blob_path(
@@ -91,7 +101,7 @@ def main() -> None:
     stratus.upload_parquet_to_blob(
         detail_gdf, dout, stage=STAGE, container_name=settings.container, compression="zstd"
     )
-    print(f"silver <- {dout} (AOI + not-analysed shapes for display)")
+    print(f"silver <- {dout} (analysed + not-analysed shapes for display)")
 
     ledger.record(
         SOURCE,
