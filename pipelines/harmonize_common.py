@@ -146,10 +146,12 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         UNPIVOT INCLUDE NULLS (value FOR metric IN ({METRICS}))
         """
     ).df()
-    # Persist per-building damage/coverage flags for the building-level viewer
-    # layer (geometry stays in the Overture silver; we join by id at serve time).
+    # Persist per-building damage/coverage flags for the agreement layer. Only
+    # assessed buildings are ever used there, and the full base is now millions
+    # of rows (a single blob write would time out), so keep just the assessed.
     flags = con.execute(
-        "SELECT id, ms_dmg, ms_analysed, cems_dmg, cems_analysed FROM located"
+        "SELECT id, ms_dmg, ms_analysed, cems_dmg, cems_analysed FROM located "
+        "WHERE ms_analysed OR cems_analysed"
     ).df()
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
     stratus.upload_parquet_to_blob(
