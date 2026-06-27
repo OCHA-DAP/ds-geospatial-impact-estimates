@@ -221,28 +221,34 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
 
 
 def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
-    """Each source's real analysis extent, as a labelling outline.
+    """Each source's real analysis extent as labelling outlines, one per AOI /
+    product (kept separate, not dissolved), carrying metadata for hover.
 
-    Microsoft -> its valid-area masks (clean per-AOI polygons); CEMS -> the
-    dissolved analysed swaths. NOT a convex hull: a hull inflates the narrow
-    irregular swaths several-fold and overlaps across the per-product extents,
-    overstating coverage. Tells you at a glance which region each source covers.
+    Microsoft -> its valid-area masks (one per AOI). CEMS -> one outline per
+    product (the actual analysed swath, dissolved only within a product), with
+    AOI name, product kind (initial vs monitoring) and acquisition date. NOT a
+    convex hull, which would inflate the narrow swaths and overstate coverage.
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
     src = "microsoft" if source == "microsoft" else "copernicus_ems"
     ext = settings.az_path("silver", f"source={src}", f"adm0={adm0}", "analysed_extent.parquet")
     if source == "microsoft":
-        sql = f"SELECT ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
-    else:
-        # dissolve the per-product swaths into one true coverage outline
         sql = (
-            f"SELECT ST_AsWKB(ST_Union_Agg(ST_MakeValid(geometry))) AS wkb "
-            f"FROM read_parquet('{ext}')"
+            f"SELECT aoi AS aoi_name, 'Microsoft analysis' AS product, NULL AS acquired, "
+            f"ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
+        )
+    else:
+        sql = (
+            f"SELECT any_value(aoi_name) AS aoi_name, any_value(product) AS product, "
+            f"any_value(acquired) AS acquired, "
+            f"ST_AsWKB(ST_Union_Agg(ST_MakeValid(geometry))) AS wkb "
+            f"FROM read_parquet('{ext}') GROUP BY src_zip"
         )
     df = con.execute(sql).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
-    return gpd.GeoDataFrame({"source": [source] * len(geom)}, geometry=geom, crs="EPSG:4326")
+    df["source"] = source
+    return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
 def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
@@ -281,7 +287,8 @@ def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFra
         "silver", "source=copernicus_ems", f"adm0={adm0}", "coverage_detail.parquet"
     )
     df = con.execute(
-        f"SELECT kind, ST_AsWKB(geometry) AS wkb FROM read_parquet('{path}')"
+        f"SELECT kind, aoi_name, product, acquired, ST_AsWKB(geometry) AS wkb "
+        f"FROM read_parquet('{path}')"
     ).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")

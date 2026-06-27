@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import io
 import os
+import re
 import tempfile
 import zipfile
 
@@ -34,6 +35,23 @@ ACTIVATION = "EMSR884"
 SOURCE = "copernicus_ems"
 ADM0 = "VE"
 STAGE = "dev"
+
+
+def _zip_meta(src_zip: str, lookup: dict) -> dict:
+    """Per-product metadata (AOI, product kind, acquisition) parsed from the
+    filename and enriched from the products manifest, for display/hover."""
+    aoi_m = re.search(r"AOI(\d+)", src_zip)
+    mon_m = re.search(r"MONIT(\d+)", src_zip)
+    aoi = int(aoi_m.group(1)) if aoi_m else None
+    mon = int(mon_m.group(1)) if mon_m else 0
+    name, acq = lookup.get((aoi, mon), (None, None))
+    acq_s = acq.strftime("%Y-%m-%d") if acq is not None and pd.notna(acq) else "—"
+    return {
+        "aoi": aoi,
+        "aoi_name": name,
+        "product": "Initial product" if mon == 0 else f"Monitoring {mon:02d}",
+        "acquired": acq_s,
+    }
 
 
 def _read_layer(zip_bytes: bytes, suffix: str) -> gpd.GeoDataFrame | None:
@@ -57,6 +75,28 @@ def main() -> None:
         if b.endswith(".zip") and "GRA" in b
     ]
 
+    # acquisition metadata per product, from the latest products manifest
+    mans = sorted(
+        b
+        for b in stratus.list_container_blobs(
+            name_starts_with=prefix, stage=STAGE, container_name=settings.container
+        )
+        if "products_" in b and b.endswith(".parquet")
+    )
+    meta_lookup: dict = {}
+    if mans:
+        man = pd.read_parquet(
+            io.BytesIO(
+                stratus.load_blob_data(mans[-1], stage=STAGE, container_name=settings.container)
+            )
+        )
+        for _, r in man.iterrows():
+            if pd.isna(r.get("aoi_number")):
+                continue
+            mn = r.get("monitoring_number")
+            mon = int(mn) if pd.notna(mn) else (1 if r.get("monitoring") else 0)
+            meta_lookup[(int(r["aoi_number"]), mon)] = (r.get("aoi_name"), r.get("delivery_time"))
+
     analysed_parts, detail_parts = [], []
     for blob in zips:
         data = stratus.load_blob_data(blob, stage=STAGE, container_name=settings.container)
@@ -77,13 +117,16 @@ def main() -> None:
             analysed = gpd.overlay(analysed, ifp[["geometry"]], how="intersection")
         if not_analysed is not None and len(not_analysed):
             analysed = gpd.overlay(analysed, not_analysed[["geometry"]], how="difference")
-        analysed_parts.append(analysed.assign(src_zip=src))
+        meta = _zip_meta(src, meta_lookup)
+        analysed_parts.append(analysed.assign(src_zip=src, **meta))
 
-        # the analysed shape + the cloud gaps, for the native-view display
-        detail_parts.append(analysed[["geometry"]].assign(kind="analysed", src_zip=src))
+        # the analysed shape + the cloud gaps, with per-product metadata for hover
+        detail_parts.append(analysed[["geometry"]].assign(kind="analysed", src_zip=src, **meta))
         if not_analysed is not None and len(not_analysed):
-            detail_parts.append(not_analysed[["geometry"]].assign(kind="not_analysed", src_zip=src))
-        print(f"  {src}: analysed = imageFootprint within AOI, minus cloud", flush=True)
+            detail_parts.append(
+                not_analysed[["geometry"]].assign(kind="not_analysed", src_zip=src, **meta)
+            )
+        print(f"  {src}: {meta['aoi_name']} / {meta['product']} ({meta['acquired']})", flush=True)
 
     analysed_gdf = gpd.GeoDataFrame(pd.concat(analysed_parts, ignore_index=True), crs="EPSG:4326")
     out = settings.blob_path(

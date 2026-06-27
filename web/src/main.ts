@@ -46,6 +46,15 @@ function agreementColor(cat: string): RGBA {
   return cat === "ms_area" ? [40, 110, 205, 28] : [235, 125, 20, 28]; // single-source = faint
 }
 
+function extentTip(s: string, p: any): string {
+  const src = SOURCE_LABEL[s] ?? s;
+  if (s === "copernicus_ems") {
+    const acq = p.acquired && p.acquired !== "—" ? ` · ${p.acquired}` : "";
+    return `${src} coverage<br>${p.aoi_name ?? "?"} · ${p.product ?? ""}${acq}`;
+  }
+  return `${src} coverage<br>${p.aoi_name ?? ""}`;
+}
+
 const map = new maplibregl.Map({
   container: "map",
   style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
@@ -229,41 +238,6 @@ function buildLayers() {
     } else {
       const nat = nativeCache.get(s);
       if (!nat) continue;
-      // CEMS: draw the analysed area + not-analysed (cloud) gaps beneath the damage
-      if (s === "copernicus_ems" && coverageDetailData) {
-        const feats = (k: string): any => ({
-          type: "FeatureCollection",
-          features: coverageDetailData.features.filter((f: any) => f.properties.kind === k),
-        });
-        layers.push(
-          new GeoJsonLayer({
-            id: "cems-analysed",
-            data: feats("analysed"),
-            filled: true,
-            stroked: true,
-            getFillColor: [235, 125, 20, 22],
-            getLineColor: [235, 125, 20, 170],
-            getLineWidth: 1.5,
-            lineWidthUnits: "pixels",
-            pickable: true,
-            onHover: (info: any) =>
-              info.object ? showTip(info.x, info.y, "Analysed area (imagery, cloud removed)") : hideTip(),
-          }),
-          new GeoJsonLayer({
-            id: "cems-not-analysed",
-            data: feats("not_analysed"),
-            filled: true,
-            stroked: true,
-            getFillColor: [95, 100, 110, 105],
-            getLineColor: [95, 100, 110, 160],
-            getLineWidth: 1,
-            lineWidthUnits: "pixels",
-            pickable: true,
-            onHover: (info: any) =>
-              info.object ? showTip(info.x, info.y, "Not analysed (cloud / no imagery)") : hideTip(),
-          }),
-        );
-      }
       layers.push(
         new GeoJsonLayer({
           id: `native-${s}`,
@@ -287,23 +261,56 @@ function buildLayers() {
     }
   }
 
-  // source coverage extent (AOI bbox / convex hull), labelled by source colour
-  for (const s of sources) {
-    if (!state.show.extent) break;
-    const ext = extentCache.get(s);
-    if (!ext) continue;
-    const c = SOURCE_COLOR[s] ?? [80, 80, 80];
-    layers.push(
-      new GeoJsonLayer({
-        id: `extent-${s}`,
-        data: ext,
-        filled: true,
-        stroked: true,
-        getFillColor: [...c, 12] as any,
-        getLineColor: [...c, 235] as any,
-        lineWidthMinPixels: 2,
-      }),
-    );
+  // coverage extent: real analysed area per AOI/product (hover = metadata),
+  // plus CEMS not-analysed (cloud) gaps — both are coverage, not buildings.
+  if (state.show.extent) {
+    for (const s of sources) {
+      const ext = extentCache.get(s);
+      if (!ext) continue;
+      const c = SOURCE_COLOR[s] ?? [80, 80, 80];
+      layers.push(
+        new GeoJsonLayer({
+          id: `extent-${s}`,
+          data: ext,
+          filled: true,
+          stroked: true,
+          pickable: true,
+          getFillColor: [...c, 12] as any,
+          getLineColor: [...c, 235] as any,
+          lineWidthMinPixels: 2,
+          onHover: (info: any) =>
+            info.object ? showTip(info.x, info.y, extentTip(s, info.object.properties)) : hideTip(),
+        }),
+      );
+    }
+    if (sources.includes("copernicus_ems") && coverageDetailData) {
+      layers.push(
+        new GeoJsonLayer({
+          id: "cems-not-analysed",
+          data: {
+            type: "FeatureCollection",
+            features: coverageDetailData.features.filter(
+              (f: any) => f.properties.kind === "not_analysed",
+            ),
+          } as any,
+          filled: true,
+          stroked: true,
+          pickable: true,
+          getFillColor: [95, 100, 110, 110],
+          getLineColor: [95, 100, 110, 160],
+          getLineWidth: 1,
+          lineWidthUnits: "pixels",
+          onHover: (info: any) =>
+            info.object
+              ? showTip(
+                  info.x,
+                  info.y,
+                  `Not analysed — cloud / no imagery<br>${info.object.properties.aoi_name ?? ""} · ${info.object.properties.product ?? ""}`,
+                )
+              : hideTip(),
+        }),
+      );
+    }
   }
 
   overlay.setProps({ layers });
@@ -371,9 +378,8 @@ async function refresh() {
       if (state.show.h3) tasks.push(ensureH3(s));
       if (state.show.buildings && state.view === "overture") tasks.push(ensureBuildings(s));
       if (state.show.buildings && state.view === "native") tasks.push(ensureNative(s));
-      if (state.show.buildings && state.view === "native" && s === "copernicus_ems")
-        tasks.push(ensureCoverageDetail());
       if (state.show.extent) tasks.push(ensureExtent(s));
+      if (state.show.extent && s === "copernicus_ems") tasks.push(ensureCoverageDetail());
     }
     if (state.show.buildings && state.view === "agreement") tasks.push(ensureAgreement());
     await Promise.all(tasks);
