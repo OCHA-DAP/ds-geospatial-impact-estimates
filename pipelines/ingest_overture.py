@@ -3,12 +3,14 @@
 The common-model comparison needs one consistent building base covering every
 damage source's area (the exposure-base idea in ADR-0001). Overture buildings
 (Microsoft ML + Google Open Buildings + OSM, deduped) is global, GeoParquet, and
-DuckDB-queryable. We pull only the bboxes where we actually have a damage signal
-— the Microsoft footprint extent + each delivered CEMS AOI.
+DuckDB-queryable. We pull the full extent of every admin-1 state that any
+source's coverage intersects, so total-building counts are complete for every
+adm1/2/3 unit inside those states (the denominator for coverage and rates).
 
-Built for a flaky remote scan + large writes: each region is fetched and written
-to its own small silver partition, with retries and skip-if-present, so the job
-is idempotent and a re-run only does what's missing.
+Built for a flaky remote scan + large writes: each state is fetched and written
+to its own silver partition in 150k-row chunks, with retries and skip-if-present,
+so the job is idempotent and a re-run only pulls states not yet present — new
+coverage in a new state is picked up automatically.
 
 Run: uv run --group etl python pipelines/ingest_overture.py
 """
@@ -32,25 +34,31 @@ STAGE = "dev"
 
 
 def _affected_adm1_bboxes(con, settings) -> list[tuple[str, float, float, float, float]]:
-    """(adm1_name, xmin, xmax, ymin, ymax) for every admin-1 state with damage.
+    """(adm1_name, xmin, xmax, ymin, ymax) for every admin-1 state that any
+    source's coverage intersects.
 
-    Pulling Overture for the *full state extent* (not per-AOI) gives a stable,
-    complete building count for every affected admin unit — the correct
-    denominator for coverage and extrapolation. Keyed to affected adm1 so the
-    base does not shift as new AOIs deliver within the same states.
+    The rule: if a source's analysed extent touches an admin-1 state at all, pull
+    that whole state's Overture base, so total-building counts are complete for
+    every adm1/2/3 unit inside it. Driven by the coverage geometries (CEMS
+    analysed swaths + Microsoft masks), NOT by the gold/existing base — so it is
+    non-circular and picks up new states automatically as coverage is added.
     """
-    gold = settings.az_path("gold", "source=*", f"adm0={ADM0}", "damage_facts.parquet")
+    cems = settings.az_path(
+        "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+    )
+    ms = settings.az_path("silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet")
     adm1 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm1.parquet")
     rows = con.execute(
         f"""
-        WITH affected AS (
-            SELECT DISTINCT unit_id AS adm1_id
-            FROM read_parquet('{gold}', hive_partitioning=true) WHERE unit_type='adm1'
+        WITH cov AS (
+            SELECT ST_MakeValid(geometry) AS g FROM read_parquet('{cems}')
+            UNION ALL SELECT ST_MakeValid(geometry) FROM read_parquet('{ms}')
         )
         SELECT a.adm1_name,
                ST_XMin(a.geometry), ST_XMax(a.geometry),
                ST_YMin(a.geometry), ST_YMax(a.geometry)
-        FROM read_parquet('{adm1}') a JOIN affected USING (adm1_id)
+        FROM read_parquet('{adm1}') a
+        WHERE EXISTS (SELECT 1 FROM cov WHERE ST_Intersects(a.geometry, cov.g))
         """
     ).fetchall()
     return [tuple(r) for r in rows]
