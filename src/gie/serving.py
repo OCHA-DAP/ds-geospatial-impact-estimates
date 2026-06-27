@@ -221,11 +221,12 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
 
 
 def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
-    """Each source's analysis extent, one outline per AOI, as a labelling layer.
+    """Each source's real analysis extent, as a labelling outline.
 
-    Microsoft -> its valid-area masks (already clean per-AOI polygons); CEMS ->
-    convex hull of each analysed-extent AOI. Tells you at a glance which region
-    each source covers and where they overlap.
+    Microsoft -> its valid-area masks (clean per-AOI polygons); CEMS -> the
+    dissolved analysed swaths. NOT a convex hull: a hull inflates the narrow
+    irregular swaths several-fold and overlaps across the per-product extents,
+    overstating coverage. Tells you at a glance which region each source covers.
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
@@ -234,10 +235,10 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     if source == "microsoft":
         sql = f"SELECT ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
     else:
-        # CEMS analysed extent is fragmented (imagery minus cloud); hull per AOI
+        # dissolve the per-product swaths into one true coverage outline
         sql = (
-            f"SELECT ST_AsWKB(ST_ConvexHull(ST_Union_Agg(geometry))) AS wkb "
-            f"FROM read_parquet('{ext}') GROUP BY src_zip"
+            f"SELECT ST_AsWKB(ST_Union_Agg(ST_MakeValid(geometry))) AS wkb "
+            f"FROM read_parquet('{ext}')"
         )
     df = con.execute(sql).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
