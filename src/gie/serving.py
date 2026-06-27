@@ -278,7 +278,7 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
     rm.title = "README"
     rm["A1"] = "Venezuela Earthquake — Building Damage Exposure by Admin Unit"
     rm["A1"].font = Font(bold=True, size=20)
-    rm["A2"] = "Microsoft vs Copernicus EMS — buildings & damage aggregated to OCHA COD admin 1 / 2 / 3"
+    rm["A2"] = "Microsoft vs Copernicus EMS — buildings & damage by OCHA COD admin 1 / 2 / 3"
     rm["A3"] = (
         f"OCHA Centre for Humanitarian Data  ·  activation EMSR884  ·  "
         f"generated {date.today().isoformat()}  ·  dev"
