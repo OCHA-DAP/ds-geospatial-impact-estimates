@@ -182,34 +182,25 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
 
 
 def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
-    """The area a source analysed, as a labelling outline.
+    """Each source's analysis extent, one outline per AOI, as a labelling layer.
 
-    Microsoft -> bounding box of its footprints; CEMS -> convex hull of each
-    analysed-extent AOI. Light enough to always draw, and it tells you at a
-    glance which region each source covers (and where they overlap).
+    Microsoft -> its valid-area masks (already clean per-AOI polygons); CEMS ->
+    convex hull of each analysed-extent AOI. Tells you at a glance which region
+    each source covers and where they overlap.
     """
-    from shapely.geometry import box
-
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
+    src = "microsoft" if source == "microsoft" else "copernicus_ems"
+    ext = settings.az_path("silver", f"source={src}", f"adm0={adm0}", "analysed_extent.parquet")
     if source == "microsoft":
-        ms = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet")
-        x0, x1, y0, y1 = con.execute(
-            f"""SELECT min(ST_XMin(geometry)), max(ST_XMax(geometry)),
-                       min(ST_YMin(geometry)), max(ST_YMax(geometry))
-                FROM read_parquet('{ms}')"""
-        ).fetchone()
-        return gpd.GeoDataFrame(
-            {"source": [source]}, geometry=[box(x0, y0, x1, y1)], crs="EPSG:4326"
+        sql = f"SELECT ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
+    else:
+        # CEMS analysed extent is fragmented (imagery minus cloud); hull per AOI
+        sql = (
+            f"SELECT ST_AsWKB(ST_ConvexHull(ST_Union_Agg(geometry))) AS wkb "
+            f"FROM read_parquet('{ext}') GROUP BY src_zip"
         )
-
-    ext = settings.az_path(
-        "silver", "source=copernicus_ems", f"adm0={adm0}", "analysed_extent.parquet"
-    )
-    df = con.execute(
-        f"""SELECT ST_AsWKB(ST_ConvexHull(ST_Union_Agg(geometry))) AS wkb
-            FROM read_parquet('{ext}') GROUP BY src_zip"""
-    ).df()
+    df = con.execute(sql).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
     return gpd.GeoDataFrame({"source": [source] * len(geom)}, geometry=geom, crs="EPSG:4326")
 
