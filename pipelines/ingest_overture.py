@@ -103,7 +103,8 @@ def main() -> None:
             print(f"  {label}: UPLOAD FAILED — re-run to retry this region", flush=True)
             continue
         total += len(gdf)
-        print(f"  {label}: {len(gdf):,} buildings -> region={region} ({time.time() - t:.0f}s)", flush=True)
+        dt = time.time() - t
+        print(f"  {label}: {len(gdf):,} buildings -> region={region} ({dt:.0f}s)", flush=True)
 
     ledger.record(
         "overture",
