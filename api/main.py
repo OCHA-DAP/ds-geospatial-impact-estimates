@@ -11,10 +11,12 @@ Run: uv run --group api uvicorn api.main:app --reload --port 8077
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
 
 from gie.serving import (
     export_workbook,
@@ -143,3 +145,11 @@ def export_xlsx(adm0: str = "VE") -> Response:
             "filename=ven_earthquake_damage_compilation_by_admin.xlsx"
         },
     )
+
+
+# Serve the built SPA (web/dist) at the root, mounted AFTER all /api routes so it
+# only catches everything else. In local dev the dist may not exist (Vite serves
+# it on :5173), so mount only when present.
+_DIST = Path(__file__).resolve().parent.parent / "web" / "dist"
+if _DIST.is_dir():
+    app.mount("/", StaticFiles(directory=str(_DIST), html=True), name="spa")
