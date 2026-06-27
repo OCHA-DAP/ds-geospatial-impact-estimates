@@ -138,5 +138,8 @@ def export_xlsx(adm0: str = "VE") -> Response:
     return Response(
         _export_xlsx(adm0),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": "attachment; filename=ve_damage_by_admin.xlsx"},
+        headers={
+            "Content-Disposition": "attachment; "
+            "filename=ven_earthquake_damage_compilation__by_admin.xlsx"
+        },
     )

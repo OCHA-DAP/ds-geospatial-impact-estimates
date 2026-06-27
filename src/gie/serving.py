@@ -236,63 +236,68 @@ _EXPORT_GLOSSARY = [
     ),
     (
         "analysed_area_km2",
-        "Area (km², WGS84 spheroid) of the source's analysed extent that falls in the unit.",
+        "Area (km²) of the source's analysed extent that falls within the unit.",
     ),
-    ("unit_area_km2", "The admin unit's own area (km², WGS84 spheroid)."),
+    ("unit_area_km2", "The admin unit's own area (km²)."),
     (
         "area_coverage_fraction",
         "analysed_area_km2 / unit_area_km2 — share of the unit's land area the source imaged.",
     ),
 ]
-_EXPORT_CAVEATS = [
-    "Each row is ONE source's view of ONE unit. The two sources differ in coverage and "
-    "method — compare them within a unit.",
-    "damage_fraction is computed over the assessed area only; read it alongside "
-    "pct_buildings_covered and area_coverage_fraction to judge how representative it is.",
-    "Damage is binary per building (any grade counts as damaged); not severity-weighted.",
-    "The sources assessed different, sometimes non-overlapping areas; 'damaged' is a floor "
-    "— it counts only where the source actually looked (imagery, cloud-free).",
-    "Full-unit damage extrapolation is available in the viewer (gated to ≥25% coverage) but "
-    "is intentionally not included in this sheet.",
-    "The Overture base is pulled for the full extent of every admin-1 state that coverage "
-    "touches, so adm1/2/3 totals are complete; adm0 totals are not.",
-]
-
-
 def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
-    """Styled multi-sheet workbook: README (+ column glossary), adm1/2/3 data,
-    and caveats. Header styling mirrors the team's storm-exposure export."""
+    """Styled workbook: a README (with column glossary) + adm1/2/3 data sheets.
+    Header styling mirrors the team's storm-exposure export."""
     import io
     from datetime import date
 
     from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
     from openpyxl.utils import get_column_letter
 
     header_fill = PatternFill("solid", fgColor="55B284")
     header_font = Font(bold=True, color="FFFFFF", size=11)
+    band_fill = PatternFill("solid", fgColor="EAF4EE")  # zebra rows
+    hair = Side(style="thin", color="D3D3D3")
+    border = Border(left=hair, right=hair, top=hair, bottom=hair)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
     top = Alignment(vertical="top", wrap_text=True)
 
     wb = Workbook()
     rm = wb.active
     rm.title = "README"
+    rm.sheet_view.showGridLines = False
     rm["A1"] = "Venezuela Earthquake — Building Damage Exposure by Admin Unit"
-    rm["A1"].font = Font(bold=True, size=20)
+    rm["A1"].font = Font(bold=True, size=22, color="3E8F6B")
     rm["A2"] = "Microsoft vs Copernicus EMS — buildings & damage by OCHA COD admin 1 / 2 / 3"
+    rm["A2"].font = Font(italic=True, size=13, color="333333")
     rm["A3"] = (
         f"OCHA Centre for Humanitarian Data  ·  activation EMSR884  ·  "
         f"generated {date.today().isoformat()}  ·  dev"
     )
-    rm["A3"].font = Font(italic=True, color="5D6B7A")
+    rm["A3"].font = Font(size=10, color="888888")
+    # teal section bar (spans columns A:B)
     rm["A5"] = "Columns — meaning & derivation"
-    rm["A5"].font = Font(bold=True, size=13)
-    for i, (col, desc) in enumerate(_EXPORT_GLOSSARY, 6):
+    rm["A5"].font = Font(bold=True, size=12, color="FFFFFF")
+    rm["A5"].fill = rm["B5"].fill = header_fill
+    # glossary table header
+    rm["A6"], rm["B6"] = "Column", "How it is derived"
+    for cell in (rm["A6"], rm["B6"]):
+        cell.font = Font(bold=True, color="FFFFFF", size=11)
+        cell.fill = header_fill
+        cell.alignment = Alignment(vertical="center", indent=1)
+        cell.border = border
+    for i, (col, desc) in enumerate(_EXPORT_GLOSSARY, 7):
         rm[f"A{i}"], rm[f"B{i}"] = col, desc
-        rm[f"A{i}"].font = Font(bold=True)
-        rm[f"A{i}"].alignment = Alignment(vertical="top")
-        rm[f"B{i}"].alignment = top
+        rm[f"A{i}"].font = Font(bold=True, color="333333")
+        rm[f"B{i}"].font = Font(color="333333")
+        for cell in (rm[f"A{i}"], rm[f"B{i}"]):
+            cell.alignment = top
+            cell.border = border
+            if i % 2 == 0:
+                cell.fill = band_fill
+        rm.row_dimensions[i].height = max(16, 15 * (len(desc) // 88 + 1))
     rm.column_dimensions["A"].width = 30
-    rm.column_dimensions["B"].width = 95
+    rm.column_dimensions["B"].width = 92
 
     pct = {"pct_buildings_covered", "damage_fraction", "area_coverage_fraction"}
     for level in (1, 2, 3):
@@ -303,8 +308,11 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
             ws.append([None if pd.isna(v) else v for v in row.tolist()])
         for cell in ws[1]:
             cell.fill, cell.font = header_fill, header_font
+            cell.alignment, cell.border = center, border
+        ws.row_dimensions[1].height = 30
         ws.freeze_panes = "A2"
         ws.auto_filter.ref = ws.dimensions
+        ws.sheet_view.showGridLines = False
         for i, name in enumerate(df.columns, 1):
             letter = get_column_letter(i)
             ws.column_dimensions[letter].width = max(
@@ -314,14 +322,10 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
             if name not in ("source",) and "name" not in name and name != "unit_id":
                 for cell in ws[letter][1:]:
                     cell.number_format = fmt
-
-    cv = wb.create_sheet("caveats")
-    cv["A1"] = "Caveats & interpretation"
-    cv["A1"].font = Font(bold=True, size=14)
-    for i, txt in enumerate(_EXPORT_CAVEATS, 3):
-        cv[f"A{i}"] = f"•  {txt}"
-        cv[f"A{i}"].alignment = top
-    cv.column_dimensions["A"].width = 115
+        for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+            if row[0].row % 2 == 0:
+                for cell in row:
+                    cell.fill = band_fill
 
     buf = io.BytesIO()
     wb.save(buf)
