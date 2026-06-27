@@ -19,24 +19,14 @@ import duckdb
 from gie.config import Settings, load_settings
 
 
-def _ensure_ca_bundle() -> None:
-    """Point the azure extension's HTTP client at a CA bundle.
-
-    The DuckDB ``azure`` extension talks to Blob over libcurl, which reads
-    ``CURL_CA_BUNDLE``. On minimal Linux hosts (e.g. Azure App Service) it can't
-    find the system trust store and TLS fails with "Problem with the SSL CA
-    cert"; ``certifi``'s bundle is always present in the environment. No-op
-    locally where the system store is already found.
-    """
-    if os.environ.get("CURL_CA_BUNDLE"):
-        return
+def _ca_bundle() -> str | None:
+    """Path to certifi's CA bundle, or None. Used to fix TLS for the DuckDB
+    azure/httpfs extensions on hosts without the default trust store."""
     try:
         import certifi
     except ImportError:
-        return
-    bundle = certifi.where()
-    os.environ.setdefault("CURL_CA_BUNDLE", bundle)
-    os.environ.setdefault("SSL_CERT_FILE", bundle)
+        return None
+    return certifi.where()
 
 
 def connect(
@@ -49,7 +39,12 @@ def connect(
     ETL connections that upload to Blob (uses the write-scoped SAS token).
     """
     settings = settings or load_settings()
-    _ensure_ca_bundle()
+    bundle = _ca_bundle()
+    if bundle:
+        # The azure extension's curl transport honours CURL_CA_INFO (a PEM file)
+        # — NOT CURL_CA_BUNDLE. Point it at certifi so TLS to blob works on hosts
+        # without the default trust store (e.g. App Service).
+        os.environ.setdefault("CURL_CA_INFO", bundle)
     con = duckdb.connect()
 
     con.execute("INSTALL spatial; LOAD spatial;")
@@ -57,6 +52,10 @@ def connect(
     con.execute("INSTALL h3 FROM community; LOAD h3;")
     # No terminal progress bar — these connections run inside web apps and scripts.
     con.execute("SET enable_progress_bar = false;")
+    # Use the curl transport: the default azure transport ignores the cert env
+    # vars and fails TLS on hosts without the system trust store. curl honours
+    # CURL_CA_INFO/CURL_CA_PATH and also searches standard cert locations.
+    con.execute("SET azure_transport_option_type = 'curl';")
 
     # SAS-token auth via a DuckDB azure secret. The token is read from the
     # environment in config; it is interpolated here (DuckDB does not bind
