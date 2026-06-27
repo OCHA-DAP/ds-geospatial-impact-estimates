@@ -268,6 +268,24 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
+def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
+    """CEMS Area-of-Interest + Not-Analysed (cloud) shapes, for the native view.
+
+    Shows what the assessment looked at (AOI) and the holes within it that
+    couldn't be assessed (cloud / no imagery) — so coverage gaps are visible.
+    """
+    settings = load_settings(stage)  # type: ignore[arg-type]
+    con = db.connect()
+    path = settings.az_path(
+        "silver", "source=copernicus_ems", f"adm0={adm0}", "coverage_detail.parquet"
+    )
+    df = con.execute(
+        f"SELECT kind, ST_AsWKB(geometry) AS wkb FROM read_parquet('{path}')"
+    ).df()
+    geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
+    return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
+
+
 def load_agreement(adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
     """Per-building source-agreement category (MS vs CEMS) for the agreement map.
 

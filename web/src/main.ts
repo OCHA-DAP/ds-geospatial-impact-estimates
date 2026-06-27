@@ -30,6 +30,7 @@ const h3Cache = new Map<string, any[]>();
 const buildingsCache = new Map<string, any[]>();
 const nativeCache = new Map<string, any>();
 const extentCache = new Map<string, any>();
+let coverageDetailData: any = null; // CEMS AOI + not-analysed (cloud) shapes
 let agreementData: any[] | null = null;
 
 // Source-agreement categories (the spatial Venn) — used by the "agreement" view.
@@ -228,6 +229,37 @@ function buildLayers() {
     } else {
       const nat = nativeCache.get(s);
       if (!nat) continue;
+      // CEMS: draw the AOI outline + not-analysed (cloud) gaps beneath the damage
+      if (s === "copernicus_ems" && coverageDetailData) {
+        const feats = (k: string): any => ({
+          type: "FeatureCollection",
+          features: coverageDetailData.features.filter((f: any) => f.properties.kind === k),
+        });
+        layers.push(
+          new GeoJsonLayer({
+            id: "cems-aoi",
+            data: feats("aoi"),
+            filled: false,
+            stroked: true,
+            getLineColor: [235, 125, 20, 170],
+            getLineWidth: 1.5,
+            lineWidthUnits: "pixels",
+          }),
+          new GeoJsonLayer({
+            id: "cems-not-analysed",
+            data: feats("not_analysed"),
+            filled: true,
+            stroked: true,
+            getFillColor: [95, 100, 110, 105],
+            getLineColor: [95, 100, 110, 160],
+            getLineWidth: 1,
+            lineWidthUnits: "pixels",
+            pickable: true,
+            onHover: (info: any) =>
+              info.object ? showTip(info.x, info.y, "Not analysed (cloud / no imagery)") : hideTip(),
+          }),
+        );
+      }
       layers.push(
         new GeoJsonLayer({
           id: `native-${s}`,
@@ -318,6 +350,9 @@ async function ensureNative(source: string) {
 async function ensureExtent(source: string) {
   if (!extentCache.has(source)) extentCache.set(source, await fetch(`/api/extent?source=${source}`).then((r) => r.json()));
 }
+async function ensureCoverageDetail() {
+  if (!coverageDetailData) coverageDetailData = await fetch("/api/coverage_detail").then((r) => r.json());
+}
 async function ensureAgreement() {
   if (!agreementData) agreementData = await fetch("/api/agreement").then((r) => r.json());
 }
@@ -332,6 +367,8 @@ async function refresh() {
       if (state.show.h3) tasks.push(ensureH3(s));
       if (state.show.buildings && state.view === "overture") tasks.push(ensureBuildings(s));
       if (state.show.buildings && state.view === "native") tasks.push(ensureNative(s));
+      if (state.show.buildings && state.view === "native" && s === "copernicus_ems")
+        tasks.push(ensureCoverageDetail());
       if (state.show.extent) tasks.push(ensureExtent(s));
     }
     if (state.show.buildings && state.view === "agreement") tasks.push(ensureAgreement());

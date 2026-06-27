@@ -24,6 +24,7 @@ from gie.serving import (
     load_buildings,
     load_common_admin,
     load_common_h3,
+    load_coverage_detail,
     load_export,
     load_native,
     load_source_extent,
@@ -116,6 +117,16 @@ def extent(source: str, adm0: str = "VE") -> Response:
 @app.get("/api/agreement")
 def agreement(adm0: str = "VE") -> Response:
     return _json(_agreement_json(adm0))
+
+
+@lru_cache(maxsize=2)
+def _coverage_detail_json(adm0: str) -> str:
+    return load_coverage_detail(adm0).to_json()
+
+
+@app.get("/api/coverage_detail")
+def coverage_detail(adm0: str = "VE") -> Response:
+    return _json(_coverage_detail_json(adm0))
 
 
 @lru_cache(maxsize=1)
