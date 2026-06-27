@@ -177,16 +177,16 @@ def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFram
                 max(value) FILTER (WHERE metric='exposed_buildings')      AS total_buildings,
                 max(value) FILTER (WHERE metric='analysed_buildings')     AS analysed_buildings,
                 max(value) FILTER (WHERE metric='damaged_detected')       AS damaged,
-                max(value) FILTER (WHERE metric='damaged_extrapolated')   AS damaged_est_full_unit,
                 max(value) FILTER (WHERE metric='analysed_area_km2')      AS analysed_area_km2,
                 max(value) FILTER (WHERE metric='unit_area_km2')          AS unit_area_km2,
                 max(value) FILTER (WHERE metric='area_coverage_fraction') AS area_coverage_fraction
             FROM read_parquet('{gold}') WHERE unit_type='adm{level}' GROUP BY unit_id, source
         )
         SELECT {names}, f.unit_id, f.source,
-               f.total_buildings, f.analysed_buildings, f.damaged,
+               f.total_buildings, f.analysed_buildings,
+               f.analysed_buildings / nullif(f.total_buildings, 0) AS pct_buildings_covered,
+               f.damaged,
                f.damaged / nullif(f.analysed_buildings, 0) AS damage_fraction,
-               f.damaged_est_full_unit,
                f.analysed_area_km2, f.unit_area_km2, f.area_coverage_fraction
         FROM f JOIN read_parquet('{adm}') a ON a.adm{level}_id = f.unit_id
         ORDER BY {names}, f.source
