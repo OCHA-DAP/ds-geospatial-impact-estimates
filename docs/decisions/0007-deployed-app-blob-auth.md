@@ -81,6 +81,50 @@ on Azure). This removes the stored secret entirely.
 
 Revisit when moving the app to a wider audience or to prod data: do the managed
 identity upgrade then (it also pairs naturally with reading `imb0chd0prod`,
-where the deployer already holds Storage Blob Data Reader). Deployment specifics
-live in the app's App Service config (startup `gunicorn asgi:app -k
-uvicorn.workers.UvicornWorker`, `SCM_DO_BUILD_DURING_DEPLOYMENT=true`).
+where the deployer already holds Storage Blob Data Reader).
+
+## Deployment notes (staging runbook)
+
+Target: resource group `IMB-CHD-DataScience-EastUS2`, plan `DsciAppServicePlan`
+(P0v3 Linux), app `chd-ds-geospatial-impact-viewer` + a `staging` slot. Identity
+needs Website Contributor on the RG (create/deploy) and Storage Account
+Contributor on `imb0chd0dev` (data). No CI — code zip-deploy with Oryx build,
+matching the sibling `chd-ds-*` apps.
+
+**App shape.** One Linux Python app serves both the API and the SPA: FastAPI
+mounts the Vite build (`web/dist`) at `/` after the `/api` routes (`api/main.py`);
+`asgi.py` is the gunicorn entry point (adds `src/` to the path, exposes `app`).
+`requirements.txt` is generated from the lock: `uv export --no-dev --group api
+--no-emit-project --no-hashes` (main + api only; no etl/ocha-lens). `web/dist`
+stays gitignored and is built per deploy.
+
+**Create + configure (CLI).**
+- `az webapp create -g <rg> -p DsciAppServicePlan -n <app> --runtime "PYTHON:3.13"`
+- `az webapp deployment slot create -g <rg> -n <app> --slot staging`
+- per slot: `az webapp config set --startup-file "gunicorn asgi:app -k
+  uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000" --always-on true`
+- per slot: `--settings SCM_DO_BUILD_DURING_DEPLOYMENT=true` and
+  `--slot-settings STAGE=dev` (+ the SAS as a sticky slot setting, set from the
+  operator's shell env — never on the agent's command line).
+
+**Build + deploy.** `cd web && npm run build`; then zip exactly
+`api src web/dist requirements.txt asgi.py` and
+`az webapp deploy --slot staging --src-path deploy.zip --type zip`. Oryx runs
+`pip install -r requirements.txt` on the server, then the startup command.
+
+**Gotcha that cost the most time — azure-extension TLS.** The DuckDB `azure`
+extension's *default* transport could not verify TLS to blob on the App Service
+image: `IOException ... Problem with the SSL CA cert (path? access rights?)`.
+Important: the SAS was fine, and the system bundle (`/etc/ssl/certs/
+ca-certificates.crt`) existed and was readable — the extension just wasn't using
+it, and it does **not** honour `CURL_CA_BUNDLE` (DuckDB's extension *downloads*
+over HTTPS worked, proving it's specific to the azure transport). Per the azure
+extension docs the fix is, in `db.py`:
+`SET azure_transport_option_type = 'curl';` **and** point **`CURL_CA_INFO`** (a
+PEM file — not `CURL_CA_BUNDLE`) at `certifi.where()`. With both, blob reads
+succeed. No-op locally where the default store already works.
+
+**Verification.** `/` → 200 (SPA), `/api/sources` → 200, `/api/common/admin/3`
+→ 200 (first call ~15 s cold — DuckDB + 4 MB GeoJSON build — then lru-cached);
+headless browser render-check passes with no console errors. Promote with a slot
+swap once verified.
