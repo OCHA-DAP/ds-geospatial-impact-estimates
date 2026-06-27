@@ -107,6 +107,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             JOIN read_parquet('{ms_analysed}') e ON ST_Within(b.c, e.geometry)
         )
         SELECT b.id,
+            round(ST_X(b.c), 6) AS lon, round(ST_Y(b.c), 6) AS lat,
             h3_h3_to_string(h3_latlng_to_cell(ST_Y(b.c), ST_X(b.c), {res})) AS h3,
             a.adm0_id, a.adm0_name, a.adm1_id, a.adm1_name,
             a.adm2_id, a.adm2_name, a.adm3_id, a.adm3_name,
@@ -150,7 +151,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # assessed buildings are ever used there, and the full base is now millions
     # of rows (a single blob write would time out), so keep just the assessed.
     flags = con.execute(
-        "SELECT id, ms_dmg, ms_analysed, cems_dmg, cems_analysed FROM located "
+        "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_analysed FROM located "
         "WHERE ms_analysed OR cems_analysed"
     ).df()
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")

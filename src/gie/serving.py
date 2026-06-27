@@ -195,28 +195,18 @@ def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFram
 
 
 def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
-    """Overture base buildings (as points) the source assessed, with a damaged flag.
+    """Assessed buildings (as points) for one source, with a damaged flag.
 
-    Geometry stays in the Overture silver; we join the persisted per-building
-    flags by id and return only buildings inside the source's coverage extent.
+    Reads the persisted per-building flags directly (deduped, assessed-only, with
+    lon/lat) — no scan of the multi-million-row Overture base at serve time.
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    base = settings.az_path(
-        "silver", "source=overture", f"adm0={adm0}", "region=*", "*.parquet"
-    )
     flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
     dmg = "ms_dmg" if source == "microsoft" else "cems_dmg"
     seen = "ms_analysed" if source == "microsoft" else "cems_analysed"
     return con.execute(
-        f"""
-        SELECT round(ST_X(ST_Centroid(b.geometry)), 6) AS lon,
-               round(ST_Y(ST_Centroid(b.geometry)), 6) AS lat,
-               f.{dmg}::INT AS damaged
-        FROM read_parquet('{base}', hive_partitioning=true) b
-        JOIN read_parquet('{flags}') f USING (id)
-        WHERE f.{seen}
-        """
+        f"SELECT lon, lat, {dmg}::INT AS damaged FROM read_parquet('{flags}') WHERE {seen}"
     ).df()
 
 
@@ -304,26 +294,19 @@ def load_agreement(adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    base = settings.az_path("silver", "source=overture", f"adm0={adm0}", "region=*", "*.parquet")
     flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
     return con.execute(
         f"""
-        WITH b AS (
-            SELECT id, geometry FROM read_parquet('{base}', hive_partitioning=true)
-            QUALIFY row_number() OVER (PARTITION BY id) = 1
-        )
-        SELECT round(ST_X(ST_Centroid(b.geometry)), 6) AS lon,
-               round(ST_Y(ST_Centroid(b.geometry)), 6) AS lat,
+        SELECT lon, lat,
                CASE
-                 WHEN f.ms_analysed AND f.cems_analysed THEN
-                   CASE WHEN f.ms_dmg AND f.cems_dmg THEN 'both'
-                        WHEN f.ms_dmg THEN 'ms_only'
-                        WHEN f.cems_dmg THEN 'cems_only'
+                 WHEN ms_analysed AND cems_analysed THEN
+                   CASE WHEN ms_dmg AND cems_dmg THEN 'both'
+                        WHEN ms_dmg THEN 'ms_only'
+                        WHEN cems_dmg THEN 'cems_only'
                         ELSE 'agree_none' END
-                 WHEN f.ms_analysed THEN 'ms_area'
+                 WHEN ms_analysed THEN 'ms_area'
                  ELSE 'cems_area' END AS agreement
-        FROM b JOIN read_parquet('{flags}') f USING (id)
-        WHERE f.ms_analysed OR f.cems_analysed
+        FROM read_parquet('{flags}')
         """
     ).df()
 
