@@ -5,13 +5,14 @@
 #   scripts/deploy.sh swap       promote: swap staging -> production
 #   scripts/deploy.sh rollback   undo: swap back (production <-> staging again)
 #
-# Prereqs: `az login` as the UN account (adm.zarno1@global.un.org), `uv` and a
-# `cd web && npm install` done once. No secrets are handled here — the SAS lives
-# in the app's slot settings already.
+# Prereqs: `az login`, `uv`, and a `cd web && npm install` done once. Set the
+# target via env (e.g. in a local, gitignored file):
+#   export GIE_AZ_RG=<resource-group>  GIE_AZ_APP=<web-app-name>
+# No secrets are handled here — the SAS lives in the app's slot settings already.
 set -euo pipefail
 
-RG=IMB-CHD-DataScience-EastUS2
-APP=chd-ds-geospatial-impact-viewer
+RG="${GIE_AZ_RG:?set GIE_AZ_RG to the Azure resource group}"
+APP="${GIE_AZ_APP:?set GIE_AZ_APP to the web app name}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 

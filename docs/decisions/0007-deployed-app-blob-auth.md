@@ -9,11 +9,11 @@ deciders: zackarno
 ## Context and Problem Statement
 
 The viewer is deployed as an Azure App Service Linux web app
-(`chd-ds-geospatial-impact-viewer`, on `DsciAppServicePlan`, with a `staging`
+(`<app-name>`, on `<app-service-plan>`, with a `staging`
 slot). At runtime the FastAPI/DuckDB serving layer reads the gold/silver
-GeoParquet from blob (`imb0chd0dev`). How should the *deployed* app present
+GeoParquet from blob (`<dev-blob-account>`). How should the *deployed* app present
 credentials to blob, given the deployer's current RBAC (Website Contributor on
-the resource group + Storage Account Contributor on `imb0chd0dev`, but **no**
+the resource group + Storage Account Contributor on `<dev-blob-account>`, but **no**
 `Microsoft.Authorization/roleAssignments/write`)?
 
 ## Decision Drivers
@@ -40,7 +40,7 @@ from the operator's shell env (`! az webapp config appsettings set ...`).
 
 **Planned upgrade (before wider rollout): managed identity.** Give the web app a
 system-assigned identity and grant it **Storage Blob Data Reader** on
-`imb0chd0dev`, then switch `db.py` from a `CONNECTION_STRING` SAS secret to the
+`<dev-blob-account>`, then switch `db.py` from a `CONNECTION_STRING` SAS secret to the
 DuckDB azure extension's **credential chain** provider (which uses the identity
 on Azure). This removes the stored secret entirely.
 
@@ -80,15 +80,15 @@ on Azure). This removes the stored secret entirely.
 ## More Information
 
 Revisit when moving the app to a wider audience or to prod data: do the managed
-identity upgrade then (it also pairs naturally with reading `imb0chd0prod`,
+identity upgrade then (it also pairs naturally with reading `<prod-blob-account>`,
 where the deployer already holds Storage Blob Data Reader).
 
 ## Deployment notes (staging runbook)
 
-Target: resource group `IMB-CHD-DataScience-EastUS2`, plan `DsciAppServicePlan`
-(P0v3 Linux), app `chd-ds-geospatial-impact-viewer` + a `staging` slot. Identity
+Target: resource group `<resource-group>`, plan `<app-service-plan>`
+(P0v3 Linux), app `<app-name>` + a `staging` slot. Identity
 needs Website Contributor on the RG (create/deploy) and Storage Account
-Contributor on `imb0chd0dev` (data). No CI — code zip-deploy with Oryx build,
+Contributor on `<dev-blob-account>` (data). No CI — code zip-deploy with Oryx build,
 matching the sibling `chd-ds-*` apps.
 
 **App shape.** One Linux Python app serves both the API and the SPA: FastAPI
@@ -99,7 +99,7 @@ mounts the Vite build (`web/dist`) at `/` after the `/api` routes (`api/main.py`
 stays gitignored and is built per deploy.
 
 **Create + configure (CLI).**
-- `az webapp create -g <rg> -p DsciAppServicePlan -n <app> --runtime "PYTHON:3.13"`
+- `az webapp create -g <rg> -p <app-service-plan> -n <app> --runtime "PYTHON:3.13"`
 - `az webapp deployment slot create -g <rg> -n <app> --slot staging`
 - per slot: `az webapp config set --startup-file "gunicorn asgi:app -k
   uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000" --always-on true`

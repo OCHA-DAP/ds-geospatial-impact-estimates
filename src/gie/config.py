@@ -26,13 +26,15 @@ Stage = Literal["dev", "prod"]
 
 @dataclass(frozen=True)
 class Settings:
-    """Team Azure Blob + medallion layout settings.
+    """Azure Blob + medallion layout settings.
 
-    Storage account follows the team convention ``imb0chd0{stage}``; paths live
-    under ``{container}/{project_prefix}/{layer}/...``.
+    Storage account is ``{account_prefix}{stage}`` — set ``account_prefix`` via
+    ``GIE_BLOB_ACCOUNT_PREFIX`` (kept out of the repo). Paths live under
+    ``{container}/{project_prefix}/{layer}/...``.
     """
 
     stage: Stage = "dev"
+    account_prefix: str = ""
     container: str = "projects"
     project_prefix: str = "ds-geospatial-impact-estimates"
     bronze_prefix: str = "bronze"
@@ -41,7 +43,12 @@ class Settings:
 
     @property
     def account_name(self) -> str:
-        return f"imb0chd0{self.stage}"
+        if not self.account_prefix:
+            raise RuntimeError(
+                "Storage account prefix not set — define GIE_BLOB_ACCOUNT_PREFIX "
+                "in your .env (the team blob-account prefix)."
+            )
+        return f"{self.account_prefix}{self.stage}"
 
     @property
     def account_host(self) -> str:
@@ -97,6 +104,7 @@ def load_settings(stage: Stage | None = None) -> Settings:
         raise ValueError(f"Invalid stage: {resolved!r} (expected 'dev' or 'prod')")
     return Settings(
         stage=resolved,  # type: ignore[arg-type]
+        account_prefix=os.getenv("GIE_BLOB_ACCOUNT_PREFIX", ""),
         container=os.getenv("GIE_CONTAINER", "projects"),
         project_prefix=os.getenv("GIE_PROJECT_PREFIX", "ds-geospatial-impact-estimates"),
     )
