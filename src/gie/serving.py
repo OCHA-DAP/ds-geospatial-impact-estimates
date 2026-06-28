@@ -230,9 +230,12 @@ _EXPORT_GLOSSARY = [
     ),
     (
         "damaged",
-        "Buildings the source flagged as damaged, within the analysed area. A building is "
-        "damaged if it intersects the source's damage geometry (Microsoft: a footprint "
-        "flagged damaged; Copernicus: a Possibly damaged / Damaged / Destroyed polygon).",
+        "Buildings flagged damaged within the analysed area, counting any grade together "
+        "(Possibly damaged, Damaged, or Destroyed). Microsoft: an AI-flagged damaged "
+        "footprint. Copernicus EMS: an Overture building matched to a per-building damage "
+        "point from its latest assessment (points snapped to the nearest footprint within "
+        "20 m). Where a Copernicus AOI has only its earlier coarse damage-area blocks and "
+        "no points yet, those blocks are used instead.",
     ),
     (
         "damage_fraction",
