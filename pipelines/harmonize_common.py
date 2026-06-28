@@ -128,6 +128,13 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             FROM (SELECT * FROM cems_pt UNION ALL SELECT * FROM cems_area)
             GROUP BY id
         ),
+        cems_coarse_set AS (
+            -- coarse-block estimate: every building an area block covers (the
+            -- CEMS reading available before the per-building points land)
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{cems}') x
+              ON x.layer_type = 'area' AND ST_Intersects(b.geom, x.geometry)
+        ),
         cems_seen AS (
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{analysed}') e ON ST_Intersects(b.geom, e.geometry)
@@ -147,6 +154,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             (b.id IN (SELECT id FROM ms_seen)) AS ms_analysed,
             (cd.id IS NOT NULL) AS cems_dmg,
             cd.cems_class AS cems_class,
+            (b.id IN (SELECT id FROM cems_coarse_set)) AS cems_coarse,
             (b.id IN (SELECT id FROM cems_seen)) AS cems_analysed
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
@@ -196,6 +204,8 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
 
     # areal coverage: polygon area of each source's valid extent per admin unit
     df = pd.concat([df, _area_facts(con, settings)], ignore_index=True)
+    # per-unit CEMS grade breakdown + coarse-block estimate (hover detail)
+    df = pd.concat([df, _cems_breakdown(con)], ignore_index=True)
     df["ingested_at"] = pd.Timestamp.now("UTC")
     return df
 
@@ -243,6 +253,37 @@ def _area_facts(con, settings) -> pd.DataFrame:
     return df.melt(
         id_vars=["source", "method", "unit_type", "unit_id", "unit_name"],
         value_vars=["analysed_area_km2", "unit_area_km2", "area_coverage_fraction"],
+        var_name="metric",
+        value_name="value",
+    )
+
+
+def _cems_breakdown(con) -> pd.DataFrame:
+    """Per-unit CEMS hover breakdown: snapped damaged buildings by grade (sums to
+    damaged_detected) and the coarse-block estimate (the area-block reading shown
+    before the per-building points land)."""
+    parts = []
+    for unit_type, idcol, namecol in GRAINS:
+        name_expr = "NULL" if namecol is None else f"any_value({namecol})"
+        where = "" if unit_type == "h3" else f"WHERE {idcol} IS NOT NULL"
+        parts.append(
+            con.execute(
+                f"""
+                SELECT 'copernicus_ems' AS source, '{METHOD}' AS method,
+                       '{unit_type}' AS unit_type, {idcol} AS unit_id,
+                       {name_expr} AS unit_name,
+                       sum((cems_class = 3)::INT)::DOUBLE AS cems_destroyed,
+                       sum((cems_class = 2)::INT)::DOUBLE AS cems_damaged,
+                       sum((cems_class = 1)::INT)::DOUBLE AS cems_possibly,
+                       sum(cems_coarse::INT)::DOUBLE AS cems_coarse_detected
+                FROM located {where} GROUP BY {idcol}
+                """
+            ).df()
+        )
+    df = pd.concat(parts, ignore_index=True)
+    return df.melt(
+        id_vars=["source", "method", "unit_type", "unit_id", "unit_name"],
+        value_vars=["cems_destroyed", "cems_damaged", "cems_possibly", "cems_coarse_detected"],
         var_name="metric",
         value_name="value",
     )

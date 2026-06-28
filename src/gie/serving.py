@@ -107,7 +107,12 @@ _COMMON_PIVOT = """
     max(value) FILTER (WHERE metric='damaged_extrapolated')  AS damaged_extrapolated,
     max(value) FILTER (WHERE metric='analysed_area_km2')     AS analysed_area_km2,
     max(value) FILTER (WHERE metric='unit_area_km2')         AS unit_area_km2,
-    max(value) FILTER (WHERE metric='area_coverage_fraction') AS area_coverage_fraction
+    max(value) FILTER (WHERE metric='area_coverage_fraction') AS area_coverage_fraction,
+    -- CEMS-only hover breakdown (null for Microsoft): snapped grade counts + coarse estimate
+    max(value) FILTER (WHERE metric='cems_destroyed')        AS cems_destroyed,
+    max(value) FILTER (WHERE metric='cems_damaged')          AS cems_damaged,
+    max(value) FILTER (WHERE metric='cems_possibly')         AS cems_possibly,
+    max(value) FILTER (WHERE metric='cems_coarse_detected')  AS cems_coarse_detected
 """
 
 

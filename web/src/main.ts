@@ -145,6 +145,43 @@ const tip = (name: string, p: any) =>
   `damage fraction: ${pct(p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null)}<br>` +
   `damaged (est. full unit): ${num(p.damaged_extrapolated)}`;
 
+// One CEMS section: snapped point counts by grade where available, plus the
+// coarse-block estimate (the reading before the per-building points land).
+function cemsBreakdown(p: any): string {
+  const grade = (p.cems_destroyed ?? p.cems_damaged ?? p.cems_possibly) != null;
+  let s = "";
+  if (grade)
+    s +=
+      `&nbsp;&nbsp;destroyed: ${num(p.cems_destroyed)} · ` +
+      `damaged: ${num(p.cems_damaged)} · possibly: ${num(p.cems_possibly)}<br>`;
+  if (p.cems_coarse_detected != null)
+    s += `&nbsp;&nbsp;coarse-block estimate: ${num(p.cems_coarse_detected)}<br>`;
+  return s;
+}
+
+// One section per checked source for the same unit, both listed together.
+function adminTip(unitId: any, unitName: string): string {
+  let html = `<b>${unitName}</b>`;
+  for (const s of state.sources) {
+    const f = (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []).find(
+      (x: any) => x.properties.unit_id === unitId,
+    );
+    if (!f) continue;
+    const p = f.properties;
+    html +=
+      `<div style="margin-top:6px;padding-top:4px;border-top:1px solid rgba(255,255,255,.25)">` +
+      `<b>${SOURCE_LABEL[s] ?? s}</b><br>` +
+      `total buildings: ${num(p.exposed_buildings)}<br>` +
+      `coverage: ${pct(p.coverage_fraction)}<br>` +
+      `analysed: ${num(p.analysed_buildings)}<br>` +
+      `damaged: ${num(p.damaged_detected)}<br>` +
+      (s === "copernicus_ems" ? cemsBreakdown(p) : "") +
+      `damage fraction: ${pct(p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null)}<br>` +
+      `damaged (est. full unit): ${num(p.damaged_extrapolated)}</div>`;
+  }
+  return html;
+}
+
 // --- layers ------------------------------------------------------------------
 function buildLayers() {
   const m = state.metric;
@@ -177,7 +214,7 @@ function buildLayers() {
         updateTriggers: { getFillColor: [m, state.adminLevel, aMax] },
         onHover: (info: any) =>
           info.object
-            ? showTip(info.x, info.y, tip(`${info.object.properties.unit_name} · ${SOURCE_LABEL[s] ?? s}`, info.object.properties))
+            ? showTip(info.x, info.y, adminTip(info.object.properties.unit_id, info.object.properties.unit_name))
             : hideTip(),
       }),
     );
