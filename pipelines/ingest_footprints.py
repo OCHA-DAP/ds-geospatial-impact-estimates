@@ -31,15 +31,18 @@ HDX = "https://data.humdata.org/api/3/action/package_show?id={}"
 # HDX dataset slug -> short AOI name. We store stable slugs, not download URLs;
 # _resources() resolves the current .gpkg/.geojson URLs from HDX at runtime, so a
 # Microsoft re-upload is picked up automatically. New AOIs: add the slug here.
-# NOTE: la_guaira_surrounding (newer, broader) spatially encloses la_guaira_east
-# and likely supersedes it — kept both for now pending a decision.
 MS_AOIS = {
     "venezuela-earthquakes-catia-la-mar": "catia_la_mar",
     "venezuela-earthquakes-building-damage-assessment-in-catia-la-mar-east": "catia_la_mar_east",
     "venezuela-earthquakes-building-damage-assessment-in-la-guaira": "la_guaira_east",
-    "building-damage-assessment-la-guaira-coastline-building-damage-assessment": "la_guaira_surrounding",
+    "building-damage-assessment-la-guaira-coastline-building-damage-assessment": "la_guaira_surrounding",  # noqa: E501
     "venezuela-earthquakes-building-damage-assessment-in-caraballeda": "caraballeda_east",
 }
+# AOIs superseded by a newer assessment that spatially encloses them. They stay
+# in bronze + silver for provenance but are flagged `superseded`, so the gold
+# (and the front-end map/statistics) uses only the latest. la_guaira_surrounding
+# encloses la_guaira_east.
+SUPERSEDED = {"la_guaira_east"}
 SOURCE = "microsoft"
 ADM0 = "VE"
 STAGE = "dev"
@@ -77,12 +80,18 @@ def main() -> None:
             if "damage_pct_10m" not in g.columns:
                 g["damage_pct_10m"] = float("nan")
             g["aoi"] = aoi
-            foot_parts.append(g[["damaged", "damage_pct_10m", "aoi", "geometry"]])
+            g["superseded"] = aoi in SUPERSEDED
+            foot_parts.append(g[["damaged", "damage_pct_10m", "aoi", "superseded", "geometry"]])
 
             m = gpd.read_file(mk).to_crs(4326)
             m["aoi"] = aoi
-            mask_parts.append(m[["aoi", "geometry"]])
-        print(f"  {aoi}: {len(g):,} footprints ({int(g['damaged'].sum())} damaged)", flush=True)
+            m["superseded"] = aoi in SUPERSEDED
+            mask_parts.append(m[["aoi", "superseded", "geometry"]])
+        tag = " (superseded — excluded from gold)" if aoi in SUPERSEDED else ""
+        print(
+            f"  {aoi}: {len(g):,} footprints ({int(g['damaged'].sum())} damaged){tag}",
+            flush=True,
+        )
 
     foot = gpd.GeoDataFrame(pd.concat(foot_parts, ignore_index=True), crs="EPSG:4326")
     silver = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet")

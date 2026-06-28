@@ -114,7 +114,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         ms_dmg AS (
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{ms}') m ON ST_Intersects(b.geom, m.geometry)
-            WHERE m.damaged = 1
+            WHERE m.damaged = 1 AND NOT m.superseded
         ),
         cems_latest AS (
             -- the authoritative latest CEMS layer per AOI (points where the
@@ -158,9 +158,11 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         ),
         ms_seen AS (
             -- MS only assessed within its valid-area masks; elsewhere it has no
-            -- data, which is different from "assessed, zero damage".
+            -- data, which is different from "assessed, zero damage". Superseded
+            -- AOIs (enclosed by a newer assessment) are excluded.
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{ms_analysed}') e ON ST_Within(b.c, e.geometry)
+            WHERE NOT e.superseded
         )
         SELECT b.id,
             round(ST_X(b.c), 6) AS lon, round(ST_Y(b.c), 6) AS lat,
@@ -233,15 +235,21 @@ def _area_facts(con, settings) -> pd.DataFrame:
     this is areal, the answer to "how much of the unit did each source image?".
     """
     sources = {
-        "microsoft": settings.az_path(
-            "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet"
+        "microsoft": (
+            settings.az_path(
+                "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet"
+            ),
+            "WHERE NOT superseded",  # exclude AOIs enclosed by a newer assessment
         ),
-        "copernicus_ems": settings.az_path(
-            "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+        "copernicus_ems": (
+            settings.az_path(
+                "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+            ),
+            "",  # CEMS supersession is handled upstream (active_products)
         ),
     }
     parts = []
-    for src, ext in sources.items():
+    for src, (ext, where) in sources.items():
         for unit_type, idcol, namecol in GRAINS:
             if namecol is None:  # skip h3
                 continue
@@ -251,7 +259,7 @@ def _area_facts(con, settings) -> pd.DataFrame:
                     f"""
                     WITH u AS (
                         SELECT ST_Union_Agg(ST_MakeValid(geometry)) AS g
-                        FROM read_parquet('{ext}')
+                        FROM read_parquet('{ext}') {where}
                     )
                     SELECT '{src}' AS source, '{METHOD}' AS method, '{unit_type}' AS unit_type,
                            a.{idcol} AS unit_id, a.{namecol} AS unit_name,
