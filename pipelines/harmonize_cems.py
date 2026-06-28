@@ -1,9 +1,12 @@
 """Harmonize Copernicus EMS damage grading into the gold fact table.
 
-Reads the delivered GRA `builtUpA` layers (damage-graded built-up-area polygons,
-each with an EMS damage grade) for activation EMSR884, standardizes them to
-silver, and aggregates to the H3 grid + CODAB admin levels as a second `source`
-(`copernicus_ems`) in the *same* long fact-table schema as Microsoft.
+Reads the graded built-up damage from the live GRA products for activation
+EMSR884 — `builtUpA` (coarse damage *areas*, the early estimate) and `builtUpP`
+(per-building damage *points*, the detailed update) — standardizes them to
+silver tagged by `layer_type` and product version, and aggregates the latest per
+AOI to the H3 grid + CODAB admin levels as a second `source` (`copernicus_ems`)
+in the *same* long fact-table schema as Microsoft. Which products are live (and
+which is latest) comes from `gie.cems_products`.
 
 This is the damage-signal side of the harmonization model (ADR-0001). CEMS maps
 damaged building blocks, not an exposure inventory, so its native metrics are
@@ -17,11 +20,11 @@ Run: uv run --group etl python pipelines/harmonize_cems.py
 from __future__ import annotations
 
 import geopandas as gpd
-import ocha_lens as lens
 import ocha_stratus as stratus
 import pandas as pd
 
 from gie import db, ledger
+from gie.cems_products import active_products, read_layer
 from gie.config import DEFAULT_H3_RESOLUTION, load_settings
 
 ACTIVATION = "EMSR884"
@@ -44,26 +47,63 @@ EMS_TO_CLASS = {
 
 
 def build_silver(settings) -> None:
-    cat = lens.cems.get_catalog(ACTIVATION)
-    built = cat[cat.layer_name.str.contains("builtUpA") & cat.geojson_url.notna()]
+    """Read the graded built-up damage from each live product's GRA zip.
+
+    CEMS grades built-up damage two ways: ``builtUpA`` (damage *areas* — the
+    coarse early estimate) and ``builtUpP`` (per-building *points* — the detailed
+    update that lands later). A product carries one; we keep whichever it has,
+    tagged with ``layer_type`` and the product's metadata (incl. ``is_latest``),
+    so downstream can attribute from the latest per AOI and still break down by
+    product. Superseded versions are already excluded by ``active_products``.
+    """
+    products = active_products(settings, ACTIVATION, STAGE)
+    products = products[products["product_type"] == "GRA"]
+    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"code={ACTIVATION}")
+    zip_by_name = {
+        b.split("/")[-1]: b
+        for b in stratus.list_container_blobs(
+            name_starts_with=bronze, stage=STAGE, container_name=settings.container
+        )
+        if b.endswith(".zip")
+    }
+
     parts = []
-    for _, row in built.iterrows():
-        g = lens.cems.download_geojson(row)
-        if g is None or len(g) == 0:
+    for p in products.itertuples():
+        blob = zip_by_name.get(p.zip_name)
+        if blob is None:
             continue
-        g = g.to_crs(4326)
-        g["aoi_number"] = int(row.aoi_number)
-        g["aoi_name"] = row.aoi_name
-        parts.append(g)
+        data = stratus.load_blob_data(blob, stage=STAGE, container_name=settings.container)
+        for suffix, layer_type in (("builtUpA", "area"), ("builtUpP", "point")):
+            g = read_layer(data, suffix)
+            if g is None or len(g) == 0 or "damage_gra" not in g.columns:
+                continue
+            keep = g[["damage_gra", "geometry"]].copy()
+            keep["obj_type"] = g["obj_type"] if "obj_type" in g.columns else None
+            keep["aoi_number"] = int(p.aoi_number)
+            keep["aoi_name"] = p.aoi_name
+            keep["product_id"] = int(p.product_id)
+            keep["monitoring_number"] = int(p.monitoring_number)
+            keep["version_number"] = int(p.version_number)
+            keep["is_latest"] = bool(p.is_latest)
+            keep["layer_type"] = layer_type
+            parts.append(keep)
 
     gdf = gpd.GeoDataFrame(pd.concat(parts, ignore_index=True), crs="EPSG:4326")
     gdf["ems_grade"] = gdf["damage_gra"]
     gdf["damage_class"] = gdf["ems_grade"].map(
         lambda v: EMS_TO_CLASS.get(str(v).strip().lower())
     )
-    gdf["area_m2"] = gdf.to_crs(32619).area  # UTM 19N for the Venezuela coast
+    # Area is meaningful only for the polygon (builtUpA) layer; points get 0.
+    gdf["area_m2"] = 0.0
+    poly = gdf.geom_type.isin(["Polygon", "MultiPolygon"])
+    if poly.any():
+        gdf.loc[poly, "area_m2"] = gdf.loc[poly].to_crs(32619).area  # UTM 19N coast
     gdf = gdf[
-        ["aoi_number", "aoi_name", "obj_type", "ems_grade", "damage_class", "area_m2", "geometry"]
+        [
+            "aoi_number", "aoi_name", "product_id", "monitoring_number",
+            "version_number", "is_latest", "layer_type", "obj_type",
+            "ems_grade", "damage_class", "area_m2", "geometry",
+        ]
     ]
 
     silver = settings.blob_path(
@@ -72,14 +112,14 @@ def build_silver(settings) -> None:
     stratus.upload_parquet_to_blob(
         gdf, silver, stage=STAGE, container_name=settings.container, compression="zstd"
     )
-    grades = sorted(gdf["ems_grade"].dropna().unique().tolist())
-    print(f"silver <- {silver} ({len(gdf)} graded blocks; grades {grades})")
+    by_type = gdf.groupby("layer_type").size().to_dict()
+    print(f"silver <- {silver} ({len(gdf)} graded features by layer {by_type})")
     ledger.record(
         SOURCE,
         "silver",
-        f"CEMS {ACTIVATION} damage grading (builtUpA)",
+        f"CEMS {ACTIVATION} damage grading (builtUpA areas + builtUpP points)",
         silver,
-        f"{len(gdf)} graded blocks; EMS grade + class; EPSG:4326",
+        f"{len(gdf)} graded features; layer_type + is_latest + version; EPSG:4326",
         status="ingesting",
     )
 
@@ -97,7 +137,10 @@ def build_gold(settings, res: int = DEFAULT_H3_RESOLUTION) -> None:
     )
     sql = f"""
     WITH pts AS (
-        SELECT area_m2, ST_Centroid(geometry) AS c FROM read_parquet('{sp}')
+        -- native CEMS view = the latest product per AOI (points where available,
+        -- else coarse areas); ST_Centroid is a no-op for the point layer.
+        SELECT area_m2, ST_Centroid(geometry) AS c
+        FROM read_parquet('{sp}') WHERE is_latest
     ),
     cells AS (
         SELECT area_m2, c,

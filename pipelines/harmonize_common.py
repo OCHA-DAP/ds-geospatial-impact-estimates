@@ -6,7 +6,9 @@ read in the same units. A base building is counted as damaged for a source if it
 intersects that source's damage geometry:
 
   * Microsoft  -> intersects an MS footprint flagged damaged (binary)
-  * Copernicus -> intersects a CEMS damage-grade polygon
+  * Copernicus -> the latest CEMS layer per AOI: each damage point snapped to its
+                  nearest footprint (<=20 m), or every footprint a coarse damage
+                  block covers; the worst grade wins (carried as cems_class)
 
 Coverage-aware (a source may only assess part of a unit — CEMS imagery/cloud):
 
@@ -37,6 +39,10 @@ from gie.config import DEFAULT_H3_RESOLUTION, load_settings
 METHOD = "common_overture_v1"
 ADM0 = "VE"
 STAGE = "dev"
+
+# CEMS per-building damage points (builtUpP) are snapped to the nearest Overture
+# footprint within this radius; 20 m matched 99.5% of points in EMSR884.
+SNAP_M = 20
 
 # (source, damaged-flag, analysed-buildings expression). Each source only
 # "analysed" within its own extent — MS within its footprint coverage, CEMS
@@ -76,6 +82,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet"
     )
     adm3 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
+    tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
     con.execute(
         f"""
@@ -92,9 +99,34 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             JOIN read_parquet('{ms}') m ON ST_Intersects(b.geom, m.geometry)
             WHERE m.damaged = 1
         ),
+        cems_latest AS (
+            -- the authoritative latest CEMS layer per AOI (points where the
+            -- monitoring update has landed, else the coarse area blocks)
+            SELECT row_number() OVER () AS fid, layer_type, damage_class, geometry AS g
+            FROM read_parquet('{cems}') WHERE is_latest
+        ),
+        cems_pt AS (
+            -- snap each damage POINT to its nearest footprint within {SNAP_M} m
+            -- (one point marks one building; ST_Distance is 0 when contained)
+            SELECT id, damage_class FROM (
+                SELECT b.id, l.damage_class,
+                    row_number() OVER (PARTITION BY l.fid
+                                       ORDER BY ST_Distance(b.geom, l.g)) AS rn
+                FROM cems_latest l JOIN base b
+                  ON l.layer_type = 'point'
+                 AND ST_Intersects(ST_Buffer(l.g, {tol}), b.geom)
+            ) WHERE rn = 1
+        ),
+        cems_area AS (
+            -- coarse area blocks: every building the polygon covers
+            SELECT b.id, l.damage_class FROM cems_latest l JOIN base b
+              ON l.layer_type = 'area' AND ST_Intersects(b.geom, l.g)
+        ),
         cems_dmg AS (
-            SELECT DISTINCT b.id FROM base b
-            JOIN read_parquet('{cems}') x ON ST_Intersects(b.geom, x.geometry)
+            -- worst grade wins when a building is hit by multiple features
+            SELECT id, max(damage_class) AS cems_class
+            FROM (SELECT * FROM cems_pt UNION ALL SELECT * FROM cems_area)
+            GROUP BY id
         ),
         cems_seen AS (
             SELECT DISTINCT b.id FROM base b
@@ -113,10 +145,12 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             a.adm2_id, a.adm2_name, a.adm3_id, a.adm3_name,
             (b.id IN (SELECT id FROM ms_dmg)) AS ms_dmg,
             (b.id IN (SELECT id FROM ms_seen)) AS ms_analysed,
-            (b.id IN (SELECT id FROM cems_dmg)) AS cems_dmg,
+            (cd.id IS NOT NULL) AS cems_dmg,
+            cd.cems_class AS cems_class,
             (b.id IN (SELECT id FROM cems_seen)) AS cems_analysed
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
+        LEFT JOIN cems_dmg cd ON cd.id = b.id
         """
     )
 
@@ -151,8 +185,8 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # assessed buildings are ever used there, and the full base is now millions
     # of rows (a single blob write would time out), so keep just the assessed.
     flags = con.execute(
-        "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_analysed FROM located "
-        "WHERE ms_analysed OR cems_analysed"
+        "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_class, cems_analysed "
+        "FROM located WHERE ms_analysed OR cems_analysed"
     ).df()
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
     stratus.upload_parquet_to_blob(
