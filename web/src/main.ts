@@ -142,31 +142,32 @@ const tip = (name: string, p: any) =>
   `<b>${name}</b><br>total buildings: ${num(p.exposed_buildings)}<br>coverage: ${pct(p.coverage_fraction)}<br>` +
   `analysed: ${num(p.analysed_buildings)}<br>` +
   `damaged: ${num(p.damaged_detected)}<br>` +
-  `damage fraction: ${pct(p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null)}<br>` +
-  `damaged (est. full unit): ${num(p.damaged_extrapolated)}`;
+  `damage fraction: ${pct(p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null)}`;
 
-// One CEMS section: snapped point counts by grade where available, plus the
-// coarse-block estimate (the reading before the per-building points land).
+// CEMS damage shown two ways, distinctly: the per-building POINT assessment
+// (with grades) — the detailed, latest reading — and the COARSE-block estimate,
+// the earlier/broader reading that's available before the points land. Either
+// can be absent for a given unit.
 function cemsBreakdown(p: any): string {
-  const grade = (p.cems_destroyed ?? p.cems_damaged ?? p.cems_possibly) != null;
-  let s = "";
-  if (grade)
-    s +=
-      `&nbsp;&nbsp;destroyed: ${num(p.cems_destroyed)} · ` +
-      `damaged: ${num(p.cems_damaged)} · possibly: ${num(p.cems_possibly)}<br>`;
-  if (p.cems_coarse_detected != null)
-    s += `&nbsp;&nbsp;coarse-block estimate: ${num(p.cems_coarse_detected)}<br>`;
+  let s =
+    (p.damaged_detected ?? 0) > 0
+      ? `point damage: ${num(p.damaged_detected)} ` +
+        `(${num(p.cems_destroyed)} destroyed · ${num(p.cems_damaged)} damaged · ` +
+        `${num(p.cems_possibly)} possibly)<br>`
+      : `point damage: none yet<br>`;
+  if ((p.cems_coarse_detected ?? 0) > 0)
+    s += `coarse-block estimate: ${num(p.cems_coarse_detected)} buildings<br>`;
   return s;
 }
 
-// One section per checked source for the same unit, both listed together.
+// One section per checked source that assessed this unit, listed together.
 function adminTip(unitId: any, unitName: string): string {
   let html = `<b>${unitName}</b>`;
   for (const s of state.sources) {
     const f = (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []).find(
       (x: any) => x.properties.unit_id === unitId,
     );
-    if (!f) continue;
+    if (!f || !hasCov(f.properties)) continue;
     const p = f.properties;
     html +=
       `<div style="margin-top:6px;padding-top:4px;border-top:1px solid rgba(255,255,255,.25)">` +
@@ -174,10 +175,10 @@ function adminTip(unitId: any, unitName: string): string {
       `total buildings: ${num(p.exposed_buildings)}<br>` +
       `coverage: ${pct(p.coverage_fraction)}<br>` +
       `analysed: ${num(p.analysed_buildings)}<br>` +
-      `damaged: ${num(p.damaged_detected)}<br>` +
-      (s === "copernicus_ems" ? cemsBreakdown(p) : "") +
-      `damage fraction: ${pct(p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null)}<br>` +
-      `damaged (est. full unit): ${num(p.damaged_extrapolated)}</div>`;
+      (s === "copernicus_ems"
+        ? cemsBreakdown(p)
+        : `damaged: ${num(p.damaged_detected)}<br>`) +
+      `damage fraction: ${pct(p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null)}</div>`;
   }
   return html;
 }
@@ -478,7 +479,8 @@ async function init() {
   const sources: string[] = meta.sources;
   METRICS = [
     { key: "damage_rate_detected", label: "Damage fraction" },
-    ...meta.metrics,
+    // extrapolation stays in the data but is kept off the surface (no map metric)
+    ...meta.metrics.filter((m: any) => m.key !== "damage_rate_extrapolated"),
   ];
   state.sources = new Set(sources);
 
