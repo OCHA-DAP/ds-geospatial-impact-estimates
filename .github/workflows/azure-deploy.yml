@@ -19,6 +19,17 @@ name: Deploy to Azure App Service
 on:
   push:
     branches: [v1]
+    # Don't redeploy the app for changes that don't affect it (docs, diagrams,
+    # the workflow itself, local scripts). A push touching ONLY these is skipped;
+    # a push that also changes app code still deploys. Use "Run workflow"
+    # (workflow_dispatch) to deploy manually regardless.
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - ".gitignore"
+      - ".github/**"
+      - "scripts/**"
+      - ".env.example"
   workflow_dispatch:
 
 jobs:
