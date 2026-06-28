@@ -36,8 +36,22 @@ app.add_middleware(
 )
 
 
+# API responses are deterministic + read-only until the data is refreshed, so let
+# the browser keep its own copy — a reload or revisit is then instant instead of
+# re-downloading the (multi-MB) layers. The server-side lru_cache covers repeats
+# within a process; this covers the client across page loads. stale-while-
+# revalidate keeps revisits instant while a fresh copy is fetched in the
+# background. After a data refresh, restarting the app re-reads the new gold;
+# clients pick it up within max-age (or on a hard refresh).
+_CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=3600"
+
+
 def _json(content: str) -> Response:
-    return Response(content=content, media_type="application/json")
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={"Cache-Control": _CACHE_CONTROL},
+    )
 
 
 @lru_cache(maxsize=1)
