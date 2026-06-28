@@ -30,6 +30,8 @@ Run: uv run --group etl python pipelines/harmonize_common.py
 
 from __future__ import annotations
 
+import time
+
 import ocha_stratus as stratus
 import pandas as pd
 
@@ -43,6 +45,21 @@ STAGE = "dev"
 # CEMS per-building damage points (builtUpP) are snapped to the nearest Overture
 # footprint within this radius; 20 m matched 99.5% of points in EMSR884.
 SNAP_M = 20
+
+
+def _upload(frame, blob, settings, tries: int = 4) -> None:
+    """Upload with retries — the gold writes are large and the blob endpoint is
+    flaky, so a transient timeout shouldn't waste the (expensive) recompute."""
+    for attempt in range(tries):
+        try:
+            stratus.upload_parquet_to_blob(
+                frame, blob, stage=STAGE, container_name=settings.container, compression="zstd"
+            )
+            return
+        except Exception as e:  # noqa: BLE001 — network write, retry any failure
+            print(f"  upload retry {attempt + 1}/{tries}: {str(e)[:70]}", flush=True)
+            time.sleep(5)
+    raise RuntimeError(f"upload failed after {tries} tries: {blob}")
 
 # (source, damaged-flag, analysed-buildings expression). Each source only
 # "analysed" within its own extent — MS within its footprint coverage, CEMS
@@ -197,9 +214,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         "FROM located WHERE ms_analysed OR cems_analysed"
     ).df()
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
-    stratus.upload_parquet_to_blob(
-        flags, fpath, stage=STAGE, container_name=settings.container, compression="zstd"
-    )
+    _upload(flags, fpath, settings)
     print(f"building_flags <- {fpath} ({len(flags):,} buildings)")
 
     # areal coverage: polygon area of each source's valid extent per admin unit
@@ -307,9 +322,7 @@ def main() -> None:
     )
 
     gold = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet")
-    stratus.upload_parquet_to_blob(
-        df, gold, stage=STAGE, container_name=settings.container, compression="zstd"
-    )
+    _upload(df, gold, settings)
     print(f"gold <- {gold} ({len(df):,} fact rows)")
     ledger.record(
         "common",

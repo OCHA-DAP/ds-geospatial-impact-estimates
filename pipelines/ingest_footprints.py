@@ -28,10 +28,16 @@ from gie import ledger
 from gie.config import load_settings
 
 HDX = "https://data.humdata.org/api/3/action/package_show?id={}"
-# HDX dataset slug -> short AOI name
+# HDX dataset slug -> short AOI name. We store stable slugs, not download URLs;
+# _resources() resolves the current .gpkg/.geojson URLs from HDX at runtime, so a
+# Microsoft re-upload is picked up automatically. New AOIs: add the slug here.
+# NOTE: la_guaira_surrounding (newer, broader) spatially encloses la_guaira_east
+# and likely supersedes it — kept both for now pending a decision.
 MS_AOIS = {
     "venezuela-earthquakes-catia-la-mar": "catia_la_mar",
+    "venezuela-earthquakes-building-damage-assessment-in-catia-la-mar-east": "catia_la_mar_east",
     "venezuela-earthquakes-building-damage-assessment-in-la-guaira": "la_guaira_east",
+    "building-damage-assessment-la-guaira-coastline-building-damage-assessment": "la_guaira_surrounding",
     "venezuela-earthquakes-building-damage-assessment-in-caraballeda": "caraballeda_east",
 }
 SOURCE = "microsoft"
