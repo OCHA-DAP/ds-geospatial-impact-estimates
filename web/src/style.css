@@ -64,10 +64,38 @@ html, body { margin: 0; height: 100%; }
 
 #tooltip {
   position: absolute; z-index: 3; display: none; pointer-events: none;
-  background: rgba(20, 26, 34, 0.92); color: #fff; font-size: 12px;
-  padding: 6px 9px; border-radius: 6px; max-width: 220px; line-height: 1.35;
+  background: rgba(16, 20, 27, 0.96); color: #fff; font-size: 12px;
+  padding: 12px 14px; border-radius: 9px; max-width: 620px; line-height: 1.35;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 }
 #tooltip b { font-size: 12.5px; }
+
+/* Multi-source comparison card (admin hover) */
+.tt-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.tt-empty { color: #8b939c; font-size: 11.5px; }
+table.tt { border-collapse: collapse; }
+table.tt th { text-align: left; }
+.tt-head th {
+  text-transform: uppercase; font-size: 9.5px; letter-spacing: 0.04em;
+  color: #9aa3ad; font-weight: 600; padding: 0 14px 5px 0; vertical-align: bottom;
+}
+table.tt td { font-size: 12px; padding: 2px 14px 2px 0; white-space: nowrap; vertical-align: top; }
+.tt-rl { color: #c7ccd2; padding-right: 18px !important; }
+.tt-big { font-size: 16px; font-weight: 700; }
+.tt-bar {
+  width: 70px; height: 4px; border-radius: 2px; margin-top: 4px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.12);
+}
+.tt-fill { height: 100%; background: #e0492f; border-radius: 2px; }
+.tt-frac td { padding-bottom: 6px; }
+.tt-sep td { border-bottom: 1px solid rgba(255, 255, 255, 0.16); height: 8px; padding: 0; }
+.tt-note { color: #8b939c; font-size: 10.5px; }
+.tt-foot {
+  margin-top: 9px; padding-top: 7px; font-size: 11.5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+.tt-foot-h { font-weight: 600; margin-top: 3px; }
+.tt-foot-l { color: #c7ccd2; padding-left: 10px; margin-top: 1px; }
 
 /* Exploratory / attribution note — translucent glass card, top-right. */
 #about {

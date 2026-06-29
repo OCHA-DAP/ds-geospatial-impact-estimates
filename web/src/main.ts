@@ -150,41 +150,61 @@ const tip = (name: string, p: any) =>
   `damaged: ${num(p.damaged_detected)}<br>` +
   `damage fraction: ${pct(p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null)}`;
 
-// CEMS damage shown two ways, distinctly: the per-building POINT assessment
-// (with grades) — the detailed, latest reading — and the COARSE-block estimate,
-// the earlier/broader reading that's available before the points land. Either
-// can be absent for a given unit.
-function cemsBreakdown(p: any): string {
-  let s =
-    (p.damaged_detected ?? 0) > 0
-      ? `point damage: ${num(p.damaged_detected)} ` +
-        `(${num(p.cems_destroyed)} destroyed · ${num(p.cems_damaged)} damaged · ` +
-        `${num(p.cems_possibly)} possibly)<br>`
-      : `point damage: none yet<br>`;
-  if ((p.cems_coarse_detected ?? 0) > 0)
-    s += `coarse-block estimate: ${num(p.cems_coarse_detected)} buildings<br>`;
-  return s;
-}
-
-// One section per checked source that assessed this unit, listed together.
+// Hover card: a side-by-side comparison of every checked source that has data
+// for this unit (it assessed the unit, or detected damage in it). Coverage-aware
+// sources show coverage/analysed; detected-only sources (no AOI, e.g. HotOSM)
+// show "—" there and a "(point)" damaged count. CEMS's per-grade point breakdown
+// and coarse area estimate render as a footer.
 function adminTip(unitId: any, unitName: string): string {
-  let html = `<b>${unitName}</b>`;
-  for (const s of state.sources) {
-    const f = (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []).find(
-      (x: any) => x.properties.unit_id === unitId,
-    );
-    if (!f || !hasCov(f.properties)) continue;
-    const p = f.properties;
-    html +=
-      `<div style="margin-top:6px;padding-top:4px;border-top:1px solid rgba(255,255,255,.25)">` +
-      `<b>${SOURCE_LABEL[s] ?? s}</b><br>` +
-      `total buildings: ${num(p.exposed_buildings)}<br>` +
-      `coverage: ${pct(p.coverage_fraction)}<br>` +
-      `analysed: ${num(p.analysed_buildings)}<br>` +
-      (s === "copernicus_ems"
-        ? cemsBreakdown(p)
-        : `damaged: ${num(p.damaged_detected)}<br>`) +
-      `damage fraction: ${pct(p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null)}</div>`;
+  const cols = [...state.sources]
+    .map((s) => {
+      const f = (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []).find(
+        (x: any) => x.properties.unit_id === unitId,
+      );
+      return { s, p: f?.properties };
+    })
+    .filter((c) => c.p && (hasCov(c.p) || (c.p.damaged_detected ?? 0) > 0));
+  if (!cols.length)
+    return `<div class="tt-title">${unitName}</div><div class="tt-empty">no source data here</div>`;
+
+  const isPoint = (s: string) => s === "copernicus_ems" || s === "hot_osm";
+  const frac = (p: any) => (p.analysed_buildings ? p.damaged_detected / p.analysed_buildings : null);
+  const head = cols.map((c) => `<th>${SOURCE_LABEL[c.s] ?? c.s}</th>`).join("");
+  const fracRow = cols
+    .map((c) => {
+      const v = frac(c.p);
+      const fill =
+        v == null ? "" : `<div class="tt-fill" style="width:${Math.round(lift(v) * 100)}%"></div>`;
+      return `<td><span class="tt-big">${pct(v)}</span><div class="tt-bar">${fill}</div></td>`;
+    })
+    .join("");
+  const row = (label: string, cell: (p: any, s: string) => string) =>
+    `<tr><td class="tt-rl">${label}</td>${cols.map((c) => `<td>${cell(c.p, c.s)}</td>`).join("")}</tr>`;
+
+  let html =
+    `<div class="tt-title">${unitName}</div>` +
+    `<table class="tt"><tr class="tt-head"><th></th>${head}</tr>` +
+    `<tr class="tt-frac"><td class="tt-rl">Damage fraction</td>${fracRow}</tr>` +
+    `<tr class="tt-sep"><td colspan="${cols.length + 1}"></td></tr>` +
+    row("Total buildings", (p) => num(p.exposed_buildings)) +
+    row("Coverage", (p) => pct(p.coverage_fraction)) +
+    row("Analysed", (p) => num(p.analysed_buildings)) +
+    row(
+      "Damaged",
+      (p, s) => num(p.damaged_detected) + (isPoint(s) ? ` <span class="tt-note">(point)</span>` : ""),
+    ) +
+    `</table>`;
+
+  const cems = cols.find((c) => c.s === "copernicus_ems")?.p;
+  if (cems && ((cems.damaged_detected ?? 0) > 0 || (cems.cems_coarse_detected ?? 0) > 0)) {
+    let foot = "";
+    if ((cems.damaged_detected ?? 0) > 0)
+      foot +=
+        `<div class="tt-foot-h">Copernicus EMS point damage:</div>` +
+        `<div class="tt-foot-l">${num(cems.cems_destroyed)} destroyed · ${num(cems.cems_damaged)} damaged · ${num(cems.cems_possibly)} possibly damaged</div>`;
+    if ((cems.cems_coarse_detected ?? 0) > 0)
+      foot += `<div class="tt-foot-h">Area-based estimate: ${num(cems.cems_coarse_detected)} buildings <span class="tt-note">(not point-counted)</span></div>`;
+    html += `<div class="tt-foot">${foot}</div>`;
   }
   return html;
 }
@@ -242,6 +262,12 @@ function buildLayers() {
         getHexagon: (d: any) => d.h3,
         getFillColor: (d: any) => metricColor(m, metricValue(d, m), hMax),
         updateTriggers: { getFillColor: [m, hMax] },
+        // thin gray outline so data-covered cells read as a grid — makes the edge
+        // of coverage (where the hexes stop) easy to see against the basemap
+        stroked: true,
+        filled: true,
+        getLineColor: [150, 158, 168, 120],
+        lineWidthMinPixels: 0.6,
         onHover: (info: any) =>
           info.object ? showTip(info.x, info.y, tip(SOURCE_LABEL[s] ?? s, info.object)) : hideTip(),
       }),
@@ -497,9 +523,9 @@ async function init() {
   const meta = await fetch("/api/sources").then((r) => r.json());
   const sources: string[] = meta.sources;
   METRICS = [
-    { key: "damage_rate_detected", label: "Damage fraction" },
-    // extrapolation stays in the data but is kept off the surface (no map metric)
-    ...meta.metrics.filter((m: any) => m.key !== "damage_rate_extrapolated"),
+    { key: "damage_rate_detected", label: "Damage fraction (highest)" },
+    { key: "coverage_fraction", label: "Coverage (highest)" },
+    { key: "damaged_detected", label: "Damaged buildings (highest)" },
   ];
   state.sources = new Set(sources);
 
