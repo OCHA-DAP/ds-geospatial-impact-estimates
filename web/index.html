@@ -10,63 +10,77 @@
     <div id="map"></div>
 
     <div id="panel" class="floating">
-      <h1>Damage Exposure</h1>
-      <p class="sub">Venezuela earthquake (EMSR884)</p>
+      <img src="/ocha_logo.svg" alt="OCHA" class="panel-logo" width="117" height="28" />
+      <h1>Venezuela earthquake (EMSR884)</h1>
+      <p class="sub">Damage Exposure</p>
+
+      <div class="divider"></div>
 
       <div class="group">
         <div class="label">Sources</div>
         <div id="sources"></div>
       </div>
 
-      <div class="group">
-        <div class="label">Building view</div>
-        <select id="view">
-          <option value="overture" selected>Overture base</option>
-          <option value="native">Native data</option>
-        </select>
-      </div>
+      <div class="divider"></div>
 
       <div class="group">
         <div class="label">Show</div>
+
         <label><input type="checkbox" data-layer="admin" checked /> Admin aggregation</label>
+        <div class="sub-control">
+          <div class="sub-label">Admin level</div>
+          <select id="adminLevel">
+            <option value="0">Admin 0</option>
+            <option value="1">Admin 1</option>
+            <option value="2">Admin 2</option>
+            <option value="3" selected>Admin 3</option>
+          </select>
+        </div>
+
         <label><input type="checkbox" data-layer="buildings" /> Buildings</label>
+        <div class="sub-control">
+          <div class="sub-label">Source</div>
+          <select id="view">
+            <option value="overture" selected>Overture base</option>
+            <option value="native">Native data</option>
+          </select>
+        </div>
+
         <label><input type="checkbox" data-layer="extent" checked /> Coverage extent</label>
         <label><input type="checkbox" data-layer="h3" /> H3 hexagons</label>
       </div>
 
+      <div class="divider"></div>
+
       <div class="group">
-        <div class="label">Colour aggregation by</div>
+        <div class="label">Colour aggregation by
+          <span class="help" tabindex="0" title="How each admin unit or H3 cell is coloured:&#10;• Damage fraction — damaged ÷ analysed buildings&#10;• Coverage — share of the unit's buildings that were analysed&#10;• Damaged buildings — count of buildings flagged damaged">?</span>
+        </div>
         <select id="metric"></select>
       </div>
 
       <div class="group">
-        <div class="label">Admin level</div>
-        <select id="adminLevel">
-          <option value="0">Admin 0</option>
-          <option value="1">Admin 1</option>
-          <option value="2">Admin 2</option>
-          <option value="3" selected>Admin 3</option>
-        </select>
+        <label><input type="checkbox" id="satellite" /> Satellite imagery basemap</label>
       </div>
 
+      <div class="divider"></div>
+
       <div class="group">
-        <div class="label">Basemap</div>
-        <label><input type="checkbox" id="satellite" /> Satellite imagery</label>
+        <div class="label">Current view</div>
+        <div id="status" class="status">Loading…</div>
       </div>
+
+      <div class="divider"></div>
+
+      <div id="legend"></div>
 
       <div class="group">
         <a id="export" href="/api/export.xlsx" download="ven_earthquake_damage_compilation_by_admin.xlsx">⬇ Download spreadsheet (.xlsx)</a>
       </div>
 
-      <div id="status" class="status">Loading…</div>
-    </div>
+      <div class="divider"></div>
 
-    <div id="legend" class="floating"></div>
-
-    <div id="about">
-      <button id="about-close" type="button" aria-label="Dismiss">×</button>
-      <img src="/ocha_logo.svg" alt="OCHA" class="about-logo" width="113" height="28" />
-      <div class="about-text">
+      <div id="panel-about">
         <p>An <b>exploratory</b> tool from the <b>OCHA Centre for Humanitarian Data</b>, consolidating satellite-derived damage assessments — <b>Microsoft</b>, <b>Copernicus EMS</b>, <b>IMPACT Initiatives</b> (SAR), <b>OSU</b> (Sentinel-1 coherence), and <b>HotOSM</b> (fAIr) — into one harmonized view for side-by-side comparison.</p>
         <p class="about-contact">For additional information, please reach out to <a href="mailto:zachary.arno@un.org">zachary.arno@un.org</a> and <a href="mailto:leonardo.milano@un.org">leonardo.milano@un.org</a>.</p>
       </div>
