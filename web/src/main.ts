@@ -433,13 +433,63 @@ function renderLegend() {
     return;
   }
   const meta = METRICS.find((x) => x.key === state.metric);
-  const stops = [0, 0.15, 0.35, 0.6, 1].map((t) => damageColor(lift(t)));
-  const grad = `linear-gradient(90deg, ${stops.map((c) => `rgb(${c[0]},${c[1]},${c[2]})`).join(",")})`;
-  const [lo, hi] = state.metric === "coverage_fraction" ? ["full", "partial"] : ["low", "high"];
-  document.getElementById("legend")!.innerHTML =
-    `<div class="title">Aggregation · ${meta?.label ?? state.metric}</div>` +
-    `<div class="bar" style="background:${grad}"></div>` +
-    `<div class="ticks"><span>${lo}</span><span>${hi}</span></div>`;
+  const title = `<div class="title">Aggregation · ${meta?.label ?? state.metric}</div>`;
+  const swatch = (c: RGBA) => `<span class="lg-swatch" style="background:rgb(${c[0]},${c[1]},${c[2]})"></span>`;
+  // Each bin's swatch is sampled from the SAME colour function the map uses (at a
+  // representative value), so the legend always matches what's drawn.
+  const binRows = (m: string, bins: { label: string; v: number }[]) =>
+    bins.map((b) => `<div class="lg-row">${swatch(metricColor(m, b.v, 1))}${b.label}</div>`).join("");
+
+  // Damage fraction is a true 0–100% rate → fixed classification bands.
+  if (state.metric.startsWith("damage_rate")) {
+    lg.innerHTML =
+      title +
+      binRows(state.metric, [
+        { label: "No damage detected (0%)", v: 0 },
+        { label: "Low (0–10%)", v: 0.05 },
+        { label: "Medium (10–25%)", v: 0.175 },
+        { label: "High (25–50%)", v: 0.375 },
+        { label: "Severe (50%+)", v: 0.75 },
+      ]);
+    return;
+  }
+  // Coverage is also 0–100%, but the ramp is inverted (gaps highlighted).
+  if (state.metric === "coverage_fraction") {
+    lg.innerHTML =
+      title +
+      binRows("coverage_fraction", [
+        { label: "Full (100%)", v: 1 },
+        { label: "High (75–100%)", v: 0.875 },
+        { label: "Partial (50–75%)", v: 0.625 },
+        { label: "Low (25–50%)", v: 0.375 },
+        { label: "Minimal (0–25%)", v: 0.125 },
+      ]);
+    return;
+  }
+  // Building counts have no fixed scale: keep a graduated strip, but put the real
+  // max (highest unit currently in view) on the axis instead of a vague "high".
+  const max = legendMax(state.metric);
+  const stops = [0, 0.25, 0.5, 0.75, 1].map((t) => metricColor(state.metric, t * max, max));
+  lg.innerHTML =
+    title +
+    `<div class="lg-bins">${stops.map(swatch).join("")}</div>` +
+    `<div class="ticks"><span>0</span><span>${num(max)}</span></div>`;
+}
+
+// Highest metric value among the units currently drawn (admin and/or H3), so the
+// count legend's axis reflects the actual data in view.
+function legendMax(metric: string): number {
+  const props: any[] = [];
+  for (const s of state.sources) {
+    if (state.show.admin)
+      props.push(
+        ...(adminCache.get(`${s}:${state.adminLevel}`)?.features ?? [])
+          .map((f: any) => f.properties)
+          .filter(hasCov),
+      );
+    if (state.show.h3) props.push(...(h3Cache.get(s) ?? []).filter(hasCov));
+  }
+  return maxBy(props, (p) => metricValue(p, metric) ?? 0);
 }
 
 // --- data --------------------------------------------------------------------
@@ -511,22 +561,21 @@ async function refresh() {
 
 // --- init + wiring -----------------------------------------------------------
 const el = (id: string) => document.getElementById(id)!;
-el("about-close").addEventListener("click", () => (el("about").style.display = "none"));
 
 async function init() {
   const meta = await fetch("/api/sources").then((r) => r.json());
   const sources: string[] = meta.sources;
   METRICS = [
-    { key: "damage_rate_detected", label: "Damage fraction (highest)" },
-    { key: "coverage_fraction", label: "Coverage (highest)" },
-    { key: "damaged_detected", label: "Damaged buildings (highest)" },
+    { key: "damage_rate_detected", label: "Damage fraction" },
+    { key: "coverage_fraction", label: "Coverage" },
+    { key: "damaged_detected", label: "Damaged buildings" },
   ];
   state.sources = new Set(sources);
 
   el("sources").innerHTML = sources
     .map((s) => {
       const c = SOURCE_COLOR[s] ?? [120, 120, 120];
-      return `<label><span class="swatch" style="background:rgb(${c.join(",")})"></span><input type="checkbox" data-source="${s}" checked /> ${SOURCE_LABEL[s] ?? s}</label>`;
+      return `<label><input type="checkbox" data-source="${s}" checked /><span class="swatch" style="background:rgb(${c.join(",")})"></span> ${SOURCE_LABEL[s] ?? s}</label>`;
     })
     .join("");
   (el("metric") as HTMLSelectElement).innerHTML = METRICS.map((x) => `<option value="${x.key}">${x.label}</option>`).join("");
@@ -559,9 +608,18 @@ async function init() {
   state.adminLevel = Number((el("adminLevel") as HTMLSelectElement).value);
   await refresh();
 });
+// The admin-level and building-source selects are nested under their parent
+// toggles; greying them out when the parent is off mirrors that hierarchy.
+function syncSubControls() {
+  (el("adminLevel") as HTMLSelectElement).disabled = !state.show.admin;
+  (el("view") as HTMLSelectElement).disabled = !state.show.buildings;
+}
+syncSubControls();
+
 document.querySelectorAll<HTMLInputElement>("input[data-layer]").forEach((box) =>
   box.addEventListener("change", async () => {
     state.show[box.dataset.layer!] = box.checked;
+    syncSubControls();
     await refresh();
   }),
 );
