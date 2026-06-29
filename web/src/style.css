@@ -68,3 +68,30 @@ html, body { margin: 0; height: 100%; }
   padding: 6px 9px; border-radius: 6px; max-width: 220px; line-height: 1.35;
 }
 #tooltip b { font-size: 12.5px; }
+
+/* Exploratory / attribution note — translucent glass card, top-right. */
+#about {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  right: 16px;
+  width: 296px;
+  padding: 11px 30px 12px 14px;
+  font-size: 11.5px;
+  line-height: 1.46;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(18, 24, 33, 0.52);
+  backdrop-filter: blur(12px) saturate(125%);
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
+}
+#about p { margin: 0; }
+#about b { color: #fff; font-weight: 600; }
+#about-close {
+  position: absolute; top: 5px; right: 7px; padding: 2px;
+  background: none; border: none; cursor: pointer; line-height: 1;
+  color: rgba(255, 255, 255, 0.5); font-size: 16px;
+}
+#about-close:hover { color: rgba(255, 255, 255, 0.92); }

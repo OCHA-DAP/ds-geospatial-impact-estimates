@@ -475,6 +475,7 @@ async function refresh() {
 
 // --- init + wiring -----------------------------------------------------------
 const el = (id: string) => document.getElementById(id)!;
+el("about-close").addEventListener("click", () => (el("about").style.display = "none"));
 
 async function init() {
   const meta = await fetch("/api/sources").then((r) => r.json());
