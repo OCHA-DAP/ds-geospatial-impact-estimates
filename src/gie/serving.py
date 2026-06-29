@@ -355,6 +355,9 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
         # building_flags carries SAR damaged-only (ADR-0008): no sar_analysed
         # column, so the "assessed" set IS the damaged set here.
         dmg, seen = "sar_dmg", "sar_dmg"
+    elif source == "osu":
+        # OSU is the same shape (ADR-0009): damaged-only on building_flags.
+        dmg, seen = "osu_dmg", "osu_dmg"
     else:
         dmg, seen = "cems_dmg", "cems_analysed"
     return con.execute(
@@ -373,13 +376,19 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    if source == "impact_initiatives":
+    if source in ("impact_initiatives", "osu"):
+        # Single-polygon coverage extents keyed to Overture (SAR / OSU).
         ext = settings.az_path(
-            "silver", "source=impact_initiatives", f"adm0={adm0}", "analysed_extent.parquet"
+            "silver", f"source={source}", f"adm0={adm0}", "analysed_extent.parquet"
+        )
+        label, product = (
+            ("SAR analysed extent", "Sentinel-1 damage proxy")
+            if source == "impact_initiatives"
+            else ("OSU analyzed area", "Sentinel-1 coherence")
         )
         df = con.execute(
-            f"SELECT 'SAR analysed extent' AS aoi_name, 'Sentinel-1 damage proxy' AS product, "
-            f"NULL AS acquired, ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
+            f"SELECT '{label}' AS aoi_name, '{product}' AS product, NULL AS acquired, "
+            f"ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
         ).df()
         geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
         df["source"] = source
@@ -413,9 +422,9 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    if source == "impact_initiatives":
-        # SAR is a raster proxy — no native vector geometry; its building-level
-        # view is the damaged points (load_buildings). Nothing to draw here.
+    if source in ("impact_initiatives", "osu"):
+        # SAR / OSU are keyed to Overture with no own vector geometry; their
+        # building-level view is the damaged points (load_buildings).
         return gpd.GeoDataFrame(
             {"damaged": pd.Series([], dtype="int64")},
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),
