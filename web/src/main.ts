@@ -336,10 +336,12 @@ function buildLayers() {
         new GeoJsonLayer({
           id: `extent-${s}`,
           data: ext,
-          filled: true,
+          // Outline only: a filled AOI (even at ~5% alpha) is pickable across its
+          // whole interior and intercepts hover from the admin units beneath it.
+          // The stroke stays pickable, so the coverage tooltip shows near the edge.
+          filled: false,
           stroked: true,
           pickable: true,
-          getFillColor: [...c, 12] as any,
           getLineColor: [...c, 235] as any,
           lineWidthMinPixels: 2,
           onHover: (info: any) =>
