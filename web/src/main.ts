@@ -11,12 +11,14 @@ const SOURCE_LABEL: Record<string, string> = {
   microsoft: "Microsoft",
   copernicus_ems: "Copernicus EMS",
   impact_initiatives: "IMPACT SAR (proxy)",
+  hot_osm: "HOTOSM fAIr (points)",
   osu: "OSU S1 (coherence)",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
   microsoft: [40, 110, 205],
   copernicus_ems: [235, 125, 20],
   impact_initiatives: [150, 70, 190],
+  hot_osm: [210, 45, 130],
   osu: [20, 160, 130],
 };
 
@@ -311,6 +313,13 @@ function buildLayers() {
           pickable: true,
           filled: true,
           stroked: false,
+          // HOTOSM fAIr native geometry is points (not polygons): render them as
+          // visible circles. These point props are ignored for polygon sources.
+          pointType: "circle",
+          getPointRadius: 9,
+          pointRadiusUnits: "meters",
+          pointRadiusMinPixels: 3.5,
+          pointRadiusMaxPixels: 8,
           getFillColor: (f: any) => nativeColor(s, f.properties),
           onHover: (info: any) =>
             info.object
@@ -319,7 +328,10 @@ function buildLayers() {
                   info.y,
                   s === "microsoft"
                     ? `Microsoft footprint<br>damaged: ${info.object.properties.damaged ? "yes" : "no"}`
-                    : `Copernicus EMS<br>grade: ${info.object.properties.ems_grade}`,
+                    : `${SOURCE_LABEL[s] ?? s}<br>grade: ${info.object.properties.ems_grade}` +
+                        (info.object.properties.confidence != null
+                          ? `<br>confidence: ${(info.object.properties.confidence * 100).toFixed(0)}%`
+                          : ""),
                 )
               : hideTip(),
         }),
