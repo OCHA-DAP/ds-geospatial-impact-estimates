@@ -137,10 +137,20 @@ const hasCov = (p: any) => (p?.coverage_fraction ?? 0) > 0;
 // --- tooltip -----------------------------------------------------------------
 const tooltip = document.getElementById("tooltip")!;
 function showTip(x: number, y: number, html: string) {
-  tooltip.style.display = "block";
-  tooltip.style.left = `${x + 14}px`;
-  tooltip.style.top = `${y + 14}px`;
+  // set content first so we can measure the rendered size, then place it so it
+  // never runs off-screen: flip to the left of the cursor near the right edge,
+  // above near the bottom, and clamp as a final guard (wide comparison card).
   tooltip.innerHTML = html;
+  tooltip.style.display = "block";
+  const pad = 14;
+  const w = tooltip.offsetWidth;
+  const h = tooltip.offsetHeight;
+  let left = x + pad + w > window.innerWidth ? x - pad - w : x + pad;
+  let top = y + pad + h > window.innerHeight ? y - pad - h : y + pad;
+  left = Math.max(6, Math.min(left, window.innerWidth - w - 6));
+  top = Math.max(6, Math.min(top, window.innerHeight - h - 6));
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
 }
 const hideTip = () => {
   tooltip.style.display = "none";
