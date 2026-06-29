@@ -349,8 +349,14 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
     flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
-    dmg = "ms_dmg" if source == "microsoft" else "cems_dmg"
-    seen = "ms_analysed" if source == "microsoft" else "cems_analysed"
+    if source == "microsoft":
+        dmg, seen = "ms_dmg", "ms_analysed"
+    elif source == "impact_initiatives":
+        # building_flags carries SAR damaged-only (ADR-0008): no sar_analysed
+        # column, so the "assessed" set IS the damaged set here.
+        dmg, seen = "sar_dmg", "sar_dmg"
+    else:
+        dmg, seen = "cems_dmg", "cems_analysed"
     return con.execute(
         f"SELECT lon, lat, {dmg}::INT AS damaged FROM read_parquet('{flags}') WHERE {seen}"
     ).df()
@@ -367,6 +373,17 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
+    if source == "impact_initiatives":
+        ext = settings.az_path(
+            "silver", "source=impact_initiatives", f"adm0={adm0}", "analysed_extent.parquet"
+        )
+        df = con.execute(
+            f"SELECT 'SAR analysed extent' AS aoi_name, 'Sentinel-1 damage proxy' AS product, "
+            f"NULL AS acquired, ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
+        ).df()
+        geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
+        df["source"] = source
+        return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
     src = "microsoft" if source == "microsoft" else "copernicus_ems"
     ext = settings.az_path("silver", f"source={src}", f"adm0={adm0}", "analysed_extent.parquet")
     if source == "microsoft":
@@ -396,6 +413,14 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
+    if source == "impact_initiatives":
+        # SAR is a raster proxy — no native vector geometry; its building-level
+        # view is the damaged points (load_buildings). Nothing to draw here.
+        return gpd.GeoDataFrame(
+            {"damaged": pd.Series([], dtype="int64")},
+            geometry=gpd.GeoSeries([], crs="EPSG:4326"),
+            crs="EPSG:4326",
+        )
     if source == "microsoft":
         path = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet")
         cols = "damaged"

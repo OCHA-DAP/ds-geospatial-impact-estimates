@@ -10,10 +10,12 @@ type RGBA = [number, number, number, number];
 const SOURCE_LABEL: Record<string, string> = {
   microsoft: "Microsoft",
   copernicus_ems: "Copernicus EMS",
+  impact_initiatives: "IMPACT SAR (proxy)",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
   microsoft: [40, 110, 205],
   copernicus_ems: [235, 125, 20],
+  impact_initiatives: [150, 70, 190],
 };
 
 const state = {
