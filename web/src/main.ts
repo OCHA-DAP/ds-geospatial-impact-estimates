@@ -11,7 +11,7 @@ const SOURCE_LABEL: Record<string, string> = {
   microsoft: "Microsoft",
   copernicus_ems: "Copernicus EMS",
   impact_initiatives: "IMPACT SAR (proxy)",
-  hot_osm: "HOTOSM fAIr (points)",
+  hot_osm: "HotOSM",
   osu: "OSU S1 (coherence)",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
