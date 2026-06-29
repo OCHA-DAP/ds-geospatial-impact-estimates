@@ -225,23 +225,39 @@ function buildLayers() {
   const h3All = sources.flatMap((s) => (h3Cache.get(s) ?? []).filter(hasCov));
   const hMax = maxBy(h3All, (r) => metricValue(r, m) ?? 0);
 
-  // admin aggregation (common model, shared by both views)
-  for (const s of sources) {
-    if (!state.show.admin) break;
-    const data = adminCache.get(`${s}:${state.adminLevel}`);
-    if (!data) continue;
+  // admin aggregation: ONE layer, each unit coloured by the MAX metric value across
+  // the selected sources (recomputed as sources toggle). Hover shows the per-source
+  // breakdown (adminTip), so you still see which source drove the max.
+  if (state.show.admin && sources.length) {
+    const byUnit = new Map<string, { f: any; v: number | null }>();
+    for (const s of sources) {
+      for (const f of adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []) {
+        if (!hasCov(f.properties)) continue;
+        const v = metricValue(f.properties, m);
+        const cur = byUnit.get(f.properties.unit_id);
+        if (!cur) byUnit.set(f.properties.unit_id, { f, v });
+        else if (v != null && (cur.v == null || v > cur.v)) {
+          cur.f = f;
+          cur.v = v;
+        }
+      }
+    }
+    const feats = [...byUnit.values()].map(({ f, v }) => ({
+      ...f,
+      properties: { ...f.properties, _v: v },
+    }));
     layers.push(
       new GeoJsonLayer({
-        id: `admin-${s}-${state.adminLevel}`,
-        data: { type: "FeatureCollection", features: data.features.filter((f: any) => hasCov(f.properties)) },
+        id: `admin-${state.adminLevel}`,
+        data: { type: "FeatureCollection", features: feats },
         pickable: true,
         filled: true,
         stroked: true,
         opacity: 0.6,
         getLineColor: [55, 65, 80, 200],
         lineWidthMinPixels: 1,
-        getFillColor: (f: any) => metricColor(m, metricValue(f.properties, m), aMax),
-        updateTriggers: { getFillColor: [m, state.adminLevel, aMax] },
+        getFillColor: (f: any) => metricColor(m, f.properties._v, aMax),
+        updateTriggers: { getFillColor: [m, state.adminLevel, aMax, sources.join()] },
         onHover: (info: any) =>
           info.object
             ? showTip(info.x, info.y, adminTip(info.object.properties.unit_id, info.object.properties.unit_name))
@@ -250,25 +266,40 @@ function buildLayers() {
     );
   }
 
-  // h3 (common)
-  for (const s of sources) {
-    if (!state.show.h3) break;
-    const rows = (h3Cache.get(s) ?? []).filter(hasCov);
-    if (!rows.length) continue;
-    layers.push(
-      new H3HexagonLayer({
-        id: `h3-${s}`,
-        data: rows,
-        pickable: true,
-        extruded: false,
-        opacity: 0.6,
-        getHexagon: (d: any) => d.h3,
-        getFillColor: (d: any) => metricColor(m, metricValue(d, m), hMax),
-        updateTriggers: { getFillColor: [m, hMax] },
-        onHover: (info: any) =>
-          info.object ? showTip(info.x, info.y, tip(SOURCE_LABEL[s] ?? s, info.object)) : hideTip(),
-      }),
-    );
+  // h3: ONE layer, each cell coloured by the MAX metric value across selected sources.
+  if (state.show.h3 && sources.length) {
+    const byCell = new Map<string, any>();
+    for (const s of sources) {
+      for (const r of h3Cache.get(s) ?? []) {
+        if (!hasCov(r)) continue;
+        const v = metricValue(r, m);
+        const cur = byCell.get(r.h3);
+        if (!cur || (v != null && (cur._v == null || v > cur._v)))
+          byCell.set(r.h3, { ...r, _v: v, _src: s });
+      }
+    }
+    const rows = [...byCell.values()];
+    if (rows.length)
+      layers.push(
+        new H3HexagonLayer({
+          id: "h3-combined",
+          data: rows,
+          pickable: true,
+          extruded: false,
+          opacity: 0.6,
+          getHexagon: (d: any) => d.h3,
+          getFillColor: (d: any) => metricColor(m, d._v, hMax),
+          updateTriggers: { getFillColor: [m, hMax, sources.join()] },
+          onHover: (info: any) =>
+            info.object
+              ? showTip(
+                  info.x,
+                  info.y,
+                  tip(`${SOURCE_LABEL[info.object._src] ?? info.object._src} · highest here`, info.object),
+                )
+              : hideTip(),
+        }),
+      );
   }
 
   // agreement view: one combined layer — faint single-source context, bold overlap on top
