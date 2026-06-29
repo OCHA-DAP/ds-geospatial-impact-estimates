@@ -125,7 +125,10 @@ function metricColor(metric: string, value: number | null | undefined, max: numb
 function nativeColor(source: string, p: any): RGBA {
   if (source === "microsoft") return p.damaged ? [220, 30, 30, 205] : [120, 128, 140, 70];
   const cls = p.damage_class; // CEMS: 1 possibly .. 3 destroyed
-  return cls == null ? [225, 60, 40, 200] : damageColor(Math.max(0.25, cls / 3));
+  const rgb = (cls == null ? [225, 60, 40, 0] : damageColor(Math.max(0.25, cls / 3))) as number[];
+  // CEMS coarse area blocks (the earlier, lower-resolution estimate) render
+  // translucent so the per-building point estimates read clearly on top of them.
+  return [rgb[0], rgb[1], rgb[2], p.layer_type === "area" ? 60 : 210];
 }
 const maxBy = (arr: any[], get: (x: any) => number) =>
   Math.max(1, ...arr.map(get).filter((v) => !Number.isNaN(v)));
@@ -349,6 +352,9 @@ function buildLayers() {
                   s === "microsoft"
                     ? `Microsoft footprint<br>damaged: ${info.object.properties.damaged ? "yes" : "no"}`
                     : `${SOURCE_LABEL[s] ?? s}<br>grade: ${info.object.properties.ems_grade}` +
+                        (info.object.properties.layer_type
+                          ? `<br>${info.object.properties.layer_type === "area" ? "coarse block (early estimate)" : "per-building point"}`
+                          : "") +
                         (info.object.properties.confidence != null
                           ? `<br>confidence: ${(info.object.properties.confidence * 100).toFixed(0)}%`
                           : ""),

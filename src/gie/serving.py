@@ -415,7 +415,7 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
             f"SELECT any_value(aoi_name) AS aoi_name, any_value(product) AS product, "
             f"any_value(acquired) AS acquired, "
             f"ST_AsWKB(ST_Union_Agg(ST_MakeValid(geometry))) AS wkb "
-            f"FROM read_parquet('{ext}') GROUP BY src_zip"
+            f"FROM read_parquet('{ext}') WHERE is_latest GROUP BY src_zip"
         )
     df = con.execute(sql).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
@@ -451,14 +451,18 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
         return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
     if source == "microsoft":
         path = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet")
-        cols = "damaged"
+        cols, where = "damaged", ""
     else:
         path = settings.az_path(
             "silver", "source=copernicus_ems", f"adm0={adm0}", "builtup_damage.parquet"
         )
-        cols = "ems_grade, damage_class"
+        cols = "ems_grade, damage_class, layer_type"
+        # Keep BOTH the latest detailed product (per-building points) AND the coarse
+        # area blocks (the earlier, lower-resolution estimate — still useful for
+        # partners); drop only the superseded intermediate point rounds.
+        where = "WHERE is_latest OR layer_type = 'area'"
     df = con.execute(
-        f"SELECT {cols}, ST_AsWKB(geometry) AS wkb FROM read_parquet('{path}')"
+        f"SELECT {cols}, ST_AsWKB(geometry) AS wkb FROM read_parquet('{path}') {where}"
     ).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
@@ -477,7 +481,7 @@ def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFra
     )
     df = con.execute(
         f"SELECT kind, aoi_name, product, acquired, ST_AsWKB(geometry) AS wkb "
-        f"FROM read_parquet('{path}')"
+        f"FROM read_parquet('{path}') WHERE is_latest"
     ).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
