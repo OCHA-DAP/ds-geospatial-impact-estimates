@@ -95,6 +95,9 @@ SOURCES = [
     ("copernicus_ems", "cems_dmg", "sum(cems_analysed::INT)"),
     # IMPACT Sentinel-1 SAR proxy: analysed = inside the raster extent (ADR-0008).
     ("impact_initiatives", "sar_dmg", "sum(sar_analysed::INT)"),
+    # OSU Sentinel-1 coherence: pre-keyed to Overture (id-join); analysed =
+    # inside the analyzed-area polygon (ADR-0009).
+    ("osu", "osu_dmg", "sum(osu_analysed::INT)"),
 ]
 GRAINS = [
     ("h3", "h3", None),
@@ -209,6 +212,13 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     sar_ext = _local(settings,
         "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet"
     )
+    # OSU S1 coherence: per-building damaged set (id-keyed to Overture) + extent (ADR-0009).
+    osu = _local(settings,
+        "silver", "source=osu", f"adm0={ADM0}", "building_damage.parquet"
+    )
+    osu_ext = _local(settings,
+        "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
+    )
     adm3 = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
@@ -279,6 +289,11 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             -- SAR-analysed = inside the raster's bounds footprint (ADR-0008)
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{sar_ext}') e ON ST_Within(b.c, e.geometry)
+        ),
+        osu_seen AS (
+            -- OSU-analysed = inside the analyzed-area polygon
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{osu_ext}') e ON ST_Within(b.c, e.geometry)
         )
         SELECT b.id,
             round(ST_X(b.c), 6) AS lon, round(ST_Y(b.c), 6) AS lat,
@@ -293,11 +308,15 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             (b.id IN (SELECT id FROM cems_seen)) AS cems_analysed,
             (sd.id IS NOT NULL) AS sar_dmg,
             sd.damage_class AS sar_class,
-            (b.id IN (SELECT id FROM sar_seen)) AS sar_analysed
+            (b.id IN (SELECT id FROM sar_seen)) AS sar_analysed,
+            (od.id IS NOT NULL) AS osu_dmg,
+            od.damage_class AS osu_class,
+            (b.id IN (SELECT id FROM osu_seen)) AS osu_analysed
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
         LEFT JOIN cems_dmg cd ON cd.id = b.id
         LEFT JOIN read_parquet('{sar}') sd ON sd.id = b.id
+        LEFT JOIN read_parquet('{osu}') od ON od.id = b.id
         """
     )
     print("  located table built", flush=True)
@@ -341,14 +360,15 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # Persist per-building damage/coverage flags for the agreement layer. Only
     # assessed buildings are ever used there, and the full base is now millions
     # of rows (a single blob write would time out), so keep just the assessed.
-    # TEMPORARY (ADR-0008): SAR contributes only its DAMAGED buildings to the
-    # per-building layer, NOT its ~1.9M analysed set — the untiled agreement view
-    # and a single blob write can't take that. Rectify with PMTiles: then add
-    # `OR sar_analysed` and carry sar_analysed through.
+    # TEMPORARY (ADR-0008, ADR-0009): the SAR and OSU sources contribute only their
+    # DAMAGED buildings to the per-building layer, NOT their full analysed sets
+    # (~1.9M / ~2.1M) — the untiled agreement view and a single blob write can't take that.
+    # Rectify with PMTiles: then add `OR sar_analysed`/`OR osu_analysed` and carry
+    # the analysed flags through.
     flags = con.execute(
         "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_class, cems_analysed, "
-        "sar_dmg, sar_class "
-        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg"
+        "sar_dmg, sar_class, osu_dmg, osu_class "
+        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR osu_dmg"
     ).df()
     print(f"  building_flags computed ({len(flags):,} rows), uploading", flush=True)
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
@@ -388,6 +408,12 @@ def _area_facts(con, settings) -> pd.DataFrame:
                 "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet"
             ),
             "",  # SAR footprint = raster bounds (ADR-0008)
+        ),
+        "osu": (
+            _local(settings,
+                "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
+            ),
+            "",  # OSU footprint = analyzed-area polygon (ADR-0009)
         ),
     }
     parts = []
