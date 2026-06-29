@@ -96,7 +96,7 @@ SOURCES = [
     # IMPACT Sentinel-1 SAR proxy: analysed = inside the raster extent (ADR-0008).
     ("impact_initiatives", "sar_dmg", "sum(sar_analysed::INT)"),
     # OSU Sentinel-1 coherence: pre-keyed to Overture (id-join); analysed =
-    # inside the analyzed-area polygon.
+    # inside the analyzed-area polygon (ADR-0009).
     ("osu", "osu_dmg", "sum(osu_analysed::INT)"),
 ]
 GRAINS = [
@@ -212,7 +212,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     sar_ext = _local(settings,
         "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet"
     )
-    # OSU S1 coherence: per-building damaged set (id-keyed to Overture) + extent.
+    # OSU S1 coherence: per-building damaged set (id-keyed to Overture) + extent (ADR-0009).
     osu = _local(settings,
         "silver", "source=osu", f"adm0={ADM0}", "building_damage.parquet"
     )
@@ -360,9 +360,9 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # Persist per-building damage/coverage flags for the agreement layer. Only
     # assessed buildings are ever used there, and the full base is now millions
     # of rows (a single blob write would time out), so keep just the assessed.
-    # TEMPORARY (ADR-0008): the SAR and OSU sources contribute only their DAMAGED
-    # buildings to the per-building layer, NOT their full analysed sets (~1.9M /
-    # ~2.1M) — the untiled agreement view and a single blob write can't take that.
+    # TEMPORARY (ADR-0008, ADR-0009): the SAR and OSU sources contribute only their
+    # DAMAGED buildings to the per-building layer, NOT their full analysed sets
+    # (~1.9M / ~2.1M) — the untiled agreement view and a single blob write can't take that.
     # Rectify with PMTiles: then add `OR sar_analysed`/`OR osu_analysed` and carry
     # the analysed flags through.
     flags = con.execute(
@@ -413,7 +413,7 @@ def _area_facts(con, settings) -> pd.DataFrame:
             _local(settings,
                 "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
             ),
-            "",  # OSU footprint = analyzed-area polygon
+            "",  # OSU footprint = analyzed-area polygon (ADR-0009)
         ),
     }
     parts = []

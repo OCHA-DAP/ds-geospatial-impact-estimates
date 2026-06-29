@@ -21,7 +21,8 @@ The delivery (all EPSG:4326 GeoPackages) lands here in bronze as received. Each
 damaged building carries its `overture_id`, so harmonization to the common model
 is an id-join onto our Overture base (99.4% match) plus the analyzed-area polygon
 as the coverage extent — no raster sampling (cf. ingest_impact_sar.py). Mapping
-to silver/gold is a later step (harmonize_osu.py + harmonize_common.py).
+to silver/gold is a later step (harmonize_osu.py + harmonize_common.py). See
+ADR-0009 for the source-design decisions.
 
 Run: uv run --group etl python pipelines/ingest_osu.py [package-dir]
      (package-dir defaults to ~/Downloads/S1_Damage_Prelim_EMSR884)
@@ -94,7 +95,9 @@ def main() -> None:
             cc.upload_blob(
                 name=blob, data=f, overwrite=True, length=size, max_concurrency=8
             )
-        ledger.record(SOURCE, "bronze", dataset, blob, detail, status="ingested")
+        # preliminary v0 delivery — "ingesting" to match the analogous IMPACT
+        # SAR source (impact_initiatives), not the stable/final sources.
+        ledger.record(SOURCE, "bronze", dataset, blob, detail, status="ingesting")
         print(f"  bronze <- {blob}", flush=True)
 
     print("done.", flush=True)

@@ -1,5 +1,8 @@
 """Project the OSU Sentinel-1 coherence damage assessment onto the Overture base -> silver.
 
+See ADR-0009 for the design decisions (id-join over geometry, damage_class
+mapping, analyzed-area polygon as extent, damaged-only per-building stopgap).
+
 OSU (Corey Scher & Jamon Van Den Hoek, Oregon State University) delivered
 building-level damage already keyed to Overture footprints (`overture_id`), so —
 unlike the IMPACT raster proxy (ingest/harmonize_impact_sar) — there is no raster
