@@ -12,12 +12,14 @@ const SOURCE_LABEL: Record<string, string> = {
   copernicus_ems: "Copernicus EMS",
   impact_initiatives: "IMPACT SAR (proxy)",
   hot_osm: "HOTOSM fAIr (points)",
+  osu: "OSU S1 (coherence)",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
   microsoft: [40, 110, 205],
   copernicus_ems: [235, 125, 20],
   impact_initiatives: [150, 70, 190],
-  hot_osm: [15, 155, 120],
+  hot_osm: [210, 45, 130],
+  osu: [20, 160, 130],
 };
 
 const state = {

@@ -30,16 +30,15 @@ Run: uv run --group etl python pipelines/harmonize_common.py
 
 from __future__ import annotations
 
-import io
 import os
 import threading
 import time
 
 import ocha_stratus as stratus
 import pandas as pd
-from azure.storage.blob import ContainerClient
 
 from gie import ledger
+from gie.blob import upload_parquet_staged
 from gie.config import DEFAULT_H3_RESOLUTION, load_settings
 
 METHOD = "common_overture_v1"
@@ -51,40 +50,11 @@ STAGE = "dev"
 SNAP_M = 20
 
 
-def _upload(frame, blob, settings, tries: int = 5, timeout_s: int = 90) -> None:
-    """Serialize to parquet and upload via a chunked, concurrent block upload.
-
-    The single-shot blob write on this endpoint intermittently *stalls* mid-write
-    (0% CPU, never errors). The chunked ContainerClient path (per-block, parallel)
-    survives it — the same approach the 465 MB raster used. Each attempt runs in a
-    daemon thread and is abandoned if it stalls past timeout_s, then retried."""
-    buf = io.BytesIO()
-    frame.to_parquet(buf, compression="zstd", index=False)
-    data = buf.getvalue()
-    cc = ContainerClient.from_connection_string(
-        settings.connection_string(write=True), container_name=settings.container
-    )
-    for attempt in range(tries):
-        result: dict = {}
-
-        def _do(result=result):
-            try:
-                cc.upload_blob(
-                    name=blob, data=data, overwrite=True, length=len(data), max_concurrency=8
-                )
-                result["ok"] = True
-            except Exception as e:  # noqa: BLE001 — network write, retry any failure
-                result["err"] = e
-
-        th = threading.Thread(target=_do, daemon=True)
-        th.start()
-        th.join(timeout_s)
-        if result.get("ok"):
-            return
-        reason = "stalled" if th.is_alive() else str(result.get("err", ""))[:60]
-        print(f"  upload attempt {attempt + 1}/{tries} failed ({reason}); retrying", flush=True)
-        time.sleep(3)
-    raise RuntimeError(f"upload failed after {tries} tries: {blob}")
+def _upload(frame, blob, settings) -> None:
+    """Serialize to parquet and upload via staged blocks (gie.blob). The SDK
+    sends blobs <= 64 MB as one long PUT that stalls on this flaky/slow uplink;
+    chunking into small per-request blocks gets it through reliably."""
+    upload_parquet_staged(frame, blob, settings, stage=STAGE)
 
 # (source, damaged-flag, analysed-buildings expression). Each source only
 # "analysed" within its own extent — MS within its footprint coverage, CEMS
@@ -100,6 +70,9 @@ SOURCES = [
     # damaged_extrapolated all fall out NULL, leaving only damaged_detected. When an
     # AOI lands, swap NULL for sum(hot_analysed::INT) to make it coverage-aware.
     ("hot_osm", "hot_dmg", "NULL"),
+    # OSU Sentinel-1 coherence: pre-keyed to Overture (id-join); analysed =
+    # inside the analyzed-area polygon (ADR-0009).
+    ("osu", "osu_dmg", "sum(osu_analysed::INT)"),
 ]
 GRAINS = [
     ("h3", "h3", None),
@@ -173,14 +146,14 @@ def _local_base(settings, stage: str = STAGE) -> str:
 
 
 def _local(settings, layer, *parts, stage: str = STAGE) -> str:
-    """Download a single input blob to local (cached) and return its path — same
-    reason as _local_base: this endpoint is currently stalling even small reads,
-    so we mirror every input to disk and let DuckDB read locally."""
+    """Download a single input blob to local and return its path (DuckDB then
+    reads locally). ALWAYS re-fetched, never cached: these silver / codab inputs
+    are small and change between runs, so caching them would serve stale data
+    (only the large, stable Overture base is cached — see _local_base)."""
     bp = settings.blob_path(layer, *parts)
     dst = os.path.join("/tmp/gie_local", bp)
-    if not os.path.exists(dst):
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-        _fetch(bp, dst, settings, stage)
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    _fetch(bp, dst, settings, stage)
     return dst
 
 
@@ -217,6 +190,13 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # HOT fAIr damage points (detected-only): snapped to the base like CEMS points.
     hot = _local(settings,
         "silver", "source=hot_osm", f"adm0={ADM0}", "damage_points.parquet"
+    )
+    # OSU S1 coherence: per-building damaged set (id-keyed to Overture) + extent (ADR-0009).
+    osu = _local(settings,
+        "silver", "source=osu", f"adm0={ADM0}", "building_damage.parquet"
+    )
+    osu_ext = _local(settings,
+        "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
     )
     adm3 = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
@@ -300,6 +280,11 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
                       FROM read_parquet('{hot}')) p
                 JOIN base b ON ST_Intersects(ST_Buffer(p.g, {tol}), b.geom)
             ) WHERE rn = 1
+        ),
+        osu_seen AS (
+            -- OSU-analysed = inside the analyzed-area polygon
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{osu_ext}') e ON ST_Within(b.c, e.geometry)
         )
         SELECT b.id,
             round(ST_X(b.c), 6) AS lon, round(ST_Y(b.c), 6) AS lat,
@@ -315,11 +300,15 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             (sd.id IS NOT NULL) AS sar_dmg,
             sd.damage_class AS sar_class,
             (b.id IN (SELECT id FROM sar_seen)) AS sar_analysed,
-            (b.id IN (SELECT id FROM hot_dmg)) AS hot_dmg
+            (b.id IN (SELECT id FROM hot_dmg)) AS hot_dmg,
+            (od.id IS NOT NULL) AS osu_dmg,
+            od.damage_class AS osu_class,
+            (b.id IN (SELECT id FROM osu_seen)) AS osu_analysed
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
         LEFT JOIN cems_dmg cd ON cd.id = b.id
         LEFT JOIN read_parquet('{sar}') sd ON sd.id = b.id
+        LEFT JOIN read_parquet('{osu}') od ON od.id = b.id
         """
     )
     print("  located table built", flush=True)
@@ -363,14 +352,15 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # Persist per-building damage/coverage flags for the agreement layer. Only
     # assessed buildings are ever used there, and the full base is now millions
     # of rows (a single blob write would time out), so keep just the assessed.
-    # TEMPORARY (ADR-0008): SAR contributes only its DAMAGED buildings to the
-    # per-building layer, NOT its ~1.9M analysed set — the untiled agreement view
-    # and a single blob write can't take that. Rectify with PMTiles: then add
-    # `OR sar_analysed` and carry sar_analysed through.
+    # TEMPORARY (ADR-0008, ADR-0009): the SAR and OSU sources contribute only their
+    # DAMAGED buildings to the per-building layer, NOT their full analysed sets
+    # (~1.9M / ~2.1M) — the untiled agreement view and a single blob write can't take that.
+    # Rectify with PMTiles: then add `OR sar_analysed`/`OR osu_analysed` and carry
+    # the analysed flags through.
     flags = con.execute(
         "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_class, cems_analysed, "
-        "sar_dmg, sar_class, hot_dmg "
-        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR hot_dmg"
+        "sar_dmg, sar_class, hot_dmg, osu_dmg, osu_class "
+        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR hot_dmg OR osu_dmg"
     ).df()
     print(f"  building_flags computed ({len(flags):,} rows), uploading", flush=True)
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
@@ -410,6 +400,12 @@ def _area_facts(con, settings) -> pd.DataFrame:
                 "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet"
             ),
             "",  # SAR footprint = raster bounds (ADR-0008)
+        ),
+        "osu": (
+            _local(settings,
+                "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
+            ),
+            "",  # OSU footprint = analyzed-area polygon (ADR-0009)
         ),
     }
     parts = []
