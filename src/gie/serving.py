@@ -355,6 +355,9 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
         # building_flags carries SAR damaged-only (ADR-0008): no sar_analysed
         # column, so the "assessed" set IS the damaged set here.
         dmg, seen = "sar_dmg", "sar_dmg"
+    elif source == "hot_osm":
+        # detected-only (no analysed AOI): assessed set IS the damaged set.
+        dmg, seen = "hot_dmg", "hot_dmg"
     else:
         dmg, seen = "cems_dmg", "cems_analysed"
     return con.execute(
@@ -373,6 +376,13 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
+    if source == "hot_osm":
+        # detected-only: fAIr published no analysed extent — nothing to outline.
+        return gpd.GeoDataFrame(
+            {"aoi_name": [], "product": [], "acquired": [], "source": []},
+            geometry=gpd.GeoSeries([], crs="EPSG:4326"),
+            crs="EPSG:4326",
+        )
     if source == "impact_initiatives":
         ext = settings.az_path(
             "silver", "source=impact_initiatives", f"adm0={adm0}", "analysed_extent.parquet"
@@ -421,6 +431,15 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),
             crs="EPSG:4326",
         )
+    if source == "hot_osm":
+        # fAIr's native geometry IS its damage points (grade + confidence per point).
+        path = settings.az_path("silver", "source=hot_osm", f"adm0={adm0}", "damage_points.parquet")
+        df = con.execute(
+            f"SELECT ems_grade, damage_class, confidence, ST_AsWKB(geometry) AS wkb "
+            f"FROM read_parquet('{path}')"
+        ).df()
+        geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
+        return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
     if source == "microsoft":
         path = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet")
         cols = "damaged"

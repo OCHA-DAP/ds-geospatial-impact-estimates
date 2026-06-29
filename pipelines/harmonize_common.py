@@ -95,6 +95,11 @@ SOURCES = [
     ("copernicus_ems", "cems_dmg", "sum(cems_analysed::INT)"),
     # IMPACT Sentinel-1 SAR proxy: analysed = inside the raster extent (ADR-0008).
     ("impact_initiatives", "sar_dmg", "sum(sar_analysed::INT)"),
+    # HOT fAIr damage points: detected-only. fAIr published no analysed AOI, so the
+    # analysed expression is NULL — analysed_buildings, coverage_fraction and
+    # damaged_extrapolated all fall out NULL, leaving only damaged_detected. When an
+    # AOI lands, swap NULL for sum(hot_analysed::INT) to make it coverage-aware.
+    ("hot_osm", "hot_dmg", "NULL"),
 ]
 GRAINS = [
     ("h3", "h3", None),
@@ -209,6 +214,10 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     sar_ext = _local(settings,
         "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet"
     )
+    # HOT fAIr damage points (detected-only): snapped to the base like CEMS points.
+    hot = _local(settings,
+        "silver", "source=hot_osm", f"adm0={ADM0}", "damage_points.parquet"
+    )
     adm3 = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
@@ -279,6 +288,18 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             -- SAR-analysed = inside the raster's bounds footprint (ADR-0008)
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{sar_ext}') e ON ST_Within(b.c, e.geometry)
+        ),
+        hot_dmg AS (
+            -- fAIr damage POINTS snapped to the nearest base footprint within
+            -- {SNAP_M} m (same rule as CEMS points): one point marks one building.
+            SELECT id FROM (
+                SELECT b.id,
+                    row_number() OVER (PARTITION BY p.fid
+                                       ORDER BY ST_Distance(b.geom, p.g)) AS rn
+                FROM (SELECT row_number() OVER () AS fid, geometry AS g
+                      FROM read_parquet('{hot}')) p
+                JOIN base b ON ST_Intersects(ST_Buffer(p.g, {tol}), b.geom)
+            ) WHERE rn = 1
         )
         SELECT b.id,
             round(ST_X(b.c), 6) AS lon, round(ST_Y(b.c), 6) AS lat,
@@ -293,7 +314,8 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             (b.id IN (SELECT id FROM cems_seen)) AS cems_analysed,
             (sd.id IS NOT NULL) AS sar_dmg,
             sd.damage_class AS sar_class,
-            (b.id IN (SELECT id FROM sar_seen)) AS sar_analysed
+            (b.id IN (SELECT id FROM sar_seen)) AS sar_analysed,
+            (b.id IN (SELECT id FROM hot_dmg)) AS hot_dmg
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
         LEFT JOIN cems_dmg cd ON cd.id = b.id
@@ -347,8 +369,8 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # `OR sar_analysed` and carry sar_analysed through.
     flags = con.execute(
         "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_class, cems_analysed, "
-        "sar_dmg, sar_class "
-        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg"
+        "sar_dmg, sar_class, hot_dmg "
+        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR hot_dmg"
     ).df()
     print(f"  building_flags computed ({len(flags):,} rows), uploading", flush=True)
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
