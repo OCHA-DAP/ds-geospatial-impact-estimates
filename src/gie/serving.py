@@ -208,20 +208,24 @@ _EXPORT_GLOSSARY = [
     ("unit_id", "OCHA COD pcode of the admin unit."),
     (
         "source",
-        "Damage source: 'microsoft' (AI per-building damage on Microsoft footprints) or "
-        "'copernicus_ems' (Copernicus EMS rapid-mapping damage grades).",
+        "Damage source (one row per source per unit): 'microsoft' (AI per-building damage on "
+        "Microsoft footprints), 'copernicus_ems' (Copernicus EMS rapid-mapping damage grades), "
+        "'impact_initiatives' (IMPACT Sentinel-1 SAR damage proxy), 'osu' (OSU Sentinel-1 "
+        "coherence damage), and 'hot_osm' (HOTOSM fAIr AI damage points — detected-only).",
     ),
     (
         "total_buildings",
         "Total buildings in the unit: Overture footprints whose centroid is inside it "
         "(Overture = Microsoft ML + Google Open Buildings + OSM, deduplicated; pulled for "
-        "the full admin-1 state, so the count is complete). Identical for both sources.",
+        "the full admin-1 state, so the count is complete). Identical across sources.",
     ),
     (
         "analysed_buildings",
         "Of total_buildings, those inside the source's valid analysed area — where it "
-        "actually assessed. Copernicus: image footprint within the AOI, minus cloud / "
-        "no-data. Microsoft: its valid-area mask.",
+        "actually assessed. Copernicus EMS: image footprint within the AOI, minus cloud / "
+        "no-data. Microsoft: its valid-area mask. IMPACT SAR / OSU: the source's analysed "
+        "coverage footprint. HOTOSM fAIr: blank — it ships only damage points with no "
+        "published analysed area (detected-only), so coverage and damage_fraction are empty.",
     ),
     (
         "pct_buildings_covered",
@@ -233,14 +237,16 @@ _EXPORT_GLOSSARY = [
         "Buildings flagged damaged within the analysed area, counting any grade together "
         "(Possibly damaged, Damaged, or Destroyed). Microsoft: an AI-flagged damaged "
         "footprint. Copernicus EMS: an Overture building matched to a per-building damage "
-        "point from its latest assessment (points snapped to the nearest footprint within "
-        "20 m). Where a Copernicus AOI has only its earlier coarse damage-area blocks and "
-        "no points yet, those blocks are used instead.",
+        "point from its latest assessment (snapped to the nearest footprint within 20 m), or, "
+        "where only the earlier coarse damage-area blocks exist, the buildings those blocks "
+        "cover. IMPACT SAR / OSU: an Overture building flagged damaged by the source. "
+        "HOTOSM fAIr: an Overture building matched to a fAIr damage point (snapped within 20 m).",
     ),
     (
         "damage_fraction",
         "damaged / analysed_buildings — the observed damage rate within the assessed area "
-        "(NOT over the whole unit).",
+        "(NOT over the whole unit). Blank for detected-only sources with no analysed area "
+        "(HOTOSM fAIr).",
     ),
     (
         "analysed_area_km2",
@@ -276,7 +282,10 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
     rm.sheet_view.showGridLines = False
     rm["A1"] = "Venezuela Earthquake — Building Damage Exposure by Admin Unit"
     rm["A1"].font = Font(bold=True, size=22, color="3E8F6B")
-    rm["A2"] = "Microsoft vs Copernicus EMS — buildings & damage by OCHA COD admin 1 / 2 / 3"
+    rm["A2"] = (
+        "Multi-source — Microsoft, Copernicus EMS, IMPACT SAR, OSU & HOTOSM fAIr — "
+        "buildings & damage by OCHA COD admin 1 / 2 / 3"
+    )
     rm["A2"].font = Font(italic=True, size=13, color="333333")
     rm["A3"] = (
         f"OCHA Centre for Humanitarian Data  ·  activation EMSR884  ·  "
