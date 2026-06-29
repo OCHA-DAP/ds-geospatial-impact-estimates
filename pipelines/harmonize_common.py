@@ -30,16 +30,15 @@ Run: uv run --group etl python pipelines/harmonize_common.py
 
 from __future__ import annotations
 
-import io
 import os
 import threading
 import time
 
 import ocha_stratus as stratus
 import pandas as pd
-from azure.storage.blob import ContainerClient
 
 from gie import ledger
+from gie.blob import upload_parquet_staged
 from gie.config import DEFAULT_H3_RESOLUTION, load_settings
 
 METHOD = "common_overture_v1"
@@ -51,40 +50,11 @@ STAGE = "dev"
 SNAP_M = 20
 
 
-def _upload(frame, blob, settings, tries: int = 5, timeout_s: int = 90) -> None:
-    """Serialize to parquet and upload via a chunked, concurrent block upload.
-
-    The single-shot blob write on this endpoint intermittently *stalls* mid-write
-    (0% CPU, never errors). The chunked ContainerClient path (per-block, parallel)
-    survives it — the same approach the 465 MB raster used. Each attempt runs in a
-    daemon thread and is abandoned if it stalls past timeout_s, then retried."""
-    buf = io.BytesIO()
-    frame.to_parquet(buf, compression="zstd", index=False)
-    data = buf.getvalue()
-    cc = ContainerClient.from_connection_string(
-        settings.connection_string(write=True), container_name=settings.container
-    )
-    for attempt in range(tries):
-        result: dict = {}
-
-        def _do(result=result):
-            try:
-                cc.upload_blob(
-                    name=blob, data=data, overwrite=True, length=len(data), max_concurrency=8
-                )
-                result["ok"] = True
-            except Exception as e:  # noqa: BLE001 — network write, retry any failure
-                result["err"] = e
-
-        th = threading.Thread(target=_do, daemon=True)
-        th.start()
-        th.join(timeout_s)
-        if result.get("ok"):
-            return
-        reason = "stalled" if th.is_alive() else str(result.get("err", ""))[:60]
-        print(f"  upload attempt {attempt + 1}/{tries} failed ({reason}); retrying", flush=True)
-        time.sleep(3)
-    raise RuntimeError(f"upload failed after {tries} tries: {blob}")
+def _upload(frame, blob, settings) -> None:
+    """Serialize to parquet and upload via staged blocks (gie.blob). The SDK
+    sends blobs <= 64 MB as one long PUT that stalls on this flaky/slow uplink;
+    chunking into small per-request blocks gets it through reliably."""
+    upload_parquet_staged(frame, blob, settings, stage=STAGE)
 
 # (source, damaged-flag, analysed-buildings expression). Each source only
 # "analysed" within its own extent — MS within its footprint coverage, CEMS
@@ -171,14 +141,14 @@ def _local_base(settings, stage: str = STAGE) -> str:
 
 
 def _local(settings, layer, *parts, stage: str = STAGE) -> str:
-    """Download a single input blob to local (cached) and return its path — same
-    reason as _local_base: this endpoint is currently stalling even small reads,
-    so we mirror every input to disk and let DuckDB read locally."""
+    """Download a single input blob to local and return its path (DuckDB then
+    reads locally). ALWAYS re-fetched, never cached: these silver / codab inputs
+    are small and change between runs, so caching them would serve stale data
+    (only the large, stable Overture base is cached — see _local_base)."""
     bp = settings.blob_path(layer, *parts)
     dst = os.path.join("/tmp/gie_local", bp)
-    if not os.path.exists(dst):
-        os.makedirs(os.path.dirname(dst), exist_ok=True)
-        _fetch(bp, dst, settings, stage)
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    _fetch(bp, dst, settings, stage)
     return dst
 
 
