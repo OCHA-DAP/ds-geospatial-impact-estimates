@@ -262,12 +262,6 @@ function buildLayers() {
         getHexagon: (d: any) => d.h3,
         getFillColor: (d: any) => metricColor(m, metricValue(d, m), hMax),
         updateTriggers: { getFillColor: [m, hMax] },
-        // thin gray outline so data-covered cells read as a grid — makes the edge
-        // of coverage (where the hexes stop) easy to see against the basemap
-        stroked: true,
-        filled: true,
-        getLineColor: [150, 158, 168, 120],
-        lineWidthMinPixels: 0.6,
         onHover: (info: any) =>
           info.object ? showTip(info.x, info.y, tip(SOURCE_LABEL[s] ?? s, info.object)) : hideTip(),
       }),
