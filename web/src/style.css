@@ -75,23 +75,40 @@ html, body { margin: 0; height: 100%; }
   z-index: 2;
   top: 16px;
   right: 16px;
-  width: 296px;
-  padding: 11px 30px 12px 14px;
-  font-size: 11.5px;
-  line-height: 1.46;
-  color: rgba(255, 255, 255, 0.82);
-  background: rgba(18, 24, 33, 0.52);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 660px;
+  padding: 7px 32px 7px 16px;
+  color: #1c2430;
+  background: rgba(255, 255, 255, 0.74);
   backdrop-filter: blur(12px) saturate(125%);
   -webkit-backdrop-filter: blur(12px) saturate(125%);
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 10px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.18);
 }
+.about-logo {
+  height: 28px;
+  width: auto;
+  flex: none;
+  opacity: 0.5;
+  padding-right: 15px;
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+}
+.about-text { font-size: 11px; line-height: 1.4; }
 #about p { margin: 0; }
-#about b { color: #fff; font-weight: 600; }
+#about b { color: #0d1722; font-weight: 600; }
+#about .about-contact {
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: #5d6b7a;
+}
+#about .about-contact a { color: #2563cd; text-decoration: none; }
+#about .about-contact a:hover { text-decoration: underline; }
 #about-close {
   position: absolute; top: 5px; right: 7px; padding: 2px;
   background: none; border: none; cursor: pointer; line-height: 1;
-  color: rgba(255, 255, 255, 0.5); font-size: 16px;
+  color: rgba(0, 0, 0, 0.4); font-size: 16px;
 }
-#about-close:hover { color: rgba(255, 255, 255, 0.92); }
+#about-close:hover { color: rgba(0, 0, 0, 0.75); }
