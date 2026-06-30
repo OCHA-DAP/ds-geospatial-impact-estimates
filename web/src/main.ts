@@ -1,6 +1,7 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 import maplibregl from "maplibre-gl";
+import { Protocol } from "pmtiles";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
@@ -69,6 +70,62 @@ const map = new maplibregl.Map({
 });
 const overlay = new MapboxOverlay({ interleaved: false, layers: [] });
 map.addControl(overlay as any);
+
+// --- v2 serving: EXPLICIT per-layer registry (no silent fallback). Each native
+// source is served either from PMTiles (converted) or deck.gl (not converted
+// yet). Flip an entry from "deckgl" to "pmtiles" as a layer is converted. ---
+type Serving = { mode: "pmtiles"; file: string; sourceLayer: string } | { mode: "deckgl" };
+const LAYER_SERVING: Record<string, Serving> = {
+  microsoft: {
+    mode: "pmtiles",
+    file: "platinum/native-microsoft/footprints.pmtiles",
+    sourceLayer: "footprints",
+  },
+  copernicus_ems: { mode: "deckgl" },
+  impact_initiatives: { mode: "deckgl" },
+  osu: { mode: "deckgl" },
+  hot_osm: { mode: "deckgl" },
+};
+const usePmtiles = (s: string) => LAYER_SERVING[s]?.mode === "pmtiles";
+
+maplibregl.addProtocol("pmtiles", new Protocol().tile);
+
+// Add a MapLibre PMTiles fill layer for each "pmtiles" source (hidden until shown
+// by syncPmtiles). The read SAS + catalog base URL come from /api/token.
+async function setupPmtiles() {
+  const converted = Object.entries(LAYER_SERVING).filter(([, v]) => v.mode === "pmtiles") as [
+    string,
+    Extract<Serving, { mode: "pmtiles" }>,
+  ][];
+  if (!converted.length) return;
+  const tok = await fetch("/api/token").then((r) => r.json());
+  for (const [s, v] of converted) {
+    map.addSource(`pmt-${s}`, {
+      type: "vector",
+      url: `pmtiles://${tok.base_url}/${v.file}?${tok.sas}`,
+    });
+    map.addLayer({
+      id: `pmt-${s}`,
+      type: "fill",
+      source: `pmt-${s}`,
+      "source-layer": v.sourceLayer,
+      layout: { visibility: "none" },
+      paint: {
+        "fill-color": ["case", ["==", ["get", "damaged"], 1], "#dc1e1e", "#788090"],
+        "fill-opacity": ["case", ["==", ["get", "damaged"], 1], 0.8, 0.28],
+      },
+    } as any);
+  }
+}
+
+// Show a source's PMTiles layer only when its native view is active.
+function syncPmtiles() {
+  for (const s of Object.keys(LAYER_SERVING)) {
+    if (!usePmtiles(s) || !map.getLayer(`pmt-${s}`)) continue;
+    const show = state.view === "native" && state.show.buildings && state.sources.has(s);
+    map.setLayoutProperty(`pmt-${s}`, "visibility", show ? "visible" : "none");
+  }
+}
 
 // Optional satellite basemap (Esri World Imagery), drawn under the place labels.
 const satEl = document.getElementById("satellite") as HTMLInputElement | null;
@@ -368,6 +425,7 @@ function buildLayers() {
         }),
       );
     } else {
+      if (usePmtiles(s)) continue; // served by its MapLibre PMTiles layer, not deck.gl
       const nat = nativeCache.get(s);
       if (!nat) continue;
       layers.push(
@@ -461,6 +519,7 @@ function buildLayers() {
   }
 
   overlay.setProps({ layers });
+  syncPmtiles();
 }
 
 function renderLegend() {
@@ -573,7 +632,8 @@ async function refresh() {
       if (state.show.admin) tasks.push(ensureAdmin(s, state.adminLevel));
       if (state.show.h3) tasks.push(ensureH3(s));
       if (state.show.buildings && state.view === "overture") tasks.push(ensureBuildings(s));
-      if (state.show.buildings && state.view === "native") tasks.push(ensureNative(s));
+      if (state.show.buildings && state.view === "native" && !usePmtiles(s))
+        tasks.push(ensureNative(s));
       if (state.show.extent) tasks.push(ensureExtent(s));
       if (state.show.extent && s === "copernicus_ems") tasks.push(ensureCoverageDetail());
     }
@@ -610,6 +670,7 @@ async function refresh() {
 const el = (id: string) => document.getElementById(id)!;
 
 async function init() {
+  await setupPmtiles();
   const meta = await fetch("/api/sources").then((r) => r.json());
   const sources: string[] = meta.sources;
   METRICS = [

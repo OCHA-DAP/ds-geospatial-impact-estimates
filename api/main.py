@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
+from gie.config import load_settings
 from gie.serving import (
     export_workbook,
     list_sources,
@@ -101,6 +102,23 @@ METRICS = [
 @app.get("/api/sources")
 def sources(adm0: str = "VE") -> dict:
     return {"sources": _sources(adm0), "adm0": adm0, "metrics": METRICS}
+
+
+@app.get("/api/token")
+def token() -> dict:
+    """Blob read access for the v2 client-side serving path (PMTiles + hyparquet).
+
+    Returns a read SAS + the catalog base URL so the SPA can range-read PMTiles
+    and GeoParquet directly from blob. Phase 1 returns the configured read SAS;
+    a short-lived user-delegation SAS (managed identity) is a later hardening.
+    """
+    s = load_settings()
+    return {
+        "account": s.account_name,
+        "container": s.container,
+        "base_url": f"https://{s.account_host}/{s.container}/{s.project_prefix}",
+        "sas": s.sas_token(write=False),
+    }
 
 
 @app.get("/api/common/h3")
