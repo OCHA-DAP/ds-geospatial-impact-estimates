@@ -41,6 +41,7 @@ STAGE = "dev"
 LAYERS: dict[str, tuple[str, str, tuple[str, str] | None]] = {
     "native-microsoft": ("silver", f"source=microsoft/adm0={ADM0}/footprints.parquet", None),
     "native-cems": ("silver", f"source=copernicus_ems/adm0={ADM0}/builtup_damage.parquet", None),
+    "native-hot_osm": ("silver", f"source=hot_osm/adm0={ADM0}/damage_points.parquet", None),
     "admin-adm1": ("bronze", f"source=codab/adm0={ADM0}/adm1.parquet", None),
     "admin-adm2": ("bronze", f"source=codab/adm0={ADM0}/adm2.parquet", None),
     "admin-adm3": ("bronze", f"source=codab/adm0={ADM0}/adm3.parquet", None),

@@ -147,7 +147,28 @@ const LAYER_SERVING: Record<string, Serving> = {
   },
   impact_initiatives: { mode: "deckgl" },
   osu: { mode: "deckgl" },
-  hot_osm: { mode: "deckgl" },
+  hot_osm: {
+    mode: "pmtiles",
+    file: "platinum/native-hot_osm/damage_points.pmtiles",
+    sourceLayer: "damage_points",
+    layers: [
+      {
+        id: "pmt-hot",
+        spec: {
+          type: "circle",
+          paint: {
+            "circle-color": DAMAGE_BY_CLASS,
+            "circle-opacity": 0.85,
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 15, 7],
+            "circle-stroke-width": 0,
+          },
+        },
+      },
+    ],
+    hover: (p) =>
+      `${SOURCE_LABEL["hot_osm"] ?? "hot_osm"}<br>grade: ${p.ems_grade}` +
+      (p.confidence != null ? `<br>confidence: ${Math.round(p.confidence * 100)}%` : ""),
+  },
 };
 const usePmtiles = (s: string) => LAYER_SERVING[s]?.mode === "pmtiles";
 
