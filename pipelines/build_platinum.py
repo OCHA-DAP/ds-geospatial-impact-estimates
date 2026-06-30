@@ -35,7 +35,7 @@ import geopandas as gpd
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import ledger
+from gie import db, ledger
 from gie.config import load_settings
 
 ADM0 = "VE"
@@ -70,6 +70,27 @@ def _portolan(args: list[str], cwd: str, env: dict | None = None) -> None:
         print(r.stdout.decode(errors="replace")[-1500:])
         print(r.stderr.decode(errors="replace")[-1500:])
         raise RuntimeError(f"portolan {' '.join(args)} failed ({r.returncode})")
+
+
+def export_values(settings) -> None:
+    """Write the slim admin facts parquet for client-side hyparquet reads.
+
+    facts.parquet is dominated by ~926k h3 rows; the admin choropleth needs only
+    the ~12k adm1/2/3 rows. Writing just those to platinum/values keeps the
+    browser read tiny. Snappy (not zstd) so plain hyparquet can decode it. (H3
+    values get their own slim file when H3 is converted.)
+    """
+    con = db.connect()
+    src = settings.az_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet")
+    df = con.execute(
+        f"SELECT source, unit_type, unit_id, unit_name, metric, value "
+        f"FROM read_parquet('{src}') WHERE unit_type IN ('adm1', 'adm2', 'adm3')"
+    ).df()
+    dest = f"{settings.project_prefix}/platinum/values/facts-admin.parquet"
+    stratus.upload_parquet_to_blob(
+        df, dest, stage=STAGE, container_name=settings.container, compression="snappy"
+    )
+    print(f"  values <- {dest}  ({len(df):,} admin rows)", flush=True)
 
 
 def main(only: list[str] | None = None) -> None:
@@ -110,6 +131,7 @@ def main(only: list[str] | None = None) -> None:
     }
     # Push the whole persistent catalog; Portolan syncs only changed collections.
     _portolan(["push", dest, "--force"], cwd=str(cat), env=env)
+    export_values(settings)  # slim values parquet for hyparquet (admin choropleth)
     ledger.record(
         "platinum",
         "platinum",

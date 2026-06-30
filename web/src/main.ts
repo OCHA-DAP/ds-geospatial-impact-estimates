@@ -2,6 +2,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 import maplibregl from "maplibre-gl";
 import { Protocol } from "pmtiles";
+import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
@@ -236,6 +237,98 @@ function syncBuildings() {
   }
 }
 
+// Admin choropleth (v2): boundaries from admin PMTiles, values from hyparquet,
+// each unit coloured via setFeatureState. Reuses adminCache/byUnit/metricColor/
+// adminTip — only the data source + render path change. Being a real MapLibre
+// layer, it sits IN the stack (fixes the deck.gl "always on top of tiles" issue).
+const ADMIN_SERVING: "pmtiles" | "deckgl" = "pmtiles";
+
+async function setupAdmin() {
+  if (ADMIN_SERVING !== "pmtiles") return;
+  const tok = await fetch("/api/token").then((r) => r.json());
+  // values: read the slim admin facts parquet, pivot into adminCache (properties
+  // only — geometry comes from the tiles now) so the existing logic is reused.
+  const rows = (await parquetReadObjects({
+    file: await asyncBufferFromUrl({
+      url: `${tok.base_url}/platinum/values/facts-admin.parquet?${tok.sas}`,
+    }),
+  })) as any[];
+  const byKey = new Map<string, Map<string, any>>();
+  for (const r of rows) {
+    const lvl = Number(String(r.unit_type).replace("adm", ""));
+    const k = `${r.source}:${lvl}`;
+    let units = byKey.get(k);
+    if (!units) byKey.set(k, (units = new Map()));
+    let p = units.get(r.unit_id);
+    if (!p) units.set(r.unit_id, (p = { unit_id: r.unit_id, unit_name: r.unit_name }));
+    p[r.metric] = r.value;
+  }
+  for (const [k, units] of byKey)
+    adminCache.set(k, { features: [...units.values()].map((p) => ({ properties: p })) });
+  // boundaries: one vector source + fill/line per level (hidden until shown).
+  // Insert BELOW the basemap labels so labels stay readable — this is the
+  // layering the deck.gl admin (drawn over everything) couldn't do.
+  const labelId = map.getStyle().layers?.find((l: any) => l.type === "symbol")?.id;
+  for (const lvl of [1, 2, 3]) {
+    const src = `pmt-src-admin-${lvl}`;
+    const sl = `adm${lvl}`;
+    map.addSource(src, {
+      type: "vector",
+      url: `pmtiles://${tok.base_url}/platinum/admin-adm${lvl}/adm${lvl}.pmtiles?${tok.sas}`,
+      promoteId: `adm${lvl}_id`,
+    });
+    map.addLayer({
+      id: `pmt-admin-${lvl}-fill`,
+      source: src,
+      "source-layer": sl,
+      type: "fill",
+      layout: { visibility: "none" },
+      paint: {
+        "fill-color": ["coalesce", ["feature-state", "color"], "rgba(0,0,0,0)"],
+        "fill-opacity": 0.6,
+      },
+    } as any, labelId);
+    map.addLayer({
+      id: `pmt-admin-${lvl}-line`,
+      source: src,
+      "source-layer": sl,
+      type: "line",
+      layout: { visibility: "none" },
+      paint: { "line-color": "rgb(55,65,80)", "line-width": 1, "line-opacity": 0.45 },
+    } as any, labelId);
+    map.on("mousemove", `pmt-admin-${lvl}-fill`, (e: any) => {
+      const f = e.features?.[0];
+      if (f)
+        showTip(e.point.x, e.point.y, adminTip(f.properties[`adm${lvl}_id`], f.properties[`adm${lvl}_name`]));
+    });
+    map.on("mouseleave", `pmt-admin-${lvl}-fill`, hideTip);
+  }
+}
+
+// Colour each unit by the max-across-sources value (byUnit, computed in buildLayers).
+function applyAdminState(byUnit: Map<string, any>, m: string, aMax: number) {
+  const lvl = state.adminLevel;
+  const src = `pmt-src-admin-${lvl}`;
+  const sl = `adm${lvl}`;
+  map.removeFeatureState({ source: src, sourceLayer: sl });
+  for (const [unitId, { v }] of byUnit) {
+    const c = metricColor(m, v, aMax);
+    map.setFeatureState({ source: src, sourceLayer: sl, id: unitId }, { color: `rgb(${c[0]},${c[1]},${c[2]})` });
+  }
+}
+
+// Show only the active admin level's fill+line (when admin is on).
+function syncAdmin() {
+  if (ADMIN_SERVING !== "pmtiles") return;
+  for (const lvl of [1, 2, 3]) {
+    const vis = state.show.admin && state.sources.size && lvl === state.adminLevel ? "visible" : "none";
+    for (const suf of ["fill", "line"]) {
+      const id = `pmt-admin-${lvl}-${suf}`;
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", vis);
+    }
+  }
+}
+
 maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
 // Add each "pmtiles" source's MapLibre layers (hidden until shown by syncPmtiles)
@@ -459,28 +552,32 @@ function buildLayers() {
         }
       }
     }
-    const feats = [...byUnit.values()].map(({ f, v }) => ({
-      ...f,
-      properties: { ...f.properties, _v: v },
-    }));
-    layers.push(
-      new GeoJsonLayer({
-        id: `admin-${state.adminLevel}`,
-        data: { type: "FeatureCollection", features: feats },
-        pickable: true,
-        filled: true,
-        stroked: true,
-        opacity: 0.6,
-        getLineColor: [55, 65, 80, 200],
-        lineWidthMinPixels: 1,
-        getFillColor: (f: any) => metricColor(m, f.properties._v, aMax),
-        updateTriggers: { getFillColor: [m, state.adminLevel, aMax, sources.join()] },
-        onHover: (info: any) =>
-          info.object
-            ? showTip(info.x, info.y, adminTip(info.object.properties.unit_id, info.object.properties.unit_name))
-            : hideTip(),
-      }),
-    );
+    if (ADMIN_SERVING === "pmtiles") {
+      applyAdminState(byUnit, m, aMax); // colour the MapLibre admin layer in-place
+    } else {
+      const feats = [...byUnit.values()].map(({ f, v }) => ({
+        ...f,
+        properties: { ...f.properties, _v: v },
+      }));
+      layers.push(
+        new GeoJsonLayer({
+          id: `admin-${state.adminLevel}`,
+          data: { type: "FeatureCollection", features: feats },
+          pickable: true,
+          filled: true,
+          stroked: true,
+          opacity: 0.6,
+          getLineColor: [55, 65, 80, 200],
+          lineWidthMinPixels: 1,
+          getFillColor: (f: any) => metricColor(m, f.properties._v, aMax),
+          updateTriggers: { getFillColor: [m, state.adminLevel, aMax, sources.join()] },
+          onHover: (info: any) =>
+            info.object
+              ? showTip(info.x, info.y, adminTip(info.object.properties.unit_id, info.object.properties.unit_name))
+              : hideTip(),
+        }),
+      );
+    }
   }
 
   // h3: ONE layer, each cell coloured by the MAX metric value across selected sources.
@@ -672,6 +769,7 @@ function buildLayers() {
   overlay.setProps({ layers });
   syncPmtiles();
   syncBuildings();
+  syncAdmin();
 }
 
 function renderLegend() {
@@ -781,7 +879,7 @@ async function refresh() {
   try {
     const tasks: Promise<any>[] = [];
     for (const s of state.sources) {
-      if (state.show.admin) tasks.push(ensureAdmin(s, state.adminLevel));
+      if (state.show.admin && ADMIN_SERVING !== "pmtiles") tasks.push(ensureAdmin(s, state.adminLevel));
       if (state.show.h3) tasks.push(ensureH3(s));
       if (state.show.buildings && state.view === "overture" && OVERTURE_SERVING !== "pmtiles")
         tasks.push(ensureBuildings(s));
@@ -823,8 +921,18 @@ async function refresh() {
 const el = (id: string) => document.getElementById(id)!;
 
 async function init() {
-  await setupPmtiles();
-  await setupBuildings();
+  // PMTiles/hyparquet setup is additive — a failure must never blank the app.
+  for (const [name, fn] of [
+    ["pmtiles", setupPmtiles],
+    ["buildings", setupBuildings],
+    ["admin", setupAdmin],
+  ] as const) {
+    try {
+      await fn();
+    } catch (e) {
+      console.error(`v2 ${name} setup failed:`, e);
+    }
+  }
   const meta = await fetch("/api/sources").then((r) => r.json());
   const sources: string[] = meta.sources;
   METRICS = [
