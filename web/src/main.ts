@@ -997,3 +997,72 @@ document.querySelectorAll<HTMLInputElement>("input[data-layer]").forEach((box) =
 );
 
 map.on("load", init);
+
+// --- methodology slide-over: glass panel of how the map is built + per-source cards ---
+const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }[] = [
+  {
+    key: "copernicus_ems",
+    tag: "Reference · expert-mapped",
+    blurb:
+      "Copernicus Emergency Management Service rapid mapping. Trained analysts grade individual buildings from very-high-resolution satellite imagery.",
+    note: "The most authoritative signal — but only where an activation was mapped.",
+  },
+  {
+    key: "impact_initiatives",
+    tag: "Screening · radar",
+    blurb:
+      "A Sentinel-1 SAR damage proxy: change in radar coherence before and after the event flags likely structural damage across a wide footprint.",
+    note: "A hotspot screen, not confirmed damage — it casts a wide net.",
+  },
+  {
+    key: "microsoft",
+    tag: "AI · per-building",
+    blurb:
+      "Machine-learning damage labels on Microsoft's global building footprints, classifying each footprint from post-event imagery.",
+    note: "Dense, automated coverage wherever imagery allows.",
+  },
+  {
+    key: "osu",
+    tag: "Research · radar",
+    blurb:
+      "Ohio State University Sentinel-1 coherence analysis. Loss of radar coherence serves as an independent indicator of damage.",
+    note: "A second, independent radar opinion alongside the SAR proxy.",
+  },
+  {
+    key: "hot_osm",
+    tag: "Community · ML",
+    blurb:
+      "The Humanitarian OpenStreetMap Team's fAIr model detects damaged buildings from imagery, aligned to the OpenStreetMap community base.",
+    note: "Open, community-driven detection.",
+  },
+];
+
+function renderMethodsCards() {
+  const host = document.getElementById("methods-cards");
+  if (!host) return;
+  host.innerHTML = METHODS_SOURCES.map((m, i) => {
+    const c = SOURCE_COLOR[m.key] ?? [120, 120, 120];
+    return (
+      `<article class="source-card" style="--accent:rgb(${c.join(",")});animation-delay:${i * 65}ms">` +
+      `<div class="card-glow"></div>` +
+      `<div class="card-top"><span class="card-dot"></span><h3>${SOURCE_LABEL[m.key] ?? m.key}</h3></div>` +
+      `<span class="card-chip">${m.tag}</span>` +
+      `<p class="card-blurb">${m.blurb}</p>` +
+      `<p class="card-note">${m.note}</p>` +
+      `</article>`
+    );
+  }).join("");
+}
+
+const methodsEl = document.getElementById("methods");
+const openMethods = () => {
+  renderMethodsCards();
+  methodsEl?.removeAttribute("hidden");
+};
+const closeMethods = () => methodsEl?.setAttribute("hidden", "");
+document.getElementById("methods-open")?.addEventListener("click", openMethods);
+document.getElementById("methods-close")?.addEventListener("click", closeMethods);
+methodsEl?.querySelector(".methods-bg")?.addEventListener("click", closeMethods);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && methodsEl && !methodsEl.hasAttribute("hidden")) closeMethods();
+});

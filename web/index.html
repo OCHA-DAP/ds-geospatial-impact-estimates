@@ -13,6 +13,7 @@
       <img src="/ocha_logo.svg" alt="OCHA" class="panel-logo" width="117" height="28" />
       <h1>Venezuela earthquake (EMSR884)</h1>
       <p class="sub">Damage Exposure</p>
+      <button id="methods-open" class="methods-trigger" type="button">✦ Methodology &amp; sources</button>
 
       <div class="divider"></div>
 
@@ -87,6 +88,22 @@
     </div>
 
     <div id="tooltip"></div>
+
+    <div id="methods" class="methods" hidden>
+      <div class="methods-bg"></div>
+      <div class="methods-sheet" role="dialog" aria-modal="true" aria-label="Methodology and data sources">
+        <button id="methods-close" class="methods-close" type="button" aria-label="Close">×</button>
+        <div class="methods-scroll">
+          <header class="methods-head">
+            <p class="methods-eyebrow">Behind the map</p>
+            <h2>How this map is made</h2>
+            <p class="methods-lede">Every source is normalised onto a common <b>Overture</b> building base, with damage aligned to the <b>Copernicus EMS</b> grades and reported <b>coverage-aware</b> — so each admin unit or H3 cell shows the damage fraction within the area a source actually analysed, and the map colours by the <b>highest signal</b> across the sources you've selected.</p>
+          </header>
+          <div id="methods-cards" class="methods-cards"></div>
+          <p class="methods-foot">An exploratory tool from the OCHA Centre for Humanitarian Data — read each source on its own terms.</p>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
