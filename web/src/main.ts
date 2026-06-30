@@ -72,16 +72,79 @@ const overlay = new MapboxOverlay({ interleaved: false, layers: [] });
 map.addControl(overlay as any);
 
 // --- v2 serving: EXPLICIT per-layer registry (no silent fallback). Each native
-// source is served either from PMTiles (converted) or deck.gl (not converted
-// yet). Flip an entry from "deckgl" to "pmtiles" as a layer is converted. ---
-type Serving = { mode: "pmtiles"; file: string; sourceLayer: string } | { mode: "deckgl" };
+// source is served from PMTiles (converted) or deck.gl (not yet). A converted
+// source declares its own MapLibre layer spec(s) + hover, mirroring the deck.gl
+// look. Flip a source from "deckgl" to "pmtiles" once its tiles + styling exist.
+//
+// CEMS damage colour ramp by class (1 possibly .. 3 destroyed) — the discrete
+// values match the deck.gl damageColor(max(0.25, class/3)) the native view used.
+const DAMAGE_BY_CLASS: any = [
+  "match",
+  ["get", "damage_class"],
+  1, "rgb(241,173,145)",
+  2, "rgb(231,101,83)",
+  3, "rgb(222,30,20)",
+  "rgb(225,60,40)",
+];
+type PmLayer = { id: string; spec: any };
+type Serving =
+  | { mode: "pmtiles"; file: string; sourceLayer: string; layers: PmLayer[]; hover: (p: any) => string }
+  | { mode: "deckgl" };
+
 const LAYER_SERVING: Record<string, Serving> = {
   microsoft: {
     mode: "pmtiles",
     file: "platinum/native-microsoft/footprints.pmtiles",
     sourceLayer: "footprints",
+    layers: [
+      {
+        id: "pmt-microsoft",
+        spec: {
+          type: "fill",
+          paint: {
+            "fill-color": ["case", ["==", ["get", "damaged"], 1], "#dc1e1e", "#788090"],
+            "fill-opacity": ["case", ["==", ["get", "damaged"], 1], 0.8, 0.28],
+          },
+        },
+      },
+    ],
+    hover: (p) => `Microsoft footprint<br>damaged: ${p.damaged ? "yes" : "no"}`,
   },
-  copernicus_ems: { mode: "deckgl" },
+  copernicus_ems: {
+    mode: "pmtiles",
+    file: "platinum/native-cems/builtup_damage.pmtiles",
+    sourceLayer: "builtup_damage",
+    // Mirror load_native: latest per-building POINTS + ALL coarse AREA blocks.
+    // Areas = translucent fills, points = solid circles — like the deck.gl view.
+    layers: [
+      {
+        id: "pmt-cems-area",
+        spec: {
+          type: "fill",
+          filter: ["==", ["get", "layer_type"], "area"],
+          paint: { "fill-color": DAMAGE_BY_CLASS, "fill-opacity": 0.24 },
+        },
+      },
+      {
+        id: "pmt-cems-point",
+        spec: {
+          type: "circle",
+          filter: ["all", ["==", ["get", "layer_type"], "point"], ["get", "is_latest"]],
+          paint: {
+            "circle-color": DAMAGE_BY_CLASS,
+            "circle-opacity": 0.85,
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 15, 7],
+            "circle-stroke-width": 0,
+          },
+        },
+      },
+    ],
+    hover: (p) =>
+      `Copernicus EMS<br>grade: ${p.ems_grade}` +
+      (p.layer_type
+        ? `<br>${p.layer_type === "area" ? "coarse block (early estimate)" : "per-building point"}`
+        : ""),
+  },
   impact_initiatives: { mode: "deckgl" },
   osu: { mode: "deckgl" },
   hot_osm: { mode: "deckgl" },
@@ -90,8 +153,8 @@ const usePmtiles = (s: string) => LAYER_SERVING[s]?.mode === "pmtiles";
 
 maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
-// Add a MapLibre PMTiles fill layer for each "pmtiles" source (hidden until shown
-// by syncPmtiles). The read SAS + catalog base URL come from /api/token.
+// Add each "pmtiles" source's MapLibre layers (hidden until shown by syncPmtiles)
+// and wire their hover. The read SAS + catalog base URL come from /api/token.
 async function setupPmtiles() {
   const converted = Object.entries(LAYER_SERVING).filter(([, v]) => v.mode === "pmtiles") as [
     string,
@@ -100,30 +163,32 @@ async function setupPmtiles() {
   if (!converted.length) return;
   const tok = await fetch("/api/token").then((r) => r.json());
   for (const [s, v] of converted) {
-    map.addSource(`pmt-${s}`, {
-      type: "vector",
-      url: `pmtiles://${tok.base_url}/${v.file}?${tok.sas}`,
-    });
-    map.addLayer({
-      id: `pmt-${s}`,
-      type: "fill",
-      source: `pmt-${s}`,
-      "source-layer": v.sourceLayer,
-      layout: { visibility: "none" },
-      paint: {
-        "fill-color": ["case", ["==", ["get", "damaged"], 1], "#dc1e1e", "#788090"],
-        "fill-opacity": ["case", ["==", ["get", "damaged"], 1], 0.8, 0.28],
-      },
-    } as any);
+    const src = `pmt-src-${s}`;
+    map.addSource(src, { type: "vector", url: `pmtiles://${tok.base_url}/${v.file}?${tok.sas}` });
+    for (const { id, spec } of v.layers) {
+      map.addLayer({
+        id,
+        source: src,
+        "source-layer": v.sourceLayer,
+        layout: { visibility: "none" },
+        ...spec,
+      } as any);
+      map.on("mousemove", id, (e: any) => {
+        if (e.features?.[0]) showTip(e.point.x, e.point.y, v.hover(e.features[0].properties));
+      });
+      map.on("mouseleave", id, hideTip);
+    }
   }
 }
 
-// Show a source's PMTiles layer only when its native view is active.
+// Show a source's PMTiles layer(s) only when its native view is active.
 function syncPmtiles() {
-  for (const s of Object.keys(LAYER_SERVING)) {
-    if (!usePmtiles(s) || !map.getLayer(`pmt-${s}`)) continue;
+  for (const [s, v] of Object.entries(LAYER_SERVING)) {
+    if (v.mode !== "pmtiles") continue;
     const show = state.view === "native" && state.show.buildings && state.sources.has(s);
-    map.setLayoutProperty(`pmt-${s}`, "visibility", show ? "visible" : "none");
+    for (const { id } of v.layers) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", show ? "visible" : "none");
+    }
   }
 }
 
