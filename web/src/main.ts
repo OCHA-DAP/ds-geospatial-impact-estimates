@@ -1,6 +1,8 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./style.css";
 import maplibregl from "maplibre-gl";
+import { Protocol } from "pmtiles";
+import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
@@ -69,6 +71,306 @@ const map = new maplibregl.Map({
 });
 const overlay = new MapboxOverlay({ interleaved: false, layers: [] });
 map.addControl(overlay as any);
+
+// --- v2 serving: EXPLICIT per-layer registry (no silent fallback). Each native
+// source is served from PMTiles (converted) or deck.gl (not yet). A converted
+// source declares its own MapLibre layer spec(s) + hover, mirroring the deck.gl
+// look. Flip a source from "deckgl" to "pmtiles" once its tiles + styling exist.
+//
+// CEMS damage colour ramp by class (1 possibly .. 3 destroyed) — the discrete
+// values match the deck.gl damageColor(max(0.25, class/3)) the native view used.
+// Distinct hues per grade (amber -> orange -> red) so the three classes read
+// clearly even at the coarse blocks' low opacity — not just lightness steps.
+const DAMAGE_BY_CLASS: any = [
+  "match",
+  ["get", "damage_class"],
+  1, "rgb(255,199,64)",
+  2, "rgb(240,124,32)",
+  3, "rgb(202,24,24)",
+  "rgb(225,60,40)",
+];
+type PmLayer = { id: string; spec: any };
+type Serving =
+  | { mode: "pmtiles"; file: string; sourceLayer: string; layers: PmLayer[]; hover: (p: any) => string }
+  | { mode: "deckgl" };
+
+const LAYER_SERVING: Record<string, Serving> = {
+  microsoft: {
+    mode: "pmtiles",
+    file: "platinum/native-microsoft/footprints.pmtiles",
+    sourceLayer: "footprints",
+    layers: [
+      {
+        id: "pmt-microsoft",
+        spec: {
+          type: "fill",
+          paint: {
+            "fill-color": ["case", ["==", ["get", "damaged"], 1], "#dc1e1e", "#788090"],
+            "fill-opacity": ["case", ["==", ["get", "damaged"], 1], 0.8, 0.28],
+          },
+        },
+      },
+    ],
+    hover: (p) => `Microsoft footprint<br>damaged: ${p.damaged ? "yes" : "no"}`,
+  },
+  copernicus_ems: {
+    mode: "pmtiles",
+    file: "platinum/native-cems/builtup_damage.pmtiles",
+    sourceLayer: "builtup_damage",
+    // Mirror load_native: latest per-building POINTS + ALL coarse AREA blocks.
+    // Areas = translucent fills, points = solid circles — like the deck.gl view.
+    layers: [
+      {
+        id: "pmt-cems-area",
+        spec: {
+          type: "fill",
+          filter: ["==", ["get", "layer_type"], "area"],
+          paint: { "fill-color": DAMAGE_BY_CLASS, "fill-opacity": 0.32 },
+        },
+      },
+      {
+        id: "pmt-cems-point",
+        spec: {
+          type: "circle",
+          filter: ["all", ["==", ["get", "layer_type"], "point"], ["get", "is_latest"]],
+          paint: {
+            "circle-color": DAMAGE_BY_CLASS,
+            "circle-opacity": 0.85,
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 15, 7],
+            "circle-stroke-width": 0,
+          },
+        },
+      },
+    ],
+    hover: (p) =>
+      `Copernicus EMS<br>grade: ${p.ems_grade}` +
+      (p.layer_type
+        ? `<br>${p.layer_type === "area" ? "coarse block (early estimate)" : "per-building point"}`
+        : ""),
+  },
+  impact_initiatives: { mode: "deckgl" },
+  osu: { mode: "deckgl" },
+  hot_osm: {
+    mode: "pmtiles",
+    file: "platinum/native-hot_osm/damage_points.pmtiles",
+    sourceLayer: "damage_points",
+    layers: [
+      {
+        id: "pmt-hot",
+        spec: {
+          type: "circle",
+          paint: {
+            "circle-color": DAMAGE_BY_CLASS,
+            "circle-opacity": 0.85,
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 15, 7],
+            "circle-stroke-width": 0,
+          },
+        },
+      },
+    ],
+    hover: (p) =>
+      `${SOURCE_LABEL["hot_osm"] ?? "hot_osm"}<br>grade: ${p.ems_grade}` +
+      (p.confidence != null ? `<br>confidence: ${Math.round(p.confidence * 100)}%` : ""),
+  },
+};
+const usePmtiles = (s: string) => LAYER_SERVING[s]?.mode === "pmtiles";
+
+// Overture/buildings view: ONE building_flags PMTiles (every source's flags
+// embedded) serves all sources' points — viewport-streamed, no per-source fetch.
+const OVERTURE_SERVING: "pmtiles" | "deckgl" = "pmtiles";
+const BUILDING_FIELDS: Record<string, { seen: string; dmg: string }> = {
+  microsoft: { seen: "ms_analysed", dmg: "ms_dmg" },
+  copernicus_ems: { seen: "cems_analysed", dmg: "cems_dmg" },
+  impact_initiatives: { seen: "sar_dmg", dmg: "sar_dmg" }, // damaged-only (ADR-0008)
+  osu: { seen: "osu_dmg", dmg: "osu_dmg" }, // damaged-only
+  hot_osm: { seen: "hot_dmg", dmg: "hot_dmg" }, // detected-only
+};
+
+// Add the one buildings tile + per-source exposed/damaged circle layers (hidden).
+async function setupBuildings() {
+  if (OVERTURE_SERVING !== "pmtiles") return;
+  const tok = await fetch("/api/token").then((r) => r.json());
+  map.addSource("pmt-src-buildings", {
+    type: "vector",
+    url: `pmtiles://${tok.base_url}/platinum/buildings/building_flags.pmtiles?${tok.sas}`,
+  });
+  for (const [s, f] of Object.entries(BUILDING_FIELDS)) {
+    map.addLayer({
+      id: `bpm-${s}-exposed`,
+      source: "pmt-src-buildings",
+      "source-layer": "building_flags",
+      type: "circle",
+      layout: { visibility: "none" },
+      filter: ["all", ["get", f.seen], ["!", ["get", f.dmg]]],
+      paint: {
+        "circle-color": "rgb(110,118,130)",
+        "circle-opacity": 0.34,
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 1, 15, 3],
+        "circle-stroke-width": 0,
+      },
+    } as any);
+    map.addLayer({
+      id: `bpm-${s}-damaged`,
+      source: "pmt-src-buildings",
+      "source-layer": "building_flags",
+      type: "circle",
+      layout: { visibility: "none" },
+      filter: ["all", ["get", f.seen], ["get", f.dmg]],
+      paint: {
+        "circle-color": "rgb(230,20,20)",
+        "circle-opacity": 0.94,
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2, 15, 6],
+        "circle-stroke-width": 0,
+      },
+    } as any);
+  }
+}
+
+// Show per-source building points only in the Overture view.
+function syncBuildings() {
+  if (OVERTURE_SERVING !== "pmtiles") return;
+  const on = state.view === "overture" && state.show.buildings;
+  for (const s of Object.keys(BUILDING_FIELDS)) {
+    const show = on && state.sources.has(s);
+    for (const suf of ["exposed", "damaged"]) {
+      const id = `bpm-${s}-${suf}`;
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", show ? "visible" : "none");
+    }
+  }
+}
+
+// Admin choropleth (v2): boundaries from admin PMTiles, values from hyparquet,
+// each unit coloured via setFeatureState. Reuses adminCache/byUnit/metricColor/
+// adminTip — only the data source + render path change. Being a real MapLibre
+// layer, it sits IN the stack (fixes the deck.gl "always on top of tiles" issue).
+const ADMIN_SERVING: "pmtiles" | "deckgl" = "pmtiles";
+
+async function setupAdmin() {
+  if (ADMIN_SERVING !== "pmtiles") return;
+  const tok = await fetch("/api/token").then((r) => r.json());
+  // values: read the slim admin facts parquet, pivot into adminCache (properties
+  // only — geometry comes from the tiles now) so the existing logic is reused.
+  const rows = (await parquetReadObjects({
+    file: await asyncBufferFromUrl({
+      url: `${tok.base_url}/platinum/values/facts-admin.parquet?${tok.sas}`,
+    }),
+  })) as any[];
+  const byKey = new Map<string, Map<string, any>>();
+  for (const r of rows) {
+    const lvl = Number(String(r.unit_type).replace("adm", ""));
+    const k = `${r.source}:${lvl}`;
+    let units = byKey.get(k);
+    if (!units) byKey.set(k, (units = new Map()));
+    let p = units.get(r.unit_id);
+    if (!p) units.set(r.unit_id, (p = { unit_id: r.unit_id, unit_name: r.unit_name }));
+    p[r.metric] = r.value;
+  }
+  for (const [k, units] of byKey)
+    adminCache.set(k, { features: [...units.values()].map((p) => ({ properties: p })) });
+  // boundaries: one vector source + fill/line per level (hidden until shown).
+  // Insert BELOW the basemap labels so labels stay readable — this is the
+  // layering the deck.gl admin (drawn over everything) couldn't do.
+  const labelId = map.getStyle().layers?.find((l: any) => l.type === "symbol")?.id;
+  for (const lvl of [1, 2, 3]) {
+    const src = `pmt-src-admin-${lvl}`;
+    const sl = `adm${lvl}`;
+    map.addSource(src, {
+      type: "vector",
+      url: `pmtiles://${tok.base_url}/platinum/admin-adm${lvl}/adm${lvl}.pmtiles?${tok.sas}`,
+      promoteId: `adm${lvl}_id`,
+    });
+    map.addLayer({
+      id: `pmt-admin-${lvl}-fill`,
+      source: src,
+      "source-layer": sl,
+      type: "fill",
+      layout: { visibility: "none" },
+      paint: {
+        "fill-color": ["coalesce", ["feature-state", "color"], "rgba(0,0,0,0)"],
+        "fill-opacity": 0.6,
+      },
+    } as any, labelId);
+    map.addLayer({
+      id: `pmt-admin-${lvl}-line`,
+      source: src,
+      "source-layer": sl,
+      type: "line",
+      layout: { visibility: "none" },
+      paint: { "line-color": "rgb(55,65,80)", "line-width": 1, "line-opacity": 0.45 },
+    } as any, labelId);
+    map.on("mousemove", `pmt-admin-${lvl}-fill`, (e: any) => {
+      const f = e.features?.[0];
+      if (f)
+        showTip(e.point.x, e.point.y, adminTip(f.properties[`adm${lvl}_id`], f.properties[`adm${lvl}_name`]));
+    });
+    map.on("mouseleave", `pmt-admin-${lvl}-fill`, hideTip);
+  }
+}
+
+// Colour each unit by the max-across-sources value (byUnit, computed in buildLayers).
+function applyAdminState(byUnit: Map<string, any>, m: string, aMax: number) {
+  const lvl = state.adminLevel;
+  const src = `pmt-src-admin-${lvl}`;
+  const sl = `adm${lvl}`;
+  map.removeFeatureState({ source: src, sourceLayer: sl });
+  for (const [unitId, { v }] of byUnit) {
+    const c = metricColor(m, v, aMax);
+    map.setFeatureState({ source: src, sourceLayer: sl, id: unitId }, { color: `rgb(${c[0]},${c[1]},${c[2]})` });
+  }
+}
+
+// Show only the active admin level's fill+line (when admin is on).
+function syncAdmin() {
+  if (ADMIN_SERVING !== "pmtiles") return;
+  for (const lvl of [1, 2, 3]) {
+    const vis = state.show.admin && state.sources.size && lvl === state.adminLevel ? "visible" : "none";
+    for (const suf of ["fill", "line"]) {
+      const id = `pmt-admin-${lvl}-${suf}`;
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", vis);
+    }
+  }
+}
+
+maplibregl.addProtocol("pmtiles", new Protocol().tile);
+
+// Add each "pmtiles" source's MapLibre layers (hidden until shown by syncPmtiles)
+// and wire their hover. The read SAS + catalog base URL come from /api/token.
+async function setupPmtiles() {
+  const converted = Object.entries(LAYER_SERVING).filter(([, v]) => v.mode === "pmtiles") as [
+    string,
+    Extract<Serving, { mode: "pmtiles" }>,
+  ][];
+  if (!converted.length) return;
+  const tok = await fetch("/api/token").then((r) => r.json());
+  for (const [s, v] of converted) {
+    const src = `pmt-src-${s}`;
+    map.addSource(src, { type: "vector", url: `pmtiles://${tok.base_url}/${v.file}?${tok.sas}` });
+    for (const { id, spec } of v.layers) {
+      map.addLayer({
+        id,
+        source: src,
+        "source-layer": v.sourceLayer,
+        layout: { visibility: "none" },
+        ...spec,
+      } as any);
+      map.on("mousemove", id, (e: any) => {
+        if (e.features?.[0]) showTip(e.point.x, e.point.y, v.hover(e.features[0].properties));
+      });
+      map.on("mouseleave", id, hideTip);
+    }
+  }
+}
+
+// Show a source's PMTiles layer(s) only when its native view is active.
+function syncPmtiles() {
+  for (const [s, v] of Object.entries(LAYER_SERVING)) {
+    if (v.mode !== "pmtiles") continue;
+    const show = state.view === "native" && state.show.buildings && state.sources.has(s);
+    for (const { id } of v.layers) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", show ? "visible" : "none");
+    }
+  }
+}
 
 // Optional satellite basemap (Esri World Imagery), drawn under the place labels.
 const satEl = document.getElementById("satellite") as HTMLInputElement | null;
@@ -252,28 +554,32 @@ function buildLayers() {
         }
       }
     }
-    const feats = [...byUnit.values()].map(({ f, v }) => ({
-      ...f,
-      properties: { ...f.properties, _v: v },
-    }));
-    layers.push(
-      new GeoJsonLayer({
-        id: `admin-${state.adminLevel}`,
-        data: { type: "FeatureCollection", features: feats },
-        pickable: true,
-        filled: true,
-        stroked: true,
-        opacity: 0.6,
-        getLineColor: [55, 65, 80, 200],
-        lineWidthMinPixels: 1,
-        getFillColor: (f: any) => metricColor(m, f.properties._v, aMax),
-        updateTriggers: { getFillColor: [m, state.adminLevel, aMax, sources.join()] },
-        onHover: (info: any) =>
-          info.object
-            ? showTip(info.x, info.y, adminTip(info.object.properties.unit_id, info.object.properties.unit_name))
-            : hideTip(),
-      }),
-    );
+    if (ADMIN_SERVING === "pmtiles") {
+      applyAdminState(byUnit, m, aMax); // colour the MapLibre admin layer in-place
+    } else {
+      const feats = [...byUnit.values()].map(({ f, v }) => ({
+        ...f,
+        properties: { ...f.properties, _v: v },
+      }));
+      layers.push(
+        new GeoJsonLayer({
+          id: `admin-${state.adminLevel}`,
+          data: { type: "FeatureCollection", features: feats },
+          pickable: true,
+          filled: true,
+          stroked: true,
+          opacity: 0.6,
+          getLineColor: [55, 65, 80, 200],
+          lineWidthMinPixels: 1,
+          getFillColor: (f: any) => metricColor(m, f.properties._v, aMax),
+          updateTriggers: { getFillColor: [m, state.adminLevel, aMax, sources.join()] },
+          onHover: (info: any) =>
+            info.object
+              ? showTip(info.x, info.y, adminTip(info.object.properties.unit_id, info.object.properties.unit_name))
+              : hideTip(),
+        }),
+      );
+    }
   }
 
   // h3: ONE layer, each cell coloured by the MAX metric value across selected sources.
@@ -345,6 +651,7 @@ function buildLayers() {
   // building-level (Overture points or native geometry), per source
   for (const s of state.view === "agreement" || !state.show.buildings ? [] : sources) {
     if (state.view === "overture") {
+      if (OVERTURE_SERVING === "pmtiles") continue; // served by the buildings PMTiles layers
       const pts = buildingsCache.get(s);
       if (!pts) continue;
       layers.push(
@@ -368,6 +675,7 @@ function buildLayers() {
         }),
       );
     } else {
+      if (usePmtiles(s)) continue; // served by its MapLibre PMTiles layer, not deck.gl
       const nat = nativeCache.get(s);
       if (!nat) continue;
       layers.push(
@@ -461,6 +769,9 @@ function buildLayers() {
   }
 
   overlay.setProps({ layers });
+  syncPmtiles();
+  syncBuildings();
+  syncAdmin();
 }
 
 function renderLegend() {
@@ -570,10 +881,12 @@ async function refresh() {
   try {
     const tasks: Promise<any>[] = [];
     for (const s of state.sources) {
-      if (state.show.admin) tasks.push(ensureAdmin(s, state.adminLevel));
+      if (state.show.admin && ADMIN_SERVING !== "pmtiles") tasks.push(ensureAdmin(s, state.adminLevel));
       if (state.show.h3) tasks.push(ensureH3(s));
-      if (state.show.buildings && state.view === "overture") tasks.push(ensureBuildings(s));
-      if (state.show.buildings && state.view === "native") tasks.push(ensureNative(s));
+      if (state.show.buildings && state.view === "overture" && OVERTURE_SERVING !== "pmtiles")
+        tasks.push(ensureBuildings(s));
+      if (state.show.buildings && state.view === "native" && !usePmtiles(s))
+        tasks.push(ensureNative(s));
       if (state.show.extent) tasks.push(ensureExtent(s));
       if (state.show.extent && s === "copernicus_ems") tasks.push(ensureCoverageDetail());
     }
@@ -610,6 +923,18 @@ async function refresh() {
 const el = (id: string) => document.getElementById(id)!;
 
 async function init() {
+  // PMTiles/hyparquet setup is additive — a failure must never blank the app.
+  for (const [name, fn] of [
+    ["pmtiles", setupPmtiles],
+    ["buildings", setupBuildings],
+    ["admin", setupAdmin],
+  ] as const) {
+    try {
+      await fn();
+    } catch (e) {
+      console.error(`v2 ${name} setup failed:`, e);
+    }
+  }
   const meta = await fetch("/api/sources").then((r) => r.json());
   const sources: string[] = meta.sources;
   METRICS = [
