@@ -19,12 +19,15 @@ Deps: portolan-cli[pmtiles]  +  tippecanoe  (brew install tippecanoe).
 
 from __future__ import annotations
 
+import io
 import os
 import subprocess
 import tempfile
 from pathlib import Path
 
+import geopandas as gpd
 import ocha_stratus as stratus
+import pandas as pd
 
 from gie import ledger
 from gie.config import load_settings
@@ -32,14 +35,18 @@ from gie.config import load_settings
 ADM0 = "VE"
 STAGE = "dev"
 
-# collection name (= platinum/ subdir) -> (layer, blob path of the GeoParquet to tile).
-# Rebuilt and pushed every run, so this dict is the authoritative platinum contents.
-LAYERS: dict[str, tuple[str, str]] = {
-    "native-microsoft": ("silver", f"source=microsoft/adm0={ADM0}/footprints.parquet"),
-    "native-cems": ("silver", f"source=copernicus_ems/adm0={ADM0}/builtup_damage.parquet"),
-    "admin-adm1": ("bronze", f"source=codab/adm0={ADM0}/adm1.parquet"),
-    "admin-adm2": ("bronze", f"source=codab/adm0={ADM0}/adm2.parquet"),
-    "admin-adm3": ("bronze", f"source=codab/adm0={ADM0}/adm3.parquet"),
+# collection (= platinum/ subdir) -> (layer, blob path, optional (lon, lat) cols).
+# If (lon, lat) is given, the parquet is non-geo (e.g. building_flags) and point
+# geometry is built before tiling. Rebuilt+pushed every run = authoritative.
+LAYERS: dict[str, tuple[str, str, tuple[str, str] | None]] = {
+    "native-microsoft": ("silver", f"source=microsoft/adm0={ADM0}/footprints.parquet", None),
+    "native-cems": ("silver", f"source=copernicus_ems/adm0={ADM0}/builtup_damage.parquet", None),
+    "admin-adm1": ("bronze", f"source=codab/adm0={ADM0}/adm1.parquet", None),
+    "admin-adm2": ("bronze", f"source=codab/adm0={ADM0}/adm2.parquet", None),
+    "admin-adm3": ("bronze", f"source=codab/adm0={ADM0}/adm3.parquet", None),
+    # assessed buildings (per-source damage/analysed flags) — the heavy Overture +
+    # agreement views; lon/lat -> points so one tile serves every source.
+    "buildings": ("gold", f"model=common/adm0={ADM0}/building_flags.parquet", ("lon", "lat")),
 }
 
 
@@ -64,14 +71,21 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory() as cat:
         _portolan(["init"], cwd=cat)
-        for coll, (layer, rel) in LAYERS.items():
+        for coll, (layer, rel, xy) in LAYERS.items():
             raw = stratus.load_blob_data(
                 settings.blob_path(layer, rel), stage=STAGE, container_name=settings.container
             )
             d = Path(cat) / coll
             d.mkdir(parents=True, exist_ok=True)
-            (d / Path(rel).name).write_bytes(raw)
-            _portolan(["add", "--pmtiles", str(d / Path(rel).name)], cwd=cat)
+            out = d / Path(rel).name
+            if xy:  # non-geo parquet (lon/lat) -> GeoParquet points before tiling
+                df = pd.read_parquet(io.BytesIO(raw))
+                gpd.GeoDataFrame(
+                    df, geometry=gpd.points_from_xy(df[xy[0]], df[xy[1]]), crs="EPSG:4326"
+                ).to_parquet(out)
+            else:
+                out.write_bytes(raw)
+            _portolan(["add", "--pmtiles", str(out)], cwd=cat)
             print(f"  built {coll}  ({len(raw) / 1e6:.1f} MB source)", flush=True)
 
         env = {

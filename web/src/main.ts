@@ -151,6 +151,70 @@ const LAYER_SERVING: Record<string, Serving> = {
 };
 const usePmtiles = (s: string) => LAYER_SERVING[s]?.mode === "pmtiles";
 
+// Overture/buildings view: ONE building_flags PMTiles (every source's flags
+// embedded) serves all sources' points — viewport-streamed, no per-source fetch.
+const OVERTURE_SERVING: "pmtiles" | "deckgl" = "pmtiles";
+const BUILDING_FIELDS: Record<string, { seen: string; dmg: string }> = {
+  microsoft: { seen: "ms_analysed", dmg: "ms_dmg" },
+  copernicus_ems: { seen: "cems_analysed", dmg: "cems_dmg" },
+  impact_initiatives: { seen: "sar_dmg", dmg: "sar_dmg" }, // damaged-only (ADR-0008)
+  osu: { seen: "osu_dmg", dmg: "osu_dmg" }, // damaged-only
+  hot_osm: { seen: "hot_dmg", dmg: "hot_dmg" }, // detected-only
+};
+
+// Add the one buildings tile + per-source exposed/damaged circle layers (hidden).
+async function setupBuildings() {
+  if (OVERTURE_SERVING !== "pmtiles") return;
+  const tok = await fetch("/api/token").then((r) => r.json());
+  map.addSource("pmt-src-buildings", {
+    type: "vector",
+    url: `pmtiles://${tok.base_url}/platinum/buildings/building_flags.pmtiles?${tok.sas}`,
+  });
+  for (const [s, f] of Object.entries(BUILDING_FIELDS)) {
+    map.addLayer({
+      id: `bpm-${s}-exposed`,
+      source: "pmt-src-buildings",
+      "source-layer": "building_flags",
+      type: "circle",
+      layout: { visibility: "none" },
+      filter: ["all", ["get", f.seen], ["!", ["get", f.dmg]]],
+      paint: {
+        "circle-color": "rgb(110,118,130)",
+        "circle-opacity": 0.34,
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 1, 15, 3],
+        "circle-stroke-width": 0,
+      },
+    } as any);
+    map.addLayer({
+      id: `bpm-${s}-damaged`,
+      source: "pmt-src-buildings",
+      "source-layer": "building_flags",
+      type: "circle",
+      layout: { visibility: "none" },
+      filter: ["all", ["get", f.seen], ["get", f.dmg]],
+      paint: {
+        "circle-color": "rgb(230,20,20)",
+        "circle-opacity": 0.94,
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2, 15, 6],
+        "circle-stroke-width": 0,
+      },
+    } as any);
+  }
+}
+
+// Show per-source building points only in the Overture view.
+function syncBuildings() {
+  if (OVERTURE_SERVING !== "pmtiles") return;
+  const on = state.view === "overture" && state.show.buildings;
+  for (const s of Object.keys(BUILDING_FIELDS)) {
+    const show = on && state.sources.has(s);
+    for (const suf of ["exposed", "damaged"]) {
+      const id = `bpm-${s}-${suf}`;
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", show ? "visible" : "none");
+    }
+  }
+}
+
 maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
 // Add each "pmtiles" source's MapLibre layers (hidden until shown by syncPmtiles)
@@ -467,6 +531,7 @@ function buildLayers() {
   // building-level (Overture points or native geometry), per source
   for (const s of state.view === "agreement" || !state.show.buildings ? [] : sources) {
     if (state.view === "overture") {
+      if (OVERTURE_SERVING === "pmtiles") continue; // served by the buildings PMTiles layers
       const pts = buildingsCache.get(s);
       if (!pts) continue;
       layers.push(
@@ -585,6 +650,7 @@ function buildLayers() {
 
   overlay.setProps({ layers });
   syncPmtiles();
+  syncBuildings();
 }
 
 function renderLegend() {
@@ -696,7 +762,8 @@ async function refresh() {
     for (const s of state.sources) {
       if (state.show.admin) tasks.push(ensureAdmin(s, state.adminLevel));
       if (state.show.h3) tasks.push(ensureH3(s));
-      if (state.show.buildings && state.view === "overture") tasks.push(ensureBuildings(s));
+      if (state.show.buildings && state.view === "overture" && OVERTURE_SERVING !== "pmtiles")
+        tasks.push(ensureBuildings(s));
       if (state.show.buildings && state.view === "native" && !usePmtiles(s))
         tasks.push(ensureNative(s));
       if (state.show.extent) tasks.push(ensureExtent(s));
@@ -736,6 +803,7 @@ const el = (id: string) => document.getElementById(id)!;
 
 async function init() {
   await setupPmtiles();
+  await setupBuildings();
   const meta = await fetch("/api/sources").then((r) => r.json());
   const sources: string[] = meta.sources;
   METRICS = [
