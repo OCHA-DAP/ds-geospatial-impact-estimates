@@ -97,8 +97,19 @@
           <header class="methods-head">
             <p class="methods-eyebrow">Behind the map</p>
             <h2>How this map is made</h2>
-            <p class="methods-lede">Every source is normalised onto a common <b>Overture</b> building base, with damage aligned to the <b>Copernicus EMS</b> grades and reported <b>coverage-aware</b> — so each admin unit or H3 cell shows the damage fraction within the area a source actually analysed, and the map colours by the <b>highest signal</b> across the sources you've selected.</p>
+            <div class="methods-body">
+              <p>This viewer doesn't rely on any single assessment — it puts every source on the same footing so they can be compared directly. Each damage dataset is projected onto one shared base of <b>Overture building footprints</b>, so every source is expressed in the same unit: <b>buildings</b>. A footprint is counted as damaged for a source when that source's data lands on it — Microsoft footprints are matched directly, Copernicus EMS and HotOSM damage points are snapped to the nearest building within 20&nbsp;m, and the radar sources (IMPACT&nbsp;SAR, OSU) are sampled building-by-building. That shared base is the <b>common denominator</b> that makes “what does each source say <i>here</i>?” an answerable question.</p>
+              <p>Just as important, a source is only credited where it actually looked. Every source carries its own <b>area of interest</b> — a Copernicus activation footprint, a radar swath, a model's coverage mask. Inside it a building is <i>analysed</i>; outside it the source simply has <b>no data</b>, which is very different from “looked and found nothing.” So a source is never penalised for ground it never covered, and every rate is measured against what was actually assessed.</p>
+            </div>
+            <div class="methods-figures">
+              <div class="figure-tile"><span class="fig-term">Exposed</span><span class="fig-def">Every building in the unit (the Overture base).</span></div>
+              <div class="figure-tile"><span class="fig-term">Analysed</span><span class="fig-def">Buildings inside the source's area of interest — what it could actually see.</span></div>
+              <div class="figure-tile"><span class="fig-term">Coverage</span><span class="fig-def">Analysed ÷ exposed — how much of the unit the source assessed.</span></div>
+              <div class="figure-tile"><span class="fig-term">Damage fraction</span><span class="fig-def">Damaged ÷ analysed — the share of assessed buildings found damaged.</span></div>
+            </div>
+            <p class="methods-rollup">These per-building results are rolled up to <b>OCHA COD admin units (levels 0–3)</b> and an <b>H3 hexagon grid</b>, with damage grades aligned across every source to the Copernicus EMS scale — <i>Possibly · Damaged · Destroyed</i>. Select any mix of sources and each admin unit or hexagon is coloured by the <b>strongest signal</b> among them — so one source's coverage gap is filled by another's, and you can always open the hover to see exactly which source drove the number.</p>
           </header>
+          <div class="methods-sub">Contributing sources</div>
           <div id="methods-cards" class="methods-cards"></div>
           <p class="methods-foot">An exploratory tool from the OCHA Centre for Humanitarian Data — read each source on its own terms.</p>
         </div>

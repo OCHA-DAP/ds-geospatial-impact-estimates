@@ -192,8 +192,25 @@ table.tt td { font-size: 12px; padding: 2px 14px 2px 0; white-space: nowrap; ver
   background: linear-gradient(90deg, #ffffff, #a8c2ea);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
-.methods-lede { margin: 0 0 34px; max-width: 72ch; font-size: 15px; line-height: 1.62; color: #c4d2e6; }
-.methods-lede b { color: #eaf1fb; font-weight: 600; }
+.methods-body p { margin: 0 0 15px; font-size: 15px; line-height: 1.65; color: #c8d5e8; }
+.methods-body p:last-child { margin-bottom: 0; }
+.methods-body b, .methods-rollup b { color: #eaf1fb; font-weight: 600; }
+.methods-body i, .methods-rollup i { color: #bccadf; font-style: italic; }
+.methods-figures {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 12px;
+  margin: 26px 0 22px;
+}
+.figure-tile {
+  padding: 14px 16px; border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045); border: 1px solid rgba(255, 255, 255, 0.09);
+}
+.fig-term { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 700; color: #eaf1fb; }
+.fig-def { display: block; font-size: 12px; line-height: 1.46; color: #9fb0c8; }
+.methods-rollup { margin: 0; font-size: 14.5px; line-height: 1.62; color: #c4d2e6; }
+.methods-sub {
+  margin: 34px 0 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: #8ea4c4;
+}
 .methods-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(244px, 1fr)); gap: 18px; }
 .source-card {
   position: relative; overflow: hidden; border-radius: 22px; padding: 22px 22px 24px;
