@@ -10,6 +10,10 @@ Run: uv run --group api uvicorn api.main:app --reload --port 8077
 
 from __future__ import annotations
 
+import logging
+import os
+import urllib.request
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
 
@@ -104,20 +108,93 @@ def sources(adm0: str = "VE") -> dict:
     return {"sources": _sources(adm0), "adm0": adm0, "metrics": METRICS}
 
 
+# --- /api/token: blob read for the v2 client, scoped to platinum/ (ADR-0011) ---
+# The client reads PMTiles/values straight from blob, so the SAS is visible in the
+# browser. That is fine BECAUSE it is scoped to this project's platinum/ directory
+# only (read+list): it grants nothing but the published map tiles the app already
+# shows everyone. We NEVER hand out the broad container SAS. Order of preference:
+#   1. a short-lived user-delegation SAS minted via the App Service managed identity
+#      (when MI + Storage Blob Data Reader are in place) — keyless, auto-rotating;
+#   2. else GIE_PLATINUM_SAS — a long-lived account-key SAS scoped to platinum/, set
+#      as an app setting, used until (1) is wired up.
+_SAS_HOURS = 24
+_SAS_REFRESH_UNDER = timedelta(hours=6)
+_token_cache: dict = {}
+
+
+def _se_expiry(sas: str) -> str | None:
+    import urllib.parse
+
+    return urllib.parse.parse_qs(sas).get("se", [None])[0]
+
+
+def _mint_scoped_sas(s) -> tuple[str, datetime] | None:
+    # Only attempt when a managed identity is actually present (App Service sets
+    # IDENTITY_ENDPOINT), so there's no AAD/IMDS latency locally or on apps without MI.
+    if not os.getenv("IDENTITY_ENDPOINT"):
+        return None
+    try:
+        from azure.identity import DefaultAzureCredential
+        from azure.storage.filedatalake import (
+            DataLakeServiceClient,
+            DirectorySasPermissions,
+            generate_directory_sas,
+        )
+
+        now = datetime.now(timezone.utc)
+        exp = now + timedelta(hours=_SAS_HOURS)
+        svc = DataLakeServiceClient(
+            f"https://{s.account_name}.dfs.core.windows.net", credential=DefaultAzureCredential()
+        )
+        udk = svc.get_user_delegation_key(now, exp)
+        sas = generate_directory_sas(
+            s.account_name,
+            s.container,
+            f"{s.project_prefix}/platinum",
+            credential=udk,
+            permission=DirectorySasPermissions(read=True, list=True),
+            expiry=exp,
+            start=now,
+        )
+        # Generating a SAS never checks RBAC; only a read does. Verify before handing
+        # it out so a missing Data Reader role falls back instead of serving a dud.
+        probe = f"https://{s.account_host}/{s.container}/{s.project_prefix}/platinum/values/facts-admin.parquet?{sas}"
+        urllib.request.urlopen(urllib.request.Request(probe, headers={"Range": "bytes=0-1"}), timeout=10)
+        return sas, exp
+    except Exception as e:
+        logging.warning("MI scoped-SAS mint failed (%s) — using GIE_PLATINUM_SAS", str(e)[:140])
+        return None
+
+
 @app.get("/api/token")
 def token() -> dict:
-    """Blob read access for the v2 client-side serving path (PMTiles + hyparquet).
-
-    Returns a read SAS + the catalog base URL so the SPA can range-read PMTiles
-    and GeoParquet directly from blob. Phase 1 returns the configured read SAS;
-    a short-lived user-delegation SAS (managed identity) is a later hardening.
-    """
+    """Blob read for the v2 client (PMTiles + hyparquet), scoped to platinum/ — never
+    the broad container SAS (ADR-0011)."""
     s = load_settings()
+    now = datetime.now(timezone.utc)
+    c = _token_cache.get("v")
+    if not c or c["exp"] - now < _SAS_REFRESH_UNDER:
+        minted = _mint_scoped_sas(s)
+        if minted:
+            sas, exp = minted
+            c = {"sas": sas, "exp": exp, "mode": "delegation-platinum", "expires": exp.isoformat()}
+        elif os.getenv("GIE_PLATINUM_SAS"):
+            sas = os.getenv("GIE_PLATINUM_SAS").lstrip("?")
+            # static scoped SAS; re-check hourly so MI can take over once it's wired up
+            c = {"sas": sas, "exp": now + timedelta(hours=1), "mode": "scoped-platinum",
+                 "expires": _se_expiry(sas)}
+        else:
+            # no scoped SAS available — leave converted layers unserved rather than
+            # ever exposing the broad container SAS
+            c = {"sas": "", "exp": now + timedelta(minutes=5), "mode": "unavailable", "expires": None}
+        _token_cache["v"] = c
     return {
         "account": s.account_name,
         "container": s.container,
         "base_url": f"https://{s.account_host}/{s.container}/{s.project_prefix}",
-        "sas": s.sas_token(write=False),
+        "sas": c["sas"],
+        "mode": c["mode"],
+        "expires": c["expires"],
     }
 
 

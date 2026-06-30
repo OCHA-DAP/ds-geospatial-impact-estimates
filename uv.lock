@@ -282,6 +282,21 @@ wheels = [
 ]
 
 [[package]]
+name = "azure-storage-file-datalake"
+version = "12.25.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-core" },
+    { name = "azure-storage-blob" },
+    { name = "isodate" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/63/2b/9019c472f42dc9dd02b7e6443fff89901e4ea1f03be4abb6902eb3587933/azure_storage_file_datalake-12.25.0.tar.gz", hash = "sha256:34813c6f3e9bf1636898cec62529dd2ced189cd2c677160ec69ef88c3b72da7f", size = 306219, upload-time = "2026-06-08T17:28:48.314Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b7/cb/b12d8a824b8523cdb624033e731f5b2809069a178da61aab9bc74d24bc63/azure_storage_file_datalake-12.25.0-py3-none-any.whl", hash = "sha256:11fbb18250961711afc40c8442207d71bac81961e4b7b80f17fbd550f95e6fc6", size = 287753, upload-time = "2026-06-08T17:28:50.686Z" },
+]
+
+[[package]]
 name = "beautifulsoup4"
 version = "4.15.0"
 source = { registry = "https://pypi.org/simple" }
@@ -616,6 +631,7 @@ dependencies = [
 
 [package.dev-dependencies]
 api = [
+    { name = "azure-storage-file-datalake" },
     { name = "fastapi" },
     { name = "gunicorn" },
     { name = "openpyxl" },
@@ -647,6 +663,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 api = [
+    { name = "azure-storage-file-datalake", specifier = ">=12.25.0" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "gunicorn", specifier = ">=26.0.0" },
     { name = "openpyxl", specifier = ">=3.1.5" },
