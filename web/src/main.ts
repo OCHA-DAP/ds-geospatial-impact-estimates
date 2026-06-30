@@ -79,12 +79,14 @@ map.addControl(overlay as any);
 //
 // CEMS damage colour ramp by class (1 possibly .. 3 destroyed) — the discrete
 // values match the deck.gl damageColor(max(0.25, class/3)) the native view used.
+// Distinct hues per grade (amber -> orange -> red) so the three classes read
+// clearly even at the coarse blocks' low opacity — not just lightness steps.
 const DAMAGE_BY_CLASS: any = [
   "match",
   ["get", "damage_class"],
-  1, "rgb(241,173,145)",
-  2, "rgb(231,101,83)",
-  3, "rgb(222,30,20)",
+  1, "rgb(255,199,64)",
+  2, "rgb(240,124,32)",
+  3, "rgb(202,24,24)",
   "rgb(225,60,40)",
 ];
 type PmLayer = { id: string; spec: any };
@@ -123,7 +125,7 @@ const LAYER_SERVING: Record<string, Serving> = {
         spec: {
           type: "fill",
           filter: ["==", ["get", "layer_type"], "area"],
-          paint: { "fill-color": DAMAGE_BY_CLASS, "fill-opacity": 0.24 },
+          paint: { "fill-color": DAMAGE_BY_CLASS, "fill-opacity": 0.32 },
         },
       },
       {
