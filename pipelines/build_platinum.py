@@ -13,7 +13,13 @@ registry (web/src/main.ts) from "deckgl" to "pmtiles" once its MapLibre styling
 is in place. (Polygon layers = a fill; points = a circle; admin/H3 choropleths
 also need the hyparquet + setFeatureState value join — Phase 2.)
 
-Run: GIE_BLOB_ACCOUNT_PREFIX=... uv run --group etl python pipelines/build_platinum.py
+Incremental: a persistent catalog (GIE_PLATINUM_CATALOG, default /tmp/gie_platinum_catalog)
+lets Portolan skip re-tiling unchanged collections and push only what changed. Pass
+collection names to process just those — e.g. after a new Microsoft AOI:
+    uv run ... build_platinum.py native-microsoft buildings
+With no args, all collections are processed (unchanged ones are no-ops after run 1).
+
+Run: GIE_BLOB_ACCOUNT_PREFIX=... uv run --group etl python pipelines/build_platinum.py [collection ...]
 Deps: portolan-cli[pmtiles]  +  tippecanoe  (brew install tippecanoe).
 """
 
@@ -22,7 +28,7 @@ from __future__ import annotations
 import io
 import os
 import subprocess
-import tempfile
+import sys
 from pathlib import Path
 
 import geopandas as gpd
@@ -66,36 +72,44 @@ def _portolan(args: list[str], cwd: str, env: dict | None = None) -> None:
         raise RuntimeError(f"portolan {' '.join(args)} failed ({r.returncode})")
 
 
-def main() -> None:
+def main(only: list[str] | None = None) -> None:
     settings = load_settings(STAGE)
     dest = f"az://{settings.container}/{settings.project_prefix}/platinum"
+    # Persistent catalog: Portolan only re-tiles changed sources and pushes changed
+    # collections. The dir retains every collection across runs, so a partial run
+    # (only=...) re-tiles just those while push still includes the rest. Run a full
+    # build (no args) once to populate it.
+    cat = Path(os.getenv("GIE_PLATINUM_CATALOG", "/tmp/gie_platinum_catalog"))
+    cat.mkdir(parents=True, exist_ok=True)
+    if not (cat / ".portolan" / "config.yaml").exists():
+        _portolan(["init"], cwd=str(cat))
 
-    with tempfile.TemporaryDirectory() as cat:
-        _portolan(["init"], cwd=cat)
-        for coll, (layer, rel, xy) in LAYERS.items():
-            raw = stratus.load_blob_data(
-                settings.blob_path(layer, rel), stage=STAGE, container_name=settings.container
-            )
-            d = Path(cat) / coll
-            d.mkdir(parents=True, exist_ok=True)
-            out = d / Path(rel).name
-            if xy:  # non-geo parquet (lon/lat) -> GeoParquet points before tiling
-                df = pd.read_parquet(io.BytesIO(raw))
-                gpd.GeoDataFrame(
-                    df, geometry=gpd.points_from_xy(df[xy[0]], df[xy[1]]), crs="EPSG:4326"
-                ).to_parquet(out)
-            else:
-                out.write_bytes(raw)
-            _portolan(["add", "--pmtiles", str(out)], cwd=cat)
-            print(f"  built {coll}  ({len(raw) / 1e6:.1f} MB source)", flush=True)
+    sel = {k: v for k, v in LAYERS.items() if not only or k in only}
+    if not sel:
+        raise SystemExit(f"No collection matches {only}; choose from {list(LAYERS)}")
+    for coll, (layer, rel, xy) in sel.items():
+        raw = stratus.load_blob_data(
+            settings.blob_path(layer, rel), stage=STAGE, container_name=settings.container
+        )
+        d = cat / coll
+        d.mkdir(parents=True, exist_ok=True)
+        out = d / Path(rel).name
+        if xy:  # non-geo parquet (lon/lat) -> GeoParquet points before tiling
+            df = pd.read_parquet(io.BytesIO(raw))
+            gpd.GeoDataFrame(
+                df, geometry=gpd.points_from_xy(df[xy[0]], df[xy[1]]), crs="EPSG:4326"
+            ).to_parquet(out)
+        else:
+            out.write_bytes(raw)
+        _portolan(["add", "--pmtiles", str(out)], cwd=str(cat))
+        print(f"  added {coll}  ({len(raw) / 1e6:.1f} MB source)", flush=True)
 
-        env = {
-            "AZURE_STORAGE_ACCOUNT_NAME": settings.account_name,
-            "AZURE_STORAGE_SAS_KEY": settings.sas_token(write=True).lstrip("?"),
-        }
-        # --force: platinum is fully derived from this config, so rebuild authoritatively.
-        _portolan(["push", dest, "--force"], cwd=cat, env=env)
-
+    env = {
+        "AZURE_STORAGE_ACCOUNT_NAME": settings.account_name,
+        "AZURE_STORAGE_SAS_KEY": settings.sas_token(write=True).lstrip("?"),
+    }
+    # Push the whole persistent catalog; Portolan syncs only changed collections.
+    _portolan(["push", dest, "--force"], cwd=str(cat), env=env)
     ledger.record(
         "platinum",
         "platinum",
@@ -103,8 +117,8 @@ def main() -> None:
         dest,
         f"collections: {', '.join(LAYERS)}",
     )
-    print(f"platinum <- {dest}  ({len(LAYERS)} collections)")
+    print(f"platinum <- {dest}  (re-tiled {len(sel)} of {len(LAYERS)} collections)")
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:] or None)
