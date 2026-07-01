@@ -1,7 +1,7 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-06-29
-deciders: data science team
+deciders: data science team (proposed by maxmalynowsky; reviewed + implemented by zackarno)
 ---
 
 # v2 serving: PMTiles + hyparquet + exceljs client-side, Portolan catalog, short-lived SAS
@@ -59,13 +59,41 @@ derivatives — including pre-generated H3 hexagon polygons — and pushes
 everything to blob. The browser fetches a short-lived (24 h) SAS from a thin
 token-vending endpoint, then reads all data directly from blob: geometry via
 native MapLibre + PMTiles, analytics via hyparquet, workbook export via exceljs.
-The App Service is replaced by a static host (blob + CDN or Azure Static Web
-Apps) plus a single lightweight Azure Function for token vending.
+In the v1 build this runs on the **existing App Service** — FastAPI already hosts
+the SPA (`StaticFiles`) and `/api/token` is a trivial route — so the whole
+client-side data path is adopted with no architectural compromise. The **Static
+Web Apps + CDN + Function** end-state (blob + CDN static host, Function token
+vendor) is a later, non-blocking migration, not a prerequisite (see the Amendment).
 
 Managed identity (Option 2) solves auth but leaves geometry over-serving and
 server compute unchanged. DuckDB WASM (Option 3) requires a ~25 MB bundle with
 WASM warm-up latency, still needs JOIN logic for geometry + metrics, and does
 not solve the geometry serving problem without PMTiles work anyway.
+
+### Amendment (2026-07-01) — review + as-built
+
+Reviewed and accepted with two changes, then implemented.
+
+**Host: the existing App Service is the v1 host; SWA + CDN + Function are future.**
+The App Service already does the server's two remaining jobs — FastAPI serves the
+SPA via `StaticFiles`, and `/api/token` is one route — so the full client-side
+architecture runs on it today with no compromise. SWA / CDN / Function / managed
+identity depend on infrastructure whose timeline we don't control, so they are
+marked **future**: the speed win is not blocked on them, and the CDN is purely
+additive (edge caching over an already blob-direct path).
+
+**Phased, not a single cutover:**
+
+* *Phase 1 (done):* blob CORS; native geometry (Microsoft / CEMS / HotOSM) → PMTiles + MapLibre.
+* *Phase 2 (done):* the Overture buildings view and the admin choropleth (admin PMTiles + hyparquet values + `setFeatureState`), reusing the comparison-card hover, max-across-sources aggregation, and CEMS styling from the deck.gl version.
+* *Deferred:* H3, the agreement view, and export → exceljs (export stays server-side openpyxl for now).
+* *Phase 3 (future):* SWA + CDN + Function + managed identity.
+
+**As built, a few things differ from the proposal:**
+
+* The PMTiles, a slim values parquet, and the Portolan STAC catalog live in a new **`platinum`** medallion tier (`pipelines/build_platinum.py`); the gold analytics parquet stays put as the hyparquet read target.
+* Per-layer serving is an **explicit registry** (each layer is `pmtiles` or `deckgl`, no silent fallback) rather than one global flag, so layers migrate one at a time and deck.gl remains for the not-yet-converted ones.
+* The **delete/keep tables below describe the end-state target.** On the v1 host the App Service is *retained* (reduced to static SPA host + `/api/token`); the endpoint / deck.gl / openpyxl removals happen as each layer converts.
 
 ### What the pipeline gains
 
@@ -162,7 +190,8 @@ Allowed headers:  Range, x-ms-*
 Exposed headers:  Accept-Ranges, Content-Range, Content-Length
 ```
 
-This is a one-time storage account config, not a code change.
+This is a one-time storage account config, not a code change. (Done: configured on
+`imb0chd0dev` — `*` origins, `GET, HEAD`, `Range`.)
 
 ### Consequences
 
@@ -170,8 +199,9 @@ This is a one-time storage account config, not a code change.
   downloaded, regardless of dataset size.
 * Good, because the long-lived SAS is removed from app settings; 24 h expiry
   limits blast radius without manual rotation.
-* Good, because the App Service is eliminated entirely — the server is one
-  stateless Azure Function and a static file host.
+* Good, because the server reduces to a static host plus a token route. For v1
+  that runs on the retained App Service; the future SWA + Function end-state
+  removes persistent compute entirely.
 * Good, because GeoPandas, openpyxl, DuckDB, and the `azure` extension leave
   the deploy; cold-start time and image complexity drop to near zero.
 * Good, because deck.gl is removed — the frontend depends only on MapLibre,
