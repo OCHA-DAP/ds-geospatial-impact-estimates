@@ -71,8 +71,14 @@ the data tier (PMTiles + values in blob) is already in the right shape:
 
 **3 · Scale** — replicate `platinum/` + CORS to the **prod blob** so prod reads prod
 (the dev/prod data split), fronted by the CDN. Decompose the monolithic gold so a new
-source is incremental end-to-end. Binary/GeoArrow shrinks point transfers; Databricks
-only if harmonization outgrows the single-DuckDB pipeline (global scale).
+source is incremental end-to-end. **Snapshot derived gold facts to a dated path**
+(`gold-history/date=…/`) on each harmonize run so a source's numbers *over time*
+become a query rather than a replay — the bronze archive already preserves the
+*inputs* over time (immutable version-encoded products + timestamped manifests
+carrying `delivery_time`), so only the *derived* side is missing; this is the
+append-only ledger the interim `data_ledger.md` anticipates. Binary/GeoArrow
+shrinks point transfers; Databricks only if harmonization outgrows the
+single-DuckDB pipeline (global scale).
 
 **Phasing:** finish the layers + SAS hardening now → SWA/CDN migration when access
 lands → prod data tier + scale work at real/global traffic.
