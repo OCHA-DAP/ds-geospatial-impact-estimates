@@ -1028,7 +1028,7 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
     key: "osu",
     tag: "Research · radar",
     blurb:
-      "Ohio State University Sentinel-1 coherence analysis. Loss of radar coherence indicates damage.",
+      "Oregon State University Sentinel-1 coherence analysis. Loss of radar coherence indicates damage.",
     note: "An independent radar signal alongside the SAR proxy.",
   },
   {
