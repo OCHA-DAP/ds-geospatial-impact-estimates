@@ -97,7 +97,7 @@ type Serving =
 const LAYER_SERVING: Record<string, Serving> = {
   microsoft: {
     mode: "pmtiles",
-    file: "platinum/native-microsoft/footprints.pmtiles",
+    file: "native-microsoft/footprints.pmtiles",
     sourceLayer: "footprints",
     layers: [
       {
@@ -115,7 +115,7 @@ const LAYER_SERVING: Record<string, Serving> = {
   },
   copernicus_ems: {
     mode: "pmtiles",
-    file: "platinum/native-cems/builtup_damage.pmtiles",
+    file: "native-cems/builtup_damage.pmtiles",
     sourceLayer: "builtup_damage",
     // Mirror load_native: latest per-building POINTS + ALL coarse AREA blocks.
     // Areas = translucent fills, points = solid circles — like the deck.gl view.
@@ -152,7 +152,7 @@ const LAYER_SERVING: Record<string, Serving> = {
   osu: { mode: "deckgl" },
   hot_osm: {
     mode: "pmtiles",
-    file: "platinum/native-hot_osm/damage_points.pmtiles",
+    file: "native-hot_osm/damage_points.pmtiles",
     sourceLayer: "damage_points",
     layers: [
       {
@@ -190,9 +190,10 @@ const BUILDING_FIELDS: Record<string, { seen: string; dmg: string }> = {
 async function setupBuildings() {
   if (OVERTURE_SERVING !== "pmtiles") return;
   const tok = await fetch("/api/token").then((r) => r.json());
+  const pdir = tok.platinum_dir || "platinum";
   map.addSource("pmt-src-buildings", {
     type: "vector",
-    url: `pmtiles://${tok.base_url}/platinum/buildings/building_flags.pmtiles?${tok.sas}`,
+    url: `pmtiles://${tok.base_url}/${pdir}/buildings/building_flags.pmtiles?${tok.sas}`,
   });
   for (const [s, f] of Object.entries(BUILDING_FIELDS)) {
     map.addLayer({
@@ -248,11 +249,12 @@ const ADMIN_SERVING: "pmtiles" | "deckgl" = "pmtiles";
 async function setupAdmin() {
   if (ADMIN_SERVING !== "pmtiles") return;
   const tok = await fetch("/api/token").then((r) => r.json());
+  const pdir = tok.platinum_dir || "platinum";
   // values: read the slim admin facts parquet, pivot into adminCache (properties
   // only — geometry comes from the tiles now) so the existing logic is reused.
   const rows = (await parquetReadObjects({
     file: await asyncBufferFromUrl({
-      url: `${tok.base_url}/platinum/values/facts-admin.parquet?${tok.sas}`,
+      url: `${tok.base_url}/${pdir}/values/facts-admin.parquet?${tok.sas}`,
     }),
   })) as any[];
   const byKey = new Map<string, Map<string, any>>();
@@ -276,7 +278,7 @@ async function setupAdmin() {
     const sl = `adm${lvl}`;
     map.addSource(src, {
       type: "vector",
-      url: `pmtiles://${tok.base_url}/platinum/admin-adm${lvl}/adm${lvl}.pmtiles?${tok.sas}`,
+      url: `pmtiles://${tok.base_url}/${pdir}/admin-adm${lvl}/adm${lvl}.pmtiles?${tok.sas}`,
       promoteId: `adm${lvl}_id`,
     });
     map.addLayer({
@@ -342,9 +344,10 @@ async function setupPmtiles() {
   ][];
   if (!converted.length) return;
   const tok = await fetch("/api/token").then((r) => r.json());
+  const pdir = tok.platinum_dir || "platinum";
   for (const [s, v] of converted) {
     const src = `pmt-src-${s}`;
-    map.addSource(src, { type: "vector", url: `pmtiles://${tok.base_url}/${v.file}?${tok.sas}` });
+    map.addSource(src, { type: "vector", url: `pmtiles://${tok.base_url}/${pdir}/${v.file}?${tok.sas}` });
     for (const { id, spec } of v.layers) {
       map.addLayer({
         id,

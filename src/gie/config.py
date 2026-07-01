@@ -40,6 +40,23 @@ class Settings:
     bronze_prefix: str = "bronze"
     silver_prefix: str = "silver"
     gold_prefix: str = "gold"
+    # Data tier WITHIN the account (cheap prod/dev split, no separate account):
+    # "dev" = the working copy the pipeline writes and staging reads; "prod" = the
+    # promoted, published copy prod reads. Only the *served* tiers (gold, platinum)
+    # are split, via a "-prod" dir suffix, so a gold/platinum refresh doesn't go
+    # live until promote.py copies it across. Set GIE_TIER=prod ONLY on the prod
+    # app slot (read side); pipelines + promote run without it (tier="dev") so they
+    # always write the working copy.
+    tier: Stage = "dev"
+
+    def _served(self, base: str) -> str:
+        """Tier-suffix a served-tier prefix (gold/platinum); dev = unchanged."""
+        return f"{base}-prod" if self.tier == "prod" else base
+
+    @property
+    def platinum_prefix(self) -> str:
+        """The platinum dir for this tier — 'platinum' (dev) or 'platinum-prod'."""
+        return self._served("platinum")
 
     @property
     def account_name(self) -> str:
@@ -83,16 +100,25 @@ class Settings:
             f"SharedAccessSignature={self.sas_token(write=write)}"
         )
 
-    def blob_path(self, layer: Literal["bronze", "silver", "gold"], *parts: str) -> str:
-        """Path within the container (no ``az://``/container) — for stratus writes."""
+    def blob_path(
+        self, layer: Literal["bronze", "silver", "gold", "platinum"], *parts: str
+    ) -> str:
+        """Path within the container (no ``az://``/container) — for stratus writes.
+
+        ``gold`` and ``platinum`` are tier-aware (``-prod`` suffix when
+        ``tier=prod``); ``bronze``/``silver`` are the shared working copy.
+        """
         prefix = {
             "bronze": self.bronze_prefix,
             "silver": self.silver_prefix,
-            "gold": self.gold_prefix,
+            "gold": self._served(self.gold_prefix),
+            "platinum": self.platinum_prefix,
         }[layer]
         return "/".join([self.project_prefix, prefix, *parts])
 
-    def az_path(self, layer: Literal["bronze", "silver", "gold"], *parts: str) -> str:
+    def az_path(
+        self, layer: Literal["bronze", "silver", "gold", "platinum"], *parts: str
+    ) -> str:
         """Build an ``az://`` path the DuckDB azure extension understands."""
         return f"az://{self.container}/{self.blob_path(layer, *parts)}"
 
@@ -102,9 +128,13 @@ def load_settings(stage: Stage | None = None) -> Settings:
     resolved = stage or os.getenv("GIE_STAGE", "dev")
     if resolved not in ("dev", "prod"):
         raise ValueError(f"Invalid stage: {resolved!r} (expected 'dev' or 'prod')")
+    tier = os.getenv("GIE_TIER", "dev")
+    if tier not in ("dev", "prod"):
+        raise ValueError(f"Invalid GIE_TIER: {tier!r} (expected 'dev' or 'prod')")
     return Settings(
         stage=resolved,  # type: ignore[arg-type]
         account_prefix=os.getenv("GIE_BLOB_ACCOUNT_PREFIX", ""),
         container=os.getenv("GIE_CONTAINER", "projects"),
         project_prefix=os.getenv("GIE_PROJECT_PREFIX", "ds-geospatial-impact-estimates"),
+        tier=tier,  # type: ignore[arg-type]
     )

@@ -150,7 +150,7 @@ def _mint_scoped_sas(s) -> tuple[str, datetime] | None:
         sas = generate_directory_sas(
             s.account_name,
             s.container,
-            f"{s.project_prefix}/platinum",
+            f"{s.project_prefix}/{s.platinum_prefix}",
             credential=udk,
             permission=DirectorySasPermissions(read=True, list=True),
             expiry=exp,
@@ -158,7 +158,7 @@ def _mint_scoped_sas(s) -> tuple[str, datetime] | None:
         )
         # Generating a SAS never checks RBAC; only a read does. Verify before handing
         # it out so a missing Data Reader role falls back instead of serving a dud.
-        probe = f"https://{s.account_host}/{s.container}/{s.project_prefix}/platinum/values/facts-admin.parquet?{sas}"
+        probe = f"https://{s.account_host}/{s.container}/{s.project_prefix}/{s.platinum_prefix}/values/facts-admin.parquet?{sas}"
         urllib.request.urlopen(urllib.request.Request(probe, headers={"Range": "bytes=0-1"}), timeout=10)
         return sas, exp
     except Exception as e:
@@ -192,6 +192,9 @@ def token() -> dict:
         "account": s.account_name,
         "container": s.container,
         "base_url": f"https://{s.account_host}/{s.container}/{s.project_prefix}",
+        # The tier's platinum dir ("platinum" on dev/staging, "platinum-prod" on
+        # the prod slot) — the client builds all PMTiles/values URLs under this.
+        "platinum_dir": s.platinum_prefix,
         "sas": c["sas"],
         "mode": c["mode"],
         "expires": c["expires"],
