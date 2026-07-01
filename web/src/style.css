@@ -150,27 +150,22 @@ table.tt td { font-size: 12px; padding: 2px 14px 2px 0; white-space: nowrap; ver
 /* --- methodology slide-over (glassmorphism) --------------------------------- */
 .methods-fab {
   position: fixed; top: 14px; right: 14px; z-index: 45;
-  display: flex; align-items: center; height: 44px; width: 44px; padding: 0;
-  overflow: hidden; cursor: pointer; color: #2b3a4f;
-  background: rgba(255, 255, 255, 0.68);
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px 0 14px;
+  cursor: pointer; color: #2b3a4f;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(16px) saturate(1.35); -webkit-backdrop-filter: blur(16px) saturate(1.35);
-  border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.72); border-radius: 999px;
   box-shadow: 0 6px 22px rgba(23, 38, 66, 0.16);
-  transition: width 0.4s cubic-bezier(0.2, 0.85, 0.2, 1), background 0.3s ease,
-    box-shadow 0.3s ease, transform 0.3s ease;
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
-.methods-fab svg { flex: 0 0 44px; width: 44px; height: 44px; padding: 12px; }
-.methods-fab span {
-  white-space: nowrap; font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
-  opacity: 0; padding-right: 0;
-  transition: opacity 0.22s ease 0.05s, padding 0.3s ease;
-}
+.methods-fab svg { flex: 0 0 18px; width: 18px; height: 18px; }
+.methods-fab span { white-space: nowrap; }
 .methods-fab:hover, .methods-fab:focus-visible {
-  width: 168px; outline: none; transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.85);
+  outline: none; transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 12px 30px rgba(23, 38, 66, 0.22);
 }
-.methods-fab:hover span, .methods-fab:focus-visible span { opacity: 1; padding-right: 18px; }
 @media (prefers-reduced-motion: reduce) { .methods-fab { transition: none; } }
 
 .methods[hidden] { display: none; }
