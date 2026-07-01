@@ -1005,28 +1005,28 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
     tag: "Reference · expert-mapped",
     blurb:
       "Copernicus Emergency Management Service rapid mapping. Trained analysts grade individual buildings from very-high-resolution satellite imagery.",
-    note: "The most authoritative signal — but only where an activation was mapped.",
+    note: "Most authoritative, but only where an activation was mapped.",
   },
   {
     key: "impact_initiatives",
     tag: "Screening · radar",
     blurb:
-      "A Sentinel-1 SAR damage proxy: change in radar coherence before and after the event flags likely structural damage across a wide footprint.",
-    note: "A hotspot screen, not confirmed damage — it casts a wide net.",
+      "A Sentinel-1 SAR damage proxy. Change in radar coherence before and after the event flags likely structural damage over a wide area.",
+    note: "A wide-area screen, not confirmed damage.",
   },
   {
     key: "microsoft",
     tag: "AI · per-building",
     blurb:
       "Machine-learning damage labels on Microsoft's global building footprints, classifying each footprint from post-event imagery.",
-    note: "Dense, automated coverage wherever imagery allows.",
+    note: "Dense automated coverage where imagery allows.",
   },
   {
     key: "osu",
     tag: "Research · radar",
     blurb:
-      "Ohio State University Sentinel-1 coherence analysis. Loss of radar coherence serves as an independent indicator of damage.",
-    note: "A second, independent radar opinion alongside the SAR proxy.",
+      "Ohio State University Sentinel-1 coherence analysis. Loss of radar coherence indicates damage.",
+    note: "An independent radar signal alongside the SAR proxy.",
   },
   {
     key: "hot_osm",

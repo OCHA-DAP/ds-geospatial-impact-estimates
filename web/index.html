@@ -64,7 +64,7 @@
 
       <div class="group">
         <div class="label">Colour aggregation by
-          <span class="help" tabindex="0" title="How each admin unit or H3 cell is coloured:&#10;• Damage fraction — damaged ÷ analysed buildings&#10;• Coverage — share of the unit's buildings that were analysed&#10;• Damaged buildings — count of buildings flagged damaged">?</span>
+          <span class="help" tabindex="0" title="How each admin unit or H3 cell is coloured:&#10;• Damage fraction: damaged ÷ analysed buildings&#10;• Coverage: share of the unit's buildings that were analysed&#10;• Damaged buildings: count of buildings flagged damaged">?</span>
         </div>
         <select id="metric"></select>
       </div>
@@ -91,7 +91,7 @@
       <div class="divider"></div>
 
       <div id="panel-about">
-        <p>An <b>exploratory</b> tool from the <b>OCHA Centre for Humanitarian Data</b>, consolidating satellite-derived damage assessments — <b>Microsoft</b>, <b>Copernicus EMS</b>, <b>IMPACT Initiatives</b> (SAR), <b>OSU</b> (Sentinel-1 coherence), and <b>HotOSM</b> (fAIr) — into one harmonized view for side-by-side comparison.</p>
+        <p>An <b>exploratory</b> tool from the <b>OCHA Centre for Humanitarian Data</b>, consolidating satellite-derived damage assessments from <b>Microsoft</b>, <b>Copernicus EMS</b>, <b>IMPACT Initiatives</b> (SAR), <b>OSU</b> (Sentinel-1 coherence), and <b>HotOSM</b> (fAIr) into one harmonized view for side-by-side comparison.</p>
         <p class="about-contact">For additional information, please reach out to <a href="mailto:zachary.arno@un.org">zachary.arno@un.org</a> and <a href="mailto:leonardo.milano@un.org">leonardo.milano@un.org</a>.</p>
       </div>
     </div>
@@ -107,8 +107,8 @@
             <p class="methods-eyebrow">Behind the map</p>
             <h2>How this map is made</h2>
             <div class="methods-body">
-              <p>Every source is projected onto one shared base of <b>Overture building footprints</b>, expressing all sources in a single unit — buildings. A footprint is flagged damaged for a source where that source's data intersects it: Microsoft footprints matched directly; Copernicus&nbsp;EMS and HotOSM damage points snapped to the nearest footprint (≤&nbsp;20&nbsp;m); the radar sources (IMPACT&nbsp;SAR, OSU) sampled per building. This common base enables direct cross-source comparison.</p>
-              <p>Each source is evaluated only within its <b>area of interest</b> — a Copernicus activation footprint, a radar swath, or a model's coverage mask. Only buildings inside that area are considered (<i>analysed</i>); elsewhere the source has <b>no data</b> — not zero damage. Rates are computed over the analysed area only.</p>
+              <p>Every source is projected onto one shared base of <b>Overture building footprints</b>, so all sources use the same unit: buildings. A footprint is flagged as damaged for a source where that source's data intersects it. Microsoft footprints are matched directly. Copernicus&nbsp;EMS and HotOSM damage points are snapped to the nearest footprint within 20&nbsp;m. The radar sources (IMPACT&nbsp;SAR, OSU) are sampled at each building.</p>
+              <p>Each source is evaluated only within its <b>area of interest</b>, such as a Copernicus activation footprint, a radar swath, or a model's coverage mask. Only buildings inside that area are counted as <i>analysed</i>. Outside it, the source has <b>no data</b> (not zero damage). All rates use the analysed area.</p>
             </div>
             <p class="methods-figlead">Per source, each unit reports:</p>
             <div class="methods-figures">
@@ -117,11 +117,11 @@
               <div class="figure-tile"><span class="fig-term">Coverage</span><span class="fig-def">Analysed ÷ total.</span></div>
               <div class="figure-tile"><span class="fig-term">Damage fraction</span><span class="fig-def">Damaged ÷ analysed.</span></div>
             </div>
-            <p class="methods-rollup">Per-building flags are aggregated to <b>OCHA COD admin units (0–3)</b> and an <b>H3 grid</b>, with damage graded on the <b>Copernicus EMS</b> scale (<i>Possibly · Damaged · Destroyed</i>). For any selected set of sources, each unit is coloured by the <b>maximum</b> value across them; the hover reports each source individually.</p>
+            <p class="methods-rollup">Per-building flags are aggregated to <b>OCHA COD admin units (0–3)</b> and an <b>H3 grid</b>, graded on the <b>Copernicus EMS</b> scale (<i>Possibly, Damaged, Destroyed</i>). When several sources are selected, each unit takes the <b>maximum</b> value across them, and the hover lists each source separately.</p>
           </header>
           <div class="methods-sub">Contributing sources</div>
           <div id="methods-cards" class="methods-cards"></div>
-          <p class="methods-foot">An exploratory tool from the OCHA Centre for Humanitarian Data — read each source on its own terms.</p>
+          <p class="methods-foot">An exploratory tool from the OCHA Centre for Humanitarian Data.</p>
         </div>
       </div>
     </div>
