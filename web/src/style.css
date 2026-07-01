@@ -148,19 +148,30 @@ table.tt td { font-size: 12px; padding: 2px 14px 2px 0; white-space: nowrap; ver
 #panel-about .about-contact a:hover { text-decoration: underline; }
 
 /* --- methodology slide-over (glassmorphism) --------------------------------- */
-.methods-trigger {
-  display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
-  padding: 7px 13px; font-size: 12px; font-weight: 600; letter-spacing: 0.01em;
-  color: #234; cursor: pointer;
-  background: linear-gradient(135deg, rgba(40, 110, 205, 0.14), rgba(150, 70, 190, 0.14));
-  border: 1px solid rgba(40, 110, 205, 0.28); border-radius: 10px;
-  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+.methods-fab {
+  position: fixed; top: 14px; right: 14px; z-index: 45;
+  display: flex; align-items: center; height: 44px; width: 44px; padding: 0;
+  overflow: hidden; cursor: pointer; color: #2b3a4f;
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(16px) saturate(1.35); -webkit-backdrop-filter: blur(16px) saturate(1.35);
+  border: 1px solid rgba(255, 255, 255, 0.7); border-radius: 999px;
+  box-shadow: 0 6px 22px rgba(23, 38, 66, 0.16);
+  transition: width 0.4s cubic-bezier(0.2, 0.85, 0.2, 1), background 0.3s ease,
+    box-shadow 0.3s ease, transform 0.3s ease;
 }
-.methods-trigger:hover {
-  transform: translateY(-1px);
-  background: linear-gradient(135deg, rgba(40, 110, 205, 0.24), rgba(150, 70, 190, 0.24));
-  box-shadow: 0 6px 18px rgba(40, 70, 150, 0.18);
+.methods-fab svg { flex: 0 0 44px; width: 44px; height: 44px; padding: 12px; }
+.methods-fab span {
+  white-space: nowrap; font-size: 13px; font-weight: 600; letter-spacing: 0.01em;
+  opacity: 0; padding-right: 0;
+  transition: opacity 0.22s ease 0.05s, padding 0.3s ease;
 }
+.methods-fab:hover, .methods-fab:focus-visible {
+  width: 168px; outline: none; transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 12px 30px rgba(23, 38, 66, 0.22);
+}
+.methods-fab:hover span, .methods-fab:focus-visible span { opacity: 1; padding-right: 18px; }
+@media (prefers-reduced-motion: reduce) { .methods-fab { transition: none; } }
 
 .methods[hidden] { display: none; }
 .methods { position: fixed; inset: 0; z-index: 60; display: flex; }
