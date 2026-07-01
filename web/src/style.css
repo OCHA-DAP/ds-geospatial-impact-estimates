@@ -207,9 +207,10 @@ table.tt td { font-size: 12px; padding: 2px 14px 2px 0; white-space: nowrap; ver
 .methods-body p:last-child { margin-bottom: 0; }
 .methods-body b, .methods-rollup b { color: #eaf1fb; font-weight: 600; }
 .methods-body i, .methods-rollup i { color: #bccadf; font-style: italic; }
+.methods-figlead { margin: 26px 0 12px; font-size: 13.5px; color: #aebdd4; }
 .methods-figures {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 12px;
-  margin: 26px 0 22px;
+  margin: 0 0 22px;
 }
 .figure-tile {
   padding: 14px 16px; border-radius: 14px;

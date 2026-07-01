@@ -1066,3 +1066,7 @@ methodsEl?.querySelector(".methods-bg")?.addEventListener("click", closeMethods)
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && methodsEl && !methodsEl.hasAttribute("hidden")) closeMethods();
 });
+
+// Shown by default: the methodology is the first thing a new visitor sees, and the
+// map loads behind it. Minimising collapses it to the corner FAB, which reopens it.
+openMethods();
