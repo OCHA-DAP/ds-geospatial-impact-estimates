@@ -67,7 +67,7 @@ html, body { margin: 0; height: 100%; }
   display: inline-flex; align-items: center; justify-content: center;
   width: 13px; height: 13px; margin-left: 3px; border-radius: 50%;
   background: #cfd6de; color: #fff; font-size: 9px; font-weight: 700;
-  text-transform: none; cursor: help; vertical-align: middle;
+  text-transform: none; cursor: pointer; vertical-align: middle;
 }
 .label .help:hover { background: #9aa3ad; }
 

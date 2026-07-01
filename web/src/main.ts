@@ -1066,3 +1066,15 @@ methodsEl?.querySelector(".methods-bg")?.addEventListener("click", closeMethods)
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && methodsEl && !methodsEl.hasAttribute("hidden")) closeMethods();
 });
+
+// Panel "?" affordances (next to Sources / Colour aggregation) open the note.
+document.querySelectorAll(".help").forEach((el) => {
+  el.addEventListener("click", openMethods);
+  el.addEventListener("keydown", (e) => {
+    const k = (e as KeyboardEvent).key;
+    if (k === "Enter" || k === " ") {
+      e.preventDefault();
+      openMethods();
+    }
+  });
+});
