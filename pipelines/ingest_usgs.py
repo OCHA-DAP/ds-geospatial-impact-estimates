@@ -20,9 +20,7 @@ from __future__ import annotations
 import json
 import urllib.request
 
-from azure.storage.filedatalake import DataLakeServiceClient
-
-from gie import ledger
+from gie import blobio, ledger
 from gie.config import load_settings
 
 API = "https://earthquake.usgs.gov/fdsnws/event/1/query"
@@ -40,18 +38,9 @@ def _get(url: str) -> bytes:
         return r.read()
 
 
-def _upload(fs, data: bytes, dest: str) -> None:
-    fs.get_file_client(dest).upload_data(
-        data, overwrite=True, chunk_size=4 * 1024 * 1024, max_concurrency=1
-    )
-
-
 def main() -> None:
     settings = load_settings(STAGE)
-    fs = DataLakeServiceClient(
-        f"https://{settings.account_name}.dfs.core.windows.net",
-        credential=settings.sas_token(write=True),
-    ).get_file_system_client(settings.container)
+    fs = blobio.uploader(settings)
 
     for eid in EVENTS:
         raw = _get(f"{API}?eventid={eid}&format=geojson")
@@ -61,7 +50,7 @@ def main() -> None:
         coords = (ev.get("geometry") or {}).get("coordinates")
         base = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", f"event={eid}")
 
-        _upload(fs, raw, f"{base}/event.geojson")
+        blobio.upload(fs, raw, f"{base}/event.geojson")
         landed = ["event.geojson"]
         sm = (props.get("products", {}).get("shakemap") or [{}])[0]
         contents = sm.get("contents", {})
@@ -69,7 +58,7 @@ def main() -> None:
             c = contents.get(prod)
             if not c:
                 continue
-            _upload(fs, _get(c["url"]), f"{base}/{prod.split('/')[-1]}")
+            blobio.upload(fs, _get(c["url"]), f"{base}/{prod.split('/')[-1]}")
             landed.append(prod.split("/")[-1])
 
         smv = sm.get("properties", {}).get("version")
