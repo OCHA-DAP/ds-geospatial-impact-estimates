@@ -375,6 +375,89 @@ function syncPmtiles() {
   }
 }
 
+// USGS seismic-context layer (M7.5 mainshock): MMI shaking contours + fault
+// rupture + epicentre ★, all from one GeoJSON in platinum/usgs/. Toggled together.
+const USGS_LAYERS = [
+  "usgs-epi-glow", "usgs-contour-casing", "usgs-contour", "usgs-rupture", "usgs-contour-label",
+  "usgs-epi-star", "usgs-epi-mag",
+];
+async function setupUsgs() {
+  const tok = await fetch("/api/token").then((r) => r.json());
+  const pdir = tok.platinum_dir || "platinum";
+  map.addSource("usgs", {
+    type: "geojson",
+    data: `${tok.base_url}/${pdir}/usgs/shakemap.geojson?${tok.sas}`,
+  });
+  // A star icon for the epicentre (SVG → addImage, so it never depends on glyphs).
+  await new Promise<void>((res) => {
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24">' +
+      '<path d="M12 1.3l2.94 6.36 6.96.86-5.14 4.74 1.36 6.88L12 17.7l-6.08 3.35 1.36-6.88' +
+      '-5.14-4.74 6.96-.86z" fill="#e8112d" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+    const img = new Image(52, 52);
+    img.onload = () => { if (!map.hasImage("epi-star")) map.addImage("epi-star", img); res(); };
+    img.onerror = () => res();
+    img.src = "data:image/svg+xml;base64," + btoa(svg);
+  });
+  const hidden = { visibility: "none" as const };
+  map.addLayer({
+    id: "usgs-epi-glow", source: "usgs", type: "circle", filter: ["==", ["get", "kind"], "epicenter"],
+    layout: hidden,
+    paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 4, 16, 8, 52, 11, 100],
+      "circle-color": "#e8112d", "circle-opacity": 0.22, "circle-blur": 0.9 },
+  } as any);
+  // White casing so the coloured contours read over the busy damage layers.
+  map.addLayer({
+    id: "usgs-contour-casing", source: "usgs", type: "line", filter: ["==", ["get", "kind"], "contour"],
+    layout: { ...hidden, "line-cap": "round", "line-join": "round" },
+    paint: { "line-color": "#ffffff", "line-opacity": 0.6,
+      "line-width": ["interpolate", ["linear"], ["get", "mmi"], 3, 3, 6, 5, 8, 8.5] },
+  } as any);
+  map.addLayer({
+    id: "usgs-contour", source: "usgs", type: "line", filter: ["==", ["get", "kind"], "contour"],
+    layout: { ...hidden, "line-cap": "round", "line-join": "round" },
+    paint: { "line-color": ["get", "color"], "line-opacity": 0.95,
+      "line-width": ["interpolate", ["linear"], ["get", "mmi"], 3, 1.2, 6, 2.8, 8, 5.5] },
+  } as any);
+  map.addLayer({
+    id: "usgs-rupture", source: "usgs", type: "line", filter: ["==", ["get", "kind"], "rupture"],
+    layout: { ...hidden, "line-cap": "round" },
+    paint: { "line-color": "#3a0a0a", "line-width": 2.5, "line-dasharray": [2, 1.2], "line-opacity": 0.75 },
+  } as any);
+  map.addLayer({
+    id: "usgs-contour-label", source: "usgs", type: "symbol", filter: ["==", ["get", "kind"], "contour"],
+    layout: { ...hidden, "symbol-placement": "line", "symbol-spacing": 350,
+      "text-field": ["match", ["get", "mmi"], 3, "III", 4, "IV", 5, "V", 6, "VI", 7, "VII", 8, "VIII", 9, "IX", ""],
+      "text-font": ["Open Sans Bold"], "text-size": 12 },
+    paint: { "text-color": "#5a3b00", "text-halo-color": "#fff", "text-halo-width": 1.5 },
+  } as any);
+  map.addLayer({
+    id: "usgs-epi-star", source: "usgs", type: "symbol", filter: ["==", ["get", "kind"], "epicenter"],
+    layout: { ...hidden, "icon-image": "epi-star", "icon-size": 0.62, "icon-allow-overlap": true },
+  } as any);
+  map.addLayer({
+    id: "usgs-epi-mag", source: "usgs", type: "symbol", filter: ["==", ["get", "kind"], "epicenter"],
+    layout: { ...hidden, "text-field": ["concat", "M", ["to-string", ["get", "mag"]]],
+      "text-font": ["Open Sans Bold"], "text-size": 13, "text-offset": [0, 1.6], "text-anchor": "top",
+      "text-allow-overlap": true },
+    paint: { "text-color": "#e8112d", "text-halo-color": "#fff", "text-halo-width": 2 },
+  } as any);
+  map.on("mousemove", "usgs-contour", (e: any) => {
+    const p = e.features?.[0]?.properties; if (p) showTip(e.point.x, e.point.y, `Shaking intensity · MMI ${p.mmi}`);
+  });
+  map.on("mouseleave", "usgs-contour", hideTip);
+  map.on("mousemove", "usgs-epi-star", (e: any) => {
+    const p = e.features?.[0]?.properties;
+    if (p) showTip(e.point.x, e.point.y, `Epicentre · M${p.mag}<br>${p.place}<br>depth ${p.depth_km} km`);
+  });
+  map.on("mouseleave", "usgs-epi-star", hideTip);
+}
+
+function syncUsgs() {
+  const vis = state.show.usgs ? "visible" : "none";
+  for (const id of USGS_LAYERS) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", vis);
+}
+
 // Optional satellite basemap (Esri World Imagery), drawn under the place labels.
 const satEl = document.getElementById("satellite") as HTMLInputElement | null;
 function applySatellite() {
@@ -775,6 +858,7 @@ function buildLayers() {
   syncPmtiles();
   syncBuildings();
   syncAdmin();
+  syncUsgs();
 }
 
 function renderLegend() {
@@ -931,6 +1015,7 @@ async function init() {
     ["pmtiles", setupPmtiles],
     ["buildings", setupBuildings],
     ["admin", setupAdmin],
+    ["usgs", setupUsgs],
   ] as const) {
     try {
       await fn();
