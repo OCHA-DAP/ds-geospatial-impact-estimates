@@ -270,9 +270,15 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             -- so centroid-containment is a clean 1:1 match onto the exact twin — no
             -- edge-neighbour over-flag (ST_Intersects gave ~86k vs the product's
             -- 81,437), and no id needed, so it still catches the 13,433 blank-id
-            -- national footprints an id-join would drop (ADR-0015).
+            -- national footprints an id-join would drop (ADR-0015). Use
+            -- ST_PointOnSurface (a point guaranteed INSIDE the footprint), not
+            -- ST_Centroid — the centroid can fall outside concave/multipart shapes and
+            -- miss an existing base twin. Any residual vs the product's 81,437 is now
+            -- footprints with no Overture base twin (national footprints absent from our
+            -- release); a base-flag count can't reach those — TODO count v2 rows
+            -- directly if that gap ever matters.
             SELECT DISTINCT b.id FROM base b
-            JOIN read_parquet('{sar}') s ON ST_Contains(b.geom, ST_Centroid(s.geometry))
+            JOIN read_parquet('{sar}') s ON ST_Contains(b.geom, ST_PointOnSurface(s.geometry))
         ),
         sar_seen AS (
             -- IMPACT-analysed = inside the v2 analysed-area polygon (ADR-0015)
