@@ -83,3 +83,10 @@ in order by `pipelines/run_all.py`. Revisit if a future event needs complete
 adm0 totals (→ widen to country) or if state-sized pulls prove too heavy
 (→ clip each pull to the adm1 polygon to cut stored volume). Supersedes the
 per-AOI scoping described in this repo's early ingest_overture.
+
+**Update (2026-07-02, ADR-0015):** `_affected_adm1_bboxes` now (a) unions **every**
+source's `analysed_extent` — not just CEMS + Microsoft — so no source can fall
+outside the base (this had silently dropped ~0.6% of OSU: Portuguesa/Trujillo); and
+(b) **clips each pull to the adm1 polygon** — the "cut stored volume" refinement
+foreseen above. The re-run stays idempotent (skip-if-present), so it fetches only
+newly-affected states.

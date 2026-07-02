@@ -43,20 +43,36 @@ def _affected_adm1_bboxes(con, settings) -> list[tuple[str, float, float, float,
     analysed swaths + Microsoft masks), NOT by the gold/existing base — so it is
     non-circular and picks up new states automatically as coverage is added.
     """
-    cems = settings.az_path(
-        "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+    # Union EVERY source's analysed_extent (coverage), so the base covers any state
+    # any source assessed — not just CEMS + Microsoft. Sources without an extent
+    # file (e.g. detected-only HOT) are skipped. New sources are picked up with no
+    # change here; the per-state pull below is idempotent (skip-if-present).
+    extent_sources = ["copernicus_ems", "microsoft", "impact_initiatives", "osu"]
+    cc = stratus.get_container_client(stage=STAGE, container_name=settings.container)
+    exts = [
+        settings.az_path("silver", f"source={src}", f"adm0={ADM0}", "analysed_extent.parquet")
+        for src in extent_sources
+        if cc.get_blob_client(
+            settings.blob_path("silver", f"source={src}", f"adm0={ADM0}", "analysed_extent.parquet")
+        ).exists()
+    ]
+    if not exts:
+        raise RuntimeError("no source analysed_extent found — nothing to bound the base pull")
+    cov = " UNION ALL ".join(
+        f"SELECT ST_MakeValid(geometry) AS g FROM read_parquet('{p}')" for p in exts
     )
-    ms = settings.az_path("silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet")
     adm1 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm1.parquet")
+    # Return each affected state's bbox (for parquet pushdown) AND its polygon (WKB,
+    # to clip the pull) — so we fetch the whole state's buildings (complete admin
+    # denominators, ADR-0006) but not the ocean/neighbour spillover the bbox
+    # rectangle would drag in.
     rows = con.execute(
         f"""
-        WITH cov AS (
-            SELECT ST_MakeValid(geometry) AS g FROM read_parquet('{cems}')
-            UNION ALL SELECT ST_MakeValid(geometry) FROM read_parquet('{ms}')
-        )
+        WITH cov AS ({cov})
         SELECT a.adm1_name,
                ST_XMin(a.geometry), ST_XMax(a.geometry),
-               ST_YMin(a.geometry), ST_YMax(a.geometry)
+               ST_YMin(a.geometry), ST_YMax(a.geometry),
+               ST_AsWKB(ST_MakeValid(a.geometry))
         FROM read_parquet('{adm1}') a
         WHERE EXISTS (SELECT 1 FROM cov WHERE ST_Intersects(a.geometry, cov.g))
         """
@@ -85,7 +101,7 @@ def main() -> None:
 
     total = 0
     chunk = 150_000  # keep each blob upload small enough to survive a flaky network
-    for label, x0, x1, y0, y1 in _affected_adm1_bboxes(con, settings):
+    for label, x0, x1, y0, y1, wkb in _affected_adm1_bboxes(con, settings):
         region = label.strip().lower().replace(" ", "_")
 
         def part_path(i: int, region: str = region) -> str:
@@ -97,10 +113,17 @@ def main() -> None:
             print(f"  {label}: already present, skip", flush=True)
             continue
         t = time.time()
+        # bbox for parquet pushdown, then clip to the state polygon (drops the
+        # ocean/neighbour buildings the rectangle would otherwise pull).
         d = con.execute(
             f"SELECT id, geometry FROM read_parquet('{OVERTURE}', hive_partitioning=1) "
-            f"WHERE bbox.xmin BETWEEN {x0} AND {x1} AND bbox.ymin BETWEEN {y0} AND {y1}"
+            f"WHERE bbox.xmin BETWEEN {x0} AND {x1} AND bbox.ymin BETWEEN {y0} AND {y1} "
+            f"AND ST_Intersects(geometry, ST_GeomFromWKB(?::BLOB))",
+            [bytes(wkb)],
         ).df()
+        if not len(d):
+            print(f"  {label}: no buildings in polygon, skip", flush=True)
+            continue
         geom = gpd.GeoSeries.from_wkb(d.pop("geometry").map(bytes), crs="EPSG:4326")
         gdf = gpd.GeoDataFrame(d, geometry=geom, crs="EPSG:4326")
         ok = all(

@@ -1099,7 +1099,7 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
     key: "impact_initiatives",
     tag: "Screening · radar",
     blurb:
-      "A Sentinel-1 SAR damage proxy. Change in radar coherence before and after the event flags likely structural damage over a wide area.",
+      "A Sentinel-1 SAR damage proxy. A post-event change in radar backscatter intensity (amplitude, not coherence) flags likely damage over a wide area.",
     note: "A wide-area screen, not confirmed damage.",
   },
   {
