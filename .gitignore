@@ -29,6 +29,9 @@ data/
 # Notebooks
 .ipynb_checkpoints/
 
+# Generated exploratory figures — regenerate by running the analysis; never commit
+figs/
+
 # OS / editor
 .DS_Store
 .idea/
