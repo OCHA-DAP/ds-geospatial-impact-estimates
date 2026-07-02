@@ -88,7 +88,34 @@ Databricks earns its place here **only** for prod-write access.
 * Neutral: the interim `promote.py` / `GIE_TIER` mechanism is retired once this
   lands (kept briefly for transition).
 
-## Open questions to investigate (on this branch)
+## Status and sequencing — designed, not built (2026-07-02)
+
+**Proposed and designed; deliberately NOT being implemented yet.** The interim
+cheap split (same-account `-prod` dirs + `promote.py`) is sufficient for current
+needs — it gated the CEMS and USGS releases cleanly — and the problems this ADR
+solves are mostly hedges against low-probability or *future* conditions (a
+dev-account incident is unlikely; the monolith collision only bites with a
+*second* concurrent contributor). Building it now — a Databricks job, a second
+account's CORS/auth, a cutover — would add real operational surface for benefit
+we don't yet need. Capturing the design on a branch is worthwhile; **starting to
+build it is not the move** until a concrete trigger appears:
+
+* a **second concurrent contributor** working a different source (activates the
+  real collision), or
+* an actual **prod-isolation requirement** from security/IT, or
+* the **SWA + CDN migration**, which reshapes the serving layer anyway and is the
+  natural moment to move prod to `imb0chd0prod`.
+
+The **gold decompose** is likewise picked up only when it's on the critical path
+(the per-source promote needs it, or a collision actually happens) — not as a
+standalone refactor of working, prod-serving code with no driver.
+
+*Near-term work that precedes this migration (noted only for sequencing): the
+interim serving SAS bridges were renewed to a 7-day window (expire 2026-07-09) so
+nothing lapses over the weekend; the `unep_debris` silver design waits on provider
+answers. Those come first; this is the greenfield.*
+
+## Open questions (to resolve if/when this is built)
 
 1. **Databricks access shape** — confirm Databricks has dev-READ (`imb0chd0dev`)
    as well as prod-WRITE; confirm the `dsci` scope secret names and how one job
