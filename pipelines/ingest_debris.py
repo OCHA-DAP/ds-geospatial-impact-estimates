@@ -28,9 +28,8 @@ Run: uv run --group etl python pipelines/ingest_debris.py
 from __future__ import annotations
 
 import requests
-from azure.storage.filedatalake import DataLakeServiceClient
 
-from gie import ledger
+from gie import blobio, ledger
 from gie.config import load_settings
 
 HDX = "https://data.humdata.org/api/3/action/package_show?id={}"
@@ -41,25 +40,20 @@ STAGE = "dev"
 
 
 def _upload(fs, data: bytes, dest: str) -> bool:
-    """Chunked DataLake upload (HNS + slow uplink safe); skip if already landed."""
-    fc = fs.get_file_client(dest)
+    """Upload via the shared reliable helper; skip if already landed at same size."""
     try:
-        if fc.get_file_properties().size == len(data):
+        if fs.get_file_client(dest).get_file_properties().size == len(data):
             return False  # already present at the same size — resumable no-op
     except Exception:
         pass
-    # 4 MB staged appends so a large gpkg can't blow the socket write timeout.
-    fc.upload_data(data, overwrite=True, chunk_size=4 * 1024 * 1024, max_concurrency=1)
+    blobio.upload(fs, data, dest)
     return True
 
 
 def main() -> None:
     settings = load_settings(STAGE)
     resources = requests.get(HDX.format(HDX_SLUG), timeout=60).json()["result"]["resources"]
-    fs = DataLakeServiceClient(
-        f"https://{settings.account_name}.dfs.core.windows.net",
-        credential=settings.sas_token(write=True),
-    ).get_file_system_client(settings.container)
+    fs = blobio.uploader(settings)
 
     landed = []
     for r in resources:

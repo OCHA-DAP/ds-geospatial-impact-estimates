@@ -25,7 +25,7 @@ import ocha_lens as lens
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import ledger
+from gie import blobio, ledger
 from gie.config import load_settings
 
 ACTIVATION = "EMSR884"
@@ -49,6 +49,7 @@ def _product_blob(settings, row, fname: str) -> str:
 def main() -> None:
     settings = load_settings(STAGE)
     container = stratus.get_container_client(stage=STAGE, container_name=settings.container)
+    fs = blobio.uploader(settings)  # reliable chunked+concurrent upload for the product zips
 
     prods = lens.cems.get_products(ACTIVATION)
 
@@ -75,7 +76,7 @@ def main() -> None:
             skipped += 1
             continue
         data = lens.cems.download_product(row, dest=None)
-        lens.cems.to_blob(data, blob_name, stage=STAGE, container_name=settings.container)
+        blobio.upload(fs, data, blob_name)
         downloaded += 1
         print(f"  bronze <- {blob_name} ({len(data):,} bytes)")
 

@@ -264,8 +264,24 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             JOIN read_parquet('{ms_analysed}') e ON ST_Within(b.c, e.geometry)
             WHERE NOT e.superseded
         ),
+        sar_dmg AS (
+            -- IMPACT v2: flag the base building that CONTAINS a v2 damaged
+            -- footprint's centroid. v2 footprints ARE Overture (identical geometry),
+            -- so centroid-containment is a clean 1:1 match onto the exact twin — no
+            -- edge-neighbour over-flag (ST_Intersects gave ~86k vs the product's
+            -- 81,437), and no id needed, so it still catches the 13,433 blank-id
+            -- national footprints an id-join would drop (ADR-0015). Use
+            -- ST_PointOnSurface (a point guaranteed INSIDE the footprint), not
+            -- ST_Centroid — the centroid can fall outside concave/multipart shapes and
+            -- miss an existing base twin. Any residual vs the product's 81,437 is now
+            -- footprints with no Overture base twin (national footprints absent from our
+            -- release); a base-flag count can't reach those — TODO count v2 rows
+            -- directly if that gap ever matters.
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{sar}') s ON ST_Contains(b.geom, ST_PointOnSurface(s.geometry))
+        ),
         sar_seen AS (
-            -- SAR-analysed = inside the raster's bounds footprint (ADR-0008)
+            -- IMPACT-analysed = inside the v2 analysed-area polygon (ADR-0015)
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{sar_ext}') e ON ST_Within(b.c, e.geometry)
         ),
@@ -297,8 +313,8 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             cd.cems_class AS cems_class,
             (b.id IN (SELECT id FROM cems_coarse_set)) AS cems_coarse,
             (b.id IN (SELECT id FROM cems_seen)) AS cems_analysed,
-            (sd.id IS NOT NULL) AS sar_dmg,
-            sd.damage_class AS sar_class,
+            (b.id IN (SELECT id FROM sar_dmg)) AS sar_dmg,
+            IF(b.id IN (SELECT id FROM sar_dmg), 2, NULL) AS sar_class,
             (b.id IN (SELECT id FROM sar_seen)) AS sar_analysed,
             (b.id IN (SELECT id FROM hot_dmg)) AS hot_dmg,
             (od.id IS NOT NULL) AS osu_dmg,
@@ -307,7 +323,6 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
         LEFT JOIN cems_dmg cd ON cd.id = b.id
-        LEFT JOIN read_parquet('{sar}') sd ON sd.id = b.id
         LEFT JOIN read_parquet('{osu}') od ON od.id = b.id
         """
     )

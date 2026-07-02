@@ -51,6 +51,13 @@ adopt it, and does it supersede the per-AOI data?
   the analysed area *is* the AOI. (Re-check for a future cloud-affected AOI.)
 * Bad / open: if Microsoft later sends individual tiles outside this merged set,
   we must merge them in; the per-AOI path remains for that.
+* **Residual cross-scene duplication (accepted):** the merged set is *mostly* but
+  not fully deduplicated — ~3,800 buildings (~5–6% of the 72,162; ~1–2% of damaged)
+  are the same building detected in overlapping satellite scenes whose per-scene
+  footprints overlapped too little to merge. It is a Microsoft artifact (not
+  Overture) and does not affect our Overture-based comparison base, so we accept it
+  and flag it upstream. Quantified/verified in
+  [`exploratory/0001-microsoft-overture-duplicates/`](../../exploratory/0001-microsoft-overture-duplicates/findings.md).
 
 ## More Information
 

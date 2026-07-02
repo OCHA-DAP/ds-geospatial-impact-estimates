@@ -1,10 +1,17 @@
 ---
-status: "accepted"
+status: "superseded"
 date: 2026-06-28
 deciders: zackarno
+superseded-by: 0015-impact-v2-vector-damage
 ---
 
 # Ingesting the IMPACT Initiatives SAR damage-proxy raster as a third source
+
+> **Superseded by [ADR-0015](0015-impact-v2-vector-damage.md)** (2026-07-02): IMPACT
+> delivered a v2 *vector* product (damaged Overture footprints + AOI) that replaces
+> this raster ingestion. The amplitude-proxy *method* and its "wide-area screen, not
+> confirmed damage" caveat still apply; only the delivery format and harmonization
+> change.
 
 ## Context and Problem Statement
 
