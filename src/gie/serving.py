@@ -209,11 +209,13 @@ _SOURCE_DESC = {
     "impact_initiatives": "'impact_initiatives' (IMPACT Sentinel-1 SAR damage proxy, v2)",
     "osu": "'osu' (OSU Sentinel-1 coherence damage)",
     "hot_osm": "'hot_osm' (HOTOSM fAIr AI damage points — detected-only)",
-    "disha": "'disha' (DISHA / UN Global Pulse — Google Earth AI zero-shot damage, NW Caracas; unvalidated)",
+    "disha": "'disha' (DISHA — Data Insights for Social & Humanitarian Action; AI building-damage detection, NW Caracas; unvalidated)",
+    "unep_debris": "'unep_debris' (UNEP/OCHA JEU building debris — mass in tonnes; detected-only, SAR-derived)",
 }
 _SOURCE_SHORT = {
     "microsoft": "Microsoft", "copernicus_ems": "Copernicus EMS",
     "impact_initiatives": "IMPACT SAR", "osu": "OSU", "hot_osm": "HOTOSM fAIr", "disha": "DISHA",
+    "unep_debris": "UNEP debris",
 }
 
 # column -> (meaning / how it was derived), for the README sheet. The 'source' row is
@@ -386,6 +388,9 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     elif source == "osu":
         # OSU is the same shape (ADR-0009): damaged-only on building_flags.
         dmg, seen = "osu_dmg", "osu_dmg"
+    elif source == "unep_debris":
+        # detected-only (no analysed AOI): assessed set IS the damaged set.
+        dmg, seen = "debris_dmg", "debris_dmg"
     else:
         dmg, seen = "cems_dmg", "cems_analysed"
     return con.execute(
@@ -404,8 +409,8 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    if source == "hot_osm":
-        # detected-only: fAIr published no analysed extent — nothing to outline.
+    if source in ("hot_osm", "unep_debris"):
+        # detected-only: no analysed extent published — nothing to outline.
         return gpd.GeoDataFrame(
             {"aoi_name": [], "product": [], "acquired": [], "source": []},
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),
@@ -420,7 +425,7 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
         label, product = {
             "impact_initiatives": ("SAR analysed extent", "Sentinel-1 damage proxy"),
             "osu": ("OSU analyzed area", "Sentinel-1 coherence"),
-            "disha": ("DISHA AOI", "Google Earth AI zero-shot"),
+            "disha": ("DISHA AOI", "DISHA damage"),
         }[source]
         df = con.execute(
             f"SELECT '{label}' AS aoi_name, '{product}' AS product, NULL AS acquired, "
@@ -461,9 +466,9 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    if source in ("impact_initiatives", "osu", "disha"):
-        # SAR / OSU / DISHA are keyed to the Overture base with no own vector
-        # geometry to render; their building-level view is via load_buildings.
+    if source in ("impact_initiatives", "osu", "disha", "unep_debris"):
+        # SAR / OSU render from the Overture base; DISHA and UNEP debris have their
+        # own geometry but serve it client-side via PMTiles, not this loader.
         return gpd.GeoDataFrame(
             {"damaged": pd.Series([], dtype="int64")},
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),
