@@ -682,7 +682,7 @@ function buildLayers() {
   const layers: any[] = [];
 
   const adminFeats = sources.flatMap((s) =>
-    (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []).filter((f: any) => hasCov(f.properties)),
+    (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []).filter((f: any) => hasData(f.properties)),
   );
   const aMax = maxBy(adminFeats, (f) => metricValue(f.properties, m) ?? 0);
   const h3All = sources.flatMap((s) => (h3Cache.get(s) ?? []).filter(hasData));
@@ -695,7 +695,7 @@ function buildLayers() {
     const byUnit = new Map<string, { f: any; v: number | null }>();
     for (const s of sources) {
       for (const f of adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []) {
-        if (!hasCov(f.properties)) continue;
+        if (!hasData(f.properties)) continue;
         const v = metricValue(f.properties, m);
         const cur = byUnit.get(f.properties.unit_id);
         if (!cur) byUnit.set(f.properties.unit_id, { f, v });
@@ -995,7 +995,7 @@ function legendMax(metric: string): number {
       props.push(
         ...(adminCache.get(`${s}:${state.adminLevel}`)?.features ?? [])
           .map((f: any) => f.properties)
-          .filter(hasCov),
+          .filter(hasData),
       );
     if (state.show.h3) props.push(...(h3Cache.get(s) ?? []).filter(hasData));
   }
