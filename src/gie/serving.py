@@ -397,8 +397,10 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
         )
     if source in ("impact_initiatives", "osu"):
         # Single-polygon coverage extents keyed to Overture (SAR / OSU).
+        # Read the tiered gold copy (staged by stage_serving) so this is promote-
+        # gated, not the shared silver original (ADR-0016).
         ext = settings.az_path(
-            "silver", f"source={source}", f"adm0={adm0}", "analysed_extent.parquet"
+            "gold", "model=common", f"adm0={adm0}", "serving", "extent", f"source={source}.parquet"
         )
         label, product = (
             ("SAR analysed extent", "Sentinel-1 damage proxy")
@@ -413,7 +415,10 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
         df["source"] = source
         return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
     src = "microsoft" if source == "microsoft" else "copernicus_ems"
-    ext = settings.az_path("silver", f"source={src}", f"adm0={adm0}", "analysed_extent.parquet")
+    # tiered gold copy (promote-gated), not shared silver (ADR-0016)
+    ext = settings.az_path(
+        "gold", "model=common", f"adm0={adm0}", "serving", "extent", f"source={src}.parquet"
+    )
     if source == "microsoft":
         sql = (
             f"SELECT aoi AS aoi_name, 'Microsoft analysis' AS product, NULL AS acquired, "
@@ -485,8 +490,9 @@ def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFra
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
+    # tiered gold copy (promote-gated), not shared silver (ADR-0016)
     path = settings.az_path(
-        "silver", "source=copernicus_ems", f"adm0={adm0}", "coverage_detail.parquet"
+        "gold", "model=common", f"adm0={adm0}", "serving", "coverage_detail.parquet"
     )
     df = con.execute(
         f"SELECT kind, aoi_name, product, acquired, ST_AsWKB(geometry) AS wkb "

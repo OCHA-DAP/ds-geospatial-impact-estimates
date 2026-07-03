@@ -23,6 +23,7 @@ STEPS = [
     ("ingest_overture", "Overture base for every admin-1 state coverage touches"),
     ("aggregate_damage", "Microsoft native gold"),
     ("harmonize_common", "common-model gold — all sources on one base, coverage-aware"),
+    ("stage_serving", "stage server-rendered serving geometries into tiered gold (ADR-0016)"),
 ]
 
 
