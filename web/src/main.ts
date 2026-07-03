@@ -15,7 +15,7 @@ const SOURCE_LABEL: Record<string, string> = {
   impact_initiatives: "IMPACT SAR (proxy)",
   hot_osm: "HotOSM",
   osu: "OSU S1 (coherence)",
-  disha: "DISHA (zero-shot)",
+  disha: "DISHA",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
   microsoft: [40, 110, 205],
