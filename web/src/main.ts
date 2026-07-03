@@ -152,7 +152,28 @@ const LAYER_SERVING: Record<string, Serving> = {
   },
   impact_initiatives: { mode: "deckgl" },
   osu: { mode: "deckgl" },
-  disha: { mode: "deckgl" },
+  disha: {
+    mode: "pmtiles",
+    file: "native-disha/damage_points.pmtiles",
+    sourceLayer: "damage_points",
+    layers: [
+      {
+        id: "pmt-disha",
+        spec: {
+          type: "circle",
+          paint: {
+            "circle-color": DAMAGE_BY_CLASS,
+            "circle-opacity": 0.85,
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 15, 7],
+            "circle-stroke-width": 0,
+          },
+        },
+      },
+    ],
+    hover: (p) =>
+      `${SOURCE_LABEL["disha"] ?? "disha"}<br>grade: ${p.ems_grade}` +
+      (p.score != null ? `<br>score: ${Math.round(p.score * 100)}%` : ""),
+  },
   hot_osm: {
     mode: "pmtiles",
     file: "native-hot_osm/damage_points.pmtiles",
@@ -187,6 +208,7 @@ const BUILDING_FIELDS: Record<string, { seen: string; dmg: string }> = {
   impact_initiatives: { seen: "sar_dmg", dmg: "sar_dmg" }, // damaged-only (ADR-0008)
   osu: { seen: "osu_dmg", dmg: "osu_dmg" }, // damaged-only
   hot_osm: { seen: "hot_dmg", dmg: "hot_dmg" }, // detected-only
+  disha: { seen: "disha_dmg", dmg: "disha_dmg" }, // damaged-only (LICENCE-gated)
 };
 
 // Add the one buildings tile + per-source exposed/damaged circle layers (hidden).

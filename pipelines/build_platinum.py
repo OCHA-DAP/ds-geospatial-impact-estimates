@@ -27,15 +27,17 @@ from __future__ import annotations
 
 import io
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import geopandas as gpd
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import db, ledger
+from gie import blobio, db, ledger
 from gie.config import load_settings
 
 ADM0 = "VE"
@@ -48,6 +50,7 @@ LAYERS: dict[str, tuple[str, str, tuple[str, str] | None]] = {
     "native-microsoft": ("silver", f"source=microsoft/adm0={ADM0}/footprints.parquet", None),
     "native-cems": ("silver", f"source=copernicus_ems/adm0={ADM0}/builtup_damage.parquet", None),
     "native-hot_osm": ("silver", f"source=hot_osm/adm0={ADM0}/damage_points.parquet", None),
+    "native-disha": ("silver", f"source=disha/adm0={ADM0}/damage_points.parquet", None),
     "admin-adm1": ("bronze", f"source=codab/adm0={ADM0}/adm1.parquet", None),
     "admin-adm2": ("bronze", f"source=codab/adm0={ADM0}/adm2.parquet", None),
     "admin-adm3": ("bronze", f"source=codab/adm0={ADM0}/adm3.parquet", None),
@@ -70,6 +73,33 @@ def _portolan(args: list[str], cwd: str, env: dict | None = None) -> None:
         print(r.stdout.decode(errors="replace")[-1500:])
         print(r.stderr.decode(errors="replace")[-1500:])
         raise RuntimeError(f"portolan {' '.join(args)} failed ({r.returncode})")
+
+
+# Explicit tippecanoe flags for the buildings point layer (515k points, wide area).
+# Portolan's default (auto ~z12 + drop-densest) drops the densest coastal tiles'
+# features, wiping out sparse per-source damaged sets like DISHA's 193 so their flag
+# never lands in a tile. -z14 + no feature/size limit keeps every building at maxzoom
+# (default drop-rate still thins low zooms), for ~15% more bytes. See the DISHA note.
+BUILDINGS_TIPPE = ["-z14", "--no-tile-size-limit", "--no-feature-limit"]
+
+
+def _tile_buildings(gdf, settings) -> None:
+    """Tile the buildings point layer with explicit tippecanoe flags + upload direct,
+    bypassing Portolan (which doesn't cleanly expose maxzoom / drop control)."""
+    with tempfile.TemporaryDirectory() as td:
+        fgb, pmt = f"{td}/buildings.fgb", f"{td}/building_flags.pmtiles"
+        gdf.to_file(fgb, driver="FlatGeobuf")
+        r = subprocess.run(
+            ["tippecanoe", "-o", pmt, *BUILDINGS_TIPPE, "-l", "building_flags", "--force", fgb],
+            capture_output=True,
+        )
+        if r.returncode != 0:
+            print(r.stderr.decode(errors="replace")[-1200:])
+            raise RuntimeError(f"tippecanoe buildings tile failed ({r.returncode})")
+        data = Path(pmt).read_bytes()
+    dest = settings.blob_path("platinum", "buildings", "building_flags.pmtiles")
+    blobio.upload(blobio.uploader(settings), data, dest)
+    print(f"  buildings <- {dest}  (z14 no-drop, {len(data) / 1e6:.0f} MB)", flush=True)
 
 
 def export_values(settings) -> None:
@@ -117,9 +147,14 @@ def main(only: list[str] | None = None) -> None:
         out = d / Path(rel).name
         if xy:  # non-geo parquet (lon/lat) -> GeoParquet points before tiling
             df = pd.read_parquet(io.BytesIO(raw))
-            gpd.GeoDataFrame(
+            gdf = gpd.GeoDataFrame(
                 df, geometry=gpd.points_from_xy(df[xy[0]], df[xy[1]]), crs="EPSG:4326"
-            ).to_parquet(out)
+            )
+            if coll == "buildings":  # explicit tiling (no drop) + direct upload
+                _tile_buildings(gdf, settings)
+                shutil.rmtree(d, ignore_errors=True)  # keep it out of the Portolan push
+                continue
+            gdf.to_parquet(out)
         else:
             out.write_bytes(raw)
         _portolan(["add", "--pmtiles", str(out)], cwd=str(cat))
