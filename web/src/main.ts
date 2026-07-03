@@ -15,6 +15,7 @@ const SOURCE_LABEL: Record<string, string> = {
   impact_initiatives: "IMPACT SAR (proxy)",
   hot_osm: "HotOSM",
   osu: "OSU S1 (coherence)",
+  disha: "DISHA (zero-shot)",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
   microsoft: [40, 110, 205],
@@ -22,6 +23,7 @@ const SOURCE_COLOR: Record<string, [number, number, number]> = {
   impact_initiatives: [150, 70, 190],
   hot_osm: [210, 45, 130],
   osu: [20, 160, 130],
+  disha: [225, 200, 40],
 };
 
 const state = {
@@ -150,6 +152,7 @@ const LAYER_SERVING: Record<string, Serving> = {
   },
   impact_initiatives: { mode: "deckgl" },
   osu: { mode: "deckgl" },
+  disha: { mode: "deckgl" },
   hot_osm: {
     mode: "pmtiles",
     file: "native-hot_osm/damage_points.pmtiles",
@@ -1122,6 +1125,13 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
     blurb:
       "The Humanitarian OpenStreetMap Team's fAIr model detects damaged buildings from imagery, aligned to the OpenStreetMap community base.",
     note: "Open, community-driven detection.",
+  },
+  {
+    key: "disha",
+    tag: "AI · zero-shot",
+    blurb:
+      "DISHA (UN Global Pulse) runs Google Earth AI's zero-shot damage model on pre/post imagery over NW Caracas, on Google Open Buildings footprints.",
+    note: "Preview over a small AOI; provider validation pending.",
   },
 ];
 

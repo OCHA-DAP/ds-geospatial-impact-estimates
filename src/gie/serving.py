@@ -395,18 +395,17 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),
             crs="EPSG:4326",
         )
-    if source in ("impact_initiatives", "osu"):
-        # Single-polygon coverage extents keyed to Overture (SAR / OSU).
-        # Read the tiered gold copy (staged by stage_serving) so this is promote-
-        # gated, not the shared silver original (ADR-0016).
+    if source in ("impact_initiatives", "osu", "disha"):
+        # Single-polygon coverage extents (SAR / OSU / DISHA), from the tiered gold
+        # copy (stage_serving) so it's promote-gated, not shared silver (ADR-0016).
         ext = settings.az_path(
             "gold", "model=common", f"adm0={adm0}", "serving", "extent", f"source={source}.parquet"
         )
-        label, product = (
-            ("SAR analysed extent", "Sentinel-1 damage proxy")
-            if source == "impact_initiatives"
-            else ("OSU analyzed area", "Sentinel-1 coherence")
-        )
+        label, product = {
+            "impact_initiatives": ("SAR analysed extent", "Sentinel-1 damage proxy"),
+            "osu": ("OSU analyzed area", "Sentinel-1 coherence"),
+            "disha": ("DISHA AOI", "Google Earth AI zero-shot"),
+        }[source]
         df = con.execute(
             f"SELECT '{label}' AS aoi_name, '{product}' AS product, NULL AS acquired, "
             f"ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
@@ -446,9 +445,9 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    if source in ("impact_initiatives", "osu"):
-        # SAR / OSU are keyed to Overture with no own vector geometry; their
-        # building-level view is the damaged points (load_buildings).
+    if source in ("impact_initiatives", "osu", "disha"):
+        # SAR / OSU / DISHA are keyed to the Overture base with no own vector
+        # geometry to render; their building-level view is via load_buildings.
         return gpd.GeoDataFrame(
             {"damaged": pd.Series([], dtype="int64")},
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),

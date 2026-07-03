@@ -73,6 +73,9 @@ SOURCES = [
     # OSU Sentinel-1 coherence: pre-keyed to Overture (id-join); analysed =
     # inside the analyzed-area polygon (ADR-0009).
     ("osu", "osu_dmg", "sum(osu_analysed::INT)"),
+    # DISHA (UN Global Pulse) zero-shot damage POINTS + AOI; snapped to the base like
+    # HOT, analysed = inside the AOI. LICENCE-gated — staging preview only.
+    ("disha", "disha_dmg", "sum(disha_analysed::INT)"),
 ]
 GRAINS = [
     ("h3", "h3", None),
@@ -198,6 +201,13 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     osu_ext = _local(settings,
         "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
     )
+    # DISHA (UN Global Pulse) damage points + AOI extent — snapped like HOT (LICENCE-gated).
+    disha = _local(settings,
+        "silver", "source=disha", f"adm0={ADM0}", "damage_points.parquet"
+    )
+    disha_ext = _local(settings,
+        "silver", "source=disha", f"adm0={ADM0}", "analysed_extent.parquet"
+    )
     adm3 = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
@@ -301,6 +311,23 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             -- OSU-analysed = inside the analyzed-area polygon
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{osu_ext}') e ON ST_Within(b.c, e.geometry)
+        ),
+        disha_dmg AS (
+            -- DISHA damage POINTS snapped to the nearest base footprint within
+            -- {SNAP_M} m (same rule as HOT/CEMS points). LICENCE-gated preview.
+            SELECT id FROM (
+                SELECT b.id,
+                    row_number() OVER (PARTITION BY p.fid
+                                       ORDER BY ST_Distance(b.geom, p.g)) AS rn
+                FROM (SELECT row_number() OVER () AS fid, geometry AS g
+                      FROM read_parquet('{disha}')) p
+                JOIN base b ON ST_Intersects(ST_Buffer(p.g, {tol}), b.geom)
+            ) WHERE rn = 1
+        ),
+        disha_seen AS (
+            -- DISHA-analysed = inside its AOI polygon
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{disha_ext}') e ON ST_Within(b.c, e.geometry)
         )
         SELECT b.id,
             round(ST_X(b.c), 6) AS lon, round(ST_Y(b.c), 6) AS lat,
@@ -319,7 +346,9 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             (b.id IN (SELECT id FROM hot_dmg)) AS hot_dmg,
             (od.id IS NOT NULL) AS osu_dmg,
             od.damage_class AS osu_class,
-            (b.id IN (SELECT id FROM osu_seen)) AS osu_analysed
+            (b.id IN (SELECT id FROM osu_seen)) AS osu_analysed,
+            (b.id IN (SELECT id FROM disha_dmg)) AS disha_dmg,
+            (b.id IN (SELECT id FROM disha_seen)) AS disha_analysed
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
         LEFT JOIN cems_dmg cd ON cd.id = b.id
@@ -374,8 +403,8 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # the analysed flags through.
     flags = con.execute(
         "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_class, cems_analysed, "
-        "sar_dmg, sar_class, hot_dmg, osu_dmg, osu_class "
-        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR hot_dmg OR osu_dmg"
+        "sar_dmg, sar_class, hot_dmg, osu_dmg, osu_class, disha_dmg "
+        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR hot_dmg OR osu_dmg OR disha_dmg"
     ).df()
     print(f"  building_flags computed ({len(flags):,} rows), uploading", flush=True)
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
