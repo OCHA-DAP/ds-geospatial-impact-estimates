@@ -57,6 +57,10 @@ Native vs Overture-snapped (20 m) damaged-building counts:
 | CEMS | per-building points | 3,072 | 2,708 | 283 | 81 | **−12%** |
 | UNEP debris | GBA polygons (fine) | 96,046 | 75,656 | 18,917 | 1,473 | **−21%** |
 
+> Note: the production `harmonize_common` snap (centroid → nearest *footprint*) flags
+> **75,477** on the base — within 0.2% of the centroid → centroid **75,656** measured
+> here. The live viewer uses the pipeline number; the ~21% story is identical.
+
 **The gap is collapse, not coverage.** For debris, **98%** of buildings *do* find an
 Overture building within 20 m (only 1,473 dropped) — Overture covers the debris area
 fine. The −21% comes almost entirely from **~18,900 GBA footprints collapsing onto a
