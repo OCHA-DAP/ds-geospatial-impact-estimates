@@ -30,6 +30,7 @@ Run: uv run --group etl python pipelines/harmonize_common.py
 
 from __future__ import annotations
 
+import glob
 import os
 import threading
 import time
@@ -109,8 +110,10 @@ def _fetch(blob, dst, settings, stage, tries: int = 10, timeout_s: int = 45) -> 
         th.start()
         th.join(timeout_s)
         if "data" in result:
-            with open(dst, "wb") as f:
-                f.write(result["data"])
+            tmp = f"{dst}.tmp"  # atomic write: temp file, then rename, so an interrupted
+            with open(tmp, "wb") as f:  # write can never leave a truncated file that a later
+                f.write(result["data"])  # run skips-as-present and reads as complete.
+            os.replace(tmp, dst)
             return
         reason = "stalled" if th.is_alive() else str(result.get("err", ""))[:40]
         print(f"    {os.path.basename(dst)} retry {attempt + 1}/{tries} ({reason})", flush=True)
@@ -125,7 +128,11 @@ def _local_base(settings, stage: str = STAGE) -> str:
     base scan over this endpoint, and the read has no timeout, so it hangs at 0%
     CPU forever. The Azure SDK download (stratus) is robust here, so we pull the
     base to disk and let DuckDB read local files. Other inputs are small and read
-    fine straight from blob. Returns a local hive glob path."""
+    fine straight from blob. Returns a local hive glob path.
+
+    Integrity: writes are atomic (see _fetch) and the local set is verified against
+    blob before returning, so a partial cache fails loud rather than silently
+    serving a subset (an out-of-sync cache once produced badly wrong snap counts)."""
     prefix = settings.blob_path("silver", "source=overture", f"adm0={ADM0}")
     blobs = [
         b
@@ -144,6 +151,13 @@ def _local_base(settings, stage: str = STAGE) -> str:
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         _fetch(b, dst, settings, stage)
         n += 1
+    have = {os.path.relpath(p, root) for p in glob.glob(os.path.join(root, "region=*", "*.parquet"))}
+    missing = {b[len(prefix) + 1 :] for b in blobs} - have
+    if missing:  # a partial cache must fail loud, never be read as the whole base
+        raise RuntimeError(
+            f"Overture base cache incomplete: {len(missing)}/{len(blobs)} region files "
+            f"missing (e.g. {sorted(missing)[:3]}). Delete {root} and re-run."
+        )
     print(f"  base: {len(blobs)} region files local ({n} newly downloaded)", flush=True)
     return os.path.join(root, "region=*", "*.parquet")
 
