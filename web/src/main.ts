@@ -12,10 +12,11 @@ type RGBA = [number, number, number, number];
 const SOURCE_LABEL: Record<string, string> = {
   microsoft: "Microsoft",
   copernicus_ems: "Copernicus EMS",
-  impact_initiatives: "IMPACT SAR (proxy)",
+  impact_initiatives: "IMPACT (SAR)",
   hot_osm: "HotOSM",
-  osu: "OSU S1 (coherence)",
+  osu: "OSU (SAR)",
   disha: "DISHA",
+  unep_debris: "UNEP (SAR)",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
   microsoft: [40, 110, 205],
@@ -24,6 +25,15 @@ const SOURCE_COLOR: Record<string, [number, number, number]> = {
   hot_osm: [210, 45, 130],
   osu: [20, 160, 130],
   disha: [225, 200, 40],
+  unep_debris: [140, 90, 55],
+};
+// Fixed display order for the source list / legend (Copernicus first, UNEP last).
+const SOURCE_ORDER = [
+  "copernicus_ems", "microsoft", "disha", "hot_osm", "impact_initiatives", "osu", "unep_debris",
+];
+const sourceRank = (s: string) => {
+  const i = SOURCE_ORDER.indexOf(s);
+  return i < 0 ? 999 : i;
 };
 
 const state = {
@@ -196,6 +206,32 @@ const LAYER_SERVING: Record<string, Serving> = {
       `${SOURCE_LABEL["hot_osm"] ?? "hot_osm"}<br>grade: ${p.ems_grade}` +
       (p.confidence != null ? `<br>confidence: ${Math.round(p.confidence * 100)}%` : ""),
   },
+  unep_debris: {
+    mode: "pmtiles",
+    file: "native-unep_debris/debris.pmtiles",
+    sourceLayer: "debris",
+    // Polygons coloured by the source's own metric — debris MASS (tonnes) — not a
+    // damage grade. Detected-only; native count 96,046 vs 75,477 on the Overture
+    // base (ADR-0017).
+    layers: [
+      {
+        id: "pmt-debris",
+        spec: {
+          type: "fill",
+          paint: {
+            "fill-color": [
+              "interpolate", ["linear"], ["get", "debris_tonnes"],
+              10, "rgb(255,224,160)", 100, "rgb(240,140,32)", 1000, "rgb(178,24,24)",
+            ],
+            "fill-opacity": 0.85,
+          },
+        },
+      },
+    ],
+    hover: (p) =>
+      `${SOURCE_LABEL["unep_debris"] ?? "unep_debris"}<br>debris: ` +
+      `${Math.round(p.debris_tonnes).toLocaleString()} t`,
+  },
 };
 const usePmtiles = (s: string) => LAYER_SERVING[s]?.mode === "pmtiles";
 
@@ -209,6 +245,7 @@ const BUILDING_FIELDS: Record<string, { seen: string; dmg: string }> = {
   osu: { seen: "osu_dmg", dmg: "osu_dmg" }, // damaged-only
   hot_osm: { seen: "hot_dmg", dmg: "hot_dmg" }, // detected-only
   disha: { seen: "disha_dmg", dmg: "disha_dmg" }, // damaged-only (LICENCE-gated)
+  unep_debris: { seen: "debris_dmg", dmg: "debris_dmg" }, // detected-only (mass source)
 };
 
 // Add the one buildings tile + per-source exposed/damaged circle layers (hidden).
@@ -546,6 +583,9 @@ function nativeColor(source: string, p: any): RGBA {
 const maxBy = (arr: any[], get: (x: any) => number) =>
   Math.max(1, ...arr.map(get).filter((v) => !Number.isNaN(v)));
 const hasCov = (p: any) => (p?.coverage_fraction ?? 0) > 0;
+// Detected-only sources (no coverage) still contribute cells where damage was found;
+// include those so their damaged H3 cells render on the count metric.
+const hasData = (p: any) => hasCov(p) || (p?.damaged_detected ?? 0) > 0;
 
 // --- tooltip -----------------------------------------------------------------
 const tooltip = document.getElementById("tooltip")!;
@@ -645,7 +685,7 @@ function buildLayers() {
     (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []).filter((f: any) => hasCov(f.properties)),
   );
   const aMax = maxBy(adminFeats, (f) => metricValue(f.properties, m) ?? 0);
-  const h3All = sources.flatMap((s) => (h3Cache.get(s) ?? []).filter(hasCov));
+  const h3All = sources.flatMap((s) => (h3Cache.get(s) ?? []).filter(hasData));
   const hMax = maxBy(h3All, (r) => metricValue(r, m) ?? 0);
 
   // admin aggregation: ONE layer, each unit coloured by the MAX metric value across
@@ -698,7 +738,7 @@ function buildLayers() {
     const byCell = new Map<string, any>();
     for (const s of sources) {
       for (const r of h3Cache.get(s) ?? []) {
-        if (!hasCov(r)) continue;
+        if (!hasData(r)) continue;
         const v = metricValue(r, m);
         const cur = byCell.get(r.h3);
         if (!cur || (v != null && (cur._v == null || v > cur._v)))
@@ -957,7 +997,7 @@ function legendMax(metric: string): number {
           .map((f: any) => f.properties)
           .filter(hasCov),
       );
-    if (state.show.h3) props.push(...(h3Cache.get(s) ?? []).filter(hasCov));
+    if (state.show.h3) props.push(...(h3Cache.get(s) ?? []).filter(hasData));
   }
   return maxBy(props, (p) => metricValue(p, metric) ?? 0);
 }
@@ -1055,9 +1095,10 @@ async function init() {
     { key: "coverage_fraction", label: "Coverage" },
     { key: "damaged_detected", label: "Damaged buildings" },
   ];
-  state.sources = new Set(sources);
+  const ordered = [...sources].sort((a, b) => sourceRank(a) - sourceRank(b));
+  state.sources = new Set(ordered);
 
-  el("sources").innerHTML = sources
+  el("sources").innerHTML = ordered
     .map((s) => {
       const c = SOURCE_COLOR[s] ?? [120, 120, 120];
       return `<label><input type="checkbox" data-source="${s}" checked /><span class="swatch" style="background:rgb(${c.join(",")})"></span> ${SOURCE_LABEL[s] ?? s}</label>`;
@@ -1073,10 +1114,12 @@ async function init() {
       box.addEventListener("change", async () => {
         if (box.checked) state.sources.add(box.dataset.source!);
         else state.sources.delete(box.dataset.source!);
+        syncMetricLock();
         await refresh();
       }),
     );
 
+  syncMetricLock();
   await refresh();
 }
 
@@ -1101,6 +1144,21 @@ function syncSubControls() {
 }
 syncSubControls();
 
+// UNEP / HotOSM / DISHA carry no coverage or analysed rate, so damage-fraction and
+// coverage are meaningless for them. When the selection is ONLY those (any combo,
+// nothing else), lock "colour aggregation by" to the damaged count and grey it out.
+const COUNT_ONLY_SOURCES = new Set(["unep_debris", "hot_osm", "disha"]);
+function syncMetricLock() {
+  const sel = el("metric") as HTMLSelectElement;
+  const countOnly =
+    state.sources.size > 0 && [...state.sources].every((s) => COUNT_ONLY_SOURCES.has(s));
+  if (countOnly && state.metric !== "damaged_detected") {
+    state.metric = "damaged_detected";
+    sel.value = "damaged_detected";
+  }
+  sel.disabled = countOnly;
+}
+
 document.querySelectorAll<HTMLInputElement>("input[data-layer]").forEach((box) =>
   box.addEventListener("change", async () => {
     state.show[box.dataset.layer!] = box.checked;
@@ -1122,7 +1180,7 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
   },
   {
     key: "impact_initiatives",
-    tag: "Screening · radar",
+    tag: "SAR-based (radar)",
     blurb:
       "A Sentinel-1 SAR damage proxy. A post-event change in radar backscatter intensity (amplitude, not coherence) flags likely damage over a wide area.",
     note: "A wide-area screen, not confirmed damage.",
@@ -1136,7 +1194,7 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
   },
   {
     key: "osu",
-    tag: "Research · radar",
+    tag: "SAR-based (radar)",
     blurb:
       "Oregon State University Sentinel-1 coherence analysis. Loss of radar coherence indicates damage.",
     note: "An independent radar signal alongside the SAR proxy.",
@@ -1150,10 +1208,17 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
   },
   {
     key: "disha",
-    tag: "AI · zero-shot",
+    tag: "AI · per-building",
     blurb:
-      "DISHA (UN Global Pulse) runs Google Earth AI's zero-shot damage model on pre/post imagery over NW Caracas, on Google Open Buildings footprints.",
+      "DISHA (Data Insights for Social & Humanitarian Action) detects damaged buildings from pre/post satellite imagery over NW Caracas, on Google Open Buildings footprints.",
     note: "Preview over a small AOI; provider validation pending.",
+  },
+  {
+    key: "unep_debris",
+    tag: "SAR-based (radar)",
+    blurb:
+      "UNEP/OCHA Joint Environment Unit building-debris assessment. Sentinel-1 radar change detection estimates the debris mass — in tonnes — generated by each damaged building.",
+    note: "The only source carrying debris mass: roughly 17 million tonnes across ~96,000 damaged buildings.",
   },
 ];
 
