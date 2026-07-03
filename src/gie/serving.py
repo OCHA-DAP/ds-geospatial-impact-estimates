@@ -199,20 +199,31 @@ def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFram
     ).df()
 
 
-# column -> (meaning / how it was derived), documented in the export README sheet
+# Per-source one-line descriptions, joined into the README's 'source' row dynamically
+# (export_workbook) so the sheet describes exactly the sources present in THIS export —
+# 5 on prod, +DISHA on the staging preview; never a source the data lacks. Copernicus is
+# version-agnostic (one product updated piece by piece); IMPACT notes v2 (it superseded v1).
+_SOURCE_DESC = {
+    "microsoft": "'microsoft' (AI per-building damage on Microsoft footprints)",
+    "copernicus_ems": "'copernicus_ems' (Copernicus EMS rapid-mapping damage grades)",
+    "impact_initiatives": "'impact_initiatives' (IMPACT Sentinel-1 SAR damage proxy, v2)",
+    "osu": "'osu' (OSU Sentinel-1 coherence damage)",
+    "hot_osm": "'hot_osm' (HOTOSM fAIr AI damage points — detected-only)",
+    "disha": "'disha' (DISHA / UN Global Pulse — Google Earth AI zero-shot damage, NW Caracas; unvalidated)",
+}
+_SOURCE_SHORT = {
+    "microsoft": "Microsoft", "copernicus_ems": "Copernicus EMS",
+    "impact_initiatives": "IMPACT SAR", "osu": "OSU", "hot_osm": "HOTOSM fAIr", "disha": "DISHA",
+}
+
+# column -> (meaning / how it was derived), for the README sheet. The 'source' row is
+# inserted dynamically in export_workbook (see _SOURCE_DESC).
 _EXPORT_GLOSSARY = [
     (
         "adm1_name / adm2_name / adm3_name",
         "OCHA COD administrative unit names — the hierarchy this row belongs to.",
     ),
     ("unit_id", "OCHA COD pcode of the admin unit."),
-    (
-        "source",
-        "Damage source (one row per source per unit): 'microsoft' (AI per-building damage on "
-        "Microsoft footprints), 'copernicus_ems' (Copernicus EMS rapid-mapping damage grades), "
-        "'impact_initiatives' (IMPACT Sentinel-1 SAR damage proxy), 'osu' (OSU Sentinel-1 "
-        "coherence damage), and 'hot_osm' (HOTOSM fAIr AI damage points — detected-only).",
-    ),
     (
         "total_buildings",
         "Total buildings in the unit: Overture footprints whose centroid is inside it "
@@ -282,9 +293,10 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
     rm.sheet_view.showGridLines = False
     rm["A1"] = "Venezuela Earthquake — Building Damage Exposure by Admin Unit"
     rm["A1"].font = Font(bold=True, size=22, color="3E8F6B")
+    present = list_sources(adm0, stage)  # sources actually in THIS export (tier-aware)
     rm["A2"] = (
-        "Multi-source — Microsoft, Copernicus EMS, IMPACT SAR, OSU & HOTOSM fAIr — "
-        "buildings & damage by OCHA COD admin 1 / 2 / 3"
+        "Multi-source — " + ", ".join(_SOURCE_SHORT.get(s, s) for s in present)
+        + " — buildings & damage by OCHA COD admin 1 / 2 / 3"
     )
     rm["A2"].font = Font(italic=True, size=13, color="333333")
     rm["A3"] = (
@@ -303,7 +315,11 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
         cell.fill = header_fill
         cell.alignment = Alignment(vertical="center", indent=1)
         cell.border = border
-    for i, (col, desc) in enumerate(_EXPORT_GLOSSARY, 7):
+    src_desc = "Damage source (one row per source per unit): " + "; ".join(
+        _SOURCE_DESC[s] for s in present if s in _SOURCE_DESC
+    ) + "."
+    glossary = _EXPORT_GLOSSARY[:2] + [("source", src_desc)] + _EXPORT_GLOSSARY[2:]
+    for i, (col, desc) in enumerate(glossary, 7):
         rm[f"A{i}"], rm[f"B{i}"] = col, desc
         rm[f"A{i}"].font = Font(bold=True, color="333333")
         rm[f"B{i}"].font = Font(color="333333")
