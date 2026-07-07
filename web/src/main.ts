@@ -1138,8 +1138,7 @@ async function refresh() {
     );
     buildLayers();
     renderLegend();
-    const srcs = [...state.sources].map((s) => SOURCE_LABEL[s] ?? s).join(" + ") || "none";
-    status.textContent = `${srcs} · ${state.view} · adm${state.adminLevel}`;
+    status.textContent = ""; // clear the transient load line (the Current view caption was removed)
   } catch (e) {
     status.textContent = `Failed to load: ${e}`;
   }
