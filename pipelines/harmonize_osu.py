@@ -21,6 +21,9 @@ Preliminary, unvalidated — an indicator, not a building-by-building census.
 Output (mirrors source=impact_initiatives):
   * building_damage.parquet — one row per OSU-damaged building (id, damage_class,
     damage_probability, ems_grade). No geometry: `id` joins onto the Overture base.
+  * damage_footprints.parquet — the same damaged buildings WITH their footprint
+    geometry, for the client's native PMTiles view (the id-join above stays
+    geometry-free per ADR-0009; the display needs polygons).
   * analysed_extent.parquet — the analyzed-area polygon (the coverage extent).
 
 Run: uv run --group etl python pipelines/harmonize_osu.py
@@ -71,6 +74,18 @@ def main() -> None:
         out, sp, stage=STAGE, container_name=settings.container, compression="zstd"
     )
     print(f"silver <- {sp} ({len(out):,} OSU-damaged buildings, id-keyed to Overture)", flush=True)
+
+    # damage footprints -> damage_footprints.parquet (geometry KEPT, for the native view).
+    # building_damage.parquet stays id-only for the common-model join (ADR-0009); the native
+    # DISPLAY needs the actual footprint polygons, so carry them here from the same gpkg.
+    foot = dmg.rename(columns={"overture_id": "id"})[["id", "damage_probability", "geometry"]].to_crs(4326)
+    foot["damage_class"] = 2
+    foot["ems_grade"] = "Damaged"
+    fp2 = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "damage_footprints.parquet")
+    stratus.upload_parquet_to_blob(
+        foot, fp2, stage=STAGE, container_name=settings.container, compression="zstd"
+    )
+    print(f"silver <- {fp2} ({len(foot):,} OSU-damaged footprints for the native view)", flush=True)
 
     # analyzed-area polygon -> analysed_extent.parquet (the coverage extent).
     aoi = _read_gpkg(settings, AOI_GPKG)[["geometry"]].copy()

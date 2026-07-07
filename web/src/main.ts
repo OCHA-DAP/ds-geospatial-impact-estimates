@@ -162,8 +162,37 @@ const LAYER_SERVING: Record<string, Serving> = {
         ? `<br>${p.layer_type === "area" ? "coarse block (early estimate)" : "per-building point"}`
         : ""),
   },
-  impact_initiatives: { mode: "deckgl" },
-  osu: { mode: "deckgl" },
+  // IMPACT SAR (v2 vector footprints) and OSU (Overture footprints flagged damaged) each have
+  // their own polygon footprints, so they serve as native fill tiles like the other sources
+  // (retiring the last deck.gl /api/native path). Both are a single damaged class -> orange.
+  impact_initiatives: {
+    mode: "pmtiles",
+    file: "native-impact_initiatives/building_damage.pmtiles",
+    sourceLayer: "building_damage",
+    layers: [
+      {
+        id: "pmt-sar",
+        spec: { type: "fill", paint: { "fill-color": DAMAGE_BY_CLASS, "fill-opacity": 0.8 } },
+      },
+    ],
+    hover: (p) =>
+      `${SOURCE_LABEL["impact_initiatives"] ?? "impact_initiatives"}<br>grade: ${p.ems_grade}` +
+      (p.affected_fraction != null ? `<br>affected: ${Math.round(p.affected_fraction * 100)}%` : ""),
+  },
+  osu: {
+    mode: "pmtiles",
+    file: "native-osu/damage_footprints.pmtiles",
+    sourceLayer: "damage_footprints",
+    layers: [
+      {
+        id: "pmt-osu",
+        spec: { type: "fill", paint: { "fill-color": DAMAGE_BY_CLASS, "fill-opacity": 0.8 } },
+      },
+    ],
+    hover: (p) =>
+      `${SOURCE_LABEL["osu"] ?? "osu"}<br>grade: ${p.ems_grade}` +
+      (p.damage_probability != null ? `<br>probability: ${Math.round(p.damage_probability * 100)}%` : ""),
+  },
   disha: {
     mode: "pmtiles",
     file: "native-disha/damage_points.pmtiles",
@@ -1163,6 +1192,21 @@ async function init() {
         await refresh();
       }),
     );
+
+  // Select-all / deselect-all: flip every source box, then one refresh.
+  const setAllSources = async (on: boolean) => {
+    el("sources")
+      .querySelectorAll<HTMLInputElement>("input[data-source]")
+      .forEach((box) => {
+        box.checked = on;
+        if (on) state.sources.add(box.dataset.source!);
+        else state.sources.delete(box.dataset.source!);
+      });
+    syncMetricLock();
+    await refresh();
+  };
+  el("src-all").addEventListener("click", () => setAllSources(true));
+  el("src-none").addEventListener("click", () => setAllSources(false));
 
   syncMetricLock();
   await refresh();

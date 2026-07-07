@@ -41,6 +41,13 @@ html, body { margin: 0; height: 100%; }
   font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em;
   color: #6b7a8a; margin-bottom: 6px;
 }
+.src-toggle { float: right; text-transform: none; letter-spacing: 0; }
+.src-toggle button {
+  background: none; border: 0; padding: 0 2px; cursor: pointer;
+  font: inherit; font-size: 11px; color: #2a6fb0;
+}
+.src-toggle button:hover { text-decoration: underline; }
+.src-toggle span { color: #b8bfc8; }
 .group label { display: block; font-size: 13px; padding: 2px 0; cursor: pointer; }
 .swatch {
   display: inline-block; width: 10px; height: 10px; border-radius: 2px;
