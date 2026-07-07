@@ -18,10 +18,10 @@ We land the delivery to bronze as received (ADR-0003, the .geojson verbatim);
 idempotency lives in the immutable blob path (ADR-0005). Silver/gold follow in
 harmonize_uh.py + harmonize_common.py.
 
-Provisional decisions pending the provider's answer (do NOT publish numbers to
-prod until resolved): (1) attribution / credit — the source id `uh` here is
-provisional; (2) licence / redistribution terms; (3) the model / method
-description for the methodology card.
+Attribution (provider-supplied): **UH QuakeDamage** — a deep-learning model by Singh
+& Hoskere classifying Overture building footprints from pre-/post-event imagery (478K
+buildings); https://quakedamage.github.io. The internal source id stays `uh`.
+Still to confirm before a prod promote: licence / redistribution terms.
 
 Run: uv run --group etl python pipelines/ingest_uh.py [path-to.geojson]
      (defaults to ~/Downloads/final_maxsev_512.geojson)

@@ -17,7 +17,7 @@ const SOURCE_LABEL: Record<string, string> = {
   osu: "OSU (SAR)",
   disha: "DISHA",
   unep_debris: "UNEP (SAR)",
-  uh: "UH predictions",
+  uh: "UH QuakeDamage",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
   microsoft: [40, 110, 205],
@@ -1313,8 +1313,8 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
     key: "uh",
     tag: "AI · per-building",
     blurb:
-      "University of Houston building-damage predictions. A model grades each building footprint — intact, damaged or destroyed — across eight coastal AOIs, including Aragua/Carabobo towns no other per-building source covers.",
-    note: "Coverage and damage fraction come from UH's own per-building classifications (the intact footprints are the denominator) — no AOI polygon. Preview; attribution, licence and method pending.",
+      "UH QuakeDamage — a deep-learning model by Singh & Hoskere classifying Overture building footprints as intact, damaged or destroyed from pre- and post-event imagery (478K buildings across eight coastal AOIs, including Aragua/Carabobo towns no other per-building source covers).",
+    note: "Coverage and damage fraction come from its own per-building classifications (no AOI polygon). More at <a href='https://quakedamage.github.io' target='_blank' rel='noopener'>quakedamage.github.io</a>.",
   },
 ];
 

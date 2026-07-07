@@ -92,9 +92,11 @@ possibly sparser analysed denominator) but the damage *fraction* would barely mo
   is read off the building points, not an AOI boundary.
 * Bad — the −7.6% native↔Overture gap still needs explaining for absolute counts;
   mitigated by the two-base convention (ADR-0017) and cancels in the damage fraction.
-* Neutral — attribution, licence and the model/method description are still pending
-  the provider; the source id `uh` and the methodology card are provisional, and the
-  source stays staging-only until those land (do not promote numbers to prod).
+* Neutral — attribution + method are now provider-supplied (**UH QuakeDamage**, a
+  Singh & Hoskere deep-learning model over Overture footprints; quakedamage.github.io),
+  which also confirms the footprints ARE Overture (feeds ADR-0019). The internal source
+  id stays `uh`. Licence / redistribution terms are still to confirm, so the source
+  stays staging-only until those land (do not promote numbers to prod).
 
 ## Pros and Cons of the Options
 
