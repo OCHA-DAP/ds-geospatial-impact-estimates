@@ -52,6 +52,7 @@ LAYERS: dict[str, tuple[str, str, tuple[str, str] | None]] = {
     "native-hot_osm": ("silver", f"source=hot_osm/adm0={ADM0}/damage_points.parquet", None),
     "native-disha": ("silver", f"source=disha/adm0={ADM0}/damage_points.parquet", None),
     "native-unep_debris": ("silver", f"source=unep_debris/adm0={ADM0}/debris.parquet", None),
+    "native-uh": ("silver", f"source=uh/adm0={ADM0}/footprints.parquet", None),
     "admin-adm1": ("bronze", f"source=codab/adm0={ADM0}/adm1.parquet", None),
     "admin-adm2": ("bronze", f"source=codab/adm0={ADM0}/adm2.parquet", None),
     "admin-adm3": ("bronze", f"source=codab/adm0={ADM0}/adm3.parquet", None),

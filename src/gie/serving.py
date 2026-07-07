@@ -409,8 +409,9 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    if source in ("hot_osm", "unep_debris"):
-        # detected-only: no analysed extent published — nothing to outline.
+    if source in ("hot_osm", "unep_debris", "uh"):
+        # detected-only: no analysed extent published — nothing to outline. (UH ships
+        # detected-only until the provider supplies its AOI polygons — ADR-0018.)
         return gpd.GeoDataFrame(
             {"aoi_name": [], "product": [], "acquired": [], "source": []},
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),
@@ -434,23 +435,34 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
         geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
         df["source"] = source
         return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
-    src = "microsoft" if source == "microsoft" else "copernicus_ems"
-    # tiered gold copy (promote-gated), not shared silver (ADR-0016)
-    ext = settings.az_path(
-        "gold", "model=common", f"adm0={adm0}", "serving", "extent", f"source={src}.parquet"
-    )
+    # Microsoft valid-area masks: one labelled outline per AOI (carries an `aoi` column).
     if source == "microsoft":
+        ext = settings.az_path(
+            "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=microsoft.parquet"
+        )
         sql = (
             f"SELECT aoi AS aoi_name, 'Microsoft analysis' AS product, NULL AS acquired, "
             f"ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
         )
-    else:
-        sql = (
-            f"SELECT any_value(aoi_name) AS aoi_name, any_value(product) AS product, "
-            f"any_value(acquired) AS acquired, "
-            f"ST_AsWKB(ST_Union_Agg(ST_MakeValid(geometry))) AS wkb "
-            f"FROM read_parquet('{ext}') WHERE is_latest GROUP BY src_zip"
-        )
+        df = con.execute(sql).df()
+        geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
+        df["source"] = source
+        return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
+    # Explicit — a source that reaches here without a branch is a wiring bug, NOT a
+    # reason to silently fall back to CEMS (which is how UH once rendered CEMS's AOI).
+    if source != "copernicus_ems":
+        raise ValueError(f"load_source_extent: no extent handler for source {source!r}")
+    # CEMS: one outline per product (dissolved within a product), from the tiered
+    # gold copy (promote-gated), not shared silver (ADR-0016).
+    ext = settings.az_path(
+        "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=copernicus_ems.parquet"
+    )
+    sql = (
+        f"SELECT any_value(aoi_name) AS aoi_name, any_value(product) AS product, "
+        f"any_value(acquired) AS acquired, "
+        f"ST_AsWKB(ST_Union_Agg(ST_MakeValid(geometry))) AS wkb "
+        f"FROM read_parquet('{ext}') WHERE is_latest GROUP BY src_zip"
+    )
     df = con.execute(sql).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
     df["source"] = source

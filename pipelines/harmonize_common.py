@@ -81,6 +81,11 @@ SOURCES = [
     # so rate / coverage / extrapolated fall out NULL, leaving damaged_detected (the
     # Overture-snapped count). Native count is reported separately per ADR-0017.
     ("unep_debris", "debris_dmg", "NULL"),
+    # UH damage predictions: graded footprints projected by centroid-containment (the
+    # impact_v2 rule, ADR-0015). Coverage-aware WITHOUT an AOI polygon: UH grades every
+    # footprint, so the buildings it CLASSIFIED (any grade) ARE the analysed set (uh_analysed);
+    # damage fraction = damaged / classified, computed straight from their layers (ADR-0018).
+    ("uh", "uh_dmg", "sum(uh_analysed::INT)"),
 ]
 GRAINS = [
     ("h3", "h3", None),
@@ -231,6 +236,10 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     debris = _local(settings,
         "silver", "source=unep_debris", f"adm0={ADM0}", "debris.parquet"
     )
+    # UH graded predictions: footprints projected by containment (detected-only, ADR-0018).
+    uh = _local(settings,
+        "silver", "source=uh", f"adm0={ADM0}", "footprints.parquet"
+    )
     adm3 = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
@@ -365,6 +374,22 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
                       FROM read_parquet('{debris}')) p
                 JOIN base b ON ST_Intersects(ST_Buffer(p.c, {tol}), b.geom)
             ) WHERE rn = 1
+        ),
+        uh_hit AS (
+            -- Project every UH footprint onto the base by point-on-surface containment (the
+            -- impact_v2 rule, ADR-0015): ST_PointOnSurface is inside the footprint, so it lands
+            -- on the exact Overture twin — no id, no edge-neighbour over-flag. UH grades EVERY
+            -- footprint, so a base building UH classified (ANY grade) is the ANALYSED unit — no
+            -- AOI polygon needed, UH's own classifications ARE the analysed set (ADR-0018). The
+            -- worst non-intact class (2/3) is the damage flag + grade. ~98% of footprints have a
+            -- twin; finer UH footprints collapse onto one base (ADR-0017, exploratory/0004).
+            SELECT b.id,
+                   max((u.grade <> 'intact')::INT) AS any_dmg,
+                   max(u.cls) FILTER (u.grade <> 'intact') AS uh_class
+            FROM base b
+            JOIN read_parquet('{uh}') u
+              ON ST_Contains(b.geom, ST_PointOnSurface(u.geometry))
+            GROUP BY b.id
         )
         SELECT b.id,
             round(ST_X(b.c), 6) AS lon, round(ST_Y(b.c), 6) AS lat,
@@ -386,11 +411,15 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             (b.id IN (SELECT id FROM osu_seen)) AS osu_analysed,
             (b.id IN (SELECT id FROM disha_dmg)) AS disha_dmg,
             (b.id IN (SELECT id FROM disha_seen)) AS disha_analysed,
-            (b.id IN (SELECT id FROM debris_dmg)) AS debris_dmg
+            (b.id IN (SELECT id FROM debris_dmg)) AS debris_dmg,
+            (uh.id IS NOT NULL) AS uh_analysed,
+            (uh.any_dmg = 1) AS uh_dmg,
+            uh.uh_class AS uh_class
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
         LEFT JOIN cems_dmg cd ON cd.id = b.id
         LEFT JOIN read_parquet('{osu}') od ON od.id = b.id
+        LEFT JOIN uh_hit uh ON uh.id = b.id
         """
     )
     print("  located table built", flush=True)
@@ -438,12 +467,12 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # DAMAGED buildings to the per-building layer, NOT their full analysed sets
     # (~1.9M / ~2.1M) — the untiled agreement view and a single blob write can't take that.
     # Rectify with PMTiles: then add `OR sar_analysed`/`OR osu_analysed` and carry
-    # the analysed flags through.
+    # the analysed flags through. (UH is detected-only, so uh_dmg is its full contribution.)
     flags = con.execute(
         "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_class, cems_analysed, "
-        "sar_dmg, sar_class, hot_dmg, osu_dmg, osu_class, disha_dmg, debris_dmg "
+        "sar_dmg, sar_class, hot_dmg, osu_dmg, osu_class, disha_dmg, debris_dmg, uh_dmg, uh_class "
         "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR hot_dmg OR osu_dmg "
-        "OR disha_dmg OR debris_dmg"
+        "OR disha_dmg OR debris_dmg OR uh_dmg"
     ).df()
     print(f"  building_flags computed ({len(flags):,} rows), uploading", flush=True)
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
@@ -490,6 +519,7 @@ def _area_facts(con, settings) -> pd.DataFrame:
             ),
             "",  # OSU footprint = analyzed-area polygon (ADR-0009)
         ),
+        # UH is detected-only (no analysed extent) -> no areal coverage (ADR-0018).
     }
     parts = []
     for src, (ext, where) in sources.items():
