@@ -1312,7 +1312,7 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
     key: "uh",
     tag: "AI · per-building",
     blurb:
-      "UH QuakeDamage — a deep-learning model by Singh & Hoskere classifying Overture building footprints as intact, damaged or destroyed from pre- and post-event imagery (478K buildings across eight coastal AOIs, including Aragua/Carabobo towns no other per-building source covers).",
+      "Deep learning model by Singh and Hoskere classifying Overture building footprints using pre- and post-event imagery (covers 478K individual buildings) — across eight coastal AOIs, including Aragua/Carabobo towns no other per-building source covers.",
     note: "Coverage and damage fraction come from its own per-building classifications (no AOI polygon). More at <a href='https://quakedamage.github.io' target='_blank' rel='noopener'>quakedamage.github.io</a>.",
   },
 ];
