@@ -26,7 +26,7 @@ from gie.config import load_settings
 
 ADM0, STAGE = "VE", "dev"
 # Sources whose analysed_extent outline is server-rendered (hot_osm has none).
-EXTENT_SOURCES = ["impact_initiatives", "osu", "microsoft", "copernicus_ems", "disha"]
+EXTENT_SOURCES = ["impact_initiatives", "osu", "microsoft", "copernicus_ems", "disha", "list"]
 
 
 def _copy(fs, settings, src_blob: str, dest_blob: str) -> int:

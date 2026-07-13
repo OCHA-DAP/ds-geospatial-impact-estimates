@@ -211,11 +211,12 @@ _SOURCE_DESC = {
     "hot_osm": "'hot_osm' (HOTOSM fAIr AI damage points — detected-only)",
     "disha": "'disha' (DISHA — Data Insights for Social & Humanitarian Action; AI building-damage detection, NW Caracas; unvalidated)",
     "unep_debris": "'unep_debris' (UNEP/OCHA JEU building debris — mass in tonnes; detected-only, SAR-derived)",
+    "list": "'list' (LIST ResNet pre/post change-detection damage proxy; class 2 only, unvalidated screen)",
 }
 _SOURCE_SHORT = {
     "microsoft": "Microsoft", "copernicus_ems": "Copernicus EMS",
     "impact_initiatives": "IMPACT SAR", "osu": "OSU", "hot_osm": "HOTOSM fAIr", "disha": "DISHA",
-    "unep_debris": "UNEP debris",
+    "unep_debris": "UNEP debris", "list": "LIST",
 }
 
 # column -> (meaning / how it was derived), for the README sheet. The 'source' row is
@@ -391,6 +392,10 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     elif source == "unep_debris":
         # detected-only (no analysed AOI): assessed set IS the damaged set.
         dmg, seen = "debris_dmg", "debris_dmg"
+    elif source == "list":
+        # LIST carries damaged-only on building_flags (class 2), same shape as SAR/OSU:
+        # the analysed set (~all footprint buildings) is too large to materialise here.
+        dmg, seen = "list_dmg", "list_dmg"
     else:
         dmg, seen = "cems_dmg", "cems_analysed"
     return con.execute(
@@ -417,9 +422,9 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),
             crs="EPSG:4326",
         )
-    if source in ("impact_initiatives", "osu", "disha"):
-        # Single-polygon coverage extents (SAR / OSU / DISHA), from the tiered gold
-        # copy (stage_serving) so it's promote-gated, not shared silver (ADR-0016).
+    if source in ("impact_initiatives", "osu", "disha", "list"):
+        # Single-polygon coverage extents (SAR / OSU / DISHA / LIST), from the tiered
+        # gold copy (stage_serving) so it's promote-gated, not shared silver (ADR-0016).
         ext = settings.az_path(
             "gold", "model=common", f"adm0={adm0}", "serving", "extent", f"source={source}.parquet"
         )
@@ -427,6 +432,7 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
             "impact_initiatives": ("SAR analysed extent", "Sentinel-1 damage proxy"),
             "osu": ("OSU analyzed area", "Sentinel-1 coherence"),
             "disha": ("DISHA AOI", "DISHA damage"),
+            "list": ("LIST analysed extent", "ResNet pre/post change detection"),
         }[source]
         df = con.execute(
             f"SELECT '{label}' AS aoi_name, '{product}' AS product, NULL AS acquired, "
@@ -478,9 +484,9 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    if source in ("impact_initiatives", "osu", "disha", "unep_debris"):
-        # SAR / OSU render from the Overture base; DISHA and UNEP debris have their
-        # own geometry but serve it client-side via PMTiles, not this loader.
+    if source in ("impact_initiatives", "osu", "disha", "unep_debris", "list"):
+        # SAR / OSU / LIST render from the Overture base; DISHA and UNEP debris have
+        # their own geometry but serve it client-side via PMTiles, not this loader.
         return gpd.GeoDataFrame(
             {"damaged": pd.Series([], dtype="int64")},
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),

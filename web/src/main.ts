@@ -18,6 +18,7 @@ const SOURCE_LABEL: Record<string, string> = {
   disha: "DISHA",
   unep_debris: "UNEP (SAR)",
   uh: "UH QuakeDamage",
+  list: "LIST",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
   microsoft: [40, 110, 205],
@@ -28,10 +29,11 @@ const SOURCE_COLOR: Record<string, [number, number, number]> = {
   disha: [225, 200, 40],
   unep_debris: [140, 90, 55],
   uh: [110, 190, 70],
+  list: [214, 69, 65],
 };
 // Fixed display order for the source list / legend (Copernicus first, UNEP last).
 const SOURCE_ORDER = [
-  "copernicus_ems", "microsoft", "disha", "hot_osm", "impact_initiatives", "osu", "unep_debris", "uh",
+  "copernicus_ems", "microsoft", "disha", "hot_osm", "impact_initiatives", "osu", "unep_debris", "uh", "list",
 ];
 const sourceRank = (s: string) => {
   const i = SOURCE_ORDER.indexOf(s);
@@ -320,6 +322,7 @@ const BUILDING_FIELDS: Record<string, { seen: string; dmg: string }> = {
   uh: { seen: "uh_dmg", dmg: "uh_dmg" }, // damaged-only in the per-building layer (building_flags
   // carries uh_dmg, not the full uh_analysed set — same size-bound as SAR/OSU). The admin
   // choropleth is still coverage-aware from the gold facts.
+  list: { seen: "list_dmg", dmg: "list_dmg" }, // damaged-only (class 2; validated vs IMPACT/OSU)
 };
 
 // Add the one buildings tile + per-source exposed/damaged circle layers (hidden).
@@ -1314,6 +1317,13 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
     blurb:
       "Deep learning model by Singh and Hoskere classifying Overture building footprints using pre- and post-event imagery (covers 478K individual buildings) — across eight coastal AOIs, including Aragua/Carabobo towns no other per-building source covers.",
     note: "Coverage and damage fraction come from its own per-building classifications (no AOI polygon). More at <a href='https://quakedamage.github.io' target='_blank' rel='noopener'>quakedamage.github.io</a>.",
+  },
+  {
+    key: "list",
+    tag: "AI · change detection",
+    blurb:
+      "A WFP collaboration with LIST and CERN: a ResNet model classifying pre/post imagery across the central coast (the widest footprint of any source, ~4.9M buildings), sampled onto Overture footprints. Only its strongest damage class is shown — validated against IMPACT and OSU (~9x enriched for cross-source agreement), and concentrated in the coastal impact zone (median unit ~1.4% damaged, coastal La Guaira 20–38%).",
+    note: "The methodology is still under refinement, and the results may be subject to further improvements. Its overall damage rate (~3.3%) is in line with the other change-detection sources (IMPACT ~3.4%, OSU ~2.5%); the larger total reflects the larger area, not a higher rate — a preliminary screen to triangulate, not a confirmed count.",
   },
 ];
 

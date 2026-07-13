@@ -86,6 +86,13 @@ SOURCES = [
     # footprint, so the buildings it CLASSIFIED (any grade) ARE the analysed set (uh_analysed);
     # damage fraction = damaged / classified, computed straight from their layers (ADR-0018).
     ("uh", "uh_dmg", "sum(uh_analysed::INT)"),
+    # LIST ResNet change-detection: raster sampled onto the base (id-keyed, class 2
+    # only = Damaged, validated vs IMPACT/OSU). Coverage-aware by building COUNT —
+    # the model classified every pixel in its footprint, so every base building in
+    # the footprint IS analysed (list_analysed via the footprint polygon). Areal
+    # coverage is intentionally omitted (footprint is an ocean-padded rectangle,
+    # would over-read) — see _area_facts.
+    ("list", "list_dmg", "sum(list_analysed::INT)"),
 ]
 GRAINS = [
     ("h3", "h3", None),
@@ -240,6 +247,13 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     uh = _local(settings,
         "silver", "source=uh", f"adm0={ADM0}", "footprints.parquet"
     )
+    # LIST ResNet change detection: per-building damaged set (id-keyed, class 2 only) + footprint extent.
+    list_dmg = _local(settings,
+        "silver", "source=list", f"adm0={ADM0}", "building_damage.parquet"
+    )
+    list_ext = _local(settings,
+        "silver", "source=list", f"adm0={ADM0}", "analysed_extent.parquet"
+    )
     adm3 = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
@@ -344,6 +358,11 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{osu_ext}') e ON ST_Within(b.c, e.geometry)
         ),
+        list_seen AS (
+            -- LIST-analysed = inside the scene-footprint union (every pixel classified)
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{list_ext}') e ON ST_Within(b.c, e.geometry)
+        ),
         disha_dmg AS (
             -- DISHA damage POINTS snapped to the nearest base footprint within
             -- {SNAP_M} m (same rule as HOT/CEMS points). LICENCE-gated preview.
@@ -414,12 +433,16 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             (b.id IN (SELECT id FROM debris_dmg)) AS debris_dmg,
             (uh.id IS NOT NULL) AS uh_analysed,
             (uh.any_dmg = 1) AS uh_dmg,
-            uh.uh_class AS uh_class
+            uh.uh_class AS uh_class,
+            (ld.id IS NOT NULL) AS list_dmg,
+            ld.damage_class AS list_class,
+            (b.id IN (SELECT id FROM list_seen)) AS list_analysed
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
         LEFT JOIN cems_dmg cd ON cd.id = b.id
         LEFT JOIN read_parquet('{osu}') od ON od.id = b.id
         LEFT JOIN uh_hit uh ON uh.id = b.id
+        LEFT JOIN read_parquet('{list_dmg}') ld ON ld.id = b.id
         """
     )
     print("  located table built", flush=True)
@@ -470,9 +493,10 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # the analysed flags through. (UH is detected-only, so uh_dmg is its full contribution.)
     flags = con.execute(
         "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_class, cems_analysed, "
-        "sar_dmg, sar_class, hot_dmg, osu_dmg, osu_class, disha_dmg, debris_dmg, uh_dmg, uh_class "
+        "sar_dmg, sar_class, hot_dmg, osu_dmg, osu_class, disha_dmg, debris_dmg, uh_dmg, uh_class, "
+        "list_dmg, list_class "
         "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR hot_dmg OR osu_dmg "
-        "OR disha_dmg OR debris_dmg OR uh_dmg"
+        "OR disha_dmg OR debris_dmg OR uh_dmg OR list_dmg"
     ).df()
     print(f"  building_flags computed ({len(flags):,} rows), uploading", flush=True)
     fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
@@ -520,6 +544,9 @@ def _area_facts(con, settings) -> pd.DataFrame:
             "",  # OSU footprint = analyzed-area polygon (ADR-0009)
         ),
         # UH is detected-only (no analysed extent) -> no areal coverage (ADR-0018).
+        # LIST has an analysed extent, but it is the raster's ocean-padded rectangle,
+        # so areal coverage would over-read (~100%); omitted until the footprint is
+        # clipped to land/built-up. Building-COUNT coverage (list_analysed) still flows.
     }
     parts = []
     for src, (ext, where) in sources.items():
