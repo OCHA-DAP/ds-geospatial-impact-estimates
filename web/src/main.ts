@@ -1320,10 +1320,10 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
   },
   {
     key: "list",
-    tag: "AI · change detection",
+    tag: "AI · per-building",
     blurb:
-      "A WFP collaboration with LIST and CERN: a ResNet model classifying pre/post imagery across the central coast (the widest footprint of any source, ~4.9M buildings), sampled onto Overture footprints. Only its strongest damage class is shown — validated against IMPACT and OSU (~9x enriched for cross-source agreement), and concentrated in the coastal impact zone (median unit ~1.4% damaged, coastal La Guaira 20–38%).",
-    note: "The methodology is still under refinement, and the results may be subject to further improvements. Its overall damage rate (~3.3%) is in line with the other change-detection sources (IMPACT ~3.4%, OSU ~2.5%); the larger total reflects the larger area, not a higher rate — a preliminary screen to triangulate, not a confirmed count.",
+      "A WFP collaboration with LIST and CERN: a deep-learning (ResNet) model predicting per-building damage from pre/post SAR imagery, sampled onto Overture footprints. Only the model's strongest damage class is shown.",
+    note: "The methodology is still under refinement, and the results may be subject to further improvements. A preliminary screen to triangulate, not a confirmed count.",
   },
 ];
 

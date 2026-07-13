@@ -211,7 +211,7 @@ _SOURCE_DESC = {
     "hot_osm": "'hot_osm' (HOTOSM fAIr AI damage points — detected-only)",
     "disha": "'disha' (DISHA — Data Insights for Social & Humanitarian Action; AI building-damage detection, NW Caracas; unvalidated)",
     "unep_debris": "'unep_debris' (UNEP/OCHA JEU building debris — mass in tonnes; detected-only, SAR-derived)",
-    "list": "'list' (LIST ResNet pre/post change-detection damage proxy; class 2 only, unvalidated screen)",
+    "list": "'list' (WFP/LIST/CERN deep-learning (ResNet) per-building damage from pre/post SAR imagery; class 2 only, preliminary)",
 }
 _SOURCE_SHORT = {
     "microsoft": "Microsoft", "copernicus_ems": "Copernicus EMS",
