@@ -18,7 +18,7 @@ const SOURCE_LABEL: Record<string, string> = {
   disha: "DISHA",
   unep_debris: "UNEP (SAR)",
   uh: "UH QuakeDamage",
-  list: "LIST",
+  list: "WFP-LIST-CERN",
 };
 const SOURCE_COLOR: Record<string, [number, number, number]> = {
   microsoft: [40, 110, 205],
