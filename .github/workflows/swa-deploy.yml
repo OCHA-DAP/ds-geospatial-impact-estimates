@@ -1,0 +1,50 @@
+# Deploy the SPA to the Static Web App (chd-ds-satellite-impact-viewer) — the parallel
+# v2 host (ADR-0011 Phase 3 / ADR-0020). Runs ALONGSIDE the classic App Service deploy
+# (azure-deploy.yml, v1 branch), which is untouched.
+#
+# Environments:
+#   push to the production branch  -> SWA production env: prod token tier + prod legacy API
+#   pull_request to that branch    -> SWA PREVIEW env (own temp URL): staging tier + the
+#                                     staging App Service slot — review changes against
+#                                     staging data before they reach the public URL.
+#
+# Auth: SWA deployment token in the AZURE_STATIC_WEB_APPS_API_TOKEN repo secret
+# (no Azure login / publish profile needed).
+name: Deploy SWA (satellite-impact-viewer)
+
+on:
+  push:
+    branches: [swa-static-web-app]
+    paths: ["web/**", ".github/workflows/swa-deploy.yml"]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [swa-static-web-app]
+
+jobs:
+  deploy:
+    if: github.event_name == 'push' || github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # lets the action comment the preview URL on PRs
+          action: upload
+          app_location: web
+          output_location: dist
+          production_branch: swa-static-web-app
+        env:
+          VITE_TOKEN_URL: https://chd-ds-token-issuer.azurewebsites.net/api/token?app=satellite-viewer&tier=${{ github.event_name == 'pull_request' && 'staging' || 'prod' }}
+          VITE_API_BASE: ${{ github.event_name == 'pull_request' && 'https://chd-ds-geospatial-impact-viewer-staging.azurewebsites.net' || 'https://chd-ds-geospatial-impact-viewer.azurewebsites.net' }}
+
+  close_preview:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close preview environment
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: close
