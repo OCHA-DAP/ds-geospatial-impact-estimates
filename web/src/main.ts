@@ -657,8 +657,13 @@ function nativeColor(source: string, p: any): RGBA {
   // translucent so the per-building point estimates read clearly on top of them.
   return [rgb[0], rgb[1], rgb[2], p.layer_type === "area" ? 60 : 210];
 }
+// Reduce, not Math.max(1, ...arr): spreading a large array (H3 can be >100k cells,
+// widest for broad-coverage sources like LIST) overflows the call-stack arg limit.
 const maxBy = (arr: any[], get: (x: any) => number) =>
-  Math.max(1, ...arr.map(get).filter((v) => !Number.isNaN(v)));
+  arr.reduce((m, x) => {
+    const v = get(x);
+    return !Number.isNaN(v) && v > m ? v : m;
+  }, 1);
 const hasCov = (p: any) => (p?.coverage_fraction ?? 0) > 0;
 // Detected-only sources (no coverage) still contribute cells where damage was found;
 // include those so their damaged H3 cells render on the count metric.
@@ -1003,6 +1008,26 @@ function buildLayers() {
   syncUsgs();
 }
 
+// Sources with no native (own) geometry — raster products. In the native view they
+// have nothing per-building to draw, so we say so rather than show a blank map.
+// (Remove a source here once it gains a native layer — e.g. LIST when its raster
+// cells are polygonised into a native-list tile.)
+const NO_NATIVE_SOURCES = new Set(["list"]);
+function updateNativeNote() {
+  const note = document.getElementById("native-note")!;
+  const affected =
+    state.view === "native" && state.show.buildings
+      ? [...state.sources].filter((s) => NO_NATIVE_SOURCES.has(s))
+      : [];
+  if (affected.length) {
+    const names = affected.map((s) => SOURCE_LABEL[s] ?? s).join(", ");
+    note.textContent = `${names}: raster source — no per-building native geometry. Shown in the Overture base and admin / H3 views.`;
+    note.hidden = false;
+  } else {
+    note.hidden = true;
+  }
+}
+
 function renderLegend() {
   const lg = document.getElementById("legend")!;
   if (state.view === "agreement" && agreementData) {
@@ -1066,15 +1091,16 @@ function renderLegend() {
 // Highest metric value among the units currently drawn (admin and/or H3), so the
 // count legend's axis reflects the actual data in view.
 function legendMax(metric: string): number {
-  const props: any[] = [];
+  let props: any[] = [];
   for (const s of state.sources) {
     if (state.show.admin)
-      props.push(
-        ...(adminCache.get(`${s}:${state.adminLevel}`)?.features ?? [])
+      props = props.concat(
+        (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? [])
           .map((f: any) => f.properties)
           .filter(hasData),
       );
-    if (state.show.h3) props.push(...(h3Cache.get(s) ?? []).filter(hasData));
+    // concat, not push(...arr): spreading a large H3 array overflows the stack.
+    if (state.show.h3) props = props.concat((h3Cache.get(s) ?? []).filter(hasData));
   }
   return maxBy(props, (p) => metricValue(p, metric) ?? 0);
 }
@@ -1141,6 +1167,7 @@ async function refresh() {
     );
     buildLayers();
     renderLegend();
+    updateNativeNote();
     status.textContent = ""; // clear the transient load line (the Current view caption was removed)
   } catch (e) {
     status.textContent = `Failed to load: ${e}`;

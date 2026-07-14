@@ -68,6 +68,10 @@ html, body { margin: 0; height: 100%; }
 .sub-control .sub-label {
   font-size: 10.5px; color: #8b95a1; margin-bottom: 3px;
 }
+/* Contextual note under a sub-control (e.g. a source with no native geometry). */
+.sub-control .sub-note {
+  font-size: 10.5px; color: #8b95a1; margin: 5px 0 0; line-height: 1.35;
+}
 
 /* Inline help affordance next to a section label. */
 .label .help {
