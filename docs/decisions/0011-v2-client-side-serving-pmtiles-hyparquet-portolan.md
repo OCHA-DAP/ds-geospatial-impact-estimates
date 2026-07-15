@@ -89,6 +89,33 @@ additive (edge caching over an already blob-direct path).
 * *Deferred:* H3, the agreement view, and export → exceljs (export stays server-side openpyxl for now).
 * *Phase 3 (future):* SWA + CDN + Function + managed identity.
 
+### Amendment (2026-07-15) — deferred items done; Phase 3 substantially reached
+
+Every *Deferred* item above is now implemented, and deck.gl is deleted:
+
+* **H3** → pre-generated hex-polygon PMTiles exactly as prescribed
+  (`h3_cell_to_boundary` in `build_platinum.export_h3`; 115k cells) + slim **wide**
+  per-source values parquet, joined by `setFeatureState` like the admin choropleth.
+  (Gotcha for future layers: at ~115k features, re-running the `setFeatureState`
+  pass redundantly is the dominant cost — apply only on real state changes.)
+* **Agreement view** → paint expressions over the buildings PMTiles (the MS/CEMS
+  flags were already tile properties); legend totals precomputed in platinum meta.
+  The view remains UI-hidden (92919f6) but no longer needs the server or deck.gl.
+* **Export → exceljs** (`web/src/export.ts`, lazy-loaded chunk): renders
+  pipeline-precomputed per-level tables (`values/export-adm*.parquet`), so numbers
+  are identical to the retired server path; styling is a 1:1 port.
+* **deck.gl removed entirely** — bundle 1.84 MB → 0.91 MB (−51%).
+* Additionally, `sources`/`extents`/`coverage_detail` became static platinum
+  **meta** artifacts (`build_platinum.export_meta`) — the client's default load
+  makes **one** server request (`/api/token`), and even that now proxies the
+  standalone keyless token issuer (**ADR-0022**).
+
+**Phase 3 status:** the token Function + managed identity exist (ADR-0022) and a
+parallel **Static Web App** hosts the same build (ADR-0023). The App Service remains
+only as the classic URL and for stale cached clients' legacy `/api/*` routes; nothing
+in the current client requires it. Its retirement is now a traffic/URL decision, not
+an engineering one. CDN-over-blob remains future/additive.
+
 **As built, a few things differ from the proposal:**
 
 * The PMTiles, a slim values parquet, and the Portolan STAC catalog live in a new **`platinum`** medallion tier (`pipelines/build_platinum.py`); the gold analytics parquet stays put as the hyparquet read target.
