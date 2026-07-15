@@ -142,6 +142,7 @@ def export_meta(settings) -> None:
     from gie.serving import (
         METRICS,
         list_sources,
+        load_agreement,
         load_coverage_detail,
         load_source_extent,
     )
@@ -155,7 +156,12 @@ def export_meta(settings) -> None:
     up("sources.json", {"sources": sources, "adm0": ADM0, "metrics": METRICS})
     up("extents.json", {s: json.loads(load_source_extent(s, ADM0).to_json()) for s in sources})
     up("coverage_detail.json", json.loads(load_coverage_detail(ADM0).to_json()))
-    print(f"  meta <- {meta_dir}/ (sources, extents x{len(sources)}, coverage_detail)", flush=True)
+    # Category counts for the agreement-view legend: the geometry comes from the
+    # buildings PMTiles (flags are tile properties), but a client can't count
+    # unrendered tiles — so the totals are precomputed here.
+    counts = load_agreement(ADM0)["agreement"].value_counts().to_dict()
+    up("agreement_counts.json", {k: int(v) for k, v in counts.items()})
+    print(f"  meta <- {meta_dir}/ (sources, extents x{len(sources)}, coverage_detail, agreement_counts)", flush=True)
 
 
 def main(only: list[str] | None = None) -> None:

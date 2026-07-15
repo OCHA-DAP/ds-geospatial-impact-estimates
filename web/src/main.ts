@@ -25,6 +25,12 @@ const fetchMeta = async (name: string) => {
 // extents.json bundles every source's analysed extent -> one request instead of one per source.
 let _extentsAll: Promise<Record<string, any>> | null = null;
 const getExtents = () => (_extentsAll ??= fetchMeta("extents.json"));
+// Agreement-view legend totals (precomputed in the pipeline — a client can't count
+// buildings in tiles it hasn't rendered).
+let agreementCounts: Record<string, number> | null = null;
+async function ensureAgreementCounts() {
+  if (!agreementCounts) agreementCounts = await fetchMeta("agreement_counts.json");
+}
 
 type RGBA = [number, number, number, number];
 
@@ -74,8 +80,6 @@ const buildingsCache = new Map<string, any[]>();
 const nativeCache = new Map<string, any>();
 const extentCache = new Map<string, any>();
 let coverageDetailData: any = null; // CEMS AOI + not-analysed (cloud) shapes
-let agreementData: any[] | null = null;
-
 // Source-agreement categories (the spatial Venn) — used by the "agreement" view.
 const AGREEMENT: Record<string, { label: string; color: [number, number, number] }> = {
   both: { label: "Both damaged", color: [150, 25, 40] },
@@ -83,12 +87,6 @@ const AGREEMENT: Record<string, { label: string; color: [number, number, number]
   cems_only: { label: "Copernicus only", color: [235, 125, 20] },
   agree_none: { label: "Agree: undamaged", color: [165, 170, 178] },
 };
-function agreementColor(cat: string): RGBA {
-  const o = AGREEMENT[cat];
-  if (o) return [...o.color, cat === "agree_none" ? 110 : 235] as RGBA;
-  return cat === "ms_area" ? [40, 110, 205, 28] : [235, 125, 20, 28]; // single-source = faint
-}
-
 function extentTip(s: string, p: any): string {
   const src = SOURCE_LABEL[s] ?? s;
   if (s === "copernicus_ems") {
@@ -383,6 +381,67 @@ async function setupBuildings() {
       },
     } as any);
   }
+
+  // Agreement view from the SAME tiles: the MS/CEMS flags are tile properties, so the
+  // spatial-Venn category is a paint expression — /api/agreement (deck.gl) retired.
+  const b = (f: string) => ["to-boolean", ["get", f]];
+  const bothAnalysed = ["all", b("ms_analysed"), b("cems_analysed")];
+  const agreeCat = [
+    "case",
+    ["all", b("ms_dmg"), b("cems_dmg")], "both",
+    b("ms_dmg"), "ms_only",
+    b("cems_dmg"), "cems_only",
+    "agree_none",
+  ];
+  map.addLayer({
+    id: "bpm-agree-context", // single-source areas, faint (matches deck.gl 28/255 alpha)
+    source: "pmt-src-buildings",
+    "source-layer": "building_flags",
+    type: "circle",
+    layout: { visibility: "none" },
+    filter: ["all", ["any", b("ms_analysed"), b("cems_analysed")], ["!", bothAnalysed as any]],
+    paint: {
+      "circle-color": ["case", b("ms_analysed"), "rgb(40,110,205)", "rgb(235,125,20)"],
+      "circle-opacity": 0.11,
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 0.7, 15, 3],
+      "circle-stroke-width": 0,
+    },
+  } as any);
+  map.addLayer({
+    id: "bpm-agree-overlap", // both sources assessed: the Venn categories, bold
+    source: "pmt-src-buildings",
+    "source-layer": "building_flags",
+    type: "circle",
+    layout: { visibility: "none" },
+    filter: bothAnalysed as any,
+    paint: {
+      "circle-color": [
+        "match", agreeCat,
+        "both", "rgb(150,25,40)",
+        "ms_only", "rgb(40,110,205)",
+        "cems_only", "rgb(235,125,20)",
+        "rgb(165,170,178)", // agree_none
+      ],
+      "circle-opacity": ["case", ["==", agreeCat, "agree_none"], 0.43, 0.92],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 1.6, 15, 6],
+      "circle-stroke-width": 0,
+    },
+  } as any);
+  map.on("mousemove", "bpm-agree-overlap", (e: any) => {
+    const p = e.features?.[0]?.properties;
+    if (!p) return hideTip();
+    const cat =
+      p.ms_dmg && p.cems_dmg ? "both" : p.ms_dmg ? "ms_only" : p.cems_dmg ? "cems_only" : "agree_none";
+    showTip(e.point.x, e.point.y, AGREEMENT[cat]?.label ?? cat);
+  });
+  map.on("mouseleave", "bpm-agree-overlap", hideTip);
+}
+
+// Show the agreement layers only in the agreement view.
+function syncAgreement() {
+  const on = state.view === "agreement" && state.show.buildings;
+  for (const id of ["bpm-agree-context", "bpm-agree-overlap"])
+    if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
 }
 
 // Show per-source building points only in the Overture view.
@@ -396,6 +455,7 @@ function syncBuildings() {
       if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", show ? "visible" : "none");
     }
   }
+  syncAgreement();
 }
 
 // Admin choropleth (v2): boundaries from admin PMTiles, values from hyparquet,
@@ -877,35 +937,8 @@ function buildLayers() {
       );
   }
 
-  // agreement view: one combined layer — faint single-source context, bold overlap on top
-  if (state.show.buildings && state.view === "agreement" && agreementData) {
-    const overlap = new Set(["both", "ms_only", "cems_only", "agree_none"]);
-    layers.push(
-      new ScatterplotLayer({
-        id: "agree-context",
-        data: agreementData.filter((d: any) => !overlap.has(d.agreement)),
-        getPosition: (d: any) => [d.lon, d.lat],
-        getRadius: 5,
-        radiusMinPixels: 0.5,
-        radiusMaxPixels: 3,
-        getFillColor: (d: any) => agreementColor(d.agreement),
-      }),
-      new ScatterplotLayer({
-        id: "agree-overlap",
-        data: agreementData.filter((d: any) => overlap.has(d.agreement)),
-        getPosition: (d: any) => [d.lon, d.lat],
-        getRadius: 9,
-        radiusMinPixels: 1.6,
-        radiusMaxPixels: 6,
-        pickable: true,
-        getFillColor: (d: any) => agreementColor(d.agreement),
-        onHover: (info: any) =>
-          info.object
-            ? showTip(info.x, info.y, AGREEMENT[info.object.agreement]?.label ?? info.object.agreement)
-            : hideTip(),
-      }),
-    );
-  }
+  // agreement view: served from the buildings PMTiles (see bpm-agree-* layers) —
+  // the deck.gl ScatterplotLayer path was retired with /api/agreement.
 
   // building-level (Overture points or native geometry), per source
   for (const s of state.view === "agreement" || !state.show.buildings ? [] : sources) {
@@ -1056,9 +1089,8 @@ function updateNativeNote() {
 
 function renderLegend() {
   const lg = document.getElementById("legend")!;
-  if (state.view === "agreement" && agreementData) {
-    const c: Record<string, number> = {};
-    for (const p of agreementData) c[p.agreement] = (c[p.agreement] ?? 0) + 1;
+  if (state.view === "agreement" && agreementCounts) {
+    const c = agreementCounts;
     const rows = ["both", "ms_only", "cems_only", "agree_none"]
       .map((k) => {
         const o = AGREEMENT[k];
@@ -1153,9 +1185,6 @@ async function ensureExtent(source: string) {
 async function ensureCoverageDetail() {
   if (!coverageDetailData) coverageDetailData = await fetchMeta("coverage_detail.json");
 }
-async function ensureAgreement() {
-  if (!agreementData) agreementData = await fetch(`${API_BASE}/api/agreement`).then((r) => r.json());
-}
 
 async function refresh() {
   const status = document.getElementById("status")!;
@@ -1171,7 +1200,7 @@ async function refresh() {
       if (state.show.extent) tasks.push(ensureExtent(s));
       if (state.show.extent && s === "copernicus_ems") tasks.push(ensureCoverageDetail());
     }
-    if (state.show.buildings && state.view === "agreement") tasks.push(ensureAgreement());
+    if (state.show.buildings && state.view === "agreement") tasks.push(ensureAgreementCounts());
 
     const total = tasks.length;
     let done = 0;
