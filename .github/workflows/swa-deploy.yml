@@ -14,11 +14,12 @@ name: Deploy SWA (satellite-impact-viewer)
 
 on:
   push:
-    branches: [swa-static-web-app]
+    branches: [v1]
     paths: ["web/**", ".github/workflows/swa-deploy.yml"]
   pull_request:
     types: [opened, synchronize, reopened, closed]
-    branches: [swa-static-web-app]
+    branches: [v1]
+    paths: ["web/**", ".github/workflows/swa-deploy.yml"]
 
 jobs:
   deploy:
@@ -34,7 +35,7 @@ jobs:
           action: upload
           app_location: web
           output_location: dist
-          production_branch: swa-static-web-app
+          production_branch: v1
         env:
           VITE_TOKEN_URL: https://chd-ds-token-issuer.azurewebsites.net/api/token?app=satellite-viewer&tier=${{ github.event_name == 'pull_request' && 'staging' || 'prod' }}
           VITE_API_BASE: ${{ github.event_name == 'pull_request' && 'https://chd-ds-geospatial-impact-viewer-staging.azurewebsites.net' || 'https://chd-ds-geospatial-impact-viewer.azurewebsites.net' }}
