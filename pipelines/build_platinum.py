@@ -161,7 +161,27 @@ def export_meta(settings) -> None:
     # unrendered tiles — so the totals are precomputed here.
     counts = load_agreement(ADM0)["agreement"].value_counts().to_dict()
     up("agreement_counts.json", {k: int(v) for k, v in counts.items()})
-    print(f"  meta <- {meta_dir}/ (sources, extents x{len(sources)}, coverage_detail, agreement_counts)", flush=True)
+    # Excel-export inputs (client-side exceljs, ADR-0011): the three per-level tidy
+    # tables (needs the codab name-hierarchy join, so computed here, not in the
+    # browser) + the README text blocks composed from the same constants the server
+    # export used — numbers and wording stay identical to /api/export.xlsx.
+    from gie.serving import _EXPORT_GLOSSARY, _SOURCE_DESC, _SOURCE_SHORT, load_export
+
+    for level in (1, 2, 3):
+        stratus.upload_parquet_to_blob(
+            load_export(level, ADM0),
+            settings.blob_path("platinum", "values", f"export-adm{level}.parquet"),
+            stage=STAGE, container_name=settings.container, compression="snappy",
+        )
+    src_desc = "Damage source (one row per source per unit): " + "; ".join(
+        _SOURCE_DESC[s] for s in sources if s in _SOURCE_DESC
+    ) + "."
+    up("export_meta.json", {
+        "subtitle_sources": [_SOURCE_SHORT.get(s, s) for s in sources],
+        "glossary": _EXPORT_GLOSSARY[:2] + [["source", src_desc]] + _EXPORT_GLOSSARY[2:],
+    })
+    print(f"  meta <- {meta_dir}/ (sources, extents x{len(sources)}, coverage_detail, "
+          f"agreement_counts, export x3+meta)", flush=True)
 
 
 def export_h3(settings) -> None:

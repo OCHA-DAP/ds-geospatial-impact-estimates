@@ -667,11 +667,28 @@ function syncAdmin() {
 
 maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
-// The export link in index.html is a plain relative href; when this build targets a
-// different API host (SWA build), retarget it. API_BASE unset (classic build) → untouched.
-if (API_BASE) {
+// Excel export: built in the browser with exceljs from platinum artifacts (ADR-0011),
+// lazy-loading the exceljs chunk on first click. The anchor's href (the legacy
+// /api/export.xlsx) is kept as the fallback if the client build fails.
+{
   const exp = document.getElementById("export") as HTMLAnchorElement | null;
-  if (exp) exp.href = `${API_BASE}/api/export.xlsx`;
+  if (exp) {
+    if (API_BASE) exp.href = `${API_BASE}/api/export.xlsx`; // fallback URL per deploy target
+    exp.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const label = exp.textContent;
+      exp.textContent = "⏳ Building spreadsheet…";
+      try {
+        const { downloadExport } = await import("./export");
+        await downloadExport(await getToken());
+      } catch (err) {
+        console.error("client export failed — falling back to server:", err);
+        window.location.href = exp.href;
+      } finally {
+        exp.textContent = label;
+      }
+    });
+  }
 }
 
 // Add each "pmtiles" source's MapLibre layers (hidden until shown by syncPmtiles)
