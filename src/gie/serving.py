@@ -222,11 +222,12 @@ _SOURCE_DESC = {
     "disha": "'disha' (DISHA — Data Insights for Social & Humanitarian Action; AI building-damage detection, NW Caracas; unvalidated)",
     "unep_debris": "'unep_debris' (UNEP/OCHA JEU building debris — mass in tonnes; detected-only, SAR-derived)",
     "list": "'list' (WFP/LIST/CERN deep-learning (ResNet) per-building damage from pre/post SAR imagery; class 2 only, preliminary)",
+    "uh": "'uh' (UH QuakeDamage — Singh & Hoskere, University of Houston; deep-learning graded damage on building footprints)",
 }
 _SOURCE_SHORT = {
     "microsoft": "Microsoft", "copernicus_ems": "Copernicus EMS",
     "impact_initiatives": "IMPACT SAR", "osu": "OSU", "hot_osm": "HOTOSM fAIr", "disha": "DISHA",
-    "unep_debris": "UNEP debris", "list": "LIST",
+    "unep_debris": "UNEP debris", "list": "LIST", "uh": "UH QuakeDamage",
 }
 
 # column -> (meaning / how it was derived), for the README sheet. The 'source' row is
@@ -245,11 +246,13 @@ _EXPORT_GLOSSARY = [
     ),
     (
         "analysed_buildings",
-        "Of total_buildings, those inside the source's valid analysed area — where it "
-        "actually assessed. Copernicus EMS: image footprint within the AOI, minus cloud / "
-        "no-data. Microsoft: its valid-area mask. IMPACT SAR / OSU: the source's analysed "
-        "coverage footprint. HOTOSM fAIr: blank — it ships only damage points with no "
-        "published analysed area (detected-only), so coverage and damage_fraction are empty.",
+        "Of total_buildings, those the source actually assessed. Copernicus EMS: image "
+        "footprint within the AOI, minus cloud / no-data. Microsoft: its valid-area mask. "
+        "IMPACT SAR / OSU: the source's analysed coverage footprint. DISHA, WFP-LIST-CERN "
+        "and UH QuakeDamage: the set of buildings the source itself classified (no separate "
+        "published analysed-area polygon). HOTOSM fAIr and UNEP debris: blank — they ship "
+        "only detections with no analysed set (detected-only), so coverage and "
+        "damage_fraction are empty.",
     ),
     (
         "pct_buildings_covered",
@@ -264,22 +267,37 @@ _EXPORT_GLOSSARY = [
         "point from its latest assessment (snapped to the nearest footprint within 20 m), or, "
         "where only the earlier coarse damage-area blocks exist, the buildings those blocks "
         "cover. IMPACT SAR / OSU: an Overture building flagged damaged by the source. "
-        "HOTOSM fAIr: an Overture building matched to a fAIr damage point (snapped within 20 m).",
+        "DISHA and HOTOSM fAIr: an Overture building matched to an AI damage point (snapped "
+        "within 20 m). WFP-LIST-CERN: a building the ResNet model classed damaged (class 2). "
+        "UH QuakeDamage: a footprint the model graded damaged. UNEP debris: an Overture "
+        "building matched to a detected-debris location (snapped within 20 m).",
     ),
     (
         "damage_fraction",
         "damaged / analysed_buildings — the observed damage rate within the assessed area "
-        "(NOT over the whole unit). Blank for detected-only sources with no analysed area "
-        "(HOTOSM fAIr).",
+        "(NOT over the whole unit). Blank for detected-only sources with no analysed set "
+        "(HOTOSM fAIr, UNEP debris).",
     ),
     (
         "analysed_area_km2",
-        "Area (km²) of the source's analysed extent that falls within the unit.",
+        "Area (km²) of the source's analysed extent that falls within the unit. Blank for "
+        "sources without a published areal extent (DISHA, HOTOSM fAIr, WFP-LIST-CERN, "
+        "UH QuakeDamage, UNEP debris).",
     ),
     ("unit_area_km2", "The admin unit's own area (km²)."),
     (
         "area_coverage_fraction",
-        "analysed_area_km2 / unit_area_km2 — share of the unit's land area the source imaged.",
+        "analysed_area_km2 / unit_area_km2 — share of the unit's land area the source imaged. "
+        "Blank where analysed_area_km2 is blank.",
+    ),
+    (
+        "⚠ Reading across sources",
+        "Each source row is an INDEPENDENT estimate of the same buildings — never sum "
+        "damaged (or any other column) across sources within a unit: that double-counts "
+        "the same damage. Compare sources side by side, or pick one source (or the maximum) "
+        "per unit. Counts are also not comparable between sources without minding coverage: "
+        "a low damaged count can simply mean the source assessed little of the unit (see "
+        "pct_buildings_covered), and detected-only sources set no denominator at all.",
     ),
 ]
 def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
