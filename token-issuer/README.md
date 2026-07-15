@@ -15,7 +15,7 @@ Browsers read big map files straight from blob storage (fast, cloud-native). To 
 they need *some* credential. You never hand out the storage **account key** (it can do
 everything, forever). Instead this service mints a **SAS**: read-only, scoped to one
 folder, expires in 24h. It authenticates as the Function's **managed identity** (an Azure
-"badge"), so there is no key or password stored in config. See ADR-0020.
+"badge"), so there is no key or password stored in config. See ADR-0022.
 
 ## How to call it
 

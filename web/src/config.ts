@@ -4,7 +4,7 @@
 // same-origin relative paths, so the compiled fetch URLs are identical to the
 // pre-config-switch code — the classic deployment's behavior is unchanged.
 //
-// The SWA build (ADR-0020 / ADR-0011 Phase 3) sets:
+// The SWA build (ADR-0022 / ADR-0011 Phase 3) sets:
 //   VITE_TOKEN_URL  full token-issuer endpoint incl. app/tier, e.g.
 //                   https://chd-ds-token-issuer.azurewebsites.net/api/token?app=satellite-viewer&tier=prod
 //   VITE_API_BASE   origin of the legacy App Service, for the /api routes that are not
