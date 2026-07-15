@@ -6,6 +6,7 @@ import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";
 import { MapboxOverlay } from "@deck.gl/mapbox";
 import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
+import { API_BASE, TOKEN_URL } from "./config";
 
 type RGBA = [number, number, number, number];
 
@@ -328,7 +329,7 @@ const BUILDING_FIELDS: Record<string, { seen: string; dmg: string }> = {
 // Add the one buildings tile + per-source exposed/damaged circle layers (hidden).
 async function setupBuildings() {
   if (OVERTURE_SERVING !== "pmtiles") return;
-  const tok = await fetch("/api/token").then((r) => r.json());
+  const tok = await fetch(TOKEN_URL).then((r) => r.json());
   const pdir = tok.platinum_dir || "platinum";
   map.addSource("pmt-src-buildings", {
     type: "vector",
@@ -387,7 +388,7 @@ const ADMIN_SERVING: "pmtiles" | "deckgl" = "pmtiles";
 
 async function setupAdmin() {
   if (ADMIN_SERVING !== "pmtiles") return;
-  const tok = await fetch("/api/token").then((r) => r.json());
+  const tok = await fetch(TOKEN_URL).then((r) => r.json());
   const pdir = tok.platinum_dir || "platinum";
   // values: read the slim admin facts parquet, pivot into adminCache (properties
   // only — geometry comes from the tiles now) so the existing logic is reused.
@@ -474,6 +475,13 @@ function syncAdmin() {
 
 maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
+// The export link in index.html is a plain relative href; when this build targets a
+// different API host (SWA build), retarget it. API_BASE unset (classic build) → untouched.
+if (API_BASE) {
+  const exp = document.getElementById("export") as HTMLAnchorElement | null;
+  if (exp) exp.href = `${API_BASE}/api/export.xlsx`;
+}
+
 // Add each "pmtiles" source's MapLibre layers (hidden until shown by syncPmtiles)
 // and wire their hover. The read SAS + catalog base URL come from /api/token.
 async function setupPmtiles() {
@@ -482,7 +490,7 @@ async function setupPmtiles() {
     Extract<Serving, { mode: "pmtiles" }>,
   ][];
   if (!converted.length) return;
-  const tok = await fetch("/api/token").then((r) => r.json());
+  const tok = await fetch(TOKEN_URL).then((r) => r.json());
   const pdir = tok.platinum_dir || "platinum";
   for (const [s, v] of converted) {
     const src = `pmt-src-${s}`;
@@ -521,7 +529,7 @@ const USGS_LAYERS = [
   "usgs-epi-star", "usgs-epi-mag",
 ];
 async function setupUsgs() {
-  const tok = await fetch("/api/token").then((r) => r.json());
+  const tok = await fetch(TOKEN_URL).then((r) => r.json());
   const pdir = tok.platinum_dir || "platinum";
   map.addSource("usgs", {
     type: "geojson",
@@ -1109,26 +1117,26 @@ function legendMax(metric: string): number {
 async function ensureAdmin(source: string, level: number) {
   const k = `${source}:${level}`;
   if (!adminCache.has(k))
-    adminCache.set(k, await fetch(`/api/common/admin/${level}?source=${source}`).then((r) => r.json()));
+    adminCache.set(k, await fetch(`${API_BASE}/api/common/admin/${level}?source=${source}`).then((r) => r.json()));
 }
 async function ensureH3(source: string) {
-  if (!h3Cache.has(source)) h3Cache.set(source, await fetch(`/api/common/h3?source=${source}`).then((r) => r.json()));
+  if (!h3Cache.has(source)) h3Cache.set(source, await fetch(`${API_BASE}/api/common/h3?source=${source}`).then((r) => r.json()));
 }
 async function ensureBuildings(source: string) {
   if (!buildingsCache.has(source))
-    buildingsCache.set(source, await fetch(`/api/buildings?source=${source}`).then((r) => r.json()));
+    buildingsCache.set(source, await fetch(`${API_BASE}/api/buildings?source=${source}`).then((r) => r.json()));
 }
 async function ensureNative(source: string) {
-  if (!nativeCache.has(source)) nativeCache.set(source, await fetch(`/api/native?source=${source}`).then((r) => r.json()));
+  if (!nativeCache.has(source)) nativeCache.set(source, await fetch(`${API_BASE}/api/native?source=${source}`).then((r) => r.json()));
 }
 async function ensureExtent(source: string) {
-  if (!extentCache.has(source)) extentCache.set(source, await fetch(`/api/extent?source=${source}`).then((r) => r.json()));
+  if (!extentCache.has(source)) extentCache.set(source, await fetch(`${API_BASE}/api/extent?source=${source}`).then((r) => r.json()));
 }
 async function ensureCoverageDetail() {
-  if (!coverageDetailData) coverageDetailData = await fetch("/api/coverage_detail").then((r) => r.json());
+  if (!coverageDetailData) coverageDetailData = await fetch(`${API_BASE}/api/coverage_detail`).then((r) => r.json());
 }
 async function ensureAgreement() {
-  if (!agreementData) agreementData = await fetch("/api/agreement").then((r) => r.json());
+  if (!agreementData) agreementData = await fetch(`${API_BASE}/api/agreement`).then((r) => r.json());
 }
 
 async function refresh() {
@@ -1191,7 +1199,7 @@ async function init() {
       console.error(`v2 ${name} setup failed:`, e);
     }
   }
-  const meta = await fetch("/api/sources").then((r) => r.json());
+  const meta = await fetch(`${API_BASE}/api/sources`).then((r) => r.json());
   const sources: string[] = meta.sources;
   METRICS = [
     { key: "damage_rate_detected", label: "Damage fraction" },
