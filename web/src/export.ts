@@ -71,10 +71,16 @@ export async function downloadExport(tok: any): Promise<void> {
   rm.getColumn("B").width = 92;
 
   // --- adm1/2/3 data sheets ------------------------------------------------------
+  // fetch all three levels in parallel before building
+  const levelRows = await Promise.all(
+    [1, 2, 3].map(async (level) =>
+      (await parquetReadObjects({
+        file: await asyncBufferFromUrl({ url: `${base}/values/export-adm${level}.parquet?${tok.sas}` }),
+      })) as any[],
+    ),
+  );
   for (const level of [1, 2, 3]) {
-    const rows = (await parquetReadObjects({
-      file: await asyncBufferFromUrl({ url: `${base}/values/export-adm${level}.parquet?${tok.sas}` }),
-    })) as any[];
+    const rows = levelRows[level - 1];
     const cols = COLS(level);
     const ws = wb.addWorksheet(`adm${level}`, {
       views: [{ state: "frozen", ySplit: 1, showGridLines: false }],
@@ -93,10 +99,10 @@ export async function downloadExport(tok: any): Promise<void> {
     cols.forEach((name, i) => {
       const col = ws.getColumn(i + 1);
       col.width = Math.max(name.length + 2, name === "unit_id" || name === "source" ? 22 : 14);
-      if (name !== "source" && !name.includes("name") && name !== "unit_id") {
-        const fmt = PCT.has(name) ? "0.0%" : name.endsWith("km2") ? "0.00" : "#,##0";
-        for (let r = 2; r <= rows.length + 1; r++) ws.getCell(r, i + 1).numFmt = fmt;
-      }
+      if (name !== "source" && !name.includes("name") && name !== "unit_id")
+        // column-level format (one style op instead of one per cell); the header cell
+        // is text, so the numeric format has no visible effect on it
+        col.numFmt = PCT.has(name) ? "0.0%" : name.endsWith("km2") ? "0.00" : "#,##0";
     });
     for (let r = 2; r <= rows.length + 1; r++)
       if (r % 2 === 0) ws.getRow(r).eachCell({ includeEmpty: true }, (cell) => (cell.fill = fill(BAND)));
