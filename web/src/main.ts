@@ -3,9 +3,6 @@ import "./style.css";
 import maplibregl from "maplibre-gl";
 import { Protocol } from "pmtiles";
 import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";
-import { MapboxOverlay } from "@deck.gl/mapbox";
-import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
-import { H3HexagonLayer } from "@deck.gl/geo-layers";
 import { API_BASE, TOKEN_URL } from "./config";
 
 // One token fetch per session, shared by all callers. Four init paths need the
@@ -76,8 +73,6 @@ const state = {
 let METRICS: { key: string; label: string }[] = [];
 const adminCache = new Map<string, any>();
 const h3Cache = new Map<string, any[]>();
-const buildingsCache = new Map<string, any[]>();
-const nativeCache = new Map<string, any>();
 const extentCache = new Map<string, any>();
 let coverageDetailData: any = null; // CEMS AOI + not-analysed (cloud) shapes
 // Source-agreement categories (the spatial Venn) — used by the "agreement" view.
@@ -102,8 +97,6 @@ const map = new maplibregl.Map({
   center: [-67.03, 10.59],
   zoom: 11,
 });
-const overlay = new MapboxOverlay({ interleaved: false, layers: [] });
-map.addControl(overlay as any);
 
 // --- v2 serving: EXPLICIT per-layer registry (no silent fallback). Each native
 // source is served from PMTiles (converted) or deck.gl (not yet). A converted
@@ -124,8 +117,7 @@ const DAMAGE_BY_CLASS: any = [
 ];
 type PmLayer = { id: string; spec: any };
 type Serving =
-  | { mode: "pmtiles"; file: string; sourceLayer: string; layers: PmLayer[]; hover: (p: any) => string }
-  | { mode: "deckgl" };
+  { mode: "pmtiles"; file: string; sourceLayer: string; layers: PmLayer[]; hover: (p: any) => string };
 
 const LAYER_SERVING: Record<string, Serving> = {
   microsoft: {
@@ -323,7 +315,6 @@ const LAYER_SERVING: Record<string, Serving> = {
     hover: (p) => `${SOURCE_LABEL["uh"] ?? "uh"}<br>grade: ${p.grade}`,
   },
 };
-const usePmtiles = (s: string) => LAYER_SERVING[s]?.mode === "pmtiles";
 
 // Overture/buildings view: ONE building_flags PMTiles (every source's flags
 // embedded) serves all sources' points — viewport-streamed, no per-source fetch.
@@ -592,6 +583,57 @@ async function setupAdmin() {
   }
 }
 
+// --- H3 (v2): hex-cell polygons pre-generated in the pipeline (ADR-0011) served as
+// PMTiles; per-source values via hyparquet; cells coloured via setFeatureState —
+// exactly the admin-choropleth pattern. Replaces deck.gl H3HexagonLayer.
+let h3ByCell: Map<string, any> = new Map(); // last applied state, for hover tips
+
+async function setupH3() {
+  const tok = await getToken();
+  const pdir = tok.platinum_dir || "platinum";
+  const labelId = map.getStyle().layers?.find((l: any) => l.type === "symbol")?.id;
+  map.addSource("pmt-src-h3", {
+    type: "vector",
+    url: `pmtiles://${tok.base_url}/${pdir}/h3/h3_cells.pmtiles?${tok.sas}`,
+    promoteId: "h3",
+  });
+  map.addLayer({
+    id: "pmt-h3-fill",
+    source: "pmt-src-h3",
+    "source-layer": "h3_cells",
+    type: "fill",
+    layout: { visibility: "none" },
+    paint: {
+      "fill-color": ["coalesce", ["feature-state", "color"], "rgba(0,0,0,0)"],
+      "fill-opacity": 0.6,
+    },
+  } as any, labelId);
+  map.on("mousemove", "pmt-h3-fill", (e: any) => {
+    const id = e.features?.[0]?.properties?.h3;
+    const r = id && h3ByCell.get(id);
+    if (r) showTip(e.point.x, e.point.y, tip(`${SOURCE_LABEL[r._src] ?? r._src} · highest here`, r));
+    else hideTip();
+  });
+  map.on("mouseleave", "pmt-h3-fill", hideTip);
+}
+
+function applyH3State(byCell: Map<string, any>, m: string, hMax: number) {
+  h3ByCell = byCell;
+  map.removeFeatureState({ source: "pmt-src-h3", sourceLayer: "h3_cells" });
+  for (const [cell, r] of byCell) {
+    const c = metricColor(m, r._v, hMax);
+    map.setFeatureState(
+      { source: "pmt-src-h3", sourceLayer: "h3_cells", id: cell },
+      { color: `rgb(${c[0]},${c[1]},${c[2]})` },
+    );
+  }
+}
+
+function syncH3() {
+  const vis = state.show.h3 && state.sources.size ? "visible" : "none";
+  if (map.getLayer("pmt-h3-fill")) map.setLayoutProperty("pmt-h3-fill", "visibility", vis);
+}
+
 // Colour each unit by the max-across-sources value (byUnit, computed in buildLayers).
 function applyAdminState(byUnit: Map<string, any>, m: string, aMax: number) {
   const lvl = state.adminLevel;
@@ -800,14 +842,6 @@ function metricColor(metric: string, value: number | null | undefined, max: numb
   else t = max ? value / max : 0;
   return damageColor(lift(t));
 }
-function nativeColor(source: string, p: any): RGBA {
-  if (source === "microsoft") return p.damaged ? [220, 30, 30, 205] : [120, 128, 140, 70];
-  const cls = p.damage_class; // CEMS: 1 possibly .. 3 destroyed
-  const rgb = (cls == null ? [225, 60, 40, 0] : damageColor(Math.max(0.25, cls / 3))) as number[];
-  // CEMS coarse area blocks (the earlier, lower-resolution estimate) render
-  // translucent so the per-building point estimates read clearly on top of them.
-  return [rgb[0], rgb[1], rgb[2], p.layer_type === "area" ? 60 : 210];
-}
 // Reduce, not Math.max(1, ...arr): spreading a large array (H3 can be >100k cells,
 // widest for broad-coverage sources like LIST) overflows the call-stack arg limit.
 const maxBy = (arr: any[], get: (x: any) => number) =>
@@ -912,7 +946,6 @@ function adminTip(unitId: any, unitName: string): string {
 function buildLayers() {
   const m = state.metric;
   const sources = [...state.sources];
-  const layers: any[] = [];
 
   const adminFeats = sources.flatMap((s) =>
     (adminCache.get(`${s}:${state.adminLevel}`)?.features ?? []).filter((f: any) => hasData(f.properties)),
@@ -938,32 +971,7 @@ function buildLayers() {
         }
       }
     }
-    if (ADMIN_SERVING === "pmtiles") {
-      applyAdminState(byUnit, m, aMax); // colour the MapLibre admin layer in-place
-    } else {
-      const feats = [...byUnit.values()].map(({ f, v }) => ({
-        ...f,
-        properties: { ...f.properties, _v: v },
-      }));
-      layers.push(
-        new GeoJsonLayer({
-          id: `admin-${state.adminLevel}`,
-          data: { type: "FeatureCollection", features: feats },
-          pickable: true,
-          filled: true,
-          stroked: true,
-          opacity: 0.6,
-          getLineColor: [55, 65, 80, 200],
-          lineWidthMinPixels: 1,
-          getFillColor: (f: any) => metricColor(m, f.properties._v, aMax),
-          updateTriggers: { getFillColor: [m, state.adminLevel, aMax, sources.join()] },
-          onHover: (info: any) =>
-            info.object
-              ? showTip(info.x, info.y, adminTip(info.object.properties.unit_id, info.object.properties.unit_name))
-              : hideTip(),
-        }),
-      );
-    }
+    applyAdminState(byUnit, m, aMax); // colour the MapLibre admin layer in-place
   }
 
   // h3: ONE layer, each cell coloured by the MAX metric value across selected sources.
@@ -978,107 +986,20 @@ function buildLayers() {
           byCell.set(r.h3, { ...r, _v: v, _src: s });
       }
     }
-    const rows = [...byCell.values()];
-    if (rows.length)
-      layers.push(
-        new H3HexagonLayer({
-          id: "h3-combined",
-          data: rows,
-          pickable: true,
-          extruded: false,
-          opacity: 0.6,
-          getHexagon: (d: any) => d.h3,
-          getFillColor: (d: any) => metricColor(m, d._v, hMax),
-          updateTriggers: { getFillColor: [m, hMax, sources.join()] },
-          onHover: (info: any) =>
-            info.object
-              ? showTip(
-                  info.x,
-                  info.y,
-                  tip(`${SOURCE_LABEL[info.object._src] ?? info.object._src} · highest here`, info.object),
-                )
-              : hideTip(),
-        }),
-      );
+    applyH3State(byCell, m, hMax); // hex tiles + feature-state (was deck.gl H3HexagonLayer)
   }
 
   // agreement view: served from the buildings PMTiles (see bpm-agree-* layers) —
   // the deck.gl ScatterplotLayer path was retired with /api/agreement.
 
-  // building-level (Overture points or native geometry), per source
-  for (const s of state.view === "agreement" || !state.show.buildings ? [] : sources) {
-    if (state.view === "overture") {
-      if (OVERTURE_SERVING === "pmtiles") continue; // served by the buildings PMTiles layers
-      const pts = buildingsCache.get(s);
-      if (!pts) continue;
-      layers.push(
-        new ScatterplotLayer({
-          id: `bld-exposed-${s}`,
-          data: pts.filter((d: any) => !d.damaged),
-          getPosition: (d: any) => [d.lon, d.lat],
-          getRadius: 5,
-          radiusMinPixels: 0.6,
-          radiusMaxPixels: 3,
-          getFillColor: [110, 118, 130, 85],
-        }),
-        new ScatterplotLayer({
-          id: `bld-damaged-${s}`,
-          data: pts.filter((d: any) => d.damaged),
-          getPosition: (d: any) => [d.lon, d.lat],
-          getRadius: 9,
-          radiusMinPixels: 1.6,
-          radiusMaxPixels: 6,
-          getFillColor: [230, 20, 20, 240],
-        }),
-      );
-    } else {
-      if (usePmtiles(s)) continue; // served by its MapLibre PMTiles layer, not deck.gl
-      const nat = nativeCache.get(s);
-      if (!nat) continue;
-      layers.push(
-        new GeoJsonLayer({
-          id: `native-${s}`,
-          data: nat,
-          pickable: true,
-          filled: true,
-          stroked: false,
-          // HOTOSM fAIr native geometry is points (not polygons): render them as
-          // visible circles. These point props are ignored for polygon sources.
-          pointType: "circle",
-          getPointRadius: 9,
-          pointRadiusUnits: "meters",
-          pointRadiusMinPixels: 3.5,
-          pointRadiusMaxPixels: 8,
-          getFillColor: (f: any) => nativeColor(s, f.properties),
-          onHover: (info: any) =>
-            info.object
-              ? showTip(
-                  info.x,
-                  info.y,
-                  s === "microsoft"
-                    ? `Microsoft footprint<br>damaged: ${info.object.properties.damaged ? "yes" : "no"}`
-                    : `${SOURCE_LABEL[s] ?? s}<br>grade: ${info.object.properties.ems_grade}` +
-                        (info.object.properties.layer_type
-                          ? `<br>${info.object.properties.layer_type === "area" ? "coarse block (early estimate)" : "per-building point"}`
-                          : "") +
-                        (info.object.properties.confidence != null
-                          ? `<br>confidence: ${(info.object.properties.confidence * 100).toFixed(0)}%`
-                          : ""),
-                )
-              : hideTip(),
-        }),
-      );
-    }
-  }
-
   // coverage extents + CEMS gaps are native MapLibre layers now — see syncExtents().
 
-  overlay.setProps({ layers });
   syncPmtiles();
   syncBuildings();
   syncAdmin();
   syncUsgs();
   syncExtents();
+  syncH3();
 }
 
 // Sources with no native (own) geometry — raster products. In the native view they
@@ -1178,20 +1099,24 @@ function legendMax(metric: string): number {
 }
 
 // --- data --------------------------------------------------------------------
-async function ensureAdmin(source: string, level: number) {
-  const k = `${source}:${level}`;
-  if (!adminCache.has(k))
-    adminCache.set(k, await fetch(`${API_BASE}/api/common/admin/${level}?source=${source}`).then((r) => r.json()));
-}
 async function ensureH3(source: string) {
-  if (!h3Cache.has(source)) h3Cache.set(source, await fetch(`${API_BASE}/api/common/h3?source=${source}`).then((r) => r.json()));
-}
-async function ensureBuildings(source: string) {
-  if (!buildingsCache.has(source))
-    buildingsCache.set(source, await fetch(`${API_BASE}/api/buildings?source=${source}`).then((r) => r.json()));
-}
-async function ensureNative(source: string) {
-  if (!nativeCache.has(source)) nativeCache.set(source, await fetch(`${API_BASE}/api/native?source=${source}`).then((r) => r.json()));
+  // Per-source slim values parquet from platinum (long form), pivoted to the same
+  // row shape the API returned ({h3, <metric>: value}) so hMax/legend logic is reused.
+  if (h3Cache.has(source)) return;
+  const tok = await getToken();
+  const pdir = tok.platinum_dir || "platinum";
+  const rows = (await parquetReadObjects({
+    file: await asyncBufferFromUrl({
+      url: `${tok.base_url}/${pdir}/values/facts-h3-${source}.parquet?${tok.sas}`,
+    }),
+  })) as any[];
+  const by = new Map<string, any>();
+  for (const r of rows) {
+    let p = by.get(r.unit_id);
+    if (!p) by.set(r.unit_id, (p = { h3: r.unit_id }));
+    p[r.metric] = r.value;
+  }
+  h3Cache.set(source, [...by.values()]);
 }
 async function ensureExtent(source: string) {
   if (!extentCache.has(source)) extentCache.set(source, (await getExtents())[source]);
@@ -1205,12 +1130,7 @@ async function refresh() {
   try {
     const tasks: Promise<any>[] = [];
     for (const s of state.sources) {
-      if (state.show.admin && ADMIN_SERVING !== "pmtiles") tasks.push(ensureAdmin(s, state.adminLevel));
       if (state.show.h3) tasks.push(ensureH3(s));
-      if (state.show.buildings && state.view === "overture" && OVERTURE_SERVING !== "pmtiles")
-        tasks.push(ensureBuildings(s));
-      if (state.show.buildings && state.view === "native" && !usePmtiles(s))
-        tasks.push(ensureNative(s));
       if (state.show.extent) tasks.push(ensureExtent(s));
       if (state.show.extent && s === "copernicus_ems") tasks.push(ensureCoverageDetail());
     }
@@ -1261,6 +1181,7 @@ async function init() {
     ["pmtiles", setupPmtiles],
     ["buildings", setupBuildings],
     ["admin", setupAdmin],
+    ["h3", setupH3],
     ["usgs", setupUsgs],
   ] as const) {
     try {

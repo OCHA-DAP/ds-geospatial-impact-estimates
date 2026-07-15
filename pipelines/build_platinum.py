@@ -164,6 +164,51 @@ def export_meta(settings) -> None:
     print(f"  meta <- {meta_dir}/ (sources, extents x{len(sources)}, coverage_detail, agreement_counts)", flush=True)
 
 
+def export_h3(settings) -> None:
+    """H3-view assets: hex-cell polygon tiles + per-source slim values parquet.
+
+    Cell geometry is pre-generated with DuckDB's h3 extension (ADR-0011) so the
+    browser needs no H3 library; the client joins values to tiles by cell id via
+    setFeatureState, mirroring the admin choropleth. Values are one slim long-form
+    parquet PER SOURCE (the client loads only selected sources). Tier-aware like
+    export_meta.
+    """
+    con = db.connect()
+    src = settings.az_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet")
+    df = con.execute(
+        f"SELECT source, unit_id, metric, value FROM read_parquet('{src}') WHERE unit_type='h3'"
+    ).df()
+    for s, g in df.groupby("source"):
+        dest = settings.blob_path("platinum", "values", f"facts-h3-{s}.parquet")
+        stratus.upload_parquet_to_blob(
+            g.drop(columns=["source"]), dest, stage=STAGE,
+            container_name=settings.container, compression="snappy",
+        )
+    cells = con.execute(
+        f"SELECT DISTINCT unit_id AS h3, h3_cell_to_boundary_wkt(unit_id) AS wkt "
+        f"FROM read_parquet('{src}') WHERE unit_type='h3'"
+    ).df()
+    gdf = gpd.GeoDataFrame(
+        cells[["h3"]], geometry=gpd.GeoSeries.from_wkt(cells["wkt"]), crs="EPSG:4326"
+    )
+    with tempfile.TemporaryDirectory() as td:
+        fgb, pmt = f"{td}/h3.fgb", f"{td}/h3_cells.pmtiles"
+        gdf.to_file(fgb, driver="FlatGeobuf")
+        r = subprocess.run(
+            ["tippecanoe", "-o", pmt, "-zg", "--no-feature-limit", "--no-tile-size-limit",
+             "--detect-shared-borders", "-l", "h3_cells", "--force", fgb],
+            capture_output=True,
+        )
+        if r.returncode != 0:
+            print(r.stderr.decode(errors="replace")[-1200:])
+            raise RuntimeError(f"tippecanoe h3 tile failed ({r.returncode})")
+        data = Path(pmt).read_bytes()
+    dest = settings.blob_path("platinum", "h3", "h3_cells.pmtiles")
+    blobio.upload(blobio.uploader(settings), data, dest)
+    print(f"  h3 <- {dest}  ({len(gdf):,} cells, {len(data) / 1e6:.1f} MB; "
+          f"values x{df['source'].nunique()} sources)", flush=True)
+
+
 def main(only: list[str] | None = None) -> None:
     settings = load_settings(STAGE)
     dest = f"az://{settings.container}/{settings.project_prefix}/platinum"
@@ -178,6 +223,9 @@ def main(only: list[str] | None = None) -> None:
 
     if only == ["meta"]:  # just the static meta artifacts — no tiling/push needed
         export_meta(settings)
+        return
+    if only == ["h3"]:  # just the H3 tiles + values
+        export_h3(settings)
         return
     sel = {k: v for k, v in LAYERS.items() if not only or k in only}
     if not sel:
@@ -212,6 +260,7 @@ def main(only: list[str] | None = None) -> None:
     _portolan(["push", dest, "--force"], cwd=str(cat), env=env)
     export_values(settings)  # slim values parquet for hyparquet (admin choropleth)
     export_meta(settings)  # static sources/extents/coverage JSON (was API-served)
+    export_h3(settings)  # H3 hex tiles + per-source values (was API-served)
     ledger.record(
         "platinum",
         "platinum",
