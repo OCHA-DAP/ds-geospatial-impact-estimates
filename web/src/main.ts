@@ -8,6 +8,12 @@ import { GeoJsonLayer, ScatterplotLayer } from "@deck.gl/layers";
 import { H3HexagonLayer } from "@deck.gl/geo-layers";
 import { API_BASE, TOKEN_URL } from "./config";
 
+// One token fetch per session, shared by all callers. Four init paths need the
+// blob SAS; without memoization each did its own round-trip — same-origin+cached
+// on the App Service, but a fresh cross-origin mint each time on the SWA/issuer.
+let _tokenPromise: Promise<any> | null = null;
+const getToken = () => (_tokenPromise ??= fetch(TOKEN_URL).then((r) => r.json()));
+
 type RGBA = [number, number, number, number];
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -329,7 +335,7 @@ const BUILDING_FIELDS: Record<string, { seen: string; dmg: string }> = {
 // Add the one buildings tile + per-source exposed/damaged circle layers (hidden).
 async function setupBuildings() {
   if (OVERTURE_SERVING !== "pmtiles") return;
-  const tok = await fetch(TOKEN_URL).then((r) => r.json());
+  const tok = await getToken();
   const pdir = tok.platinum_dir || "platinum";
   map.addSource("pmt-src-buildings", {
     type: "vector",
@@ -388,7 +394,7 @@ const ADMIN_SERVING: "pmtiles" | "deckgl" = "pmtiles";
 
 async function setupAdmin() {
   if (ADMIN_SERVING !== "pmtiles") return;
-  const tok = await fetch(TOKEN_URL).then((r) => r.json());
+  const tok = await getToken();
   const pdir = tok.platinum_dir || "platinum";
   // values: read the slim admin facts parquet, pivot into adminCache (properties
   // only — geometry comes from the tiles now) so the existing logic is reused.
@@ -490,7 +496,7 @@ async function setupPmtiles() {
     Extract<Serving, { mode: "pmtiles" }>,
   ][];
   if (!converted.length) return;
-  const tok = await fetch(TOKEN_URL).then((r) => r.json());
+  const tok = await getToken();
   const pdir = tok.platinum_dir || "platinum";
   for (const [s, v] of converted) {
     const src = `pmt-src-${s}`;
@@ -529,7 +535,7 @@ const USGS_LAYERS = [
   "usgs-epi-star", "usgs-epi-mag",
 ];
 async function setupUsgs() {
-  const tok = await fetch(TOKEN_URL).then((r) => r.json());
+  const tok = await getToken();
   const pdir = tok.platinum_dir || "platinum";
   map.addSource("usgs", {
     type: "geojson",
@@ -1164,11 +1170,20 @@ async function refresh() {
         `<div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>`;
     };
     if (total) tick();
+    // Paint immediately with whatever is already cached, then repaint as each
+    // response lands — the slowest overlay request (extents/coverage on a cold
+    // server) no longer gates the whole map (ADR-0021 option 1). The choropleth
+    // is independent of these tasks and unaffected either way.
+    buildLayers();
+    renderLegend();
+    updateNativeNote();
     await Promise.all(
       tasks.map((t) =>
         t.then((r) => {
           done++;
           if (total) tick();
+          buildLayers();
+          renderLegend();
           return r;
         }),
       ),
