@@ -444,6 +444,71 @@ function syncAgreement() {
     if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
 }
 
+// Coverage extents + CEMS not-analysed gaps as native MapLibre layers (GeoJSON from
+// platinum meta — replaces the deck.gl GeoJsonLayers). Outline-only extents on
+// purpose: a filled AOI would intercept hover from the admin units beneath it, so
+// the coverage tooltip only shows near the boundary (line hit = stroke only).
+function syncExtents() {
+  for (const s of Object.keys(SOURCE_LABEL)) {
+    const ext = extentCache.get(s);
+    const srcId = `ext-src-${s}`;
+    const lyrId = `ext-line-${s}`;
+    if (ext && !map.getSource(srcId)) {
+      const c = SOURCE_COLOR[s] ?? [80, 80, 80];
+      map.addSource(srcId, { type: "geojson", data: ext });
+      map.addLayer({
+        id: lyrId,
+        source: srcId,
+        type: "line",
+        layout: { visibility: "none" },
+        paint: { "line-color": `rgba(${c[0]},${c[1]},${c[2]},0.92)`, "line-width": 2 },
+      } as any);
+      map.on("mousemove", lyrId, (e: any) => {
+        const p = e.features?.[0]?.properties;
+        if (p) showTip(e.point.x, e.point.y, extentTip(s, p));
+        else hideTip();
+      });
+      map.on("mouseleave", lyrId, hideTip);
+    }
+    if (map.getLayer(lyrId))
+      map.setLayoutProperty(
+        lyrId, "visibility",
+        state.show.extent && state.sources.has(s) ? "visible" : "none",
+      );
+  }
+  // CEMS not-analysed (cloud / no imagery) gaps — filled, since they sit INSIDE the
+  // CEMS AOIs and mark holes rather than boundaries.
+  if (coverageDetailData && !map.getSource("cems-gaps-src")) {
+    map.addSource("cems-gaps-src", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: coverageDetailData.features.filter((f: any) => f.properties.kind === "not_analysed"),
+      } as any,
+    });
+    map.addLayer({
+      id: "cems-gaps-fill",
+      source: "cems-gaps-src",
+      type: "fill",
+      layout: { visibility: "none" },
+      paint: { "fill-color": "rgba(95,100,110,0.43)", "fill-outline-color": "rgba(95,100,110,0.63)" },
+    } as any);
+    map.on("mousemove", "cems-gaps-fill", (e: any) => {
+      const p = e.features?.[0]?.properties;
+      if (p)
+        showTip(e.point.x, e.point.y,
+          `Not analysed — cloud / no imagery<br>${p.aoi_name ?? ""} · ${p.product ?? ""}`);
+      else hideTip();
+    });
+    map.on("mouseleave", "cems-gaps-fill", hideTip);
+  }
+  if (map.getLayer("cems-gaps-fill"))
+    map.setLayoutProperty(
+      "cems-gaps-fill", "visibility",
+      state.show.extent && state.sources.has("copernicus_ems") ? "visible" : "none",
+    );
+}
+
 // Show per-source building points only in the Overture view.
 function syncBuildings() {
   if (OVERTURE_SERVING !== "pmtiles") return;
@@ -1006,65 +1071,14 @@ function buildLayers() {
     }
   }
 
-  // coverage extent: real analysed area per AOI/product (hover = metadata),
-  // plus CEMS not-analysed (cloud) gaps — both are coverage, not buildings.
-  if (state.show.extent) {
-    for (const s of sources) {
-      const ext = extentCache.get(s);
-      if (!ext) continue;
-      const c = SOURCE_COLOR[s] ?? [80, 80, 80];
-      layers.push(
-        new GeoJsonLayer({
-          id: `extent-${s}`,
-          data: ext,
-          // Outline only: a filled AOI (even at ~5% alpha) is pickable across its
-          // whole interior and intercepts hover from the admin units beneath it.
-          // The stroke stays pickable, so the coverage tooltip shows near the edge.
-          filled: false,
-          stroked: true,
-          pickable: true,
-          getLineColor: [...c, 235] as any,
-          lineWidthMinPixels: 2,
-          onHover: (info: any) =>
-            info.object ? showTip(info.x, info.y, extentTip(s, info.object.properties)) : hideTip(),
-        }),
-      );
-    }
-    if (sources.includes("copernicus_ems") && coverageDetailData) {
-      layers.push(
-        new GeoJsonLayer({
-          id: "cems-not-analysed",
-          data: {
-            type: "FeatureCollection",
-            features: coverageDetailData.features.filter(
-              (f: any) => f.properties.kind === "not_analysed",
-            ),
-          } as any,
-          filled: true,
-          stroked: true,
-          pickable: true,
-          getFillColor: [95, 100, 110, 110],
-          getLineColor: [95, 100, 110, 160],
-          getLineWidth: 1,
-          lineWidthUnits: "pixels",
-          onHover: (info: any) =>
-            info.object
-              ? showTip(
-                  info.x,
-                  info.y,
-                  `Not analysed — cloud / no imagery<br>${info.object.properties.aoi_name ?? ""} · ${info.object.properties.product ?? ""}`,
-                )
-              : hideTip(),
-        }),
-      );
-    }
-  }
+  // coverage extents + CEMS gaps are native MapLibre layers now — see syncExtents().
 
   overlay.setProps({ layers });
   syncPmtiles();
   syncBuildings();
   syncAdmin();
   syncUsgs();
+  syncExtents();
 }
 
 // Sources with no native (own) geometry — raster products. In the native view they
