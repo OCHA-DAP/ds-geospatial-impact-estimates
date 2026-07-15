@@ -617,8 +617,15 @@ async function setupH3() {
   map.on("mouseleave", "pmt-h3-fill", hideTip);
 }
 
+let _h3AppliedSig = "";
 function applyH3State(byCell: Map<string, any>, m: string, hMax: number) {
   h3ByCell = byCell;
+  // ~115k setFeatureState calls is the expensive path in this app, and buildLayers
+  // re-runs on every response during a refresh (incremental paint) — only re-apply
+  // when the result would actually differ.
+  const sig = `${m}|${hMax}|${byCell.size}|${[...state.sources].sort().join()}`;
+  if (sig === _h3AppliedSig) return;
+  _h3AppliedSig = sig;
   map.removeFeatureState({ source: "pmt-src-h3", sourceLayer: "h3_cells" });
   for (const [cell, r] of byCell) {
     const c = metricColor(m, r._v, hMax);
@@ -1100,8 +1107,8 @@ function legendMax(metric: string): number {
 
 // --- data --------------------------------------------------------------------
 async function ensureH3(source: string) {
-  // Per-source slim values parquet from platinum (long form), pivoted to the same
-  // row shape the API returned ({h3, <metric>: value}) so hMax/legend logic is reused.
+  // Per-source values parquet from platinum — already WIDE ({h3, <metric>: value}),
+  // the exact row shape the old API returned, so hMax/legend logic is reused as-is.
   if (h3Cache.has(source)) return;
   const tok = await getToken();
   const pdir = tok.platinum_dir || "platinum";
@@ -1110,13 +1117,7 @@ async function ensureH3(source: string) {
       url: `${tok.base_url}/${pdir}/values/facts-h3-${source}.parquet?${tok.sas}`,
     }),
   })) as any[];
-  const by = new Map<string, any>();
-  for (const r of rows) {
-    let p = by.get(r.unit_id);
-    if (!p) by.set(r.unit_id, (p = { h3: r.unit_id }));
-    p[r.metric] = r.value;
-  }
-  h3Cache.set(source, [...by.values()]);
+  h3Cache.set(source, rows);
 }
 async function ensureExtent(source: string) {
   if (!extentCache.has(source)) extentCache.set(source, (await getExtents())[source]);

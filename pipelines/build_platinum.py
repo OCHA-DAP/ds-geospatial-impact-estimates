@@ -173,17 +173,21 @@ def export_h3(settings) -> None:
     parquet PER SOURCE (the client loads only selected sources). Tier-aware like
     export_meta.
     """
+    from gie.serving import list_sources, load_common_h3
+
     con = db.connect()
     src = settings.az_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet")
-    df = con.execute(
-        f"SELECT source, unit_id, metric, value FROM read_parquet('{src}') WHERE unit_type='h3'"
-    ).df()
-    for s, g in df.groupby("source"):
+    # WIDE per-source values (one row per cell, metrics as columns) — the long form
+    # repeated the h3-id string per metric and weighed ~6.5 MB/source; wide is ~4x
+    # smaller and is already the exact row shape the client consumes.
+    n_sources = 0
+    for s in list_sources(ADM0):
+        g = load_common_h3(s, ADM0)
         dest = settings.blob_path("platinum", "values", f"facts-h3-{s}.parquet")
         stratus.upload_parquet_to_blob(
-            g.drop(columns=["source"]), dest, stage=STAGE,
-            container_name=settings.container, compression="snappy",
+            g, dest, stage=STAGE, container_name=settings.container, compression="snappy"
         )
+        n_sources += 1
     cells = con.execute(
         f"SELECT DISTINCT unit_id AS h3, h3_cell_to_boundary_wkt(unit_id) AS wkt "
         f"FROM read_parquet('{src}') WHERE unit_type='h3'"
@@ -206,7 +210,7 @@ def export_h3(settings) -> None:
     dest = settings.blob_path("platinum", "h3", "h3_cells.pmtiles")
     blobio.upload(blobio.uploader(settings), data, dest)
     print(f"  h3 <- {dest}  ({len(gdf):,} cells, {len(data) / 1e6:.1f} MB; "
-          f"values x{df['source'].nunique()} sources)", flush=True)
+          f"values x{n_sources} sources)", flush=True)
 
 
 def main(only: list[str] | None = None) -> None:
