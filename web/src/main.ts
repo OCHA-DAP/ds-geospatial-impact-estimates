@@ -14,6 +14,18 @@ import { API_BASE, TOKEN_URL } from "./config";
 let _tokenPromise: Promise<any> | null = null;
 const getToken = () => (_tokenPromise ??= fetch(TOKEN_URL).then((r) => r.json()));
 
+// Static meta artifacts (platinum/meta/*, written by build_platinum export_meta).
+// These replace the /api/sources, /api/extent and /api/coverage_detail server routes:
+// constant between data refreshes, so they are read straight from blob like the rest
+// of the platinum tier — the API server is out of the default load path (ADR-0021).
+const fetchMeta = async (name: string) => {
+  const tok = await getToken();
+  return fetch(`${tok.base_url}/${tok.platinum_dir}/meta/${name}?${tok.sas}`).then((r) => r.json());
+};
+// extents.json bundles every source's analysed extent -> one request instead of one per source.
+let _extentsAll: Promise<Record<string, any>> | null = null;
+const getExtents = () => (_extentsAll ??= fetchMeta("extents.json"));
+
 type RGBA = [number, number, number, number];
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -1136,10 +1148,10 @@ async function ensureNative(source: string) {
   if (!nativeCache.has(source)) nativeCache.set(source, await fetch(`${API_BASE}/api/native?source=${source}`).then((r) => r.json()));
 }
 async function ensureExtent(source: string) {
-  if (!extentCache.has(source)) extentCache.set(source, await fetch(`${API_BASE}/api/extent?source=${source}`).then((r) => r.json()));
+  if (!extentCache.has(source)) extentCache.set(source, (await getExtents())[source]);
 }
 async function ensureCoverageDetail() {
-  if (!coverageDetailData) coverageDetailData = await fetch(`${API_BASE}/api/coverage_detail`).then((r) => r.json());
+  if (!coverageDetailData) coverageDetailData = await fetchMeta("coverage_detail.json");
 }
 async function ensureAgreement() {
   if (!agreementData) agreementData = await fetch(`${API_BASE}/api/agreement`).then((r) => r.json());
@@ -1214,7 +1226,7 @@ async function init() {
       console.error(`v2 ${name} setup failed:`, e);
     }
   }
-  const meta = await fetch(`${API_BASE}/api/sources`).then((r) => r.json());
+  const meta = await fetchMeta("sources.json");
   const sources: string[] = meta.sources;
   METRICS = [
     { key: "damage_rate_detected", label: "Damage fraction" },

@@ -127,6 +127,37 @@ def export_values(settings) -> None:
     print(f"  values <- {dest}  ({len(df):,} admin rows)", flush=True)
 
 
+def export_meta(settings) -> None:
+    """Write the static meta artifacts the viewer previously fetched from the API.
+
+    sources.json, extents.json (all sources combined -> one request instead of one
+    per source), and coverage_detail.json are constant between data refreshes, so
+    serving them from the API recomputed them per cold cache for nothing — and they
+    were the single-worker contention behind the slow first load (ADR-0021). Written
+    tier-aware (platinum/ or platinum-prod/ via GIE_TIER) since each tier's meta
+    derives from its own gold.
+    """
+    import json
+
+    from gie.serving import (
+        METRICS,
+        list_sources,
+        load_coverage_detail,
+        load_source_extent,
+    )
+
+    sources = list_sources(ADM0)
+    meta_dir = settings.blob_path("platinum", "meta")
+    up = lambda name, obj: stratus.upload_blob_data(  # noqa: E731
+        json.dumps(obj).encode(), f"{meta_dir}/{name}", stage=STAGE,
+        container_name=settings.container, content_type="application/json",
+    )
+    up("sources.json", {"sources": sources, "adm0": ADM0, "metrics": METRICS})
+    up("extents.json", {s: json.loads(load_source_extent(s, ADM0).to_json()) for s in sources})
+    up("coverage_detail.json", json.loads(load_coverage_detail(ADM0).to_json()))
+    print(f"  meta <- {meta_dir}/ (sources, extents x{len(sources)}, coverage_detail)", flush=True)
+
+
 def main(only: list[str] | None = None) -> None:
     settings = load_settings(STAGE)
     dest = f"az://{settings.container}/{settings.project_prefix}/platinum"
@@ -139,9 +170,12 @@ def main(only: list[str] | None = None) -> None:
     if not (cat / ".portolan" / "config.yaml").exists():
         _portolan(["init"], cwd=str(cat))
 
+    if only == ["meta"]:  # just the static meta artifacts — no tiling/push needed
+        export_meta(settings)
+        return
     sel = {k: v for k, v in LAYERS.items() if not only or k in only}
     if not sel:
-        raise SystemExit(f"No collection matches {only}; choose from {list(LAYERS)}")
+        raise SystemExit(f"No collection matches {only}; choose from {list(LAYERS)} or 'meta'")
     for coll, (layer, rel, xy) in sel.items():
         raw = stratus.load_blob_data(
             settings.blob_path(layer, rel), stage=STAGE, container_name=settings.container
@@ -171,6 +205,7 @@ def main(only: list[str] | None = None) -> None:
     # Push the whole persistent catalog; Portolan syncs only changed collections.
     _portolan(["push", dest, "--force"], cwd=str(cat), env=env)
     export_values(settings)  # slim values parquet for hyparquet (admin choropleth)
+    export_meta(settings)  # static sources/extents/coverage JSON (was API-served)
     ledger.record(
         "platinum",
         "platinum",

@@ -13,6 +13,16 @@ import pandas as pd
 from gie import db
 from gie.config import load_settings
 
+# Metrics available on the common model, in display order (label shown in the UI).
+# Single definition shared by the API (/api/sources) and the platinum meta export
+# (build_platinum export_meta -> meta/sources.json).
+METRICS = [
+    {"key": "damaged_detected", "label": "Damaged buildings"},
+    {"key": "damaged_extrapolated", "label": "Damaged buildings (estimated)"},
+    {"key": "coverage_fraction", "label": "Coverage"},
+    {"key": "exposed_buildings", "label": "Total buildings"},
+]
+
 
 def _gold(settings, source: str, adm0: str) -> str:
     return settings.az_path("gold", f"source={source}", f"adm0={adm0}", "damage_facts.parquet")

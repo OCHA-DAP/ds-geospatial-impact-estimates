@@ -94,13 +94,8 @@ def _agreement_json(adm0: str) -> str:
     return load_agreement(adm0).to_json(orient="records")
 
 
-# Metrics available on the common model, in display order (label shown in the UI).
-METRICS = [
-    {"key": "damaged_detected", "label": "Damaged buildings"},
-    {"key": "damaged_extrapolated", "label": "Damaged buildings (estimated)"},
-    {"key": "coverage_fraction", "label": "Coverage"},
-    {"key": "exposed_buildings", "label": "Total buildings"},
-]
+# Metrics definition lives in gie.serving (shared with the platinum meta export).
+from gie.serving import METRICS  # noqa: E402
 
 
 @app.get("/api/sources")
