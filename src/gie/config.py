@@ -21,6 +21,12 @@ load_dotenv()
 # a reasonable city-scale default for an earthquake response; revisit per event.
 DEFAULT_H3_RESOLUTION = 8
 
+# Which OSU delivery version the common model + serving tier publish. Both OSU
+# silver versions are materialised side-by-side (silver/source=osu/.../version=<v>/)
+# for cross-version analysis; downstream reads exactly ONE via this pointer (ADR-0009).
+# Roll back by flipping to "v0" and rebuilding harmonize_common + build_platinum.
+OSU_PUBLISHED_VERSION = "v1"
+
 Stage = Literal["dev", "prod"]
 
 

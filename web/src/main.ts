@@ -202,7 +202,13 @@ const LAYER_SERVING: Record<string, Serving> = {
     ],
     hover: (p) =>
       `${SOURCE_LABEL["osu"] ?? "osu"}<br>grade: ${p.ems_grade}` +
-      (p.damage_probability != null ? `<br>probability: ${Math.round(p.damage_probability * 100)}%` : ""),
+      // v1 carries a categorical confidence tier; v0 a continuous probability. Show
+      // whichever the tile has so a version switch needs no frontend rebuild.
+      (p.damage_confidence != null
+        ? `<br>confidence: ${String(p.damage_confidence).replace(/_/g, " ")}`
+        : p.damage_probability != null
+          ? `<br>probability: ${Math.round(p.damage_probability * 100)}%`
+          : ""),
   },
   disha: {
     mode: "pmtiles",

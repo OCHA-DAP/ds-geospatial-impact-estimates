@@ -38,7 +38,7 @@ import ocha_stratus as stratus
 import pandas as pd
 
 from gie import blobio, db, ledger
-from gie.config import load_settings
+from gie.config import OSU_PUBLISHED_VERSION, load_settings
 
 ADM0 = "VE"
 STAGE = "dev"
@@ -49,7 +49,7 @@ STAGE = "dev"
 LAYERS: dict[str, tuple[str, str, tuple[str, str] | None]] = {
     "native-microsoft": ("silver", f"source=microsoft/adm0={ADM0}/footprints.parquet", None),
     "native-impact_initiatives": ("silver", f"source=impact_initiatives/adm0={ADM0}/building_damage.parquet", None),
-    "native-osu": ("silver", f"source=osu/adm0={ADM0}/damage_footprints.parquet", None),
+    "native-osu": ("silver", f"source=osu/adm0={ADM0}/version={OSU_PUBLISHED_VERSION}/damage_footprints.parquet", None),
     "native-cems": ("silver", f"source=copernicus_ems/adm0={ADM0}/builtup_damage.parquet", None),
     "native-hot_osm": ("silver", f"source=hot_osm/adm0={ADM0}/damage_points.parquet", None),
     "native-disha": ("silver", f"source=disha/adm0={ADM0}/damage_points.parquet", None),

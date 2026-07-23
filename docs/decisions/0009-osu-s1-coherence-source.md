@@ -99,3 +99,45 @@ Hoek of Oregon State University* (delivery README in
 Revisit (1) the damaged-only stopgap with the tiling work (ADR-0008), and (2) a
 formal cross-validation of OSU coherence vs the IMPACT amplitude proxy and the
 optical sources where their extents overlap.
+
+## Amendment — v1 delivery (2026-07-22)
+
+OSU published a **v1** on HDX (01 Jul 2026 pass): coverage expanded so the USGS
+ShakeMap MMI>=VI strong-shaking zone is 100% imaged, monitored footprints grew
+2,133,587 -> 2,699,969 (+26.5%), and the headline is **69,431 likely damaged**
+(was 58,870). Three schema/assumption changes vs v0, and the decisions taken:
+
+1. **Continuous `damage_probability` -> categorical `damage_confidence`.** v1
+   grades certainty in three ordinal tiers — `possible` / `probable` /
+   `high_confidence`. We carry the tier as OSU's native confidence signal (it
+   replaces `damage_probability`; the native popup shows whichever field the tile
+   has). Confidence is *certainty, not severity*: every damaged building stays
+   `damage_class 2` — we do **not** promote `high_confidence` to Destroyed. (OSU
+   is the only source giving clean ordinal certainty; a normalized cross-source
+   confidence dimension is deferred to its own ADR.)
+
+2. **The gpkg now bundles non-damaged rows.** `damage==1` (probable +
+   high_confidence) = 69,431 = the published headline; `possible` (54,202,
+   `damage==0`) is a lower-confidence *candidate* tier. The damaged files
+   (`building_damage`, `damage_footprints`) filter to `damage==1` so the common
+   model / native view are unchanged in meaning. `possible` is kept **only** in a
+   new silver `assessed_confidence.parquet` (the full tiered set) for downstream
+   analysis — never injected into the common-model gold, which is a damage fact
+   table (that would reopen the deferred damaged-only stopgap for no gain).
+
+3. **Versioned silver, single published version.** Because we have a near-term
+   need to *compare* v0 vs v1, both are materialised side by side under
+   `silver/source=osu/adm0=VE/version={v0,v1}/`. `ingest_osu.py` / `harmonize_osu.py`
+   take `--version` (default v1); v0 logic is preserved verbatim. Downstream
+   (`harmonize_common`, `build_platinum`) reads exactly one via
+   `gie.config.OSU_PUBLISHED_VERSION` — rollback = flip that constant and rebuild.
+   Gold and platinum are **not** version-partitioned (the common model is a merged
+   all-source table; per-source versioning there is meaningless, and platinum is
+   cheap to rebuild — the staging->promote gate is the live rollback). Bronze keeps
+   both deliveries permanently (filenames carry the version).
+
+Rejected: version-partitioning gold/platinum (materialising history at derived,
+rebuildable layers — reproducibility beats retention); mapping the confidence
+tiers to severity classes (conflates certainty with severity). v1 also ships
+`EMSR884_adm2_damage_pct` (the provider's own adm2 rollup) — retained in bronze as
+a validation cross-check, not ingested as a pipeline source.
