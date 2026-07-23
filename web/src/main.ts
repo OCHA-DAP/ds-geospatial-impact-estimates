@@ -1311,6 +1311,8 @@ document.querySelectorAll<HTMLInputElement>("input[data-layer]").forEach((box) =
 map.on("load", init);
 
 // --- methodology slide-over: glass panel of how the map is built + per-source cards ---
+// TODO(product-history): surface each source's product version + availability dates
+// (e.g. OSU v0 25 Jun -> v1 1 Jul) as a small per-source timeline, not just the latest.
 const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }[] = [
   {
     key: "copernicus_ems",
@@ -1337,7 +1339,7 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
     key: "osu",
     tag: "SAR-based (radar)",
     blurb:
-      "Oregon State University Sentinel-1 coherence analysis. Loss of radar coherence indicates damage.",
+      "Oregon State University Sentinel-1 coherence analysis (v1 product, published 11 Jul 2026). Loss of radar coherence indicates damage; the v1 update expanded coverage of the strong-shaking zone.",
     note: "An independent radar signal alongside the SAR proxy.",
   },
   {
