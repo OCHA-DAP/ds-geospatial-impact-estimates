@@ -40,7 +40,7 @@ import pandas as pd
 
 from gie import ledger
 from gie.blob import upload_parquet_staged
-from gie.config import DEFAULT_H3_RESOLUTION, load_settings
+from gie.config import DEFAULT_H3_RESOLUTION, OSU_PUBLISHED_VERSION, load_settings
 
 METHOD = "common_overture_v1"
 ADM0 = "VE"
@@ -225,11 +225,13 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         "silver", "source=hot_osm", f"adm0={ADM0}", "damage_points.parquet"
     )
     # OSU S1 coherence: per-building damaged set (id-keyed to Overture) + extent (ADR-0009).
+    # Reads the PUBLISHED version partition; both versions are materialised in silver
+    # for analysis, but the common model consumes exactly one (gie.config).
     osu = _local(settings,
-        "silver", "source=osu", f"adm0={ADM0}", "building_damage.parquet"
+        "silver", "source=osu", f"adm0={ADM0}", f"version={OSU_PUBLISHED_VERSION}", "building_damage.parquet"
     )
     osu_ext = _local(settings,
-        "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=osu", f"adm0={ADM0}", f"version={OSU_PUBLISHED_VERSION}", "analysed_extent.parquet"
     )
     # DISHA (UN Global Pulse) damage points + AOI extent — snapped like HOT (LICENCE-gated).
     disha = _local(settings,
