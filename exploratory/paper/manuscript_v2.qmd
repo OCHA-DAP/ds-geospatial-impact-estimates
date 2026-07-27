@@ -40,7 +40,8 @@ everything the expert reference mapped, precision ranged from 0.01 to 0.08 (reca
 and where 96% of the reference sits — precision reached only 0.04–0.09. A baseline
 model given only day-zero information — coast
 distance, building density, and ShakeMap intensity, all available before any satellite
-was tasked — carried as much building-level skill as any of them. The products were far better at ranking neighbourhoods by damage burden, and
+was tasked — carried as much building-level skill as the best of them in that
+best-scoring area, and as delivered it carried *more* than five of the six. The products were far better at ranking neighbourhoods by damage burden, and
 better still in combination: requiring more products to agree on a building raises
 precision and lowers recall step by step. At one end, flagging every building that any
 product marked captures 97% of the known damage, but a responder would visit about 26
@@ -490,6 +491,22 @@ precision, while shipping everywhere destroyed UH's. (The voting and fusion anal
 @sec-dial operate in the core region and therefore sit on top of best-case numbers;
 their relative orderings are unaffected, but their absolute levels inherit the
 best-case flattery.)
+
+The as-delivered frame also re-runs this paper's harshest benchmark. We trained the
+day-zero model (coast distance, building density, ShakeMap intensity; @sec-dial) on
+each product's full delivered footprint, with the same spatially blocked validation,
+and compared average precision in the fusion frame. As delivered, **five of the six
+products carried less building-level information than the no-satellite baseline**:
+IMPACT AP 0.036 against the baseline's 0.077, OSU 0.058 against 0.084, LIST 0.035
+against 0.076, UNEP 0.018 against 0.076, and UH 0.011 against 0.091 — at UH's own list
+size, the day-zero rule reaches 92% of the reference damage at three times UH's
+precision. The one exception is Microsoft (0.088 against 0.077), the product that
+shipped only its carefully analysed strip. One caveat cuts across all of this: outside
+Caraballeda the reference is thin, and the penalty for flagging there falls on the
+products, which did flag, not on the baseline, which did not. To whatever extent CEMS
+under-recorded those areas, part of the gap would close. But a responder in the first
+week had exactly the same information deficit, which is the point of the as-delivered
+frame.
 
 ![Per-AOI scorecard, scorecard frame. Left: precision floor per product per CEMS AOI;
 right: recall where the reference is thick enough to support it (suppressed below 20

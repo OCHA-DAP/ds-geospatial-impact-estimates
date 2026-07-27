@@ -626,14 +626,43 @@ tbl("RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv")
   strip → **coverage restraint is a product property** (protects as-delivered precision;
   UH shipping everywhere destroyed its own). Manuscript now leads Results I with the
   as-delivered range and labels core-region numbers "best case".
-- **QUEUED (user hypothesis):** does the day-zero baseline BEAT the products in the
-  as-delivered frame? Mechanism for: products blanket-flag low-damage AOIs; day-zero's
-  coast-distance term wouldn't. Mechanism against: Caracas has high density + high MMI
-  (two of three day-zero inputs vote "flag"). Needs an RQ8 variant over the all-AOI
-  frame — not yet computed, do NOT assert either way.
+- ~~QUEUED (user hypothesis)~~ **ANSWERED — RQ8b (2026-07-27): CONFIRMED for 5 of 6.**
+  See the RQ8b subsection under RQ8.
 - **Confidence: high** on the Caraballeda-dominance and the collapse pattern; the
   *interpretation* of the zeros is deliberately left as a confound (that honesty is the
   point).
+
+# RQ2j — hex performance maps: P / R / F1 / visits-per-find, all six products
+
+User ask (2026-07-27): the MS-call deck had res-7 P/R/F1 hex maps for Microsoft only —
+"a missing step" for the paper. Script `scripts/rq2j_hex_performance_maps.py`
+generalizes to all six members: four stacked panels per product (precision r=10, recall
+r=10, F1, visits-per-verified-find at 30 m) on the CODAB basemap, res-7 cells (~5 km²),
+grey where the cell has < 20 flags (P/visits) or < 10 CEMS points (R). Region = CEMS
+latest extents ∩ product extent; OSU v0-pinned. All six live here (mechanical paper);
+the manuscript will pick one or a composite.
+
+![Microsoft](artefacts/RQ2-cems-footprint-points/figs/rq2j_hexperf_ms.png)
+
+![IMPACT v2](artefacts/RQ2-cems-footprint-points/figs/rq2j_hexperf_impact.png)
+
+![OSU (v0)](artefacts/RQ2-cems-footprint-points/figs/rq2j_hexperf_osu.png)
+
+![UH](artefacts/RQ2-cems-footprint-points/figs/rq2j_hexperf_uh.png)
+
+![LIST](artefacts/RQ2-cems-footprint-points/figs/rq2j_hexperf_list.png)
+
+![UNEP debris](artefacts/RQ2-cems-footprint-points/figs/rq2j_hexperf_unep.png)
+
+- **MS panel confirms the west/east split as a map**: precision ~0.0 (pale) across the
+  western cells vs 0.4–0.5 (red) in the east; visits-per-find 250+ in the west vs
+  ~10–30 in the east — the operational cost of the west cluster, per cell.
+- Recall panels are grey outside Caraballeda for every product (RQ2i's thin-reference
+  problem, visible as grey).
+- Caveat: per-cell precision inherits the CEMS floor per cell (no per-cell crowd
+  adjustment here); visits-per-find uses the dial's 30 m definition.
+- **Confidence: high** on patterns within Caraballeda; grey discipline prevents
+  over-reading the thin AOIs.
 
 # RQ2h — OSU v0 vs v1: a revision that shuffles half the flags and moves nothing
 
@@ -808,6 +837,29 @@ numbers).](artefacts/RQ8-learned-fusion/figs/rq8_geography_baseline.png)
   transferable model; MMI was constant in the core region (importance 0 — uninformative
   here, not generally); the crowd-gap weighting changed results negligibly (reported
   sensitivity).
+
+## RQ8b — as-delivered frame: the day-zero baseline BEATS five of six products (2026-07-27)
+
+User hypothesis, confirmed. Script `scripts/rq8b_asdelivered_baseline.py`: day-zero RF
+(same spec, spatial-block CV) trained/evaluated on each product's FULL delivered
+footprint (all CEMS AOIs ∩ product extent; fusion frame, 422,931 buildings max):
+
+```{python}
+tbl("RQ8-learned-fusion/rq8b_asdelivered_baseline.csv")
+```
+
+- **AP, product vs day-zero in its own delivered region:** MS 0.088 vs 0.077 (only
+  product to beat it — Caraballeda-only coverage); IMPACT 0.036 vs 0.077; OSU 0.058 vs
+  0.084; LIST 0.035 vs 0.076; UNEP 0.018 vs 0.076; **UH 0.011 vs 0.091 (8×)**. At UH's
+  own list size the day-zero rule gets P 0.046 / R 0.92 vs UH's P 0.014 / R 0.29.
+- Headline for the manuscript (now in Results II + abstract): *as delivered, five of six
+  products carried less building-level information than a no-satellite baseline; the
+  exception is the product that restricted its coverage.*
+- Caveat (stated in manuscript): thin-reference AOIs penalize whoever flags there — the
+  products did, the baseline didn't; CEMS under-recording (flag #1) would close part of
+  the gap. Responders faced the same information deficit, which is the frame's point.
+- **Confidence: high** on directions/orderings; magnitudes inherit the fusion frame and
+  the thin-AOI reference (CIs pending).
 
 # Methods clarifications on record
 
