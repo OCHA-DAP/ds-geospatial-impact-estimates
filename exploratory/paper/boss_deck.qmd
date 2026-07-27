@@ -115,7 +115,7 @@ gradient IS the coast/shaking gradient. So present this as "products' most usefu
 NOT as a clean win over the free baseline. Don't quote a top-N percentage in the room.
 :::
 
-## <span class="fail">FAIL</span> — per building, even at their best
+## Where they struggle — the per-building list
 
 Target: **damaged *or* destroyed** buildings (expert classes 2–3). In Caraballeda, where
 products score highest:
@@ -132,30 +132,46 @@ distance, building density, ShakeMap intensity, all available *before any satell
 tasked* — matches the best single product.
 :::
 
-## <span class="fail">FAIL harder</span> — as delivered, geography wins
+## The benchmark that should give us pause
 
 ![](artefacts/RQ8-learned-fusion/figs/rq8b_asdelivered_bars.png)
 
 ::: {.notes}
-Scored across everything each product actually shipped. Five of six carry LESS building-level
-information (average precision) than the no-satellite baseline on the same footprint. Microsoft
-is the exception — only because it shipped just its carefully-analysed coastal strip; coverage
-restraint is itself a virtue. UH shipping everywhere destroyed its precision (0.009). Caveat:
-outside Caraballeda the reference is thin and the penalty falls on whoever flagged there — but
-a responder faced the same information deficit. Average precision = one number summarising the
-whole precision-recall curve, not a single precision value.
+Two bars per product: light = best case (scored only in the common area ≈ Caraballeda, where
+all products AND the day-zero baseline see the same buildings); dark = as delivered (over the
+product's full shipped footprint). Red line = the no-satellite day-zero baseline in the common
+area (0.08), a single number since it's one area. Story: in the best zone every product merely
+TIES the baseline; as delivered most fall BELOW it. Microsoft holds only because it shipped
+just its best zone — coverage restraint is a virtue. Caveat: as-delivered bars are on full
+footprints where the reference is thin, so that penalty leans on sparse reference; but a
+responder faced the same deficit. AP = one number summarising the whole precision-recall curve.
 :::
 
-## The ground truth is itself half-blind
+## The reference has its own blind spot
 
 ![](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png)
 
 ::: {.notes}
 Scoring Copernicus against the field reports: 94% of COMPLETE destruction found, but only 49%
-of SIGNIFICANT damage. Every product shows the same downward slope. So: (1) satellite damage
-detection is really destruction detection — shelter needs under-counted; (2) measured precision
-is a FLOOR, measured recall is a CEILING. Crowd review lifts Microsoft's precision 0.08 -> 0.24
-— the gap is in the reference, not the product.
+of SIGNIFICANT damage. Every product shows the same downward slope (this panel = recall vs
+ChatMap field grades). So: (1) satellite damage detection is really destruction detection —
+shelter needs under-counted; (2) measured precision is a FLOOR, measured recall is a CEILING.
+MapSwipe volunteers lift Microsoft's precision 0.08 -> ~0.24 — the gap is in the reference, not
+the product.
+:::
+
+## The destruction bias shows in precision too
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2l_grade_pr.png)
+
+::: {.notes}
+Companion to the previous slide, but on the EXPERT's own grades (Damaged class 2 vs Destroyed
+class 3), so precision is well-defined (field data too sparse for precision). Both panels: every
+product finds/flags Destroyed better than Damaged. Steep lines = destruction-biased (MS, UH,
+UNEP — appearance/debris). Flat lines = grade-neutral (OSU, IMPACT radar coherence — they sense
+structural change, not just visible collapse; LIST sides with them, so it's a tendency not a
+clean optical-vs-radar law). This is why the ecosystem under-serves shelter (lighter-damage)
+needs — confirmed on both metrics, from the expert reference itself.
 :::
 
 ## One product is many scorecards

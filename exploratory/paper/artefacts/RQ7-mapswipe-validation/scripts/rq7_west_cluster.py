@@ -70,12 +70,20 @@ def ms_residuals():
 
 
 def mapswipe_hexes():
-    """MS-flagged validation tasks from 3179 (west) + 3178 (east), with crowd vote shares."""
+    """MS-flagged validation tasks from 3179 (west) + 3178 (east), with crowd vote shares.
+    Reads from BRONZE (not scratchpad — that gets wiped)."""
+    import gzip, json
+    import ocha_stratus as stratus
+    cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
     frames = []
     for pid in (3179, 3178):
-        g = gpd.read_file(f"{MS_DIR}/p{pid}_agg_results_by_task_{pid}_geom.geojson")
-        g["pid"] = pid
-        frames.append(g)
+        pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={pid}")
+        for b in cc.list_blobs(name_starts_with=pref):
+            if "agg_results_by_task" in b.name and b.name.endswith(".geojson.gz"):
+                feats = json.loads(gzip.decompress(cc.download_blob(b.name).readall()))["features"]
+                gi = gpd.GeoDataFrame.from_features(feats, crs=4326)
+                gi["pid"] = pid
+                frames.append(gi)
     g = pd.concat(frames, ignore_index=True)
     g = g[g["sources"].str.contains("microsoft", case=False, na=False)].copy()
     g["parent8"] = [h3.cell_to_parent(c, 8) for c in g["h3"]]
