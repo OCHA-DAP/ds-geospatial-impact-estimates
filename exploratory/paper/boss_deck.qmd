@@ -147,7 +147,11 @@ footprints where the reference is thin, so that penalty leans on sparse referenc
 responder faced the same deficit. AP = one number summarising the whole precision-recall curve.
 :::
 
-## The reference has its own blind spot
+## The reference has its own blind spot {.smaller}
+
+<p style="text-align:center; font-size:0.75em; color:#52514e;">Recall vs the **415 ChatMap
+field reports** · grades: *complete / significant* · every row (incl. CEMS) scored against
+the ground</p>
 
 ![](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png)
 
@@ -160,7 +164,11 @@ MapSwipe volunteers lift Microsoft's precision 0.08 -> ~0.24 — the gap is in t
 the product.
 :::
 
-## The destruction bias shows in precision too
+## The destruction bias shows in precision too {.smaller}
+
+<p style="text-align:center; font-size:0.75em; color:#52514e;">Different validation set:
+vs **CEMS's own 1,467 points** · grades: *Damaged / Destroyed* · numbers not comparable to
+the previous slide — the shared message is the slope</p>
 
 ![](artefacts/RQ2-cems-footprint-points/figs/rq2l_grade_pr.png)
 

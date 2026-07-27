@@ -33,38 +33,44 @@ baseline = float(summ["rf context-only (NO products)"])   # day-zero AP in the c
 prods = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 best = {p: float(summ[f"single: {p}"]) for p in prods}
 deliv = {p: float(asdel.loc[p, "AP_product"]) for p in prods}
+deliv_dz = {p: float(asdel.loc[p, "AP_dayzero"]) for p in prods}  # day-zero on FULL footprint
 order = sorted(prods, key=lambda p: deliv[p])   # worst as-delivered at bottom
 
-y = np.arange(len(order))
-h = 0.38
-fig, ax = plt.subplots(figsize=(13, 7))
-ax.barh(y + h/2, [best[p] for p in order], height=h, color="#9db8d2",
-        label="best case — scored only in the common area (≈ Caraballeda)")
-ax.barh(y - h/2, [deliv[p] for p in order], height=h, color="#1b4f8a",
-        label="as delivered — scored over everything the product shipped")
+y = np.arange(len(order)) * 1.25
+h = 0.34
+fig, ax = plt.subplots(figsize=(13.5, 8.5))
+ax.barh(y + h, [best[p] for p in order], height=h, color="#9db8d2",
+        label="① product — best case (scored only in the common area ≈ Caraballeda)")
+ax.barh(y, [deliv[p] for p in order], height=h, color="#1b4f8a",
+        label="② product — as delivered (over its full shipped footprint)")
+ax.barh(y - h, [deliv_dz[p] for p in order], height=h, color="#e08a7a",
+        label="③ no-satellite baseline — on that same as-delivered footprint")
 for yi, p in zip(y, order):
-    ax.text(best[p] + 0.002, yi + h/2, f"{best[p]:.3f}", va="center", fontsize=11, color="#3a5a80")
-    ax.text(deliv[p] + 0.002, yi - h/2, f"{deliv[p]:.3f}", va="center", fontsize=11,
+    ax.text(best[p] + 0.002, yi + h, f"{best[p]:.3f}", va="center", fontsize=10.5, color="#3a5a80")
+    ax.text(deliv[p] + 0.002, yi, f"{deliv[p]:.3f}", va="center", fontsize=10.5,
             color="#1b4f8a", weight="bold")
+    ax.text(deliv_dz[p] + 0.002, yi - h, f"{deliv_dz[p]:.3f}", va="center", fontsize=10.5,
+            color="#b5533f")
     ax.text(-0.004, yi, p, va="center", ha="right", fontsize=14, weight="bold", color="#0b0b0b")
 
-ax.axvline(baseline, color="#e34948", lw=2.4, ls="--", zorder=5)
-ax.text(baseline, len(order) - 0.35, f"  no-satellite\n  day-zero baseline ({baseline:.2f})",
-        color="#c62828", fontsize=12, weight="bold", va="top")
+ax.axvline(baseline, color="#c62828", lw=2, ls="--", zorder=5)
+ax.text(baseline, y.max() + 0.75, f"  baseline in the\n  common area ({baseline:.2f})",
+        color="#c62828", fontsize=11, weight="bold", va="top")
 
 ax.set_yticks([])
-ax.set_xlim(0, max(max(best.values()), max(deliv.values())) * 1.15)
+ax.set_xlim(0, max(max(best.values()), max(deliv_dz.values())) * 1.15)
 ax.set_xlabel("average precision  (target: damaged OR destroyed buildings; higher = better)",
               fontsize=13)
 ax.tick_params(axis="x", labelsize=12)
-ax.legend(fontsize=12, loc="lower right", frameon=True)
-ax.set_title("Same products, two frames — vs a model that uses no satellite data\n"
-             "Best zone: products merely tie the baseline.  As delivered: most fall below it.",
-             fontsize=13.5)
+ax.legend(fontsize=11.5, loc="lower right", frameon=True)
+ax.set_title("Products vs a no-satellite baseline, in two frames\n"
+             "Best zone (①): products just tie the baseline.  As delivered (②): most fall "
+             "below the baseline on their own footprint (③).", fontsize=13)
 ax.spines[["top", "right"]].set_visible(False)
 fig.tight_layout()
 fig.savefig(os.path.join(FIGS, "rq8b_asdelivered_bars.png"), dpi=150)
 print("wrote rq8b_asdelivered_bars.png")
-print(f"baseline (common area) = {baseline}")
 for p in order:
-    print(f"  {p:6s} best {best[p]:.3f} | as-delivered {deliv[p]:.3f}")
+    verdict = "BELOW" if deliv[p] < deliv_dz[p] else "above"
+    print(f"  {p:6s} best {best[p]:.3f} | as-deliv {deliv[p]:.3f} vs its day-zero "
+          f"{deliv_dz[p]:.3f}  [{verdict} baseline]")
