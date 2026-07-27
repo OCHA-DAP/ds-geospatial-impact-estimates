@@ -1,0 +1,18 @@
+kind,n_flags,frac,precision,lo,hi
+random-thinned union,37644,1.0,0.0344,0.0344,0.0344
+random-thinned union,28233,0.75,0.0343,0.0333,0.0353
+random-thinned union,18822,0.5,0.0345,0.0328,0.0367
+random-thinned union,13175,0.35,0.0345,0.0321,0.0372
+random-thinned union,9411,0.25,0.0343,0.0305,0.037
+random-thinned union,5647,0.15,0.0345,0.0307,0.0384
+random-thinned union,3764,0.1,0.0349,0.0296,0.0403
+random-thinned union,2259,0.06,0.0345,0.0272,0.0418
+random-thinned union,1129,0.03,0.0341,0.0239,0.0434
+random-thinned union,565,0.015,0.0328,0.0212,0.0461
+random-thinned union,226,0.006,0.0354,0.0154,0.0619
+1-of-6 agreement,37644,,0.0344,,
+2-of-6 agreement,21060,,0.0559,,
+3-of-6 agreement,9409,,0.101,,
+4-of-6 agreement,3347,,0.187,,
+5-of-6 agreement,1005,,0.3393,,
+6-of-6 agreement,214,,0.6402,,

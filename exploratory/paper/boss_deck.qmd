@@ -239,6 +239,20 @@ complete — a prioritisation DIAL, not a work order. The dial itself is the val
 products don't give: each product hands you one fixed point.
 :::
 
+## Is the ensemble just "flagging fewer things"? No.
+
+![](artefacts/RQ5-ensemble/figs/rq5d_filtering_null.png)
+
+::: {.notes}
+The skeptic's question: agreement rules flag far fewer buildings — maybe any thinning raises
+precision. Test: randomly remove flags from the union (100 draws per size). Result: random
+thinning is DEAD FLAT at 0.034 no matter how few you keep (grey) — you drop true and false
+positives in the same proportion. The actual k-of-6 rules (blue) climb to 0.64. At every
+matched flag count the agreement point sits far above the random band. So the gain is
+SELECTION — agreement concentrates on real damage — not filtering. This is the rigorous
+rebuttal to "your ensemble just flags less."
+:::
+
 ## Transparency lets you fix failures
 
 ![](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png)

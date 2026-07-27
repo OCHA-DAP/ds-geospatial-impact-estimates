@@ -717,6 +717,29 @@ tbl("RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv")
   (coverage), not what the modality ceiling prevents (per-building precision).
 - **Confidence: high** (exact id-keyed comparison, identical scoring frame both sides).
 
+# RQ5d — is the agreement gain just filtering? NO — it's selection (2026-07-27, user experiment)
+
+User's skeptic test: agreement rules flag fewer buildings; maybe any thinning raises
+precision. Random-removal null — drop flags from the union at a size ladder, 100 draws each,
+vs the actual k-of-6 rules. Script `scripts/rq5d_filtering_null.py`:
+
+```{python}
+tbl("RQ5-ensemble/rq5d_filtering_null.csv")
+```
+
+![Filtering null](artefacts/RQ5-ensemble/figs/rq5d_filtering_null.png)
+
+- **Random thinning is precision-NEUTRAL: dead flat at 0.034** from 37,644 flags down to 226
+  (drops TP and FP in the same proportion, as statistics predict; the 95% band widens but the
+  mean never moves).
+- **The actual k-of-6 rules climb far above it at every matched size:** 3-of-6 = 0.101 vs
+  random-9,411 = 0.034 (3×); 6-of-6 = 0.640 vs random-226 = 0.035 (~18×). 1-of-6 sits ON the
+  random line (it IS the union — no selection yet).
+- **Conclusion:** the ensemble precision gain is **selection** (agreement correlates with real
+  damage), NOT a byproduct of shorter flag lists. This is the rigorous rebuttal to "your
+  ensemble just flags fewer things." Deck slide added.
+- **Confidence: high** (clean null, deterministic RNG seed 884).
+
 # RQ6 — DIY Sentinel-1 amplitude CCD: tuning cannot cross the modality floor
 
 Built in GEE (S1 GRD amplitude — no coherence in GEE): per-orbit backscatter z-score against a
