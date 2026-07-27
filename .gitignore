@@ -39,3 +39,14 @@ figs/
 
 # Local-only notes (decide later where/whether to commit)
 docs/deployment.md
+
+# Paper workspace: track source (scripts, qmd, notes, frozen CSVs); ignore rendered
+# HTML (multi-MB self-contained) and call-prep material (internal). Figures are covered
+# by the global figs/ rule above.
+exploratory/paper/*.html
+exploratory/paper/*_files/
+exploratory/paper/ms_call_*
+exploratory/paper/_freeze_batch.log
+
+# Local-only ADR (UniteApps registration internals) — deliberately not committed
+docs/decisions/0024-uniteapps-registration-compliance.md

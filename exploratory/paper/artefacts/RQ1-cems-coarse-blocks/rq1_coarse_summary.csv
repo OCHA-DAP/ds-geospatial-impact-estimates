@@ -1,0 +1,4 @@
+product,blocks_in_region,dmg_in_region,dmg_in_block,in_block_rate,block_area_frac,lift_over_chance,block_recall,grade_spearman,grade_p
+Microsoft,166,7868,2399,0.305,0.091,3.36,0.94,0.079,0.3122
+IMPACT v2,315,14056,4333,0.308,0.044,6.96,0.565,0.492,0.0
+OSU,265,27154,8143,0.3,0.028,10.63,0.694,0.517,0.0
