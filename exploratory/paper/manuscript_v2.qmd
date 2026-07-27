@@ -146,6 +146,12 @@ below.
 
 ## Three references, three failure modes {#sec-refs}
 
+![The three reference datasets at a glance. Two of them are HOT-run and easily confused:
+**MapSwipe** is remote volunteers voting on ~50 m hex cells (not building points), used to
+adjudicate false alarms; **ChatMap** is field teams reporting building-level points from the
+ground, used to reveal misses. They are used separately, each only for the error type its
+geometry and sampling permit.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refarch}
+
 **Copernicus EMS (CEMS) building-damage points.** Trained analysts interpret
 very-high-resolution imagery and mark each damaged building as a graded point. Within its
 mapped extents we treat this as reference grade for both error types, under one explicit
@@ -302,7 +308,14 @@ above by adjudication: for every flagged building with no CEMS point within 10 m
 up the MapSwipe majority verdict for its cell and count the share that volunteers judged
 damaged. "Crowd-adjusted precision" adds those confirmed flags back to the numerator.
 Each precision estimate in this paper is therefore an interval, from the CEMS-measured
-lower bound to the crowd-adjusted value.
+lower bound to the crowd-adjusted value. One caveat sets the character of the upper end:
+MapSwipe verdicts are per ~50 m cell, not per building (@fig-refarch), so a
+crowd-confirmed flag means "damage somewhere in this cell," not "this building." The
+crowd-adjusted value is therefore an *upper* estimate of building-level precision, and the
+truth lies between it and the CEMS floor. A second, independent check uses ChatMap instead:
+because its field points are building-level, they can be unioned directly with the CEMS
+points, which raises measured precision by a smaller, sharper 5–9% (the field data is
+sparse — 415 points — but geometrically exact).
 
 Recall has no such correction, and its bias runs the other way. Adjudication re-judges
 flags; it cannot add the damage CEMS never recorded to recall's denominator — the crowd

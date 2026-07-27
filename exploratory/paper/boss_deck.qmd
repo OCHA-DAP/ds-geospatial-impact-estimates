@@ -66,13 +66,20 @@ And two performance frames we **never mix**:
 
 <p class="big">That split is itself a finding.</p>
 
-## Method — three references, three blind spots
+## The three references — who they are {.smaller}
 
-| Reference | What it is | Measures | **Cannot** measure |
-|---|---|---|---|
-| **Copernicus EMS** | expert analysts, VHR imagery | false alarms **and** misses | anything outside its extents |
-| **MapSwipe crowd** | 400+ volunteers, ~8k AI-flagged spots | false alarms | misses |
-| **ChatMap field** | 415 ground-reported points | misses | false alarms |
+![](artefacts/RQ0-matching-basis/figs/reference_architecture.png)
+
+::: {.notes}
+Read this before anything else. Two HOT datasets, confusingly named: MapSwipe = REMOTE
+VOLUNTEERS voting on AI-flagged ~50m hex cells (NOT building points) — it sharpens PRECISION
+by adjudicating flags, but its verdict is per-cell so the 0.24 is an upper estimate. ChatMap =
+FIELD TEAMS reporting building-level points from the ground — it extends RECALL inland and
+can union with CEMS points (+5-9%). CEMS = the expert points, anchors both sides. They're
+used SEPARATELY because their blind spots don't overlap.
+:::
+
+## Method — one line
 
 ::: {.tldr}
 Matching is **dual-anchored** — precision and recall from opposite anchors, so we never count

@@ -45,6 +45,14 @@ sections keep the old name.
 
 # Ground rules (RQ0) — settled
 
+**The three references (read this first — MapSwipe vs ChatMap is the recurring confusion).**
+MapSwipe = remote volunteers voting on ~50 m hex cells (NOT building points) → adjudicates
+false alarms → the crowd-adjusted precision (0.08→0.24, but per-cell so an UPPER estimate).
+ChatMap = field teams' building-level points → reveals misses + grades + unions with CEMS
+points (+5–9%, `rq2k`). CEMS = expert building points, anchors both sides. Schematic:
+
+![Reference architecture](artefacts/RQ0-matching-basis/figs/reference_architecture.png)
+
 **Scoring basis:** dual-anchored pairwise-native matching on immutable silver snapshots —
 CEMS stays bare points/blocks, each product keeps its native footprints; r = 10 m primary,
 {5, 20} sensitivity. The viewer's gold/Overture model is *disqualified for scoring* (snap
@@ -663,6 +671,30 @@ the manuscript will pick one or a composite.
   adjustment here); visits-per-find uses the dial's 30 m definition.
 - **Confidence: high** on patterns within Caraballeda; grey discipline prevents
   over-reading the thin AOIs.
+
+# RQ2l — recall by CEMS's OWN grade: Damaged vs Destroyed (flag #12, user-requested)
+
+CEMS grades: class 1 Possibly-damaged (excluded), 2 Damaged (784 in core), 3 Destroyed
+(683). Score vs 2+3; here split by grade. Script `scripts/rq2l_cems_grade_recall.py`:
+
+```{python}
+tbl("RQ2-cems-footprint-points/rq2l_cems_grade_recall.csv")
+```
+
+Columns: `P_vs_X` = share of the product's flags within 10 m of a class-X point;
+`R_of_X` = share of class-X points with a flag within 10 m. (Both metrics, both grades —
+the destruction bias shows up on precision AND recall, symmetrically.)
+
+- **Destruction bias is universal in recall AND precision** — every product finds Destroyed
+  better than Damaged, and (for the appearance/debris products) its flags are likelier to
+  sit near destruction.
+- **Two behaviours, roughly by sensing:** appearance/debris products **MS, UH, UNEP** are
+  destruction-biased on both (P_vs_destroyed ≈ 1.5–2× P_vs_damaged; recall gap +0.23–0.30).
+  Radar-coherence **OSU, IMPACT** are grade-NEUTRAL on both (P and R ~equal for damaged vs
+  destroyed) — coherence senses structural change, not visible collapse. **LIST (optical
+  ResNet) sides with the coherence group** → a tendency, NOT a clean optical-vs-radar law.
+- **Confidence: high** (683–784 points per grade). Manuscript: one sentence in Results II
+  pending; register canonical.
 
 # RQ2h — OSU v0 vs v1: a revision that shuffles half the flags and moves nothing
 

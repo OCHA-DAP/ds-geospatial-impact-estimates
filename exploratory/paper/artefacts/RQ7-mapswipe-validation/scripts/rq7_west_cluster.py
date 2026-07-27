@@ -124,24 +124,24 @@ def main():
     j.reset_index().rename(columns={"index": "h3_res8"}).to_csv(
         os.path.join(os.path.dirname(__file__), "..", "rq7_west_cluster_join.csv"), index=False)
 
-    # figure: residual map + crowd rejection map + scatter
+    # figure: the two maps that tell the story (the cell-scale scatter/rho is a
+    # technical null — dropped; it confused readers and isn't the point).
     ll = np.array([h3.cell_to_latlng(c) for c in j.index])
-    fig, ax = plt.subplots(1, 3, figsize=(16, 4.2), gridspec_kw={"width_ratios": [2, 2, 1.3]})
+    fig, ax = plt.subplots(1, 2, figsize=(15, 5.4))
     lim = np.percentile(np.abs(j.resid), 98)
-    s0 = ax[0].scatter(ll[:, 1], ll[:, 0], c=j.resid, cmap="RdBu_r", vmin=-lim, vmax=lim, s=42)
-    ax[0].set_title("RQ3b: MS over-detection residual (red = cluster)")
-    plt.colorbar(s0, ax=ax[0], shrink=0.8)
-    s1 = ax[1].scatter(ll[:, 1], ll[:, 0], c=j.rej_share, cmap="PuOr_r", vmin=0, vmax=1, s=42)
-    ax[1].set_title("MapSwipe crowd: mean 'No damage' share")
-    plt.colorbar(s1, ax=ax[1], shrink=0.8)
-    for a in ax[:2]:
+    s0 = ax[0].scatter(ll[:, 1], ll[:, 0], c=j.resid, cmap="RdBu_r", vmin=-lim, vmax=lim, s=120)
+    ax[0].set_title("Where Microsoft over-flags\n(red = flags far beyond real damage)",
+                    fontsize=14)
+    plt.colorbar(s0, ax=ax[0], shrink=0.8, label="over-detection")
+    s1 = ax[1].scatter(ll[:, 1], ll[:, 0], c=j.rej_share, cmap="PuOr_r", vmin=0, vmax=1, s=120)
+    ax[1].set_title("What MapSwipe volunteers said\n(orange = 'no damage here')", fontsize=14)
+    plt.colorbar(s1, ax=ax[1], shrink=0.8, label="share voting 'no damage'")
+    for a in ax:
         a.set_aspect("equal"); a.set_xticks([]); a.set_yticks([])
-    ax[2].scatter(j.resid, j.rej_share, s=14, alpha=.6)
-    ax[2].set_xlabel("RQ3b residual"); ax[2].set_ylabel("crowd rejection share")
-    ax[2].set_title(f"rho={rho_rej:+.2f}")
-    fig.suptitle("RQ7 demo — 428-volunteer crowd vs the RQ3b Microsoft error field (res-8 join)")
+    fig.suptitle("The over-flagged western cluster (red, left) is exactly where volunteers "
+                 "saw no damage (orange, right)", fontsize=15, weight="bold")
     fig.tight_layout()
-    fig.savefig(os.path.join(FIGS, "rq7_west_cluster_adjudication.png"), dpi=130)
+    fig.savefig(os.path.join(FIGS, "rq7_west_cluster_adjudication.png"), dpi=140)
     print("wrote figs/rq7_west_cluster_adjudication.png")
 
 
