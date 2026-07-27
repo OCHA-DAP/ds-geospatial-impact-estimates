@@ -26,7 +26,7 @@ HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "figs")
 POS = (2, 3)
 RES = 7
-TOPN = 20
+TOPN = 10
 PRODUCTS = [("Microsoft", "ms_dmg"), ("OSU", "osu_dmg")]
 
 
@@ -54,8 +54,19 @@ def main():
     truth_top = set(truth.sort_values(ascending=False).head(TOPN).index)
     land = gp.codab(0).geometry.make_valid().union_all()
 
-    fig, axes = plt.subplots(len(PRODUCTS), 1, figsize=(11, 9))
-    vmax = float(truth.max())
+    # crop to where the damage is: bbox of the top-20 truth cells, padded, so the
+    # hexes fill the frame instead of drowning in empty low-damage cells.
+    tx = [h3.cell_to_latlng(c)[1] for c in truth_top]
+    ty = [h3.cell_to_latlng(c)[0] for c in truth_top]
+    xlim = (min(tx) - 0.02, max(tx) + 0.02)
+    ylim = (min(ty) - 0.015, max(ty) + 0.015)
+    vis = [c for c in cells
+           if xlim[0] - 0.01 < h3.cell_to_latlng(c)[1] < xlim[1] + 0.01
+           and ylim[0] - 0.01 < h3.cell_to_latlng(c)[0] < ylim[1] + 0.01]
+
+    fig, axes = plt.subplots(len(PRODUCTS), 1, figsize=(15, 6.4))
+    cm = plt.get_cmap("YlOrRd")
+    norm = plt.Normalize(0, float(truth.max()))
     for ax, (nm, col) in zip(axes, PRODUCTS):
         pc = inb[inb[col].to_numpy(dtype="float64", na_value=0.0) == 1].groupby("cell").size()
         prod = pc.reindex(cells).fillna(0)
@@ -66,29 +77,23 @@ def main():
         for g in getattr(land, "geoms", [land]):
             ax.add_patch(MplPolygon(np.asarray(g.exterior.coords), closed=True,
                                     facecolor="#f1f0ea", edgecolor="#b9b7ae", lw=0.8, zorder=0))
-        cm = plt.get_cmap("YlOrRd")
-        norm = plt.Normalize(0, vmax)
-        for c in cells:
+        for c in vis:
             p = hexpoly(c)
             p.set(facecolor=cm(norm(truth[c])), zorder=2,
-                  edgecolor=("#1841a0" if c in prod_top else "white"),
-                  lw=(3.2 if c in prod_top else 0.4))
+                  edgecolor=("#1841a0" if c in prod_top else "#ffffff"),
+                  lw=(4 if c in prod_top else 0.5))
             ax.add_patch(p)
-        xs = [h3.cell_to_latlng(c)[1] for c in cells]
-        ys = [h3.cell_to_latlng(c)[0] for c in cells]
-        ax.set_xlim(min(xs) - 0.02, max(xs) + 0.02)
-        ax.set_ylim(min(ys) - 0.02, max(ys) + 0.02)
+        ax.set_xlim(*xlim); ax.set_ylim(*ylim)
         ax.set_aspect("equal"); ax.set_xticks([]); ax.set_yticks([])
-        sm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
-        plt.colorbar(sm, ax=ax, shrink=0.8, pad=0.01, label="real damage (CEMS points / cell)")
-        ax.set_title(f"{nm}: found {hit} of the {TOPN} worst-hit neighbourhoods "
-                     f"({hit/TOPN:.0%})", fontsize=13)
-    fig.suptitle("Products point at the right neighbourhoods\n"
-                 "cells shaded by REAL damage; blue outline = the product's own top-20 "
-                 "worst-hit picks (res-7 ≈ 5 km², Caraballeda)", fontsize=12.5)
-    fig.tight_layout()
-    fig.savefig(os.path.join(FIGS, "rq3_priority_map.png"), dpi=150)
-    print(f"wrote rq3_priority_map.png | truth top-{TOPN} cells: {len(truth_top)}")
+        ax.set_title(f"{nm}: correctly picked {hit} of the {TOPN} worst-hit "
+                     f"neighbourhoods ({hit/TOPN:.0%})", fontsize=17, weight="bold")
+    sm = plt.cm.ScalarMappable(cmap=cm, norm=norm)
+    cb = fig.colorbar(sm, ax=axes, shrink=0.9, pad=0.01, aspect=30)
+    cb.set_label("real damage (expert points / cell)", fontsize=13)
+    cb.ax.tick_params(labelsize=11)
+    fig.savefig(os.path.join(FIGS, "rq3_priority_map.png"), dpi=150, bbox_inches="tight")
+    print(f"wrote rq3_priority_map.png | truth top-{TOPN} cells: {len(truth_top)} | "
+          f"visible cells: {len(vis)}")
 
 
 if __name__ == "__main__":

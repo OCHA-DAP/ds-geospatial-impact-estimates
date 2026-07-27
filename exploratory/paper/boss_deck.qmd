@@ -10,234 +10,244 @@ format:
     theme: default
     width: 1280
     height: 720
-    incremental: false
     css: |
-      .reveal section img { border: none; box-shadow: none; max-height: 560px; }
-      .reveal h2 { font-size: 1.35em; }
-      .reveal .slides section .fragment { line-height: 1.4; }
-      .tldr { background:#f4f6f9; border-left:5px solid #2a78d6; padding:0.6em 1em; }
-      .ask { background:#fcf3f2; border-left:5px solid #e34948; padding:0.4em 1em; }
-      .small { font-size:0.75em; color:#52514e; }
+      .reveal h2 { font-size: 1.05em; margin-bottom: 0.1em; }
+      .reveal section img { max-height: 630px; max-width: 95%; border: none;
+        box-shadow: none; margin: 0.1em auto; }
+      .reveal p, .reveal li, .reveal td, .reveal th { font-size: 0.82em; }
+      .tldr { background:#f4f6f9; border-left:5px solid #2a78d6; padding:0.5em 1em;
+        margin:0.4em 0; }
+      .ask { background:#fcf3f2; border-left:5px solid #e34948; padding:0.4em 1em;
+        margin:0.4em 0; }
       .win { color:#2e7d32; font-weight:bold; }
       .fail { color:#c62828; font-weight:bold; }
+      .big { font-size:1.5em; font-weight:bold; text-align:center; margin-top:0.6em; }
+execute:
+  echo: false
+  warning: false
+jupyter: python3
 ---
 
-## The situation {.smaller}
+## The situation
 
-Within days of the M7.5 quake (24 June 2026), **at least eight** organisations published
-satellite building-damage maps — government (Copernicus), academic radar (OSU, IMPACT),
-optical AI (Microsoft, U. Houston, WFP/LIST), debris models (UNEP), volunteer AI (HOT, DISHA).
+Within days of the M7.5 quake (24 June 2026), **eight+ organisations** published satellite
+building-damage maps — government (Copernicus), academic radar (OSU, IMPACT), optical AI
+(Microsoft, U. Houston, WFP/LIST), debris models (UNEP), volunteer AI (HOT, DISHA).
 
-They **disagreed with each other, sometimes wildly.** A coordinator receiving them in the
-same week had no principled way to answer: *which do I trust, for what, and at what scale?*
+They **disagreed with each other, sometimes wildly.** A coordinator had no principled way to
+answer: *which do I trust, for what, and at what scale?*
 
 ::: {.tldr}
-**What we did.** Scored the six products that published an analysed extent against **three
-independent reference datasets whose blind spots don't overlap** — so they check each
-other, and the products.
+**What we did** — scored the six products that published an analysed extent against **three
+reference datasets whose blind spots don't overlap**, so they check each other and the products.
 :::
 
 ::: {.tldr}
-**Bottom line.** As delivered, most single products carried **less usable per-building
-information than a no-satellite baseline**. But products *are* good at ranking
-*neighbourhoods*, combining them helps (within limits), and the real leverage is **reference
-quality + provider metadata transparency**.
+**Bottom line** — as delivered, most single products carried **less usable per-building
+information than a no-satellite baseline**. But they *are* good at ranking neighbourhoods,
+combining helps within limits, and the real leverage is **reference quality + provider
+transparency**.
 :::
 
-## Three questions we keep strictly separate
+## Three questions — kept strictly separate
 
-1. **Where is it worst?** — ranking neighbourhoods for triage.
-2. **Which buildings?** — a per-building list you could send a crew to.
-3. **What does everyone miss?** — including the "ground truth" itself.
+::: {.tldr}
+**1 · Where is it worst?** — ranking neighbourhoods for triage.
+**2 · Which buildings?** — a list you could send a crew to.
+**3 · What does everyone miss?** — including the "ground truth" itself.
+:::
 
 And two performance frames we **never mix**:
 
-- **Best case** — Caraballeda, the dense-damage coastal zone where **96% of the expert
-  reference lives**. Flattering, and where most published numbers implicitly come from.
+- **Best case** — Caraballeda, the dense-damage zone where **96% of the expert reference
+  lives.** Where most published numbers implicitly come from.
 - **As delivered** — the whole product, every zone it shipped, junk included. What a
   responder actually received.
 
-::: {.small}
-Every number in this deck is tagged to one frame. That split is itself a finding.
+<p class="big">That split is itself a finding.</p>
+
+## Method — three references, three blind spots
+
+| Reference | What it is | Measures | **Cannot** measure |
+|---|---|---|---|
+| **Copernicus EMS** | expert analysts, VHR imagery | false alarms **and** misses | anything outside its extents |
+| **MapSwipe crowd** | 400+ volunteers, ~8k AI-flagged spots | false alarms | misses |
+| **ChatMap field** | 415 ground-reported points | misses | false alarms |
+
+::: {.tldr}
+Matching is **dual-anchored** — precision and recall from opposite anchors, so we never count
+the vast stock of undamaged buildings. Radius r = 10 m, set by the urban fabric (median
+building spacing 9.7 m). **Target throughout: buildings the expert graded *damaged or
+destroyed* (CEMS classes 2–3)** — not destruction alone.
 :::
 
-## The method: three references, three blind spots {.smaller}
-
-| Reference | What it is | Can measure | **Cannot** measure |
-|---|---|---|---|
-| **Copernicus EMS** | expert analysts, VHR imagery | false alarms **and** misses | anything outside its mapped extents |
-| **MapSwipe crowd** | 400+ volunteers, ~8,000 AI-flagged spots | false alarms | misses (only saw flagged places) |
-| **ChatMap field** | 415 ground-reported damage points | misses | false alarms (positives only) |
-
-Matching is **dual-anchored** (precision and recall from opposite anchors), so we never need
-to count the vast stock of undamaged buildings. Radius **r = 10 m**, derived from the urban
-fabric (median building spacing 9.7 m).
+## How matching works
 
 ![](artefacts/RQ0-matching-basis/figs/fig_dual_anchor_matching.png)
 
-## <span class="win">WIN</span> — products point at the right neighbourhoods
+::: {.notes}
+Left: score only where product AND reference both looked. Middle: recall — each real damage
+point asks "is there a flag within r?". Right: precision — each flag asks "is there a real
+damage point within r?". Opposite anchors, so no true-negative count needed.
+:::
 
-Per-building they're weak, but at **triage scale (~5 km²)** they correctly rank where it's
-worst (rank correlation ρ ≈ 0.5–0.6; the residual errors track the **coast and shaking**,
-not building density — a benign error structure that *preserves* ranking).
+## Their most useful capability — ranking neighbourhoods {.smaller}
 
 ![](artefacts/RQ3-prioritization-error-structure/figs/rq3_priority_map.png)
 
-::: {.small}
-Best case (Caraballeda), neighbourhood scale. **This is what the products are genuinely good
-for today: sector prioritisation, not per-building work orders.**
+<p style="text-align:center; font-size:0.8em;">Rank correlation with real damage
+**ρ ≈ 0.5–0.6** — moderate, and better than their per-building skill.</p>
+
+::: {.notes}
+Cells shaded by REAL damage (CEMS damaged-or-destroyed count); blue outline = product's own
+top-10 worst-hit picks. Both get 6/10 — vs ~3 expected by chance, so a real but MODEST signal.
+The robust number is rank correlation rho 0.5-0.6. HONEST CAVEATS to hold: (1) best-case
+Caraballeda, coarse scale — finer ranking degrades; (2) we have NOT yet checked whether the
+day-zero geography baseline ranks areas equally well — it plausibly does, since the damage
+gradient IS the coast/shaking gradient. So present this as "products' most useful capability,"
+NOT as a clean win over the free baseline. Don't quote a top-N percentage in the room.
 :::
 
 ## <span class="fail">FAIL</span> — per building, even at their best
 
-In Caraballeda, where they score highest, per-building precision is **0.04–0.09**: for every
-flag that lands on real (expert-recorded) damage, **ten to twenty do not.**
+Target: **damaged *or* destroyed** buildings (expert classes 2–3). In Caraballeda, where
+products score highest:
 
-The benchmark that should worry us: a model given **only day-zero geography** — distance to
-coast, building density, ShakeMap intensity, *all available before any satellite is tasked* —
-matches the best single product.
+<p class="big">precision 0.04 – 0.09</p>
 
-![](artefacts/RQ8-learned-fusion/figs/rq8_geography_baseline.png)
+Counting **only expert-recorded damage**, for every flag that hits, **10–20 miss.**
+*(Crediting damage the expert missed — from crowd/field data — cuts this to ~4–5; see the
+operating-cost slide. Same buildings, stricter vs. fairer scoring.)*
+
+::: {.tldr}
+The benchmark that should worry us: a model given **only day-zero geography** — coast
+distance, building density, ShakeMap intensity, all available *before any satellite is
+tasked* — matches the best single product.
+:::
 
 ## <span class="fail">FAIL harder</span> — as delivered, geography wins
 
-Scored across everything each product actually shipped (not just its best zone), **five of
-six products carried *less* building-level information than the no-satellite baseline.**
+![](artefacts/RQ8-learned-fusion/figs/rq8b_asdelivered_bars.png)
 
-| Product | as-delivered precision | vs. day-zero baseline |
-|---|---|---|
-| Microsoft | 0.081 | ~ tie (only product to hold up) |
-| OSU | 0.036 | **loses** (baseline 0.084) |
-| IMPACT | 0.032 | **loses** (0.077) |
-| UNEP | 0.027 | **loses** (0.076) |
-| LIST | 0.026 | **loses** (0.076) |
-| UH | 0.009 | **loses badly** (0.091) |
-
-::: {.small}
-Microsoft survives **because it only shipped its carefully-analysed coastal strip.**
-Coverage *restraint* is itself a product virtue — UH shipping everywhere destroyed its own
-precision. *(Caveat: outside Caraballeda the reference is thin; but a responder faced the
-same information deficit.)*
+::: {.notes}
+Scored across everything each product actually shipped. Five of six carry LESS building-level
+information (average precision) than the no-satellite baseline on the same footprint. Microsoft
+is the exception — only because it shipped just its carefully-analysed coastal strip; coverage
+restraint is itself a virtue. UH shipping everywhere destroyed its precision (0.009). Caveat:
+outside Caraballeda the reference is thin and the penalty falls on whoever flagged there — but
+a responder faced the same information deficit. Average precision = one number summarising the
+whole precision-recall curve, not a single precision value.
 :::
 
 ## The ground truth is itself half-blind
 
-Scoring **Copernicus against the field reports**: it recorded **94% of completely destroyed**
-buildings but only **49% of "significant" damage.** Every product shows the same slope.
-
 ![](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png)
 
-::: {.small}
-Consequences: (1) satellite damage detection is really **destruction** detection —
-shelter-damage needs are under-counted. (2) **Measured precision is a floor; measured
-recall is a ceiling.** Crowd review lifts Microsoft's precision from 0.08 to ~0.24 — the gap
-is in the *reference*, not the product.
+::: {.notes}
+Scoring Copernicus against the field reports: 94% of COMPLETE destruction found, but only 49%
+of SIGNIFICANT damage. Every product shows the same downward slope. So: (1) satellite damage
+detection is really destruction detection — shelter needs under-counted; (2) measured precision
+is a FLOOR, measured recall is a CEILING. Crowd review lifts Microsoft's precision 0.08 -> 0.24
+— the gap is in the reference, not the product.
 :::
 
-## The split, visualised: one product is many scorecards
+## One product is many scorecards
 
 ![](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png)
 
-::: {.small}
-96% of reference damage is in Caraballeda (first column). Outside it, products keep flagging
-at scale (UH: 32,000 flags in Santa Cruz) while measured precision collapses to 0.00–0.02 —
-**though we cannot separate "product hallucination" from "reference too thin" there.** The
-honest verdict: *every headline number describes dense-damage coastal terrain.*
+::: {.notes}
+96% of reference damage in Caraballeda (first column = pooled/as-delivered). Outside it,
+products keep flagging at scale (UH: 32k flags in Santa Cruz) while measured precision collapses
+to 0.00-0.02 — BUT we cannot separate "product hallucination" from "reference too thin" there.
+Honest verdict: every headline number describes dense-damage coastal terrain.
 :::
 
-## Does combining products fix it? Honestly — partly
-
-Requiring **agreement across products** trades precision against coverage. It turns an
-unusable list into a **triage-usable** one — but **no rule is both cheap and complete.**
+## Does combining products fix it? Partly.
 
 ![](artefacts/RQ5-ensemble/figs/rq5c_operational_dial.png)
 
-::: {.small}
-Best case. Bars show the cost range (crowd-adjusted → expert-only). At ~4-of-6 you reach
-**74% of damage at ~3–5 field visits per real find**; full agreement is nearly clean but
-covers only a quarter. **This is a prioritisation dial, not a send-a-crew work order —**
-and it's the honest ceiling of what fusion buys.
+::: {.notes}
+Each bar spans the honest cost range: TOP = strict (only expert-recorded damage counts — this
+is the "10-20 per hit" from the earlier slide); BOTTOM square/dot = best estimate (also counts
+damage the expert missed, crowd-confirmed). Same buildings, two scorings. Agreement trades
+precision vs coverage: at ~4-of-6 you reach 74% of damaged-or-destroyed buildings at ~3-5
+visits per find; full agreement is nearly clean but covers a quarter. No rule is both cheap and
+complete — a prioritisation DIAL, not a work order. The dial itself is the value single
+products don't give: each product hands you one fixed point.
 :::
 
-## The hero story: transparency lets you fix failures
-
-Microsoft's one bad zone (western strip) flagged **28.7% of buildings** — crowd validators
-rejected **71% as undamaged.** We root-caused it **from Microsoft's own published metadata**:
-that zone had a single satellite pass, processed by a per-scene model with no cross-check.
+## Transparency lets you fix failures
 
 ![](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png)
 
-::: {.small}
-**The point:** it was the *only* failure we could diagnose — because it was the *only*
-product publishing per-building provenance. The other five fail undiagnosably. **Auditability
-is a product property**, and the correction signal (the crowd campaign) existed within days
-and reached no one.
+::: {.notes}
+Microsoft's one bad zone (western strip) flagged 28.7% of buildings; crowd rejected 71% as
+undamaged. We root-caused it FROM MICROSOFT'S OWN METADATA: single satellite pass, per-scene
+model, no cross-check. It was the ONLY failure we could diagnose — the only product publishing
+per-building provenance. Auditability is a product property. And the correction signal (the
+crowd campaign) existed within days and reached no one.
 :::
 
-## What we'd recommend {.smaller}
+## What we'd recommend
 
 ::: {.tldr}
 **Providers** — publish an analysed extent (non-negotiable); publish per-building provenance
-(scene count + dates); *scope your coverage* rather than blanket-ship; clear a geography-only
+(scene count + dates); *scope* your coverage rather than blanket-ship; clear a geography-only
 baseline before release.
 :::
 
 ::: {.tldr}
-**Evaluators** — one expert reference under-counts light damage: publish precision as a
-*floor*, or adjudicate against a second reference and publish an *interval*. Treat crowd and
-field data as first-class, not afterthoughts.
+**Evaluators** — one expert reference under-counts light damage. Publish precision as a
+*floor*, or adjudicate against a second reference and publish an *interval*. Crowd and field
+data are first-class, not afterthoughts.
 :::
 
 ::: {.tldr}
 **Responders** — trust the *area ranking*, not the building counts; set the agreement dial to
-your own cost of a wasted visit vs. a missed building. Nothing here sees light damage
-reliably — plan shelter assessments accordingly.
+your own cost of a wasted visit vs. a missed building. Nothing here sees light damage reliably
+— plan shelter assessments accordingly.
 :::
 
 ## Where this is solid — and where it isn't
 
-**Solid:** six products, three independent references, ~1,500 lines of reproducible open
-code; the area-ranking win, the day-zero result, the per-zone collapse, and the west-cluster
-diagnosis all replicate across frames.
+**Solid** — six products, three independent references, ~1,500 lines of reproducible open
+code. The area-ranking win, the day-zero result, the per-zone collapse, and the west-cluster
+diagnosis all hold across frames.
 
 **Honest limits:**
 
 - **One event, one geography** (coastal, dense-urban); 96% of reference in one AOI.
 - Outside Caraballeda the reference is too thin to cleanly separate product error from
   reference gaps — the as-delivered penalty leans on that.
-- **No confidence intervals yet** — the ±0.01 gaps need them before we lean hard.
-- The **timeliness axis** (accuracy × how fast each product arrived) is not yet built —
+- **No confidence intervals yet** — needed before leaning on the ±0.01 gaps.
+- The **timeliness axis** (accuracy × how fast each product arrived) isn't built yet —
   arguably the most decision-relevant variable.
 
 ## The asks
 
 ::: {.ask}
-**1. Back writing this up.** The framework (three-reference triangulation, the floor/ceiling
-correction, the geography baseline as a validation bar) is novel and travels beyond this
-event. It's a real contribution to how the sector evaluates these products.
+**1 · Back writing this up.** The framework — three-reference triangulation, the floor/ceiling
+correction, the geography baseline as a validation bar — is novel and travels beyond this event.
 :::
 
 ::: {.ask}
-**2. Support taking findings to providers.** Constructive, evidence-based, and their own
-metadata is the hero — this strengthens the ecosystem, doesn't just critique it.
+**2 · Support taking findings to providers.** Constructive and evidence-based; their own
+metadata is the hero. This strengthens the ecosystem, doesn't just critique it.
 :::
 
 ::: {.ask}
-**3. Resource the two gaps that make it bulletproof:** confidence intervals, and the
-timeliness axis (needs provider release dates — an ask we can make together).
+**3 · Resource the two gaps that make it bulletproof** — confidence intervals, and the
+timeliness axis (needs provider release dates, an ask we can make together).
 :::
 
-## {.smaller}
+## One line to carry out of the room
 
-**Thank you.**
+<p class="big" style="line-height:1.4; font-size:1.25em;">As delivered, most single damage
+products barely beat a coastline-and-shakemap model.<br>Their value is in ranking areas and in
+combination — and the biggest lever is better reference data and provider transparency, not
+better single models.</p>
 
-Working documents (internal): the findings register (`findings.qmd`, every result +
-confidence + open flags) and the full manuscript draft (`manuscript_v2.qmd`). All figures
-regenerate from frozen data via committed scripts.
-
-::: {.small}
-One-line summary to carry out of the room: *as delivered, most single damage products barely
-beat a coastline-and-shakemap model; their value is in ranking areas and in combination, and
-the biggest lever is better reference data and provider transparency — not better single
-models.*
+::: {.notes}
+Working documents: findings register (findings.qmd) and manuscript (manuscript_v2.qmd). All
+figures regenerate from frozen data via committed scripts.
 :::
