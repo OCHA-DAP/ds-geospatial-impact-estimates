@@ -10,25 +10,32 @@ format:
     theme: default
     width: 1280
     height: 720
-    css: |
-      .reveal h2 { font-size: 1.05em; margin-bottom: 0.1em; }
-      .reveal section img { max-height: 630px; max-width: 95%; border: none;
-        box-shadow: none; margin: 0.1em auto; }
-      .reveal p, .reveal li, .reveal td, .reveal th { font-size: 0.82em; }
-      .tldr { background:#f4f6f9; border-left:5px solid #2a78d6; padding:0.5em 1em;
-        margin:0.4em 0; }
-      .ask { background:#fcf3f2; border-left:5px solid #e34948; padding:0.4em 1em;
-        margin:0.4em 0; }
-      .win { color:#2e7d32; font-weight:bold; }
-      .fail { color:#c62828; font-weight:bold; }
-      .big { font-size:1.5em; font-weight:bold; text-align:center; margin-top:0.6em; }
 execute:
   echo: false
   warning: false
 jupyter: python3
 ---
 
-## The situation
+```{=html}
+<style>
+.reveal h2 { font-size: 1.02em; margin-bottom: 0.15em; }
+.reveal section img { max-height: 600px; max-width: 95%; border: none;
+  box-shadow: none; margin: 0.1em auto; }
+.reveal p, .reveal li, .reveal td, .reveal th { font-size: 0.8em; line-height: 1.25; }
+.reveal .smaller p, .reveal .smaller li,
+.reveal .smaller td, .reveal .smaller th { font-size: 0.7em; line-height: 1.2; }
+.reveal ul, .reveal ol { margin: 0.1em 0; }
+.tldr { background:#f4f6f9; border-left:5px solid #2a78d6; padding:0.35em 0.9em;
+  margin:0.3em 0; }
+.ask { background:#fcf3f2; border-left:5px solid #e34948; padding:0.35em 0.9em;
+  margin:0.3em 0; }
+.win { color:#2e7d32; font-weight:bold; }
+.fail { color:#c62828; font-weight:bold; }
+.big { font-size:1.4em; font-weight:bold; text-align:center; margin-top:0.4em; }
+</style>
+```
+
+## The situation {.smaller}
 
 Within days of the M7.5 quake (24 June 2026), **eight+ organisations** published satellite
 building-damage maps — government (Copernicus), academic radar (OSU, IMPACT), optical AI
@@ -49,7 +56,7 @@ combining helps within limits, and the real leverage is **reference quality + pr
 transparency**.
 :::
 
-## Three questions — kept strictly separate
+## Three questions — kept strictly separate {.smaller}
 
 ::: {.tldr}
 - **1 · Where is it worst?** — ranking neighbourhoods for triage
@@ -79,23 +86,29 @@ can union with CEMS points (+5-9%). CEMS = the expert points, anchors both sides
 used SEPARATELY because their blind spots don't overlap.
 :::
 
-## Method — one line
+## How we score each product
 
 ::: {.tldr}
-Matching is **dual-anchored** — precision and recall from opposite anchors, so we never count
-the vast stock of undamaged buildings. Radius r = 10 m, set by the urban fabric (median
-building spacing 9.7 m). **Target throughout: buildings the expert graded *damaged or
-destroyed* (CEMS classes 2–3)** — not destruction alone.
+- **Precision** — of the buildings a product *flagged*, how many are next to real (CEMS)
+  damage? *(are its flags trustworthy?)*
+- **Recall** — of the *real damage points*, how many did the product flag? *(how much did it
+  catch?)*
 :::
+
+A flag and a damage point count as a match within **10 m** (set by building spacing). Target
+throughout: buildings the expert graded **damaged or destroyed** — not destruction alone.
 
 ## How matching works
 
 ![](artefacts/RQ0-matching-basis/figs/fig_dual_anchor_matching.png)
 
 ::: {.notes}
-Left: score only where product AND reference both looked. Middle: recall — each real damage
-point asks "is there a flag within r?". Right: precision — each flag asks "is there a real
-damage point within r?". Opposite anchors, so no true-negative count needed.
+An illustrative block. Green footprints = product flags that sit within 10 m of a CEMS damage
+point (correct). Orange = flags with no damage nearby (false alarms). Red circles = CEMS
+damage points the product missed. Precision counts from the flags' side; recall counts from
+the damage points' side. If asked "is this a standard method?" — yes: it's proximity matching,
+the normal way to score detections when the prediction and the reference use different
+geometries. We only score where both the product and the reference looked.
 :::
 
 ## Their most useful capability — ranking neighbourhoods {.smaller}
@@ -273,7 +286,7 @@ per-building provenance. Auditability is a product property. And the correction 
 crowd campaign) existed within days and reached no one.
 :::
 
-## What we'd recommend
+## What we would recommend {.smaller}
 
 ::: {.tldr}
 **Providers** — publish an analysed extent (non-negotiable); publish per-building provenance
@@ -293,7 +306,7 @@ your own cost of a wasted visit vs. a missed building. Nothing here sees light d
 — plan shelter assessments accordingly.
 :::
 
-## Where this is solid — and where it isn't
+## Where this is solid — and where it isn't {.smaller}
 
 **Solid** — six products, three independent references, ~1,500 lines of reproducible open
 code. The area-ranking win, the day-zero result, the per-zone collapse, and the west-cluster
@@ -308,7 +321,7 @@ diagnosis all hold across frames.
 - The **timeliness axis** (accuracy × how fast each product arrived) isn't built yet —
   arguably the most decision-relevant variable.
 
-## The asks
+## The asks {.smaller}
 
 ::: {.ask}
 **1 · Back writing this up.** The framework — three-reference triangulation, the floor/ceiling
