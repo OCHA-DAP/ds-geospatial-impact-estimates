@@ -52,9 +52,9 @@ transparency**.
 ## Three questions — kept strictly separate
 
 ::: {.tldr}
-**1 · Where is it worst?** — ranking neighbourhoods for triage.
-**2 · Which buildings?** — a list you could send a crew to.
-**3 · What does everyone miss?** — including the "ground truth" itself.
+- **1 · Where is it worst?** — ranking neighbourhoods for triage
+- **2 · Which buildings?** — a list you could send a crew to
+- **3 · What does everyone miss?** — including the "ground truth" itself
 :::
 
 And two performance frames we **never mix**:
@@ -100,19 +100,27 @@ damage point within r?". Opposite anchors, so no true-negative count needed.
 
 ## Their most useful capability — ranking neighbourhoods {.smaller}
 
+:::: {.columns}
+::: {.column width="56%"}
 ![](artefacts/RQ3-prioritization-error-structure/figs/rq3_priority_map.png)
+:::
+::: {.column width="44%"}
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3_rank_scatter_clean.png)
+:::
+::::
 
-<p style="text-align:center; font-size:0.8em;">Rank correlation with real damage
-**ρ ≈ 0.5–0.6** — moderate, and better than their per-building skill.</p>
+<p style="text-align:center; font-size:0.72em;">Left: each product's worst-hit picks land on
+the really-damaged cells. Right: more real damage → more flags (**ρ ≈ 0.8 within the damage
+zone**).</p>
 
 ::: {.notes}
-Cells shaded by REAL damage (CEMS damaged-or-destroyed count); blue outline = product's own
-top-10 worst-hit picks. Both get 6/10 — vs ~3 expected by chance, so a real but MODEST signal.
-The robust number is rank correlation rho 0.5-0.6. HONEST CAVEATS to hold: (1) best-case
-Caraballeda, coarse scale — finer ranking degrades; (2) we have NOT yet checked whether the
-day-zero geography baseline ranks areas equally well — it plausibly does, since the damage
-gradient IS the coast/shaking gradient. So present this as "products' most useful capability,"
-NOT as a clean win over the free baseline. Don't quote a top-N percentage in the room.
+Left = map: cells shaded by REAL damage, blue outline = product's top-10 picks. Right = the
+same relationship as a scatter with a trend line: more real damage per cell → more flags,
+Spearman rho 0.81 within Caraballeda. CAVEATS to hold: (1) this is the dense damage zone,
+coarse ~5km2 scale — over the full region rho drops to ~0.5-0.6, and finer scale degrades;
+(2) we have NOT checked whether the day-zero geography baseline ranks areas equally well — it
+plausibly does. So present as "products' most useful capability," not a clean win over the
+free baseline. Don't quote a top-N percentage.
 :::
 
 ## Where they struggle — the per-building list
