@@ -69,22 +69,38 @@ def main():
     tree_c = cKDTree(np.c_[cpts.geometry.x, cpts.geometry.y])
     tree_u = cKDTree(truth)
 
+    # truth-point arrays for recall (denominator = CEMS, or CEMS ∪ ChatMap)
+    cems_xy = np.c_[cpts.geometry.x, cpts.geometry.y]
+    union_xy = truth
     rows = []
     for nm, col in MEMBERS.items():
         fl = bld[bld.geometry.within(region) & (bld[col].to_numpy(dtype="float64", na_value=0.0) == 1)]
         xy = np.c_[fl.geometry.x, fl.geometry.y]
+        # PRECISION: share of flags near a CEMS point / near a CEMS-or-ChatMap point
         p_cems = (tree_c.query(xy, k=1)[0] <= R).mean()
         p_union = (tree_u.query(xy, k=1)[0] <= R).mean()
+        # RECALL: share of truth points with a flag nearby, denominator = CEMS / union
+        tree_fl = cKDTree(xy)
+        r_cems = (tree_fl.query(cems_xy, k=1)[0] <= R).mean()
+        r_union = (tree_fl.query(union_xy, k=1)[0] <= R).mean()
         rows.append(dict(product=nm, n_flags=len(fl),
                          P_cems=round(float(p_cems), 3),
-                         P_cems_plus_field=round(float(p_union), 3),
-                         abs_gain=round(float(p_union - p_cems), 3),
-                         rel_gain=f"+{(p_union/p_cems - 1)*100:.0f}%" if p_cems else "n/a"))
+                         P_union=round(float(p_union), 3),
+                         P_rel_gain=f"+{(p_union/p_cems - 1)*100:.0f}%" if p_cems else "n/a",
+                         R_cems=round(float(r_cems), 3),
+                         R_union=round(float(r_union), 3),
+                         R_rel_change=f"{(r_union/r_cems - 1)*100:+.0f}%" if r_cems else "n/a"))
         print(rows[-1])
 
     out = pd.DataFrame(rows)
     out.to_csv(os.path.join(HERE, "..", "rq2k_field_union_precision.csv"), index=False)
     print("wrote rq2k_field_union_precision.csv")
+    dP = out.P_union - out.P_cems
+    dR = out.R_union - out.R_cems
+    print(f"\nSUMMARY (CEMS-only vs CEMS∪ChatMap, {len(cpts)} CEMS + {len(fpts)} field pts):")
+    print(f"  precision: mean abs change {dP.mean():+.3f} (max {dP.abs().max():.3f})")
+    print(f"  recall:    mean abs change {dR.mean():+.3f} (max {dR.abs().max():.3f})")
+    print("  -> if small, CEMS-only is justified as the headline default.")
 
 
 if __name__ == "__main__":

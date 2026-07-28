@@ -45,11 +45,29 @@ sections keep the old name.
 
 # Ground rules (RQ0) — settled
 
-**The three references (read this first — MapSwipe vs ChatMap is the recurring confusion).**
-MapSwipe = remote volunteers voting on ~50 m hex cells (NOT building points) → adjudicates
-false alarms → the crowd-adjusted precision (0.08→0.24, but per-cell so an UPPER estimate).
-ChatMap = field teams' building-level points → reveals misses + grades + unions with CEMS
-points (+5–9%, `rq2k`). CEMS = expert building points, anchors both sides. Schematic:
+**How the three references are used (CANONICAL — resolves the recurring "which reference,
+where, why" confusion; MapSwipe vs ChatMap especially).**
+
+| Reference | Geometry | Role | Used for |
+|---|---|---|---|
+| **CEMS** (expert) | building-level points | **PRIMARY** | all headline precision/recall (r = 10 m) — the default basis unless labelled otherwise |
+| **ChatMap** (field) | building-level points | strengthen **or** critique | (a) *unioned* with CEMS → a fuller building-level reference; (b) held *separate* → exposes CEMS's own grade-blindness (RQ2e grade slope) |
+| **MapSwipe** (crowd) | ~50 m hex-cell votes | **lens, not a reference** | crowd-adjusted precision (floor→interval), west-cluster adjudication (RQ7), evaluating CEMS |
+
+- **CEMS-only is the headline default — now justified, not just convenient.** RQ2k: adding
+  ChatMap (CEMS ∪ ChatMap) moves precision by **≤0.006 absolute** and recall by **≤0.026**
+  across all six products — immaterial to every conclusion. So headline numbers stay
+  CEMS-only and literature-comparable.
+- **Reporting style where useful:** `{metric}: {CEMS-only} ({CEMS∪ChatMap})` — primary value,
+  strengthened value in parentheses. Not mandatory everywhere (verbose); used where the gap
+  carries signal.
+- **ChatMap's dual role is deliberate:** *unioned* (strengthen precision/recall, small) vs
+  *separate* (the "CEMS is half-blind" critique, RQ2e) — different questions, different
+  handling. Never conflate them.
+- **MapSwipe is never a headline metric.** Its ~50 m cell verdicts, seeded from AI flags, make
+  it an UPPER-estimate lens (crowd-adjusted precision) and a CEMS-completeness probe — not a
+  building-level reference, and not usable to score the day-zero baseline (would be circular,
+  since the crowd only saw AI-flagged spots; RQ2n).
 
 ![Reference architecture](artefacts/RQ0-matching-basis/figs/reference_architecture.png)
 
@@ -178,6 +196,17 @@ All products concentrate damage inside CEMS coarse blocks far above random. SAR 
 (ρ ≈ 0.08 — but its region is Caraballeda only). **Confidence: high** on concentration;
 lift numbers are *not* cross-product comparable (different regions) until re-scored on a
 common region — partially superseded by RQ4/RQ5 common-region work.
+
+**RQ3 update (2026-07-28, clean res-7 rank scatter, all six products).** The messy
+block-gradient ρ's above (MS 0.08, different regions/resolutions) are superseded for the
+deck/paper by a clean res-7 test in Caraballeda (`scripts/rq3_rank_scatter_all.py`,
+per-cell CEMS damage count vs product flag count). **All six products rank neighbourhoods
+about equally well: ρ = 0.77–0.83** (MS 0.81, IMPACT 0.80, OSU 0.81, UH 0.80, LIST 0.83,
+UNEP 0.77) — ranking is UNIVERSAL, not cherry-picked. Caveats to hold: (1) dense zone only —
+full-region ρ ≈ 0.5–0.6; (2) coarse ~5 km² scale, degrades finer; (3) NOT yet checked vs the
+day-zero baseline at area level (it plausibly ranks areas equally well — the damage gradient
+IS the coast/shaking gradient), so present as "products' most useful capability," not a clean
+win over the free baseline. Figs: rq3_priority_map, rq3_rank_scatter_all.
 
 # RQ2 — building-level: high recall, precision structurally capped
 
@@ -401,6 +430,24 @@ tbl("RQ5-ensemble/rq5b_six_member.csv")
   (standing flag #13).
 
 ![4-of-4 consensus vs CEMS corroboration](artefacts/RQ5-ensemble/figs/rq5_consensus_gaps.png)
+
+## RQ5c — the operational dial, priced honestly (2026-07-28)
+
+The "is combining good enough?" figure. Script `scripts/rq5c_operational_dial_fig.py` (reads
+rq5b): per rule, coverage (field recall r20) vs cost (field visits per damaged-or-destroyed
+building found), drawn as a BAND from strict CEMS-only (1/P_cems, top) to crowd-adjusted
+(1/P_crowd_adj, bottom). Zones: work-order ≤3 visits/find, triage-usable 3–8, not-worth-it >8.
+
+![Operational dial](artefacts/RQ5-ensemble/figs/rq5c_operational_dial.png)
+
+- **No rule is both cheap and complete:** 4-of-6 = 74% coverage at ~3–5 visits/find (band);
+  6-of-6 near-clean but only 26% coverage. A prioritisation DIAL, not a work-order — the honest
+  ceiling of what fusion buys.
+- The added value of combination is the dial itself (a tunable operating point); a single
+  product hands you one fixed point.
+- **All three references on one figure:** CEMS strict floor, MapSwipe best-estimate band,
+  ChatMap coverage axis. **Confidence: high** on the trade; the band-bottom is an upper estimate
+  (RQ2n).
 
 # RQ2c — the density-mirror test (the skeptic's question)
 
@@ -640,6 +687,26 @@ tbl("RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv")
   *interpretation* of the zeros is deliberately left as a confound (that honesty is the
   point).
 
+# RQ2i-extra — the reference sees only a minority of each product's flags (2026-07-28)
+
+Follow-up to the per-AOI story, answering "aren't there a ton of FPs outside Caraballeda?"
+(user). YES — and it decomposes into two tiers:
+
+- **Within CEMS extents, outside Caraballeda:** the 4 other CEMS AOIs hold ~46 damage points
+  total, so precision there ≈ 0. Pooled precision is a flag-weighted average, giving a
+  near-EXACT law (RQ2m): `P_delivered ≈ P_Caraballeda × (share of flags in Caraballeda)`.
+- **Outside CEMS extents entirely (unmeasurable):** total flags vs flags-inside-CEMS-extents —
+  MS 9,635/9,217 (**4%** outside), OSU 57k/33k (43%), UH 75k/56k (25%), IMPACT 81k/23k
+  (**71%**), UNEP 75k/18k (**76%**), LIST 163k/34k (**79%**). So for IMPACT/UNEP/LIST,
+  **71–79% of flags fall where NO reference exists** and cannot be scored. Given damage was
+  coastal, most are near-certainly FPs.
+- **Consequence (important, honest):** every precision number in this register is measured on
+  each product's most favourable, damage-dense, reference-covered subset (~20–40% of flags for
+  most products). The true "in the wild" precision is very likely LOWER, unmeasurably so. MS is
+  the exception (96% of flags inside CEMS) — coverage restraint again.
+- **Confidence: high** on the flag-distribution facts; the "mostly FP" reading of the
+  unmeasurable tier is an inference (damage was coastal), stated as such.
+
 # RQ2j — hex performance maps: P / R / F1 / visits-per-find, all six products
 
 User ask (2026-07-27): the MS-call deck had res-7 P/R/F1 hex maps for Microsoft only —
@@ -695,6 +762,61 @@ the destruction bias shows up on precision AND recall, symmetrically.)
   ResNet) sides with the coherence group** → a tendency, NOT a clean optical-vs-radar law.
 - **Confidence: high** (683–784 points per grade). Manuscript: one sentence in Results II
   pending; register canonical.
+
+# RQ2k — CEMS vs CEMS∪ChatMap: the strengthened reference (justifies CEMS-only default)
+
+The "good comparison" behind the reference convention (RQ0). Score each product against
+CEMS-only vs CEMS ∪ ChatMap field points (both building-level; union = strict improvement),
+core region, r=10 m. Script `scripts/rq2k_field_union_precision.py`:
+
+```{python}
+tbl("RQ2-cems-footprint-points/rq2k_field_union_precision.csv")
+```
+
+- **The union is a pure win but a TINY one:** precision +5–9% relative (**≤0.006 absolute**);
+  recall +1–8% (**≤0.026 absolute**). No ordering, no conclusion changes.
+- **→ CEMS-only is the justified headline default** (literature-comparable; the strengthening
+  is immaterial). Reporting style where useful: `{metric}: {CEMS} ({CEMS∪ChatMap})`, e.g. MS
+  precision **0.081 (0.087)**, recall **0.474 (0.493)**.
+- ChatMap is only 367 points in-region → the union can't move much. (Its bigger value is the
+  SEPARATE grade-slope critique of CEMS, RQ2e, and the inland-coverage extension.)
+- **Confidence: high** (exact, well-powered on 1,467 CEMS + 367 field pts).
+
+# RQ2m — dead-zone dilution: precision falls by exactly the share of flags wasted (2026-07-28)
+
+The mechanism behind the as-delivered collapse (user: "shouldn't precision get ripped up
+outside Caraballeda?"). Script `scripts/rq2m_deadzone_dilution.py`:
+
+![Dead-zone dilution](artefacts/RQ2-cems-footprint-points/figs/rq2m_deadzone_dilution.png)
+
+- **A near-exact law:** `precision lost (%) ≈ share of flags outside Caraballeda (%)`. Every
+  product on the diagonal: MS 0%/0%, OSU 17%/16%, IMPACT 52%/52%, LIST 52%/52%, UNEP 68%/68%,
+  UH 90%/90%.
+- **Mechanism:** the 4 non-Caraballeda AOIs have ~zero damage → any flag there is FP → pooled
+  precision = flag-weighted average = P_Caraballeda × (share of flags in Caraballeda).
+- **So the "modest deterioration" impression is wrong:** precision DOES collapse for products
+  that flag the dead zones (IMPACT/LIST/UNEP/UH, 52–90% drop). MS/OSU are spared only because
+  they flag little outside Caraballeda (MS 0%, coverage restraint; OSU because its coherence
+  detections concentrate where damage is). NOT a dual-anchoring effect — plain precision
+  arithmetic.
+- Deck appendix slide. **Confidence: high** (exact from RQ2i flag counts).
+
+# RQ2n — the strict numbers are floors: crowd-adjusted intervals (2026-07-28)
+
+Answers "isn't it less bad if we credit damage the expert missed?" Script
+`scripts/rq2n_crowd_adjusted_bars.py` (reads RQ2i crowd columns):
+
+![Crowd-adjusted floors](artefacts/RQ2-cems-footprint-points/figs/rq2n_crowd_adjusted_bars.png)
+
+- As-delivered precision, strict CEMS → MapSwipe crowd-adjusted: MS .081→.237 (2.9×), OSU
+  .036→.100, IMPACT .032→.074, LIST .026→.066, UNEP .027→.074, UH .009→.018. All **~2–3×**.
+- **Two honesty guards baked into the figure:** (1) crowd COVERAGE varies — MS's 2.9× rests on
+  98% of its flags being crowd-voted (trustworthy), UH's 2× on just 2% (extrapolated, flagged
+  red); (2) **no day-zero baseline overlay** — MapSwipe is seeded from AI flags, so it can't
+  fairly score the baseline (circular). This softens floors into intervals; it does NOT
+  overturn the as-delivered "products barely beat the no-satellite baseline" result (which
+  stands on strict, apples-to-apples numbers).
+- Deck appendix slide. **Confidence: high** on MS/OSU (good coverage); LOW on UH (2% coverage).
 
 # RQ2h — OSU v0 vs v1: a revision that shuffles half the flags and moves nothing
 
