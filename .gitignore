@@ -44,6 +44,7 @@ docs/deployment.md
 # HTML (multi-MB self-contained) and call-prep material (internal). Figures are covered
 # by the global figs/ rule above.
 exploratory/paper/*.html
+!exploratory/paper/boss_deck.html
 exploratory/paper/*_files/
 exploratory/paper/ms_call_*
 exploratory/paper/_freeze_batch.log
