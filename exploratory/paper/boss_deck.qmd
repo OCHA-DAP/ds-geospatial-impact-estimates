@@ -105,13 +105,13 @@ damage point within r?". Opposite anchors, so no true-negative count needed.
 ![](artefacts/RQ3-prioritization-error-structure/figs/rq3_priority_map.png)
 :::
 ::: {.column width="44%"}
-![](artefacts/RQ3-prioritization-error-structure/figs/rq3_rank_scatter_clean.png)
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3_rank_scatter_all.png)
 :::
 ::::
 
 <p style="text-align:center; font-size:0.72em;">Left: each product's worst-hit picks land on
-the really-damaged cells. Right: more real damage → more flags (**ρ ≈ 0.8 within the damage
-zone**).</p>
+the really-damaged cells. Right: **all six products** rank neighbourhoods about equally well
+(ρ ≈ 0.77–0.83 within the damage zone) — closer to the dashed line = better.</p>
 
 ::: {.notes}
 Left = map: cells shaded by REAL damage, blue outline = product's top-10 picks. Right = the
@@ -335,4 +335,24 @@ better single models.</p>
 ::: {.notes}
 Working documents: findings register (findings.qmd) and manuscript (manuscript_v2.qmd). All
 figures regenerate from frozen data via committed scripts.
+:::
+
+# Appendix {.smaller}
+
+Backup slides for likely questions.
+
+## Appendix — why precision falls outside Caraballeda {.smaller}
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2m_deadzone_dilution.png)
+
+::: {.notes}
+Likely question: "shouldn't precision get destroyed outside Caraballeda, where CEMS reports
+almost no damage?" Yes — and it does, in proportion to how many flags a product places there.
+The four non-Caraballeda CEMS AOIs hold ~46 damage points total, so any flag there is a false
+positive. Pooled precision is a flag-weighted average, so precision lost ≈ share of flags in
+those dead zones — every product lands on the diagonal. MS is spared only because it flagged
+nowhere else (100% in Caraballeda); UH collapses because 90% of its flags are in dead zones.
+Two honest caveats: (1) this is only the flags inside CEMS extents — most products also flag
+tens of thousands of buildings BEYOND any reference, which we cannot score at all; (2) so every
+precision number we report is measured on each product's most favourable, damage-dense subset.
 :::
