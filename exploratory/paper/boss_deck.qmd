@@ -369,3 +369,19 @@ Two honest caveats: (1) this is only the flags inside CEMS extents — most prod
 tens of thousands of buildings BEYOND any reference, which we cannot score at all; (2) so every
 precision number we report is measured on each product's most favourable, damage-dense subset.
 :::
+
+## Appendix — the strict numbers are floors {.smaller}
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2n_crowd_adjusted_bars.png)
+
+::: {.notes}
+Likely question: "isn't it less bad if we credit damage the expert missed?" Yes — crediting
+MapSwipe-confirmed damage lifts every product's as-delivered precision ~2-3x above the strict
+CEMS floor. TWO honesty guards, both on the figure: (1) the boost is only as good as crowd
+COVERAGE — MS's rests on 98% of its flags being crowd-voted (trustworthy), UH's on just 2%
+(extrapolated, red). (2) We deliberately do NOT put the day-zero baseline on this chart:
+MapSwipe only voted on AI-flagged locations, so crediting it cannot fairly score the baseline
+(it never saw where the baseline would flag) — that comparison would be circular. So this slide
+softens the precision floors into intervals; it does NOT overturn the "products barely beat a
+no-satellite baseline" result, which stands on the strict, apples-to-apples numbers.
+:::
