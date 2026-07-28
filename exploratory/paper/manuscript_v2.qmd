@@ -180,16 +180,35 @@ Used together, the three references cover each other's blind spots. CEMS provide
 two-sided scorecard inside its bounds. ChatMap measures what CEMS and the products miss.
 MapSwipe settles disputes between a product and CEMS on the false-alarm side.
 
+**Which reference is used where.** CEMS is the primary reference: every headline precision
+and recall in this paper is computed against it, at r = 10 m, unless labelled otherwise.
+The other two enter only for the questions their geometry permits. ChatMap plays two
+distinct roles from the same 415 points: *unioned* with CEMS it forms a fuller
+building-level reference (both are damage points), and *held separate* it is what exposes
+CEMS's own grade-blindness (@sec-crossexam) — the same dataset, two purposes, never
+conflated. MapSwipe is a lens rather than a reference: its verdicts are per ~50 m cell and
+were collected only over AI-flagged locations, so it can adjudicate false alarms (the
+crowd-adjusted precision) and probe CEMS's completeness, but it cannot serve as a
+building-level reference or fairly score a model it never saw — for instance the geography
+baseline of @sec-dial, which it would penalise for flags the crowd never adjudicated. We
+keep CEMS-only as the default because unioning ChatMap changes nothing material: across all
+six products it lifts precision by at most 0.006 and recall by at most 0.026. Where the
+strengthened value carries signal we report it in parentheses, e.g. Microsoft precision
+0.081 (0.087).
+
 ## Methods
 
 ### Matching products to references
 
-The products and references use different geometries (points, polygons, rasters) on
-different building bases, so scoring requires an explicit matching rule. We compute recall
-and precision from opposite anchors, which avoids ever needing a count of true negatives
-(the vast stock of undamaged buildings). For recall, each CEMS damage point asks whether
-a product flag lies within radius r. For precision, each product flag asks whether a CEMS
-damage point lies within r.
+The product and reference use different geometries — CEMS drops points on damaged
+buildings, while each product flags its own footprints on its own building base — so there
+is no shared list of instances on which to build a single confusion matrix. We therefore
+score by *proximity*, the standard approach for detection-style evaluation: precision
+anchors on the product (of its flagged buildings, how many have a CEMS damage point within
+radius r?), and recall anchors on the reference (of the CEMS damage points, how many have a
+product flag within r?). Each metric carries its own denominator. Because the two metrics
+are precision and recall, neither uses the undamaged background (true negatives) — which we
+could not enumerate anyway, since CEMS never labels the undamaged stock.
 
 ```{python}
 #| fig-cap: "Dual-anchored matching. Left: a product is scored only where it AND the reference both looked. Middle: recall anchors on the reference — each CEMS damage point asks whether a product flag lies within radius r. Right: precision anchors on the product — each flagged building asks whether a CEMS point lies within r. Each metric brings its own denominator."
@@ -504,6 +523,29 @@ precision, while shipping everywhere destroyed UH's. (The voting and fusion anal
 @sec-dial operate in the core region and therefore sit on top of best-case numbers;
 their relative orderings are unaffected, but their absolute levels inherit the
 best-case flattery.)
+
+Two mechanisms make the as-delivered numbers what they are, and both are worth stating
+because they answer the obvious objection — *shouldn't precision be destroyed outside the
+one dense zone?* The first is arithmetic. Because the four low-damage AOIs record almost no
+damage, precision there is essentially zero, and the pooled figure is a flag-weighted
+average — so a product's as-delivered precision falls by almost exactly the share of its
+flags that land outside Caraballeda: Microsoft 0% of flags and 0% lost, OSU 17% and 16%,
+IMPACT and LIST 52% and 52%, UNEP 68% and 68%, UH 90% and 90% (@fig-deadzone). Precision is
+not *resisting* the false alarms; it collapses in direct proportion to where each product
+chose to flag. The second mechanism means even this understates the problem: the
+as-delivered frame can only score flags that fall inside a CEMS extent, and most products
+flag far beyond one. Of each product's total flags, the share landing outside every CEMS
+extent — where no reference can score them at all — is 4% for Microsoft but 43% for OSU,
+71% for IMPACT, 76% for UNEP, and 79% for LIST. Since damage was concentrated on the coast,
+the bulk of those unscoreable flags are almost certainly false positives. So every precision
+figure in this paper, as-delivered included, is measured on each product's most favourable,
+reference-covered subset; the true precision across a product's full output is very likely
+lower, and unmeasurably so.
+
+![Precision falls by almost exactly the share of flags a product places outside Caraballeda,
+where the reference records essentially no damage. Every product lies on the diagonal
+(precision lost = share of flags in the dead zones). Microsoft is spared only because it
+flagged nowhere else.](artefacts/RQ2-cems-footprint-points/figs/rq2m_deadzone_dilution.png){#fig-deadzone}
 
 The as-delivered frame also re-runs this paper's harshest benchmark. We trained the
 day-zero model (coast distance, building density, ShakeMap intensity; @sec-dial) on
