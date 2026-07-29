@@ -1038,6 +1038,31 @@ tbl("RQ8-learned-fusion/rq8b_asdelivered_baseline.csv")
 - **Confidence: high** on directions/orderings; magnitudes inherit the fusion frame and
   the thin-AOI reference (CIs pending).
 
+# Timeline — when each product arrived (availability; §8 timeliness precursor)
+
+`timeline/plot_timeline.py` → the availability timeline (time on x, product on y). Built on
+the git-anchored `timeline_events.csv` (our-ingest date = UPPER BOUND on availability;
+provider release is earlier and unconfirmed — standing flag #7).
+
+![Product availability timeline](timeline/timeline_products.png)
+
+- **The whole ecosystem arrived inside ~8 days.** CEMS ~day 2; Microsoft delivered
+  scene/AOI-by-AOI (days 1.8–3.9) → a **merged union** (day 4.8, the evaluated product);
+  IMPACT v1 raster (day 3.9) → **v2 vector** (day 8, evaluated); OSU v0 (day 4.8, evaluated);
+  UNEP (day 7).
+- **Multi-version products:** Microsoft (scenes → union), IMPACT (v1→v2), **and OSU
+  (v0→v1)** — the "rest were single versions" framing was wrong; OSU's v1 landed 07-22 (RQ2h,
+  not evaluated). UNEP is the clean single-version case.
+- **GAPS flagged (red on the plot), to fill from providers:** UH and LIST have NO git-anchored
+  date (joined as members later) — provider release + our-ingest UNKNOWN (rough bounds: UH
+  prod-promoted ~07-08; LIST a member by the 07-15 freeze). **All provider-release dates TO
+  CONFIRM.**
+- **Finer layer available:** MS lane shows AOI *deliveries*; underlying *imagery* acquisition
+  dates (Vantor/BlackSky 06-25, Vantor/Planet 06-26, from MapSwipe tile provenance) could be a
+  sub-layer.
+- **Confidence: high** on the ordering/upper-bounds; the §8 accuracy×arrival-date analysis is
+  blocked on provider release dates (the emails).
+
 # Methods clarifications on record
 
 **Does Moran's I confuse the footprint shape with clustering?** (raised 2026-07-07). No —

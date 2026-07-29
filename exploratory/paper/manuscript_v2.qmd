@@ -780,6 +780,32 @@ noise-dominated, and version-to-version stability deserves a place beside accura
 how such products are judged. The area-level signal, by contrast, is robust to exactly
 this kind of churn.
 
+## Results V — timeliness: when the products arrived {#sec-timeline}
+
+The operational question a scorecard cannot answer alone is *when*: a modestly accurate map
+on day two can matter more than a better one on day eight. We reconstruct each product's
+availability from the earthquake using the earliest date we can defend — the timestamp at
+which each product was integrated into our own pipeline — which is a conservative *upper
+bound* on when it was actually available (true provider-release dates are earlier and are
+still being confirmed).
+
+![Product availability, measured from the M7.5 mainshock. Circles mark a release or version;
+a filled star marks the final product actually evaluated (Microsoft's merged union; IMPACT
+v2). Positions are our-integration dates — an upper bound on availability — so true release
+is earlier. Red markers are dates still to confirm.](timeline/timeline_products.png){#fig-timeline}
+
+Three points stand (@fig-timeline). First, the entire ecosystem arrived inside about eight
+days — the field went from nothing to a dozen independent products in a single week.
+Second, several products were not single artefacts but sequences: Microsoft delivered
+scene-by-scene across five areas before merging them into the union we evaluate, and both
+IMPACT (raster v1 → vector v2) and OSU (v0 → a later v1) shipped successive versions — so
+"the product" has a delivery history, and the version a responder acted on depended on when
+they looked. Third, and honestly, we stop at *availability*: the decision-relevant analysis
+— accuracy interacted with arrival date, so that a fast-but-rough product can be scored
+against a slow-but-better one — requires confirmed provider-release dates we do not yet
+hold, and is deferred. What the timeline already shows is that timeliness varied by days
+across products, enough to matter operationally.
+
 ## Discussion
 
 Two negative results are worth recording because they close tempting shortcuts. First,
@@ -868,9 +894,10 @@ is understated. The learned fusion weights are calibrated within this event. OSU
 revised v1, delivered after the study window, is used by the operational dashboard but
 enters this paper only in the dedicated comparison (@sec-casestudy); all other OSU
 numbers are v0. Bootstrap
-confidence intervals, population-weighted prioritisation, and the timeliness axis (how
-each product's availability date interacts with its accuracy, arguably the operational
-variable) are in progress and absent from this draft. Input imagery details for two
+confidence intervals and population-weighted prioritisation are in progress and absent from
+this draft. The timeliness axis is partly built: @sec-timeline reconstructs *availability*
+(as an upper bound), but the decision-relevant interaction of accuracy with arrival date
+awaits confirmed provider-release dates. Input imagery details and release dates for two
 products (UH, LIST) await provider confirmation.
 
 ## Conclusion
