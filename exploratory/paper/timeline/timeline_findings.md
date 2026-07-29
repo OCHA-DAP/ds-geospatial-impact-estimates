@@ -100,3 +100,26 @@ one — captured as separate milestone rows.
 - [ ] **OSU/NASA**: product release/delivery date.
 - [ ] **HOT fAIr** & **UNEP/OCHA JEU**: HDX publish timestamps.
 - [ ] **DISHA/UNOPS**: delivery date + exact licence terms bearing on what we may publish.
+
+## Plot + open gaps (2026-07-29)
+
+`plot_timeline.py` → `timeline_products.png` (time on x, product on y). Circles = a
+release/version; filled star = the FINAL product evaluated (Microsoft's merged union;
+IMPACT v2); connecting line = multi-version progression. Everything is upper-bound
+availability (our-ingest); provider release is earlier and unconfirmed.
+
+**Gaps flagged on the plot — for the user / providers to fill:**
+- **UH QuakeDamage** — not in the git-anchored dataset (added as an evaluation member
+  later). Provider-release AND our-ingest dates UNKNOWN. Rough upper bound only: we
+  promoted it to prod ~2026-07-08 (~13.6 d). Shown as a "?" at the right margin.
+- **LIST / WFP / CERN** — same: no ingest anchor; a member by the 2026-07-15 freeze
+  (≤ ~20.7 d). Date UNKNOWN, "?" at the margin.
+- **OSU had TWO versions** (correction to "the rest were single"): v0 (~06-29, evaluated)
+  and a v1 revision on ~2026-07-22 (RQ2h; not evaluated — paper scores v0). v1 shown as a
+  hollow red diamond.
+- **All provider-release dates TO CONFIRM.** The x-positions are our-ingest git dates =
+  upper bounds; true release is earlier. This is standing flag #7 and blocks the §8
+  timeliness axis (accuracy × arrival date).
+- **Microsoft scene-level detail:** the plot shows AOI *deliveries* (our proxy for scenes).
+  The underlying *imagery* acquisition dates (Vantor 06-25, BlackSky 06-25, Vantor 06-26,
+  Planet SkySat 06-26 — from the MapSwipe tile provenance) are a finer layer if wanted.
