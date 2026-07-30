@@ -36,6 +36,14 @@ ALLOWLIST = {
         "project_prefix": "ds-geospatial-impact-estimates",
         "dirs": {"staging": "platinum", "prod": "platinum-prod"},
     },
+    # African regional seasonal forecasts gallery (GitHub Pages)
+    # https://ocha-dap.github.io/ds-regional-forecasts/
+    "regional-forecasts": {
+        "account": "imb0chd0dev",
+        "container": "projects",
+        "project_prefix": "ds-regional-forecasts",
+        "dirs": {"assets": "processed/site-assets", "raw": "raw"},
+    },
 }
 
 _SAS_HOURS = 24
