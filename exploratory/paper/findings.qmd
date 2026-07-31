@@ -66,7 +66,7 @@ where, why" confusion; MapSwipe vs ChatMap especially).**
   handling. Never conflate them.
 - **MapSwipe is never a headline metric.** Its ~50 m cell verdicts, seeded from AI flags, make
   it an UPPER-estimate lens (crowd-adjusted precision) and a CEMS-completeness probe — not a
-  building-level reference, and not usable to score the day-zero baseline (would be circular,
+  building-level reference, and not usable to score the geography null model (would be circular,
   since the crowd only saw AI-flagged spots; RQ2n).
 
 ![Reference architecture](artefacts/RQ0-matching-basis/figs/reference_architecture.png)
@@ -204,7 +204,7 @@ per-cell CEMS damage count vs product flag count). **All six products rank neigh
 about equally well: ρ = 0.77–0.83** (MS 0.81, IMPACT 0.80, OSU 0.81, UH 0.80, LIST 0.83,
 UNEP 0.77) — ranking is UNIVERSAL, not cherry-picked. Caveats to hold: (1) dense zone only —
 full-region ρ ≈ 0.5–0.6; (2) coarse ~5 km² scale, degrades finer; (3) NOT yet checked vs the
-day-zero baseline at area level (it plausibly ranks areas equally well — the damage gradient
+geography null model at area level (it plausibly ranks areas equally well — the damage gradient
 IS the coast/shaking gradient), so present as "products' most useful capability," not a clean
 win over the free baseline. Figs: rq3_priority_map, rq3_rank_scatter_all.
 
@@ -681,8 +681,9 @@ tbl("RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv")
   strip → **coverage restraint is a product property** (protects as-delivered precision;
   UH shipping everywhere destroyed its own). Manuscript now leads Results I with the
   as-delivered range and labels core-region numbers "best case".
-- ~~QUEUED (user hypothesis)~~ **ANSWERED — RQ8b (2026-07-27): CONFIRMED for 5 of 6.**
-  See the RQ8b subsection under RQ8.
+- ~~QUEUED (user hypothesis)~~ **ANSWERED — RQ8b: CONFIRMED. Operating-point headline
+  (2026-07-29 reframe): geography matches/beats 4 of 6 on both P and R at each product's own
+  list size (5 of 6 by whole-curve AP).** See the RQ8b subsection under RQ8.
 - **Confidence: high** on the Caraballeda-dominance and the collapse pattern; the
   *interpretation* of the zeros is deliberately left as a confound (that honesty is the
   point).
@@ -812,7 +813,7 @@ Answers "isn't it less bad if we credit damage the expert missed?" Script
   .036→.100, IMPACT .032→.074, LIST .026→.066, UNEP .027→.074, UH .009→.018. All **~2–3×**.
 - **Two honesty guards baked into the figure:** (1) crowd COVERAGE varies — MS's 2.9× rests on
   98% of its flags being crowd-voted (trustworthy), UH's 2× on just 2% (extrapolated, flagged
-  red); (2) **no day-zero baseline overlay** — MapSwipe is seeded from AI flags, so it can't
+  red); (2) **no geography null model overlay** — MapSwipe is seeded from AI flags, so it can't
   fairly score the baseline (circular). This softens floors into intervals; it does NOT
   overturn the as-delivered "products barely beat the no-satellite baseline" result (which
   stands on strict, apples-to-apples numbers).
@@ -984,6 +985,13 @@ tbl("RQ8-learned-fusion/rq8_summary.csv")
 
 ![Out-of-fold precision-recall + random-forest importances.](artefacts/RQ8-learned-fusion/figs/rq8_learned_fusion.png)
 
+- ⚠️ **QUALIFIED 2026-07-29:** the "+40% AP" headline below overstates the practical gap.
+  Voting is a **7-level ordinal** score (0–6) → only 6 cut points, so its AP integral is
+  penalised for grid coarseness, not just for worse ranking. At the **best-F1 operating point**
+  the fusion-vs-voting gap collapses from **+41% (AP 0.359 vs 0.255)** to **+13% (F1 0.386 vs
+  0.342)**. Practical claim for the manuscript: *a transparent 4-of-6 agreement rule recovers
+  most of the learned model's value* — which also dodges calibration/training-data/explainability
+  costs operationally. Keep this caveat attached whenever the 0.36-vs-0.26 number is quoted.
 - **Learned fusion beats the flat k-of-6 dial by ~40%** (average precision 0.36 vs 0.26)
   and quadruples the best single product (0.08–0.09). Logistic ≈ random forest — the signal
   is mostly additive, so an interpretable weighted vote captures nearly all of it.
@@ -991,33 +999,246 @@ tbl("RQ8-learned-fusion/rq8_summary.csv")
   (dist-to-coast + density = 44% of RF importance), which would have meant the model just
   learned where the earthquake was. Feature-set ablation refutes that: **context-only
   AP = 0.08; products-only AP = 0.33** (vs 0.36 full). The learned skill is the products.
-- **The mirror finding is the damning one:** knowing nothing but the **day-zero variables**
-  (coast distance, building density, ShakeMap MMI — all available before any satellite
-  tasking) predicts damaged buildings **as well as any individual satellite product** —
-  all six singles computed (v0-pinned): AP 0.076–0.092 vs context-only 0.08. REFINEMENT
-  (2026-07-27, user asked for a binary-rule comparison): thresholding the day-zero score
-  at each product's flag count gives a same-size no-satellite list; at matched sizes the
-  products hold a **modest ×1.3–1.6 pointwise precision edge** (e.g. MS 0.138 vs 0.099 at
-  9,138 flags) — real, but far below the fusion gap. Honest claim: products ≈ the day-zero
-  curve, slightly above it pointwise; fusion is in a different regime. Caveat: MMI ~constant
-  in the core region, so local day-zero skill = coast + density.
+- **The mirror finding:** knowing nothing but the **context variables** (coast distance,
+  building density, ShakeMap MMI — all available before any satellite tasking) predicts
+  damaged buildings **within ~25% of the best product's F1** in the core region.
+  ⚠️ **CORRECTED 2026-07-29** — this used to read "as well as any individual satellite
+  product", which rested on the now-discarded single-product AP comparison (AP 0.076–0.092 vs
+  context-only 0.08). Under the valid F1-at-operating-point test (below), geography loses to
+  5 of 6 products in the core region. The claim is now bounded, not equal-skill.
+  REFINEMENT (2026-07-27): thresholding the geography null score at each product's flag count gives
+  a same-size no-satellite list; in the core region the products hold a **modest ×1.3–1.6
+  pointwise precision edge** (e.g. MS 0.138 vs 0.099 at 9,138 flags) — real, but far below
+  the fusion gap. Honest claim: products ≈ the geography-null curve, slightly above it pointwise in
+  the best-case core; fusion is in a different regime. Caveat: MMI ~constant in the core
+  region, so local null-model skill = coast + density.
+- **AP-SCOPING DECISION (2026-07-29, user flagged AP as confusing):** a single product is a
+  *binary* flag list (one operating point). ⚠️ **Its AP does NOT equal its precision** (my
+  earlier wording, corrected 2026-07-29 after user challenge): sklearn's AP is a
+  recall-weighted sum over PR-curve steps, and a binary list has two steps (the flagged set +
+  the trivial flag-everything endpoint), giving the exact identity
+  **AP_binary = P·R + (1−R)·π**, π = prevalence. VERIFIED on all six products: solving for π
+  gives 0.0468–0.0489 for every one — identical, so the identity holds. Consequence: the
+  (1−R)·π term is free credit any predictor gets, it drags AP toward prevalence (hardest for
+  low-recall products), and it **compresses six products whose precisions span 0.087–0.148
+  into an AP band of just 0.076–0.092** — right where a mediocre continuous score also sits.
+  That is why the old "geography ties the products at ~0.08" read as a tie: a true curve
+  integral (geography null) compared against six compressed binary blends. AP for a single product is
+  NOT comparable to a continuous score's AP (a whole PR-curve integral). We therefore (a)
+  report AP **only among the continuous scores** — geography null 0.08, flat voting 0.26, weighted
+  fusion 0.36 — and (b) compare products vs the baseline as **operating points / point-against-
+  curve**, never single-product AP vs fusion AP. The single-product APs (0.076–0.092,
+  v0-pinned) are retained here as a computed fact but dropped from the manuscript figure/
+  headline. Manuscript: geography-null *construction* now has its own Methods subsection
+  (`manuscript_v2`, "The geography null model and weighted fusion") + a build schematic; the
+  AP-bar figure panel now shows only the 3 continuous scores.
+- 📊 **NEW DISTILLED DECK `satellite_damage_evaluation_v2.qmd` (2026-07-29).** Supersedes `satellite_damage_evaluation_v1` (was `boss_deck`)
+  for presenting: 17 slides, every number is the corrected radius-unified (10 m) set, and it
+  carries the two null findings the old deck predates (building level AND area level).
+  Styling + the animated particle-network title background are borrowed from
+  `ds-aa-lac-dry-corridor/analysis/2026_cadc_drought_v3` (`hdx-bg.html` canvas + CHD-green
+  scss) — copied here as `hdx-bg.html` + `gie_slides.scss`; wired via
+  `theme: [default, gie_slides.scss]` + `include-after-body: hdx-bg.html`, with `center: true`
+  so slides are vertically centred. New figure `rq3f_null_ranking.png` (paired product-vs-null
+  rank bars) built for it. Rendered decks are NOT tracked — `.gitignore` ignores `exploratory/paper/*.html` outright, so publishing a rendered deck is always a deliberate act.
+  **Verified headless** (puppeteer-core + Chrome, script in job tmp): 17 slides, canvas painting
+  CHD green on the title slide, 0 console/page/request errors, 0 slide overflow, all 5 headline
+  numbers cross-checked against the artefact CSVs.
 
-![The day-zero baseline, visualized (three panels, 2026-07-27): top = the no-satellite
-model's predicted risk with CEMS damage on top; bottom-left = AP bars incl. a BINARY
-day-zero rule at the median product list size (9,963 flags: P 0.10 / R 0.35, AP 0.065);
-bottom-right = the PR plane — products are points (provider-thresholded), day-zero and
-fusion are curves (continuous scores = families of binary rules), and the six k-of-6
-voting rules are numbered squares climbing from the singles' level onto the fusion curve
-(frame = centroid r20, NOT comparable to the dual-anchor r10 dial-table
+- 🔴 **RQ3f — GEOGRAPHY NULL RANKS AREAS AS WELL AS THE PRODUCTS (2026-07-29). Closes a gap
+  that was explicitly flagged as untested in the register + deck ("we have NOT checked whether
+  the baseline ranks areas equally well — it plausibly does"). It does.** Script
+  `RQ3-prioritization-error-structure/scripts/rq3f_null_ranking.py`, output
+  `rq3f_null_ranking.csv`. Method mirrors rq3_prioritization exactly (same regions = CEMS latest
+  extent ∩ product AOI, same H3 res 7/8, same Spearman vs per-cell CEMS damage count); the null's
+  per-cell value = SUM of out-of-fold predicted probabilities (expected damage count, no
+  threshold needed), logistic learner, GroupKFold on cell7, label r=10.
+
+  | res | product | ρ product | ρ null | delta |
+  |---|---|---|---|---|
+  | 8 | Microsoft | 0.466 | **0.568** | −0.102 |
+  | 7 | Microsoft | 0.585 | **0.631** | −0.046 |
+  | 8 | IMPACT | 0.292 | **0.594** | −0.303 |
+  | 7 | IMPACT | 0.433 | **0.673** | −0.240 |
+  | 8 | OSU | **0.505** | 0.478 | +0.027 |
+  | 7 | OSU | **0.540** | 0.485 | +0.055 |
+
+  - **Null beats the product in 4 of 6 comparisons**, decisively for IMPACT (0.673 vs 0.433 at
+    sector scale). Only OSU exceeds it, by +0.03/+0.06 — noise on 31–454 cells.
+  - **This damages the paper's one POSITIVE finding.** Area ranking was what we told responders
+    to trust. It is now "where the products *work*, not where they *add*".
+  - Same limitation as elsewhere: the null is fitted on this event's labels ⇒ a hindsight
+    information-content statement, NOT something a responder could have run. Products WERE
+    available. Does NOT touch the agreement finding (still the only label-free method).
+  - Written into: Abstract, Introduction, Results (new `tbl-nullrank` + interpretation),
+    Recommendations, Conclusion.
+
+- 🔶 **RQ3f SCOPE CHECK — the "geography out-ranks 5 of 6" result is largely a
+  FIND-CARABALLEDA effect (2026-07-30, user asked whether the rank analysis was Caraballeda-only).**
+  It was NOT: the region is all CEMS latest extents ∩ product AOI. But 96% of reference damage
+  sits in Caraballeda, so ranking across all five AOIs mostly rewards separating the damage zone
+  from four quiet ones — trivial for coast+density. Re-ran restricted to the Caraballeda AOI
+  (`GIE_SCOPE=caraballeda`, finer cells since the AOI holds too few ~5 km² cells;
+  `rq3f_null_ranking_caraballeda.csv`):
+
+  | product (res 8, in Caraballeda) | ρ product | ρ null | delta |
+  |---|---|---|---|
+  | LIST | **0.668** | 0.543 | +0.125 |
+  | IMPACT v2 | **0.548** | 0.456 | +0.092 |
+  | OSU | **0.642** | 0.562 | +0.080 |
+  | UNEP | 0.451 | **0.524** | −0.074 |
+  | Microsoft | 0.466 | **0.568** | −0.102 |
+  | UH | 0.389 | **0.597** | −0.208 |
+
+  - **3–3 split within the damage zone** (same at res 9). So the products DO carry ranking
+    information about where *within* a damaged area to go; what they don't add is which area —
+    the part geography already encodes.
+  - Microsoft's numbers are identical to the all-AOI res-8 run because its AOI ≈ Caraballeda,
+    a useful internal consistency check.
+  - **Corrects my earlier overstatement.** "Geography beats 5 of 6" is a statement about the
+    COARSE task only, and is now qualified in the deck, the Results text, and `tbl-nullrank-cara`.
+
+- ⭐ **NEW SPINE (2026-07-29, user's take — adopted): "flat k-of-6 voting is the most promising
+  for real-time disasters; we don't need weights or labels."** Correct, and stronger than first
+  framed, because it survives the same critique that demoted the geography null: **the weighted
+  fusion's weights are fitted to this event's CEMS labels — the very damage map a responder is
+  waiting for — so fusion is ALSO retrospective and un-runnable during a response.** Voting
+  needs no weights, no training data, no reference.
+  - **Price of deployability = 18%** (voting 0.290 vs fusion 0.343 at r=10) — NOT the 46% the AP
+    view implies (AP penalises voting's 7-level ordinal grid, not its ranking).
+  - **Voting = ~2x the best single product** (0.290 vs UH 0.148), so ingesting 6 feeds pays off.
+  - **Three qualifications kept in the text:** (1) "flat" hides an equal-trust assumption — UH
+    (as-delivered P 0.009) casts a full vote, and that it HELPED is a labels-in-hand finding;
+    (2) the transferable rule is **cross-modal agreement**, not counting per se — same-sensor
+    was the weakest of 15 pairings, and 5 correlated optical products would inherit one bias;
+    (3) k is choosable label-free BY CAPACITY (flag counts are observable) but the precision it
+    buys is not knowable at the time — you pick a workload, not a hit rate.
+  - **Promoted into:** Abstract, Results III (the 18%-is-the-price-of-deployability passage),
+    Conclusion (now leads with it), and the responder Recommendation (rewritten: "do not spend
+    time choosing a product; spend it counting agreement between products").
+  - This resolves the parked spine question: the paper's message is now *ensemble-and-area +
+    deployability*, which converts the negative finding ("products are worse than you think")
+    into an operational one, rather than leaving epistemics and recommendations disconnected.
+
+- 🔵 **RADIUS UNIFIED TO 10 m (2026-07-29, user: "lets move 10m to everything, 20m comparison
+  can go in appendix"). DONE — this supersedes the r=20 numbers logged above.** Earlier drafts
+  ran the fusion/null analysis at r=20 while every headline number used r=10, so two
+  incomparable sets of precisions circulated. Root cause: r=20 was a *model-fitting* choice
+  (halving the radius halves the positive class: 2,733 -> 1,350 in the core region), never a
+  measurement decision. Now: fusion is FITTED at 20 m, EVALUATED at 10 m like everything else.
+  - **Key diagnostic:** at MATCHED radius, centroid vs native-geometry matching differs by
+    <=0.005 per product (MS 0.081 vs 0.080, OSU 0.045 vs 0.040...). So the old "scorecard frame
+    vs fusion frame" gap was **entirely the radius** — there was never a methodological
+    difference. `tbl-frames` now shows this.
+  - **r=10 headline (core region):** geography null **0.128**; products UH 0.148, MS 0.142,
+    UNEP 0.139, IMPACT 0.123, LIST 0.104, OSU 0.085; flat voting **0.290**; weighted fusion
+    **0.343**. Null beats 3 of 6, sits 14% below the best product. AP: fusion 0.284, voting
+    0.194, null 0.060 (logit) / 0.045 (rf) — learner rule unchanged, logistic still stronger.
+  - **Matched-list-size (core, r=10):** products clear the null in 3 of 6 (UH, UNEP, MS);
+    IMPACT, LIST, OSU fall below it on P and R alike.
+  - **Combination result STRENGTHENS at the tighter radius:** fusion goes from 1.8x to **2.3x**
+    the best single product. Makes sense — r=10 demands building-level identification, which is
+    where a single product fails and agreement pays.
+  - **AS-DELIVERED IS RADIUS-INVARIANT:** 4 of 6 matched-or-beaten at BOTH radii, same four
+    products (IMPACT, UH, LIST, UNEP); MS and OSU stay ahead at both. Numbers updated to r=10
+    (`rq8b_asdelivered_baseline_r10.csv`).
+  - Scripts take `GIE_LABEL_R` (outputs suffixed `_r10`); `rq8_best_f1_fig.py` split out so the
+    bar chart redraws from CSV without refitting. r=20 table lives in the manuscript Appendix.
+  - Verified: 21/21 manuscript numbers cross-checked against artefact CSVs.
+
+- **NULL-MODEL LEARNER — RESOLVED (2026-07-29).** The paper had been comparing a *logistic*
+  fusion against a *random-forest* null (different learners on the two sides). Rule now applied
+  and stated in Methods: **the null is whichever learner scores higher IN THAT FRAME, with both
+  disclosed.** Learner is irrelevant wherever products are involved (fusion 0.359 either way;
+  products-only 0.328/0.327). For the null it is frame-dependent:
+  - **Core region → LOGISTIC** (AP 0.106 vs RF 0.080). Shaking ~constant, relationship smooth,
+    RF overfits blocks. Core-region F1: null **0.206** vs MS/IMPACT 0.212, UH 0.196, UNEP 0.193,
+    LIST 0.190, OSU 0.158 ⇒ null matches/beats 4 of 6, ~3% below the best two.
+  - **As-delivered → RANDOM FOREST** (RF wins 5 of 6 footprints; LIST/UNEP 0.076 vs logistic
+    0.038). Restores the original **4 of 6 matched-or-beaten** result. ⚠️ I briefly forced
+    logistic everywhere, which handicapped the null and wrongly cut this to 2 of 6 — reverted.
+  - Two layers needing different model classes is itself evidence they are different regimes,
+    consistent with the MMI-importance split (core 0.000 vs as-delivered 0.25–0.31).
+  - **Net:** my interim "products beat geography by ~25%" (from the weak RF null in the core)
+    is RETRACTED. Standing claim: *no single product separates itself clearly from a hindsight
+    geography null in either frame; the COMBINATION does* (voting 0.342, fusion 0.386 ≈ 2×).
+- **BEST-F1 COMPARISON (2026-07-29, user asked for it directly — `rq8_best_f1.csv`,
+  `figs/rq8_best_f1.png`).** Each product = the ONE point it shipped, so its F1 is that
+  point's F1. Each of our continuous scores = its **best single cut**. ⚠️ I first called this
+  an "oracle" cut (generous to us, a ceiling) — **TESTED AND WRONG, 2026-07-29**: selecting the
+  null-model threshold strictly out-of-sample (inner validation split held out of the training
+  blocks, applied blind to the test fold — `rq8_threshold_bias.csv`) gives **F1 0.167 vs 0.158**
+  for the hindsight cut. The honest procedure scores HIGHER (per-block adaptive threshold beats
+  one global cut by more than hindsight is worth). ⇒ threshold selection is NOT a meaningful
+  advantage at n≈400k; one scalar is pinned down from training data alone. Conclusion unchanged
+  and now better founded. Result, fusion frame:
+  **geography null 0.158** (P 0.096 / R 0.458 @ 13,112 flags) — **ties the WORST product
+  (OSU 0.158) and loses to the other five**: IMPACT 0.212, MS 0.212, UH 0.196, UNEP 0.193,
+  LIST 0.190. Combinations: **flat voting 0.342** (P 0.311 / R 0.380 @ 3,347 = the 4-of-6
+  rule), **weighted fusion 0.386** (P 0.396 / R 0.377 @ 2,604) ≈ 2× the best single product.
+  **This CORRECTS the old "geography ≈ best product" line** (an AP artefact) → in the core
+  region products DO beat geography, by ~25%; the damning result is the as-delivered frame
+  (RQ8b), not this one. The two frames now tell one coherent story: carefully-analysed area →
+  products win modestly; full delivered footprint → most lose to geography.
+
+![The geography null model, visualized (three panels; middle panel revised 2026-07-29): top =
+the no-satellite model's predicted risk with CEMS damage on top; middle = AP bars for the
+**three continuous scores only** (geography null 0.08, flat voting 0.26, weighted fusion 0.36) —
+single products removed (binary: AP = P·R+(1−R)·π, not comparable); bottom = the PR plane — products are points
+(provider-thresholded, UH/UNEP leader-lined as they nearly coincide), the null and fusion
+are curves (continuous scores = families of binary rules), the red diamond is the geography null
+score binarized at median product size (9,963 flags), and the six k-of-6 voting rules are
+numbered squares climbing from the singles' level onto the fusion curve (frame = centroid
+r20, NOT comparable to the dual-anchor r10 dial-table
 numbers).](artefacts/RQ8-learned-fusion/figs/rq8_geography_baseline.png)
 - Caveats: weights are event-specific calibration ("what was learnable in-event"), not a
   transferable model; MMI was constant in the core region (importance 0 — uninformative
   here, not generally); the crowd-gap weighting changed results negligibly (reported
   sensitivity).
+- **VALIDATION-FAIRNESS Q (user, 2026-07-29): "products are evaluated on the full sample but
+  our models use resampling — is that fair?" ANSWER, two parts.** (a) *Same sample.*
+  `GroupKFold(5)` over H3 res-7 blocks partitions the buildings and `oof[m][te] = ...` fills a
+  prediction for **every** building, so the models are scored out-of-fold on the *identical*
+  building set and denominators as the products. CV is not subsampling the evaluation — it
+  only prevents grading a model on rows it trained on, which makes model numbers *more*
+  conservative. (b) *The real asymmetry runs the OTHER way and favours our models:* the
+  null/fusion models are **fitted to this event's CEMS labels**. Spatial blocking stops
+  neighbour-memorisation but each fold still learns event-level structure (how steeply damage
+  falls off from THIS coastline). Products never saw CEMS. ⇒ the geography null model is an
+  **upper bound on geography-only skill**, and the defensible claim is about *information
+  content* ("products add little beyond 3 context variables"), NOT the operational claim that
+  responders held this baseline on day zero. A prior model fitted on *previous* earthquakes —
+  what a responder would really have — would score below this bound and is untested.
+  Now written into the manuscript Methods (geography-null subsection) + Limitations.
+- **RENAMED "day-zero baseline" → "GEOGRAPHY NULL MODEL" (2026-07-29, user: "we might be
+  overselling it... it's not really day zero because we wouldn't have labelled damage data").
+  User is right; renamed throughout both docs + figures.** The name promised operational
+  availability the model cannot deliver: its three INPUTS are day-zero available, its fitted
+  COEFFICIENTS need the damage labels a responder is still waiting for. Reframed as a *null
+  model* (role = calibrate what the metrics mean, like a majority-class comparator), and a
+  **generous** one since it is fitted with hindsight. Read directionally: product BEATS it ⇒
+  strong evidence of real added information (it beat a hindsight-fitted null); product LOSES
+  to it ⇒ that product's flags are placed no better than a retrospective geography prior —
+  damning about the product, NOT a claim geography was an available substitute. Demoted from
+  the abstract headline. Counterpoint kept in view: the model *class* IS operational (USGS
+  PAGER-style exposure × shaking runs in ~30 min), so ours is best read as a ceiling on that
+  class, not a fantasy.
+- **TWO-LAYER MMI CHECK (2026-07-29, user predicted it: "MMI could play a role in that larger
+  scope" — CONFIRMED).** Feature importances of the null model, by analysis layer:
+  - **Layer 1, Caraballeda core region: MMI = 0.000** (dist_coast 0.239, density9 0.197).
+    Shaking is ~constant over ~61 km², so the null has **NO event-specific input at all** —
+    its skill there is pure static geography + coefficients fitted to this event's labels,
+    i.e. a hindsight description of where damage fell. Frame this layer strictly as a null.
+  - **Layer 2, full AOIs ∩ CEMS (as-delivered): MMI = 0.25–0.31** (IMPACT 0.307, UH 0.302,
+    OSU/LIST/UNEP 0.248) — the null genuinely uses ShakeMap, which *is* day-zero available.
+    This layer is the better-founded comparison.
+  - **Internal check:** MS = MMI 0.000, because MS shipped only the Caraballeda strip so its
+    footprint collapses onto layer 1. The mechanism is consistent.
+  - Reported by `rq8b_asdelivered_baseline.py` (prints per-product importances).
 
-## RQ8b — as-delivered frame: the day-zero baseline BEATS five of six products (2026-07-27)
+## RQ8b — as-delivered frame: geography matches/beats 4 of 6 products at their own list size (2026-07-27; reframed 2026-07-29)
 
-User hypothesis, confirmed. Script `scripts/rq8b_asdelivered_baseline.py`: day-zero RF
+User hypothesis, confirmed. Script `scripts/rq8b_asdelivered_baseline.py`: geography null RF
 (same spec, spatial-block CV) trained/evaluated on each product's FULL delivered
 footprint (all CEMS AOIs ∩ product extent; fusion frame, 422,931 buildings max):
 
@@ -1025,13 +1246,20 @@ footprint (all CEMS AOIs ∩ product extent; fusion frame, 422,931 buildings max
 tbl("RQ8-learned-fusion/rq8b_asdelivered_baseline.csv")
 ```
 
-- **AP, product vs day-zero in its own delivered region:** MS 0.088 vs 0.077 (only
-  product to beat it — Caraballeda-only coverage); IMPACT 0.036 vs 0.077; OSU 0.058 vs
-  0.084; LIST 0.035 vs 0.076; UNEP 0.018 vs 0.076; **UH 0.011 vs 0.091 (8×)**. At UH's
-  own list size the day-zero rule gets P 0.046 / R 0.92 vs UH's P 0.014 / R 0.29.
-- Headline for the manuscript (now in Results II + abstract): *as delivered, five of six
-  products carried less building-level information than a no-satellite baseline; the
-  exception is the product that restricted its coverage.*
+- **HEADLINE (operating points, 2026-07-29 reframe):** cut the geography null score to *exactly*
+  each product's delivered flag count and compare like-for-like. On **both precision and
+  recall**, the no-satellite baseline **matches or beats 4 of 6**: IMPACT (0.061/0.52 vs
+  0.073/0.62), UH (0.014/0.29 vs 0.046/0.92), LIST (0.051/0.63 vs 0.060/0.74), UNEP
+  (0.045/0.29 vs 0.082/0.52). Only MS (0.137/0.46 vs 0.088/0.30 — Caraballeda-only strip)
+  and OSU (0.069/0.82 vs 0.062/0.73 — flagged so widely it bought recall) stay ahead.
+- **Secondary (by AP; why the count differs):** integrating the whole curve, the geography null beats
+  **5 of 6** — MS 0.088 vs 0.077 (only product to beat it); IMPACT 0.036 vs 0.077; **OSU 0.058
+  vs 0.084 (the swing case** — OSU wins the operating point but loses on AP because it ships
+  one huge low-precision list); LIST 0.035 vs 0.076; UNEP 0.018 vs 0.076; **UH 0.011 vs 0.091
+  (8×)**. Per user (2026-07-29), the manuscript now leads with the operating-point view
+  (interpretable, no binary-vs-continuous AP mix); AP retained here as the log. Manuscript
+  headline (Results II + abstract): *as delivered, cut to each product's own list size, a
+  no-satellite baseline matches or beats four of the six on both precision and recall.*
 - Caveat (stated in manuscript): thin-reference AOIs penalize whoever flags there — the
   products did, the baseline didn't; CEMS under-recording (flag #1) would close part of
   the gap. Responders faced the same information deficit, which is the frame's point.

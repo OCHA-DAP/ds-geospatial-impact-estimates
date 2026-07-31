@@ -23,6 +23,7 @@ import geopandas as gpd
 import h3
 from scipy.spatial import cKDTree
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GroupKFold
 from sklearn.metrics import average_precision_score
 
@@ -31,7 +32,8 @@ import gie_paper as gp  # noqa: E402
 
 HERE = os.path.dirname(__file__)
 POS = (2, 3)
-LABEL_R = 20
+LABEL_R = int(os.environ.get("GIE_LABEL_R", 20))
+SUF = "" if LABEL_R == 20 else f"_r{LABEL_R}"
 MEMBERS = {"MS": "ms_dmg", "IMPACT": "sar_dmg", "OSU": "osu_dmg",
            "UH": "uh_dmg", "LIST": "list_dmg", "UNEP": "debris_dmg"}
 
@@ -105,12 +107,29 @@ def main():
         oof = np.zeros(len(sub))
         gkf = GroupKFold(n_splits=5)
         for tr, te in gkf.split(X, y, groups):
+            # Null = the STRONGER learner in this frame (see manuscript Methods). Over these
+            # large footprints MMI varies and interacts non-linearly, and the forest wins on AP
+            # for 5 of 6 (e.g. LIST/UNEP 0.076 vs logistic 0.038); in the small core region the
+            # ranking reverses and the logistic wins (0.106 vs 0.080), so that layer uses logit.
             m = RandomForestClassifier(n_estimators=400, min_samples_leaf=20,
                                        class_weight="balanced_subsample", n_jobs=-1,
                                        random_state=884)
             mu, sd = X[tr].mean(0), X[tr].std(0) + 1e-9
             m.fit((X[tr] - mu) / sd, y[tr])
             oof[te] = m.predict_proba((X[te] - mu) / sd)[:, 1]
+        # Does the baseline use any EVENT information in this (larger) footprint, or is it
+        # pure static geography? MMI is the only feature carrying event-specific signal;
+        # in the small core region its importance was 0.000. Refit on all rows to report it.
+        m_full = RandomForestClassifier(n_estimators=400, min_samples_leaf=20,
+                                        class_weight="balanced_subsample", n_jobs=-1,
+                                        random_state=884)
+        mu_f, sd_f = X.mean(0), X.std(0) + 1e-9
+        m_full.fit((X - mu_f) / sd_f, y)
+        imp = dict(zip(CONTEXT, m_full.feature_importances_.round(3)))
+        print(f"  {nm:7s} day-zero feature importances: "
+              f"density {imp['density9']:.3f}  coast {imp['dist_coast']:.3f}  "
+              f"MMI {imp['mmi']:.3f}   (MMI = the only event-specific input)")
+
         ap_geo = average_precision_score(y, oof)
         ap_prod = average_precision_score(y, flags)
         nflag = int(flags.sum())
@@ -128,7 +147,7 @@ def main():
         print(rows[-1])
 
     out = pd.DataFrame(rows)
-    out.to_csv(os.path.join(HERE, "..", "rq8b_asdelivered_baseline.csv"), index=False)
+    out.to_csv(os.path.join(HERE, "..", f"rq8b_asdelivered_baseline{SUF}.csv"), index=False)
     print("wrote rq8b_asdelivered_baseline.csv")
 
 

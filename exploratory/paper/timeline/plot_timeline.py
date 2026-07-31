@@ -35,7 +35,34 @@ ev = {}
 for r in rows:
     if not r["our_ingest_utc"] or r["source"] in ("overture", "usgs"):
         continue  # pre-event base / context layer
+    if r["source"] == "copernicus_ems":
+        continue  # replaced below by the real per-AOI schedule
     ev.setdefault(r["source"], []).append((days(r["our_ingest_utc"]), r["milestone"]))
+
+
+def cems_releases():
+    """Copernicus did not publish once — it staggered products per AOI and then issued
+    monitoring updates. Reconstruct that from the extents themselves rather than showing a
+    single dot. Returns [(days_since_quake, n_products, is_monitoring), ...].
+
+    Caveat: the date available on the extents is the IMAGERY ACQUISITION date, so these are
+    a lower bound on publication, whereas every other lane uses our-ingest (an upper bound).
+    The lane is annotated accordingly."""
+    import sys
+    sys.path.insert(0, os.path.join(HERE, "..", "artefacts", "lib"))
+    import pandas as pd
+    import gie_paper as gp  # noqa: E402
+    e = gp.cems_extent()
+    c = (e[["aoi", "aoi_name", "monitoring_number", "version_number", "acquired"]]
+         .drop_duplicates())
+    out = {}
+    for _, r in c.iterrows():
+        ts = pd.to_datetime(r["acquired"], utc=True).to_pydatetime()
+        d = (ts - MAINSHOCK).total_seconds() / 86400
+        mon = int(r["monitoring_number"]) > 0
+        key = (round(d, 3), mon)
+        out[key] = out.get(key, 0) + 1
+    return sorted((d, n, mon) for (d, mon), n in out.items())
 
 # lane order (bottom→top), label, colour, and role
 LANES = [
@@ -57,11 +84,19 @@ GAPS = {  # source: (approx_days, label, hard?)
     "list": (None, "provider release + our-ingest UNKNOWN — a member by the 07-15 freeze (≤ ~20.7 d)"),
 }
 OSU_V1_DAYS = days("2026-07-22 00:00Z")  # post-freeze revision (RQ2h)
+CEMS = cems_releases()          # real per-AOI + monitoring schedule
 
-fig, ax = plt.subplots(figsize=(13, 7))
+fig, ax = plt.subplots(figsize=(13, 7.4))
+# The mainshock is an EVENT, so give it a marker on the t=0 line as well as the line itself —
+# a bare label beside a rule reads as an axis annotation rather than something that happened.
+# The label sits in headroom ABOVE every lane; anchored just above the topmost lane it made
+# Copernicus look as though it published at t=0.
+EQ_Y = len(LANES) + 0.62
 ax.axvline(0, color="#c62828", lw=2, zorder=1)
-ax.text(0, len(LANES) - 0.3, "  M7.5 earthquake\n  24 Jun 22:05 UTC", color="#c62828",
-        fontsize=10, va="top", ha="left", weight="bold")
+ax.scatter([0], [EQ_Y], s=260, marker="*", color="#c62828", edgecolor="white", lw=1.2,
+           zorder=6, clip_on=False)
+ax.text(0.45, EQ_Y, "M7.5 earthquake — 24 Jun 22:05 UTC", color="#c62828",
+        fontsize=10.5, va="center", ha="left", weight="bold")
 
 for src, label, col, role in LANES:
     y = yof[src]
@@ -93,6 +128,20 @@ for src, label, col, role in LANES:
                    edgecolor="#c62828", lw=1.6, zorder=4)
         ax.text(OSU_V1_DAYS, y + 0.3, "v1 revision (07-22)\nnot evaluated — RQ2h", fontsize=8,
                 color="#c62828", ha="center")
+    if src == "copernicus_ems":
+        rel = CEMS
+        xs = [d for d, _, _ in rel]
+        ax.plot([min(xs), max(xs)], [y, y], color=col, lw=2, alpha=0.45, zorder=2)
+        for d, n, mon in rel:
+            ax.scatter(d, y, s=70 + 42 * n, marker="s" if mon else "o", color=col,
+                       edgecolor="white", lw=1, zorder=4)
+            ax.text(d, y + 0.30, f"{n}", fontsize=8.5, color=col, ha="center", weight="bold")
+        ax.text(min(xs) - 0.3, y - 0.34, "initial products, per AOI", fontsize=8.5,
+                color="#555", ha="left")
+        ax.text(max(xs) + 0.55, y, "monitoring updates (squares)", fontsize=8.5, color=col,
+                va="center", ha="left")
+        ax.text(min(xs) - 0.3, y - 0.62, "dates = imagery acquisition (lower bound on publication)",
+                fontsize=7.5, color="#777", ha="left", style="italic")
 
 # flagged unknown-date members (UH, LIST): red "?" out at the right margin
 for src, (_, note) in GAPS.items():
@@ -102,7 +151,7 @@ for src, (_, note) in GAPS.items():
                 color="#c62828", ha="center")
 
 ax.set_xlim(-3.2, 30)
-ax.set_ylim(-0.7, len(LANES) + 0.2)
+ax.set_ylim(-0.7, len(LANES) + 0.95)
 ax.set_yticks([])
 ax.set_xlabel("days since the earthquake  (x = our-ingest date; an UPPER BOUND on availability — "
               "provider release is earlier and unconfirmed)", fontsize=11)
