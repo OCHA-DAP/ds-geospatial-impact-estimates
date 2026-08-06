@@ -122,7 +122,7 @@ this separation is explained in Methods.
 | IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar coherence change | swath (~372 km²) | 22,954 |
 | OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~471 km²) | 31,259 |
 | UH QuakeDamage | Univ. of Houston | optical imagery + vision model, graded footprints | 447,263 incl. intact | ~91k dmg/destroyed |
-| LIST | WFP / LIST / CERN | ResNet pre/post model | 163,225 | 15,904 in core region |
+| LIST | WFP / LIST / CERN | ResNet on pre/post SAR imagery (provider-stated) | 163,225 | 15,904 in core region |
 | UNEP debris | UNEP/OCHA JEU | SAR-derived debris mass per footprint | no extent (assumption, see Methods) | 96,046 |
 
 : Products evaluated. *Flag counts as harmonised to the common footprint base within each
@@ -132,14 +132,17 @@ during the response; a revised v1 arrived after the study window and is compared
 @sec-casestudy. {#tbl-products}
 
 Radar and optical products fail in different ways, which matters later in the paper.
-Optical products (Microsoft, UH, LIST) classify what damage looks like from above. Radar
+Optical products (Microsoft, UH) classify what damage looks like from above. Radar
 coherence products (IMPACT, OSU) measure something else: whether the fine-scale
 arrangement of radar reflectors inside each pixel stayed stable between satellite passes.
 An intact building is a stable reflector and keeps high coherence; a collapse rearranges
 the reflectors and coherence drops. Vegetation never holds coherence in the first place,
 so coherence methods are largely immune to the farmland and vegetation changes that
-produce false alarms in optical and amplitude-based methods. We verify this empirically
-below.
+produce false alarms in optical and amplitude-based methods. LIST also runs on radar —
+a ResNet change-detection model over pre- and post-event SAR imagery, per the provider
+(no methodology document accompanied the delivery) — but it is not a coherence measure,
+so that immunity is not assumed for it; UNEP's debris mass is likewise SAR-derived. We
+verify the coherence claim empirically below.
 
 ## Three references, three failure modes {#sec-refs}
 

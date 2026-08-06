@@ -759,8 +759,12 @@ the destruction bias shows up on precision AND recall, symmetrically.)
 - **Two behaviours, roughly by sensing:** appearance/debris products **MS, UH, UNEP** are
   destruction-biased on both (P_vs_destroyed ≈ 1.5–2× P_vs_damaged; recall gap +0.23–0.30).
   Radar-coherence **OSU, IMPACT** are grade-NEUTRAL on both (P and R ~equal for damaged vs
-  destroyed) — coherence senses structural change, not visible collapse. **LIST (optical
-  ResNet) sides with the coherence group** → a tendency, NOT a clean optical-vs-radar law.
+  destroyed) — coherence senses structural change, not visible collapse. **LIST sides with
+  the coherence group — and LIST is a SAR ResNet per the provider (ADR-0020)**, so its
+  grade-neutrality is *consistent* with its stated sensor, not an exception. (CORRECTED
+  2026-08-06: this line called LIST "optical" — an unsourced label contradicting ADR-0020
+  and flag #14. The split reads better as appearance/debris vs structural-change than as
+  optical-vs-radar; UNEP is SAR-derived yet sits with the appearance-biased group.)
 - **Confidence: high** (683–784 points per grade). Manuscript: one sentence in Results II
   pending; register canonical.
 
@@ -1397,5 +1401,10 @@ autocorrelation](https://geodacenter.github.io/workbook/5a_global_auto/lab5a.htm
     07-15 double-counted Caraballeda. Fixed in the lib (latest-only), all 13 CEMS-dependent
     scripts re-run; no metric moved by more than ±0.002 (co-located duplicates). Freeze
     declared — see RQ0.
-14. **LIST provenance/modality**: confirm the WFP/LIST/CERN product's input imagery
-    (optical vs SAR) — H1 pair-typing for LIST pairs is provisional until then.
+14. **LIST provenance/modality**: provider-stated **SAR** (ADR-0020), but the exact basis
+    (amplitude vs coherence) and model details are undocumented — H1 pair-typing for LIST
+    pairs stays provisional until the provider confirms. RELATED (2026-08-06): **UH's
+    modality is documented NOWHERE in the repo** — the manuscript table says "optical +
+    vision model" while Results III and deck slide 12 type MS∧UH as optical×radar; one of
+    those is wrong, and which one changes the cross-modal framing. Needs provider
+    confirmation (user decision pending).
