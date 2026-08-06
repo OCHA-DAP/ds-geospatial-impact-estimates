@@ -9,7 +9,6 @@ format:
     center: true
     embed-resources: true
     fig-align: center
-    include-in-header: password.html
     include-after-body: hdx-bg.html
 ---
 
@@ -258,10 +257,12 @@ None of this changes the advice. It does change how carefully we should phrase i
 ![](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png){.r-stretch}
 
 ::: {.smaller}
-Left: where Microsoft flags far more damage than the expert map records. Right: where
-volunteers said there was nothing there. **The two patterns are the same place.** That cluster
-sat under a **single satellite scene**, processed on its own with no cross-scene check —
-reviewers judged 71% of its flags undamaged.
+Top left: where Microsoft flags far more damage than the expert map records. Bottom left: where
+volunteers said there was nothing there. Across the **western strip as a whole**, reviewers
+judged **71%** of Microsoft's flags undamaged, against a roughly even split in the damage-dense
+east. Right: cell by cell the two do *not* track ($\rho$ = +0.09) — the agreement is at the
+scale of the strip, not the individual hex. That strip sat under a **single satellite scene**,
+processed on its own with no cross-scene check.
 :::
 
 ::: {.takeaway}

@@ -1,7 +1,8 @@
 """Schematic: how the day-zero baseline (and, by extension, the weighted fusion) is built.
 
 Pure diagram — no data. Three context inputs known within hours → one spatially-blocked
-logistic regression → a CONTINUOUS risk score → (sweep threshold) → a family of flag lists
+model (logistic and random forest are both fitted; the stronger in each frame is the one
+reported) → a CONTINUOUS risk score → (sweep threshold) → a family of flag lists
 = a PR curve, against which a single product is one already-thresholded point. Adding the
 six product flags to the same model = the weighted fusion.
 
@@ -47,9 +48,14 @@ ax.text(1.8, 4.95, "known within HOURS —\nno satellite input", ha="center", va
         fontsize=11, style="italic", color=BLUE, weight="bold")
 
 # --- model box (center) ---------------------------------------------------------
-mx, my, mw, mh = 4.35, 2.05, 3.15, 1.5
-box(ax, mx, my, mw, mh, "random forest\nspatially-blocked 5 km² CV\n"
-    "target: CEMS damage {2,3}", "#f1f0ea", INK, fs=10.5, weight="bold")
+# Both learners are fitted and the stronger in each frame is reported (logistic wins the core
+# region, the forest wins the larger as-delivered footprints) — a null is only meaningful if it
+# is the best honest account of "just geography". Naming only one learner here previously
+# contradicted @fig-bestf1, which labels the logistic as primary.
+mx, my, mw, mh = 4.35, 1.91, 3.15, 1.78
+box(ax, mx, my, mw, mh, "logistic  ·  random forest\n(whichever scores higher)\n"
+    "spatially-blocked 5 km² CV\ntarget: CEMS damage {2,3}",
+    "#f1f0ea", INK, fs=10.5, weight="bold")
 for y in iy:
     arrow(ax, 3.32, y + 0.45, mx - 0.14, my + mh / 2)
 

@@ -919,9 +919,13 @@ reference, not a replacement.
   the crowd where CEMS is absent.
 - Quantified uncertainty: every spot carries its vote split (e.g. 4 no / 2 yes / 1 unsure).
 
-![Left: our map of where Microsoft over-flags (red = worst). Middle: where the crowd said
-"no damage" (orange = mostly rejected). Right: spot-by-spot the two don't correlate — the
-agreement is at area scale.](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png)
+![Top left: our map of where Microsoft over-flags (red = worst). Bottom left: where the crowd
+said "no damage" (orange = mostly rejected). Right: spot-by-spot the two don't correlate
+(rho = +0.09, p = 0.39, n = 88 cells) — the agreement is at strip scale, not cell scale.
+REBUILT 2026-08-05 by `scripts/rq7_west_cluster_fig.py`: the scatter panel had been dropped
+from the figure as "confusing", which left two maps under a title asserting the cell-scale
+coincidence this null
+rules out.](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png)
 
 **Status: BRONZED** (`pipelines/ingest_mapswipe.py`, re-runnable — re-running is the update
 path). First refresh already grew the campaign 14 → **24 projects** (new: Carayaca,

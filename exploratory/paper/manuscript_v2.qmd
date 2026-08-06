@@ -551,7 +551,10 @@ Limitations.
 
 ![How the geography null model is built. Three context variables known within hours of the
 earthquake — coast distance, building density, and ShakeMap intensity — feed one
-spatially-blocked random forest whose target is CEMS damage. Its output is a *continuous*
+spatially-blocked model whose target is CEMS damage; a class-balanced logistic regression and a
+random forest are both fitted, and whichever scores higher in a given frame is the one reported
+(the logistic in this core region, the forest across the larger delivered footprints of
+@sec-crossexam). Its output is a *continuous*
 per-building risk, so every threshold on it is a different flag list and the score traces an
 entire precision–recall curve, against which a single product is one already-thresholded
 point. No satellite product enters this model. Note what the diagram cannot show: fitting it
