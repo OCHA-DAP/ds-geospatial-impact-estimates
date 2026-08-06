@@ -1184,6 +1184,29 @@ tbl("RQ8-learned-fusion/rq8_summary_r20.csv")  # r=20 as originally run; renamed
     verification for the whole rq2i pipeline). The remaining 0.00 cells (Caracas, Santa Cruz,
     n=3) are genuinely measured-and-confounded per flag #1.
 
+- 🔴 **H1 RETYPED — UH TAKEN AS OPTICAL (user decision 2026-08-06): the active ingredient
+  is METHOD INDEPENDENCE, not modality diversity.** Chain: LIST's "optical" label proved
+  unsourced (ADR-0020: SAR, provider-stated — corrected in e002b2f); checking it exposed
+  that UH's modality was documented nowhere, while the product table said "optical + vision
+  model" and Results III / the deck typed MS∧UH as optical×radar. User: assume optical.
+  With corrected typing, **the strongest pair (MS∧UH 0.372) is optical×optical and the
+  weakest (IMPACT∧OSU 0.088) shares a whole method** — modality diversity predicted neither
+  end. H1 restated in manuscript + deck: error independence is the active ingredient;
+  sharing a sensing method is the one reliable way to forfeit it; modality diversity is a
+  day-one heuristic that did not predict this event's ranking (MS and UH share a modality
+  but nothing else, and fail at opposite ends of the map). "Modality ceiling" term kept,
+  defined against the sensing *method*. Abstract, Recommendations, Conclusion and
+  Limitations updated; Limitations now disclose that both pair typings are
+  provider-stated/inferred, not documented.
+  - 📊 **NEW FIGURE `fig_extents_map.png`** (RQ0, script `scripts/fig_extents_map.py`,
+    user request): all analysed extents + the five CEMS AOIs + the 61 km² core
+    intersection, inset on the Caraballeda strip. Embedded in manuscript §2
+    (`@fig-extents`) and as a new deck slide 3. Areas: MS 210 km², UH 533 (derived from
+    its own footprints), IMPACT 32,713, OSU 41,463, LIST 223,708; CEMS 505; core 61 —
+    three orders of magnitude, the visual for the as-delivered dilution story.
+  - Deck renamed **`satellite_damage_evaluation_deck_v2.qmd`** (user request);
+    `publish_pages.sh` and both READMEs updated. Now 20 slides.
+
 - **NULL-MODEL LEARNER — RESOLVED (2026-07-29).** The paper had been comparing a *logistic*
   fusion against a *random-forest* null (different learners on the two sides). Rule now applied
   and stated in Methods: **the null is whichever learner scores higher IN THAT FRAME, with both
@@ -1405,6 +1428,7 @@ autocorrelation](https://geodacenter.github.io/workbook/5a_global_auto/lab5a.htm
     (amplitude vs coherence) and model details are undocumented — H1 pair-typing for LIST
     pairs stays provisional until the provider confirms. RELATED (2026-08-06): **UH's
     modality is documented NOWHERE in the repo** — the manuscript table says "optical +
-    vision model" while Results III and deck slide 12 type MS∧UH as optical×radar; one of
-    those is wrong, and which one changes the cross-modal framing. Needs provider
-    confirmation (user decision pending).
+    vision model" while Results III and deck slide 12 typed MS∧UH as optical×radar; one of
+    those was wrong. RESOLVED BY USER DECISION 2026-08-06: **assume UH is optical** (H1
+    retyped accordingly — see the dated entry); provider confirmation of both UH's and
+    LIST's imagery still belongs in the provider-dates email.

@@ -11,7 +11,7 @@ read that first if you are reusing any of this on another event.
 |---|---|
 | `manuscript_v2.qmd` | the technical write-up — **the keeper** |
 | `findings.qmd` | running register of every analysis, including negative and superseded results |
-| `satellite_damage_evaluation_v2.qmd` | current 19-slide results deck |
+| `satellite_damage_evaluation_deck_v2.qmd` | current 20-slide results deck |
 | `satellite_damage_evaluation_v1.qmd` | earlier deck, **numbers predate the corrections** — do not present |
 | `manuscript_draft.qmd` | v1 manuscript, superseded by `manuscript_v2` |
 | `artefacts/<RQ>/scripts/` | one script per research question; each writes CSVs + `figs/` |

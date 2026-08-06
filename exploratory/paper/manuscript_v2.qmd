@@ -44,7 +44,8 @@ rather than where they add.
 The rest of their value lies in their disagreement. Requiring more products to agree traces a
 usable operating curve, from flagging every building any product marked (97% of known damage,
 but 26 visits per damaged building found) to flagging only unanimous buildings (93% of flags
-correct, 18% of the damage). Counting agreement across sensing modalities roughly doubles the
+correct, 18% of the damage). Counting agreement between methodologically independent products
+roughly doubles the
 accuracy of any single product and requires no weights, no training data and no reference,
 which makes it the only method we tested that is both effective and computable during a
 response; a learned fusion scores 18% higher but is fitted on the damage map responders are
@@ -143,6 +144,16 @@ a ResNet change-detection model over pre- and post-event SAR imagery, per the pr
 (no methodology document accompanied the delivery) — but it is not a coherence measure,
 so that immunity is not assumed for it; UNEP's debris mass is likewise SAR-derived. We
 verify the coherence claim empirically below.
+
+![Who analysed where. Each product's analysed extent, the five expert-mapped CEMS AOIs
+(dashed black), and — in red, with the inset zoom — the core region: the intersection of
+the CEMS extents with all five extent-publishing products (~61 km²), where the head-to-head,
+ensemble and fusion analyses live. The extents span three orders of magnitude, from
+Microsoft's single coastal strip (210 km²) to LIST's two full Sentinel scenes (~224,000
+km²) — the reason the as-delivered and best-case frames of @sec-crossexam differ so much.
+UH publishes no extent; its polygon is derived from its own classified footprints
+(ADR-0018). UNEP publishes none at all and is scored under the stated coverage
+assumption.](artefacts/RQ0-matching-basis/figs/fig_extents_map.png){#fig-extents}
 
 ## Three references, three failure modes {#sec-refs}
 
@@ -259,7 +270,8 @@ plt.show()
 ```
 
 A product is only accountable where both it and the reference actually looked, so all
-scoring is restricted to the intersection of analysed extents. UNEP debris publishes no
+scoring is restricted to the intersection of analysed extents; @fig-extents maps every
+extent this paper scores against, and the core region they share. UNEP debris publishes no
 extent. Based on its density across the study region, we make the explicit assumption
 that it fully covers the ~61 km² core comparison region, the same logic used for its
 stand-alone evaluation in fully enclosed administrative units.
@@ -873,9 +885,9 @@ AOI).](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig
 ### No single product can be tuned into a usable building list
 
 Could a better single product fix per-building precision? Four independent experiments
-in this event say no. The limit behaves like a property of the sensing modality rather
+in this event say no. The limit behaves like a property of the sensing method rather
 than of any particular product. We refer to it as the modality ceiling: a precision level
-that single-sensor tuning does not rise above. (Note that this is the opposite kind of
+that single-method tuning does not rise above. (Note that this is the opposite kind of
 bound from the reference-driven lower bounds of @sec-crossexam: those mean the truth is
 higher than measured; the ceiling means single-product performance stops improving.)
 
@@ -898,23 +910,30 @@ higher than measured; the ceiling means single-product performance stops improvi
    in the confidence field.
 4. **Agreement within one product plateaus too.** Microsoft flags corroborated by a
    second satellite scene are 2.5 times more precise than single-scene flags (0.245
-   versus 0.097). That is a real gain and worth publishing. But it stalls below every
-   cross-modal pair, and in the low-damage zone where two scenes overlap, even flags
+   versus 0.097). That is a real gain and worth publishing. But it remains well below the
+   strongest two-product rule (0.372), and in the low-damage zone where two scenes overlap, even flags
    confirmed by both scenes were rejected by 72% of crowd reviews. Agreement inside one
    model inherits that model's calibration failures.
 
-### Agreement across modalities is different
+### Agreement between independent methods is different
 
-Voting across sensing modalities works because an optical model and a radar product
-rarely make the same mistake. Requiring their agreement removes false positives faster
-than it removes real detections. The clearest example: pairing Microsoft with UH, the
-product whose full-region precision is the worst we measured (0.009, driven by the
-agricultural false alarms described above), produces the strongest two-product rule in
-the study (precision at least 0.372, crowd-adjusted 0.64). A product with serious failure
-zones is still a valuable voter wherever its errors are independent of its partner's.
-The same-sensor pair, by contrast, is the weakest of all fifteen pairings. We present
-this as a mechanism, not a recipe: which pairing wins is probably event-dependent; that
-modality diversity is the active ingredient is the durable claim.
+Voting across products works when their errors are independent — when two products
+rarely make the same mistake in the same place. Requiring their agreement then removes
+false positives faster than it removes real detections. The clearest example: pairing
+Microsoft with UH, the product whose full-region precision is the worst we measured
+(0.009, driven by the agricultural false alarms described above), produces the strongest
+two-product rule in the study (precision at least 0.372, crowd-adjusted 0.64). Both are
+optical products; what they do not share is everything else — different platforms,
+different models, different imagery, and failure zones at opposite ends of the study
+area (Microsoft's on the western coast, UH's in inland agriculture). A product with
+serious failure zones is still a valuable voter wherever its errors are independent of
+its partner's. The pair that shares its entire method — the two Sentinel-1 coherence
+products — is by contrast the weakest of all fifteen pairings. We present this as a
+mechanism, not a recipe: which pairing wins is probably event-dependent. The durable
+claims are that error independence is the active ingredient, that sharing a sensing
+method is the one reliable way to forfeit it, and that the usual day-one proxy —
+modality diversity — did not predict the ranking here: the best pair shared a modality,
+and the worst shared a method.
 
 Scored against all three references at once, the number of agreeing products behaves as
 a well-ordered operating point. Every step from 1-of-6 to 6-of-6 raises precision (both
@@ -1005,10 +1024,12 @@ weighting every product equally means trusting them equally, and UH — whose as
 precision was 0.009 — casts a full vote. That it *helped* rather than hurt is a real finding,
 but one we could only establish with a reference in hand. Second, and following from the
 pairwise results above, the transferable rule is not "count votes" but **"count agreement
-across sensing modalities"**: the same-sensor pair was the weakest of all fifteen, and a slate
-of five correlated optical products would inherit their common bias no matter how many of them
-agreed. Modality is knowable without labels, so this sharpens the rule rather than weakening
-it. Third, the choice of *k* remains, and while it can be made without labels — flag counts
+between independent methods"**: the pair sharing its entire method was the weakest of all
+fifteen, and a slate of five products sharing one method would inherit their common bias no
+matter how many of them agreed. What products share — sensor, platform, model — is knowable
+without labels, so this sharpens the rule rather than weakening it; this event also showed
+the converse, in that the two optical products with nothing else in common formed the
+strongest pair. Third, the choice of *k* remains, and while it can be made without labels — flag counts
 are observable, so "we can visit three thousand buildings, therefore k = 4" is a legitimate
 day-one decision — the precision that choice buys is not knowable at the time. A responder
 picking k is choosing a workload, not a guaranteed hit rate.
@@ -1232,9 +1253,9 @@ this event no single product was meaningfully better than a model of coastline d
 building density, but the number of products agreeing on a building roughly doubled the
 accuracy of any of them alone — and unlike a fitted model, counting requires no weights, no
 training data and no reference, so it can be done the hour the second product arrives. Weight
-the count toward *different sensing modalities*: optical and radar fail in different places,
-and agreement between them is what carries information, while agreement within one modality
-carried the least in our tests. Then set the threshold from your own capacity — @tbl-dial gives
+the count toward *independent methods*: products that share a sensing method fail together
+and their agreement carried the least information in our tests, while products with nothing
+in common but the event cover for each other's failure zones. Then set the threshold from your own capacity — @tbl-dial gives
 the flag counts and visit costs at each level — remembering that you are choosing a workload,
 not a guaranteed hit rate. Used at sector scale, any major product ranks where to go first: trust that ranking, not the
 building counts — while noting that coarse geography ranks about as well, so the ranking is
@@ -1274,7 +1295,9 @@ is only ~61 km². More restrictive still, 96% of the CEMS reference sits in a si
 low-damage AOIs, measured precision (0.00–0.02) cannot distinguish product
 over-flagging from reference incompleteness (@fig-peraoi). The specific rule orderings
 and magnitudes are hypotheses elsewhere. The
-cross-modal versus same-sensor contrast rests on a single same-sensor pair. The crowd
+independence-versus-shared-method contrast rests on a single same-method pair (the two
+coherence products), and the pair typings themselves carry residual uncertainty: UH's
+optical basis and LIST's SAR basis are provider-stated or inferred, not documented. The crowd
 reference was seeded from two AI products' flags, so it scrutinizes products unevenly
 (100% of one product's contested zone had crowd votes, versus 59% for another) and cannot
 see any product's misses. Crowd volunteers are not damage-assessment experts. Their
@@ -1324,13 +1347,13 @@ as well as they do — beating five of six across all mapped areas, though split
 within the damage zone itself. The value in this ecosystem is not in picking the right product,
 because on this evidence there was no right product to pick.
 
-It is in their disagreement. Because the products fail in different ways — and most sharply
-when they fail across sensing modalities rather than within one — the number that agree on a
+It is in their disagreement. Because the products fail in different ways — and agreement is
+most informative between products that share no method — the number that agree on a
 building is a usable confidence measure, and counting that agreement roughly doubles the
 accuracy of any product alone. That result carries an operational weight the rest of this paper
 does not. A weighted fusion scores higher, but its weights are learned from the reference map a
 responder is still waiting for; like the geography baseline, it is an instrument for
-understanding an event afterwards, not for working through one. Counting cross-modal agreement
+understanding an event afterwards, not for working through one. Counting agreement
 needs no weights, no training data and no reference, costs about 18% against the fitted model,
 and can be computed the hour the second product arrives. **It is the only method we tested that
 is both effective and available on day one**, and it is the finding we would hand to a response

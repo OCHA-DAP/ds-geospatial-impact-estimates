@@ -51,6 +51,22 @@ x-axis is our ingest date, an upper bound on availability. Provider release date
 LIST still to confirm.
 :::
 
+## Where each product looked
+
+![](artefacts/RQ0-matching-basis/figs/fig_extents_map.png){.r-stretch}
+
+::: {.takeaway}
+Analysed extents span **three orders of magnitude** — LIST covered two whole Sentinel
+scenes, Microsoft one coastal strip. Scores only exist where a product overlaps the expert
+reference, and the like-for-like comparisons live in the **red core region: 61 km²** where
+all five published extents and the reference coincide.
+:::
+
+::: {.tiny}
+UH's extent is derived from its own classified footprints; UNEP publishes none and is
+scored under a stated coverage assumption.
+:::
+
 ## We scored against three references, not one
 
 ![](artefacts/RQ0-matching-basis/figs/reference_architecture.png){.r-stretch}
@@ -205,14 +221,15 @@ you how much to believe it. That gives you a dial with a known price at every se
 by how many teams you have and how much a wasted trip costs you.
 :::
 
-## Agreement across *modalities* is the active ingredient
+## *Independent failure modes* are the active ingredient
 
 ![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
 
 ::: {.takeaway}
 Pair Microsoft with **UH**, the weakest product we measured, and you get the best two-product
-rule in the study. Optical and radar go wrong in different places, so each covers for the other.
-Pair two products that see the same way and you get the worst of all fifteen combinations.
+rule in the study. Both are optical — but they share nothing else, and they fail at opposite
+ends of the map, so each covers for the other. Pair the two products that share a whole
+method — Sentinel-1 coherence — and you get the worst of all fifteen combinations.
 :::
 
 ## The one finding to take into the next event
@@ -221,8 +238,8 @@ Pair two products that see the same way and you get the worst of all fifteen com
 2×
 :::
 ::: {.hero-sub}
-Counting agreement **across sensing modalities** roughly doubles the accuracy of any single
-product
+Counting agreement **between independent products** roughly doubles the accuracy of any
+single one
 :::
 
 ::: {.smaller}
@@ -242,8 +259,10 @@ product
 ::: {.smaller}
 1. **"Flat" means equal trust.** UH, with as-delivered precision 0.009, casts a full vote. That
    it *helped* is real — but we could only establish that with a reference in hand.
-2. **Count across modalities, not just products.** Five correlated optical products would
-   inherit one shared bias no matter how many agreed.
+2. **Count independent methods, not raw products.** Five products sharing one method would
+   inherit its bias no matter how many agreed — here the two coherence products already
+   agree for the wrong reason. Independence is what mattered, not the modality label: the
+   best pair was two optical products with nothing else in common.
 3. **Choosing *k* buys a workload, not a hit rate.** Flag counts are observable without labels;
    the precision they deliver is not.
 :::
@@ -274,8 +293,8 @@ others may well have similar problems. We simply have no way to look.
 ## What we would ask for
 
 ::: {.smaller}
-**Responders** — do not spend time choosing a product; spend it counting agreement across
-modalities. Use area rankings for triage. Nothing here sees light damage reliably.
+**Responders** — do not spend time choosing a product; spend it counting agreement between
+independent products. Use area rankings for triage. Nothing here sees light damage reliably.
 
 **Providers** — publish an analysed extent (without one a product cannot be evaluated at all),
 publish per-building acquisition metadata, and validate where you deploy rather than where

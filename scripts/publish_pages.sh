@@ -122,8 +122,8 @@ encrypt() {
 CHANGED=()
 
 if [[ $TARGET == all || $TARGET == deck ]]; then
-  render satellite_damage_evaluation_v2.qmd revealjs
-  encrypt satellite_damage_evaluation_v2.html "$PAGES_DIR/slides/damage-evaluation/content.enc"
+  render satellite_damage_evaluation_deck_v2.qmd revealjs
+  encrypt satellite_damage_evaluation_deck_v2.html "$PAGES_DIR/slides/damage-evaluation/content.enc"
 fi
 
 if [[ $TARGET == all || $TARGET == paper ]]; then

@@ -48,7 +48,7 @@ gate page.
 
 **Read this before assuming the gate makes anything confidential. It does not.**
 
-`exploratory/paper/manuscript_v2.qmd` and `satellite_damage_evaluation_v2.qmd` are **tracked in
+`exploratory/paper/manuscript_v2.qmd` and  `satellite_damage_evaluation_deck_v2.qmd` are **tracked in
 this public repository**. Anyone who finds them reads the prose, the numbers and the conclusions,
 with no passphrase involved. That is a deliberate choice — the sources are fine being public.
 
