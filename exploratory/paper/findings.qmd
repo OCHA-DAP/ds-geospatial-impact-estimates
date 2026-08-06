@@ -1207,6 +1207,20 @@ tbl("RQ8-learned-fusion/rq8_summary_r20.csv")  # r=20 as originally run; renamed
   - Deck renamed **`satellite_damage_evaluation_deck_v2.qmd`** (user request);
     `publish_pages.sh` and both READMEs updated. Now 20 slides.
 
+- 🔬 **UH IMAGERY CONFIRMED — VANTOR ONLY (authors, relayed 2026-08-06). The optical
+  assumption is confirmed, and it buys a cross-product control on the west cluster.**
+  Vantor is the vendor of Microsoft's failing west scene (RQ2g). New check **RQ2o**
+  (`scripts/rq2o_uh_west_strip.py` → `rq2o_uh_west_strip.csv`): Caraballeda ∩ each
+  product's extent, split at the RQ2g scene boundary (lon −67.03), scorecard frame r=10 —
+  **UH west: flag share 3.4%, P 0.138 (its best zone anywhere); MS west: 32.4%, P 0.033**
+  (east: UH 11.3% / 0.088, MS 9.8% / 0.137). Same imagery vendor, opposite behaviour ⇒
+  the west failure travelled with MS's per-scene calibration, not the pixels —
+  vendor-level evidence only (UH acquisition dates unconfirmed). Folded into: manuscript
+  case study (new control paragraph), MS∧UH pair text (the best pair even *shares an
+  imagery source* — the independence lives in the models), tbl-products UH row,
+  Limitations, deck west-cluster + pairing slides. Flag #6 fully closed; flag #14 is now
+  LIST-only.
+
 - **NULL-MODEL LEARNER — RESOLVED (2026-07-29).** The paper had been comparing a *logistic*
   fusion against a *random-forest* null (different learners on the two sides). Rule now applied
   and stated in Methods: **the null is whichever learner scores higher IN THAT FRAME, with both
@@ -1429,6 +1443,7 @@ autocorrelation](https://geodacenter.github.io/workbook/5a_global_auto/lab5a.htm
     pairs stays provisional until the provider confirms. RELATED (2026-08-06): **UH's
     modality is documented NOWHERE in the repo** — the manuscript table says "optical +
     vision model" while Results III and deck slide 12 typed MS∧UH as optical×radar; one of
-    those was wrong. RESOLVED BY USER DECISION 2026-08-06: **assume UH is optical** (H1
-    retyped accordingly — see the dated entry); provider confirmation of both UH's and
-    LIST's imagery still belongs in the provider-dates email.
+    those was wrong. RESOLVED 2026-08-06, twice over: first by user decision (assume
+    optical), then **CONFIRMED by the UH authors — exclusively VANTOR imagery** (see the
+    RQ2o entry for the west-strip control this enabled). LIST's imagery basis is the one
+    still needing provider confirmation.

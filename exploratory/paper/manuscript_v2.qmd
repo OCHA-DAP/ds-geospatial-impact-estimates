@@ -122,7 +122,7 @@ this separation is explained in Methods.
 | Microsoft AI4G | Microsoft | very-high-res optical + AI classifier | 72,162 (own footprints) | 8,410 |
 | IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar coherence change | swath (~372 km²) | 22,954 |
 | OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~471 km²) | 31,259 |
-| UH QuakeDamage | Univ. of Houston | optical imagery + vision model, graded footprints | 447,263 incl. intact | ~91k dmg/destroyed |
+| UH QuakeDamage | Univ. of Houston | VHR optical (Vantor, author-confirmed) + vision model, graded footprints | 447,263 incl. intact | ~91k dmg/destroyed |
 | LIST | WFP / LIST / CERN | ResNet on pre/post SAR imagery (provider-stated) | 163,225 | 15,904 in core region |
 | UNEP debris | UNEP/OCHA JEU | SAR-derived debris mass per footprint | no extent (assumption, see Methods) | 96,046 |
 
@@ -923,9 +923,11 @@ false positives faster than it removes real detections. The clearest example: pa
 Microsoft with UH, the product whose full-region precision is the worst we measured
 (0.009, driven by the agricultural false alarms described above), produces the strongest
 two-product rule in the study (precision at least 0.372, crowd-adjusted 0.64). Both are
-optical products; what they do not share is everything else — different platforms,
-different models, different imagery, and failure zones at opposite ends of the study
-area (Microsoft's on the western coast, UH's in inland agriculture). A product with
+optical products — and they even overlap in imagery source, since UH's authors confirm it
+ran exclusively on Vantor imagery, the vendor behind several of Microsoft's scenes
+including its failing one. What they do not share is the model, and that is where the
+independence lives: their failure zones sit at opposite ends of the study area
+(Microsoft's on the western coast, UH's in inland agriculture). A product with
 serious failure zones is still a valuable voter wherever its errors are independent of
 its partner's. The pair that shares its entire method — the two Sentinel-1 coherence
 products — is by contrast the weakest of all fifteen pairings. We present this as a
@@ -1162,6 +1164,14 @@ by both scenes were still 72% crowd-rejected in this low-damage zone. The failur
 the calibration of each per-scene model, not the satellite, the provider, or the product
 as a whole.
 
+A cross-product control seals that attribution. UH's authors confirm their analysis ran
+exclusively on Vantor imagery — the same commercial source as the failing scene — and over
+the same strip UH shows the opposite pattern: it flags 3.4% of buildings in the west at
+precision 0.138 (its best zone anywhere), against Microsoft's 32.4% at 0.033. Same imagery
+vendor, different model, no cluster; the failure travelled with the per-scene calibration,
+not the pixels. (UH's acquisition dates are unconfirmed, so this is vendor-level rather
+than scene-level evidence.)
+
 Three things about this case study generalize. First, a single product-level metric
 averaged over a 4× internal quality split, and the split was only detectable because
 per-building provenance was published. Second, the provider's own validation missed the
@@ -1296,8 +1306,8 @@ low-damage AOIs, measured precision (0.00–0.02) cannot distinguish product
 over-flagging from reference incompleteness (@fig-peraoi). The specific rule orderings
 and magnitudes are hypotheses elsewhere. The
 independence-versus-shared-method contrast rests on a single same-method pair (the two
-coherence products), and the pair typings themselves carry residual uncertainty: UH's
-optical basis and LIST's SAR basis are provider-stated or inferred, not documented. The crowd
+coherence products); UH's exclusively-Vantor optical basis is author-confirmed, while
+LIST's SAR basis remains provider-stated rather than documented. The crowd
 reference was seeded from two AI products' flags, so it scrutinizes products unevenly
 (100% of one product's contested zone had crowd votes, versus 59% for another) and cannot
 see any product's misses. Crowd volunteers are not damage-assessment experts. Their

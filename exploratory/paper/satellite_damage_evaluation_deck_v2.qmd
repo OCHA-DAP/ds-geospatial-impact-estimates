@@ -222,9 +222,11 @@ by how many teams you have and how much a wasted trip costs you.
 
 ::: {.takeaway}
 Pair Microsoft with **UH**, the weakest product we measured, and you get the best two-product
-rule in the study. Both are optical — but they share nothing else, and they fail at opposite
-ends of the map, so each covers for the other. Pair the two products that share a whole
-method — Sentinel-1 coherence — and you get the worst of all fifteen combinations.
+rule in the study. Both are optical — UH even ran on the same commercial imagery source as
+Microsoft's failing scene — yet they fail at opposite ends of the map, so each covers for the
+other. **The independence that matters is in the models, not the inputs.** Pair the two
+products that share a whole method — Sentinel-1 coherence — and you get the worst of all
+fifteen combinations.
 :::
 
 ## The one finding to take into the next event
@@ -276,7 +278,9 @@ volunteers said there was nothing there. Across the **western strip as a whole**
 judged **71%** of Microsoft's flags undamaged, against a roughly even split in the damage-dense
 east. Right: cell by cell the two do *not* track ($\rho$ = +0.09) — the agreement is at the
 scale of the strip, not the individual hex. That strip sat under a **single satellite scene**,
-processed on its own with no cross-scene check.
+processed on its own with no cross-scene check. Cross-check: **UH ran on the same imagery
+vendor** over the same strip and flags just 3% there (Microsoft: 32%) — the failure travelled
+with the model, not the pixels.
 :::
 
 ::: {.takeaway}
