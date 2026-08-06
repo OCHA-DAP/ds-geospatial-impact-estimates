@@ -72,33 +72,48 @@ These artefacts are single self-contained documents, which is why real encryptio
 
 ### Re-publishing after a re-render
 
-The passphrase is not in this repository. It lives wherever the team keeps shared credentials.
+**Editing a `.qmd` does not update the site.** The site serves `content.enc` — an encrypted
+snapshot of the *rendered* HTML — so a source change reaches readers only after someone
+re-renders, re-encrypts and lands it on `v1`. Nothing warns you if that is skipped; the site just
+keeps serving the older version.
 
 ```bash
-# 1. Re-render the artefact (needs the notebook stack — see exploratory/paper/README.md)
-cd exploratory/paper
-uv run --group etl --with nbformat --with nbclient --with ipykernel \
-       --with matplotlib --with numpy --with shapely bash -c \
-  'QUARTO_PYTHON="$(python -c "import sys; print(sys.executable)")" \
-   quarto render satellite_damage_evaluation_v2.qmd --to revealjs'
-
-# 2. Encrypt it into place (prompts for the passphrase, twice, unless $GIE_PAGE_PASS is set)
-cd ../..
-uv run --with cryptography python scripts/encrypt_page.py \
-  --in  exploratory/paper/satellite_damage_evaluation_v2.html \
-  --out pages/slides/damage-evaluation/content.enc
-
-# 3. Commit and push to v1 — that fires the deploy
+./scripts/publish_pages.sh            # both artefacts
+./scripts/publish_pages.sh deck       # results deck only
+./scripts/publish_pages.sh paper      # manuscript only
+./scripts/publish_pages.sh deck --no-commit
 ```
 
-The manuscript is the same with `manuscript_v2.html` → `pages/manuscript/content.enc`.
+It renders, encrypts and commits, then prints the push/PR commands. It deliberately **does not
+push** — that is what makes things public.
 
-`encrypt_page.py` round-trips its own output before writing, so a format or parameter bug fails
-there rather than leaving a reader with an unopenable page. It refuses to run without a
-passphrase and never invents one.
+The passphrase comes from `$GIE_PAGE_PASS`, else `~/.gie-page-passphrase`, else a prompt. It is
+read up front, so a missing passphrase fails before you spend minutes rendering. The passphrase
+is not in this repository; it lives wherever the team keeps shared credentials.
 
-**Each re-render commits a fresh ~4 MB blob** that git cannot delta, because ciphertext is
-incompressible. Re-encrypt deliberately, not on every small edit.
+If the sources and `pages/` are on different worktrees — as they are while the paper branch is
+unmerged — point the script at each:
+
+```bash
+GIE_PAPER_DIR=/path/to/paper-branch/exploratory/paper ./scripts/publish_pages.sh deck
+```
+
+Underneath it is the `quarto render` incantation from `exploratory/paper/README.md` followed by
+`scripts/encrypt_page.py`, which you can still run by hand.
+
+Two safeguards worth knowing about, because both protect against silent damage:
+
+- **`encrypt_page.py` refuses input containing the superseded `password.html` gate.** A document
+  carrying it decrypts correctly and then denies every reader with "Access denied", which looks
+  like a broken site rather than a stale include.
+- **`--skip-if-unchanged` leaves the file alone when the document is byte-identical.** Each run
+  draws a fresh salt and nonce, so re-encrypting unchanged input still yields entirely different
+  bytes; without this, a no-op republish commits several MB of incompressible blob that git cannot
+  delta, and "nothing changed" becomes undetectable. Real content changes still commit ~4 MB, so
+  republish deliberately rather than on every small edit.
+
+It also round-trips its own output before writing, so a format bug fails there rather than
+leaving a reader with an unopenable page, and it never invents a passphrase.
 
 ### Rotating the passphrase
 
