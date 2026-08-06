@@ -1,0 +1,435 @@
+=== exploratory/paper/artefacts/RQ2-cems-footprint-points/scripts/rq2_points.py (10:26:38)
+CEMS points: 3119 | latest analysed-extent AOIs: [2, 5, 6, 8, 12]
+  Microsoft: 8410 damaged footprints
+  IMPACT v2: 81437 damaged footprints
+  OSU: 58870 damaged footprints
+    [Microsoft|dmg+destroyed] LEAK: 1 CEMS pts in AOI but outside CEMS extent (aoi=1468 region=1467)
+  [Microsoft|dmg+destroyed|r= 5] R=0.545 (800/1467)  P=0.095 (764/8023)  F1=0.162
+  [Microsoft|dmg+destroyed|r=10] R=0.613 (899/1467)  P=0.121 (974/8023)  F1=0.203
+  [Microsoft|dmg+destroyed|r=20] R=0.703 (1032/1467)  P=0.174 (1400/8023)  F1=0.280
+    [Microsoft|incl_possibly] LEAK: 1 CEMS pts in AOI but outside CEMS extent (aoi=2789 region=2788)
+  [Microsoft|incl_possibly|r= 5] R=0.463 (1291/2788)  P=0.152 (1221/8023)  F1=0.229
+  [Microsoft|incl_possibly|r=10] R=0.541 (1509/2788)  P=0.187 (1498/8023)  F1=0.278
+  [Microsoft|incl_possibly|r=20] R=0.656 (1829/2788)  P=0.251 (2014/8023)  F1=0.363
+    [IMPACT v2|dmg+destroyed] LEAK: 22 CEMS pts in AOI but outside CEMS extent (aoi=1522 region=1500)
+  [IMPACT v2|dmg+destroyed|r= 5] R=0.571 (857/1500)  P=0.036 (840/23489)  F1=0.067
+  [IMPACT v2|dmg+destroyed|r=10] R=0.619 (929/1500)  P=0.048 (1129/23489)  F1=0.089
+  [IMPACT v2|dmg+destroyed|r=20] R=0.693 (1040/1500)  P=0.083 (1947/23489)  F1=0.148
+    [IMPACT v2|incl_possibly] LEAK: 26 CEMS pts in AOI but outside CEMS extent (aoi=2936 region=2910)
+  [IMPACT v2|incl_possibly|r= 5] R=0.515 (1499/2910)  P=0.062 (1466/23489)  F1=0.111
+  [IMPACT v2|incl_possibly|r=10] R=0.563 (1638/2910)  P=0.081 (1899/23489)  F1=0.141
+  [IMPACT v2|incl_possibly|r=20] R=0.627 (1826/2910)  P=0.124 (2908/23489)  F1=0.207
+    [OSU|dmg+destroyed] LEAK: 1 CEMS pts in AOI but outside CEMS extent (aoi=1489 region=1488)
+  [OSU|dmg+destroyed|r= 5] R=0.808 (1203/1488)  P=0.039 (1268/32656)  F1=0.074
+  [OSU|dmg+destroyed|r=10] R=0.856 (1274/1488)  P=0.054 (1763/32656)  F1=0.102
+  [OSU|dmg+destroyed|r=20] R=0.907 (1349/1488)  P=0.094 (3073/32656)  F1=0.171
+    [OSU|incl_possibly] LEAK: 1 CEMS pts in AOI but outside CEMS extent (aoi=3024 region=3023)
+  [OSU|incl_possibly|r= 5] R=0.749 (2265/3023)  P=0.073 (2398/32656)  F1=0.134
+  [OSU|incl_possibly|r=10] R=0.787 (2379/3023)  P=0.098 (3211/32656)  F1=0.175
+  [OSU|incl_possibly|r=20] R=0.834 (2521/3023)  P=0.158 (5145/32656)  F1=0.265
+
+== headline (dmg+destroyed, r=10 m) ==
+  product     threshold  radius_m  cems_pts  recall  prod_bldgs  precision    f1
+Microsoft dmg+destroyed        10      1467   0.613        8023      0.121 0.203
+IMPACT v2 dmg+destroyed        10      1500   0.619       23489      0.048 0.089
+      OSU dmg+destroyed        10      1488   0.856       32656      0.054 0.102
+wrote /Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ2-cems-footprint-points/scripts/../rq2_points_summary.csv
+wrote figs/rq2_pr_f1_r10.png
+--- exit 0 
+=== exploratory/paper/artefacts/RQ2-cems-footprint-points/scripts/rq2_density_null.py (10:26:51)
+       area product  n_bldg  n_cems  n_flag  flag_pct  recall  enrichment  precision  rand_prec  lift
+Caraballeda  IMPACT   63476    1468   11269      17.8   0.462         2.6      0.066      0.021   3.1
+      Moron  IMPACT   13910      26     932       6.7   0.192         2.9      0.005      0.002   3.0
+    Caracas  IMPACT  111636       3    9445       8.5   0.667         7.9      0.000      0.000   7.9
+ Santa Cruz  IMPACT  144650       3    1739       1.2   0.333        27.7      0.001      0.000  83.2
+ San Felipe  IMPACT    6027       0     106       1.8     NaN         NaN      0.000      0.000   NaN
+Caraballeda      MS   58705    1467    9217      15.7   0.474         3.0      0.081      0.023   3.5
+Caraballeda     OSU   63476    1468   27020      42.6   0.688         1.6      0.043      0.021   2.0
+ San Felipe     OSU   89259      14     948       1.1   0.000         0.0      0.000      0.000   0.0
+    Caracas     OSU  111636       3    2827       2.5   0.667        26.3      0.001      0.000  26.3
+ Santa Cruz     OSU  144190       3    1299       0.9   0.333        37.0      0.001      0.000 111.0
+      Moron     OSU    4074       0     549      13.5     NaN         NaN      0.000      0.000   NaN
+Caraballeda      UH   57264    1467    5366       9.4   0.337         3.6      0.093      0.024   3.9
+      Moron      UH   13909      26     265       1.9   0.192        10.1      0.019      0.002  10.5
+    Caracas      UH  102573       3   18175      17.7   1.000         5.6      0.000      0.000   5.6
+ Santa Cruz      UH  116900       3   32145      27.5   0.333         1.2      0.000      0.000   3.6
+wrote /Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ2-cems-footprint-points/scripts/../rq2_density_null.csv
+--- exit 0 
+=== exploratory/paper/artefacts/RQ2-cems-footprint-points/scripts/rq2_ms_confidence.py (10:27:14)
+region: 62,666 MS footprints, 8,023 shipped-damaged, 1,467 CEMS pts
+shipped binary flag: P=0.121 R=0.613 F1=0.203 (curve max F1=0.229 at t=0.5)
+
+num_observations strata (shipped damaged flag):
+  1 scene  : n=6,691  P=0.097  (recall-if-alone R=0.398)
+  2+ scenes: n=1,332  P=0.245  (recall-if-alone R=0.238)
+
+ChatMap field points in MS AOI: 376 | with shipped MS flag within 10 m: 276 (73%)
+
+ChatMap field points in MS AOI: 376 | with shipped MS flag within 20 m: 299 (80%)
+wrote figs/rq2_ms_confidence_curve.png
+--- exit 0 
+=== exploratory/paper/artefacts/RQ2-cems-footprint-points/scripts/rq2_chatmap_recall.py (10:27:19)
+field points: 415  grades: {'complete': 328, 'significant': 63, 'minimal': 24}
+{'reference': 'MS', 'n_field_in_aoi': 376, 'recall_r20': 0.74, 'recall_r10': 0.56, 'recall_r50': 0.86, 'complete_r20': 0.82, 'n_complete': 319, 'significant_r20': 0.33, 'n_significant': 52, 'minimal_r20': 0.2, 'n_minimal': 5}
+{'reference': 'IMPACT v2', 'n_field_in_aoi': 415, 'recall_r20': 0.66, 'recall_r10': 0.49, 'recall_r50': 0.81, 'complete_r20': 0.73, 'n_complete': 328, 'significant_r20': 0.46, 'n_significant': 63, 'minimal_r20': 0.25, 'n_minimal': 24}
+{'reference': 'OSU', 'n_field_in_aoi': 415, 'recall_r20': 0.85, 'recall_r10': 0.67, 'recall_r50': 0.92, 'complete_r20': 0.92, 'n_complete': 328, 'significant_r20': 0.71, 'n_significant': 63, 'minimal_r20': 0.21, 'n_minimal': 24}
+{'reference': 'UH', 'n_field_in_aoi': 388, 'recall_r20': 0.54, 'recall_r10': 0.42, 'recall_r50': 0.63, 'complete_r20': 0.59, 'n_complete': 321, 'significant_r20': 0.23, 'n_significant': 56, 'minimal_r20': 0.45, 'n_minimal': 11}
+{'reference': 'CEMS {2,3}', 'n_field_in_aoi': 381, 'recall_r20': 0.85, 'recall_r10': 0.64, 'recall_r50': 0.91, 'complete_r20': 0.94, 'n_complete': 318, 'significant_r20': 0.49, 'n_significant': 51, 'minimal_r20': 0.17, 'n_minimal': 12}
+{'reference': '≥1-of-4 votes', 'n_field_in_aoi': 376, 'recall_r20': 0.95, 'recall_r10': 0.76, 'recall_r50': 1.0, 'complete_r20': 0.97, 'n_complete': 319, 'significant_r20': 0.85, 'n_significant': 52, 'minimal_r20': 0.8, 'n_minimal': 5}
+{'reference': '≥2-of-4 votes', 'n_field_in_aoi': 376, 'recall_r20': 0.9, 'recall_r10': 0.7, 'recall_r50': 0.96, 'complete_r20': 0.95, 'n_complete': 319, 'significant_r20': 0.63, 'n_significant': 52, 'minimal_r20': 0.8, 'n_minimal': 5}
+{'reference': '≥3-of-4 votes', 'n_field_in_aoi': 376, 'recall_r20': 0.67, 'recall_r10': 0.51, 'recall_r50': 0.81, 'complete_r20': 0.74, 'n_complete': 319, 'significant_r20': 0.31, 'n_significant': 52, 'minimal_r20': 0.2, 'n_minimal': 5}
+
+detected-only (NO AOI — raw hit-rate over all 415, not comparable recall):
+  HOT fAIr    : 8/415 = 2% within 20 m
+  DISHA       : 70/415 = 17% within 20 m
+  UNEP debris : 228/415 = 55% within 20 m
+
+wrote rq2_chatmap_recall.csv
+wrote figs/rq2_chatmap_found_by.png
+
+field points outside every product AOI: 0
+found-by distribution (eligible pts): {0: np.int64(40), 1: np.int64(31), 2: np.int64(85), 3: np.int64(125), 4: np.int64(134)}
+--- exit 0 
+=== exploratory/paper/artefacts/RQ3-prioritization-error-structure/scripts/rq3_prioritization.py (10:27:34)
+  res8 Microsoft  cells=  112 rho=0.475 tau=0.350 top10=0.10 top20=0.35 overdet_med=2.9 bias_rho=-0.487
+  res8 IMPACT v2  cells=  374 rho=0.292 tau=0.227 top10=0.40 top20=0.25 overdet_med=6.3 bias_rho=-0.245
+  res8 OSU        cells=  454 rho=0.505 tau=0.406 top10=0.40 top20=0.45 overdet_med=19.1 bias_rho=-0.348
+  res7 Microsoft  cells=   31 rho=0.607 tau=0.453 top10=0.60 top20=0.85 overdet_med=6.1 bias_rho=-0.811
+  res7 IMPACT v2  cells=  114 rho=0.433 tau=0.339 top10=0.40 top20=0.45 overdet_med=7.2 bias_rho=-0.357
+  res7 OSU        cells=  152 rho=0.540 tau=0.434 top10=0.60 top20=0.80 overdet_med=23.6 bias_rho=-0.362
+
+== res 8 ==
+  res   product  cells  cems_cells  spearman  kendall  top10  top20  top50  overdet_median  overdet_p90  bias_rho
+   8 Microsoft    112          73     0.475    0.350    0.1   0.35   0.60             2.9         57.0    -0.487
+   8 IMPACT v2    374          86     0.292    0.227    0.4   0.25   0.38             6.3         81.0    -0.245
+   8       OSU    454          80     0.505    0.406    0.4   0.45   0.66            19.1        156.0    -0.348
+== res 7 ==
+  res   product  cells  cems_cells  spearman  kendall  top10  top20  top50  overdet_median  overdet_p90  bias_rho
+   7 Microsoft     31          24     0.607    0.453    0.6   0.85   0.62             6.1        107.0    -0.811
+   7 IMPACT v2    114          31     0.433    0.339    0.4   0.45   0.46             7.2         83.8    -0.357
+   7       OSU    152          31     0.540    0.434    0.6   0.80   0.50            23.6        192.0    -0.362
+wrote /Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ3-prioritization-error-structure/scripts/../rq3_prioritization_summary.csv
+wrote figs/rq3_rank_scatter_res8.png
+--- exit 0 
+=== exploratory/paper/artefacts/RQ3-prioritization-error-structure/scripts/rq3_error_structure.py (10:27:46)
+res8 Microsoft  [raw     ] n=  140 disp= 187.8 I=0.343 (p=0.0010)  b: bldg=+5.366 coast=+0.232 mmi=+nan  R2=0.155
+res8 Microsoft  [exposure] n=  140 disp=  54.6 I=0.540 (p=0.0010)  b: bldg=-0.121 coast=-0.852 mmi=+nan  R2=0.014
+res8 IMPACT v2  [raw     ] n=  743 disp= 137.7 I=0.472 (p=0.0010)  b: bldg=+5.277 coast=-1.874 mmi=+0.993  R2=0.236
+res8 IMPACT v2  [exposure] n=  743 disp=  31.3 I=0.432 (p=0.0010)  b: bldg=+0.359 coast=-1.660 mmi=+0.532  R2=0.126
+res8 OSU        [raw     ] n=  957 disp= 184.1 I=0.341 (p=0.0010)  b: bldg=+3.970 coast=-3.796 mmi=+2.121  R2=0.167
+res8 OSU        [exposure] n=  957 disp=  80.2 I=0.494 (p=0.0010)  b: bldg=-0.002 coast=-3.500 mmi=+1.832  R2=0.187
+res7 Microsoft  [raw     ] n=   33 disp= 447.8 I=0.275 (p=0.0140)  b: bldg=+7.180 coast=+1.452 mmi=+nan  R2=0.121
+res7 Microsoft  [exposure] n=   33 disp= 193.6 I=0.539 (p=0.0010)  b: bldg=-0.932 coast=-1.146 mmi=+nan  R2=0.011
+res7 IMPACT v2  [raw     ] n=  170 disp= 519.3 I=0.518 (p=0.0010)  b: bldg=+10.380 coast=-2.887 mmi=+1.691  R2=0.225
+res7 IMPACT v2  [exposure] n=  170 disp=  86.1 I=0.576 (p=0.0010)  b: bldg=+0.558 coast=-3.004 mmi=+1.132  R2=0.148
+res7 OSU        [raw     ] n=  225 disp= 284.7 I=0.312 (p=0.0010)  b: bldg=+6.104 coast=-5.805 mmi=+2.605  R2=0.241
+res7 OSU        [exposure] n=  225 disp= 218.3 I=0.434 (p=0.0010)  b: bldg=+0.159 coast=-6.399 mmi=+3.301  R2=0.229
+
+== res 8 [raw] ==
+  res   product spec  cells  dispersion  moran_I  moran_p  b_logbldg  p_logbldg  b_coast  p_coast  b_mmi  p_mmi    r2  sp_logbldg  sp_coast  sp_mmi
+   8 Microsoft  raw    140       187.8    0.343    0.001      5.366        0.0    0.232   0.7274    NaN    NaN 0.155        0.49      0.25     NaN
+   8 IMPACT v2  raw    743       137.7    0.472    0.001      5.277        0.0   -1.874   0.0000  0.993 0.0002 0.236        0.72     -0.12   -0.01
+   8       OSU  raw    957       184.1    0.341    0.001      3.970        0.0   -3.796   0.0000  2.121 0.0000 0.167        0.50     -0.30   -0.05
+
+== res 8 [exposure] ==
+  res   product     spec  cells  dispersion  moran_I  moran_p  b_logbldg  p_logbldg  b_coast  p_coast  b_mmi  p_mmi    r2  sp_logbldg  sp_coast  sp_mmi
+   8 Microsoft exposure    140        54.6    0.540    0.001     -0.121     0.8459   -0.852   0.0346    NaN    NaN 0.014       -0.26     -0.09     NaN
+   8 IMPACT v2 exposure    743        31.3    0.432    0.001      0.359     0.0995   -1.660   0.0000  0.532    0.0 0.126       -0.27     -0.37    0.37
+   8       OSU exposure    957        80.2    0.494    0.001     -0.002     0.9946   -3.500   0.0000  1.832    0.0 0.187       -0.54     -0.37    0.26
+wrote /Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ3-prioritization-error-structure/scripts/../rq3_error_structure_summary.csv
+wrote figs/rq3_residual_maps_res8.png
+--- exit 0 
+=== exploratory/paper/artefacts/RQ3-prioritization-error-structure/scripts/rq3b_per_area_moran.py (10:28:27)
+{'product': 'MS', 'area': 'Caraballeda', 'cells': 140, 'n_cems': 1467, 'flag_pct': np.float64(15.7), 'moran_I': np.float64(0.54), 'p': np.float64(0.001)}
+{'product': 'MS', 'area': 'ALL', 'cells': 140, 'n_cems': 1467, 'flag_pct': np.float64(15.7), 'moran_I': np.float64(0.54), 'p': np.float64(0.001)}
+{'product': 'IMPACT', 'area': 'Caraballeda', 'cells': 187, 'n_cems': 1468, 'flag_pct': np.float64(17.8), 'moran_I': np.float64(0.263), 'p': np.float64(0.001)}
+{'product': 'IMPACT', 'area': 'Caracas', 'cells': 178, 'n_cems': 3, 'flag_pct': np.float64(8.5), 'moran_I': np.float64(0.279), 'p': np.float64(0.001)}
+{'product': 'IMPACT', 'area': 'Moron', 'cells': 49, 'n_cems': 26, 'flag_pct': np.float64(6.7), 'moran_I': np.float64(0.0), 'p': np.float64(0.999)}
+{'product': 'IMPACT', 'area': 'San Felipe', 'cells': 71, 'n_cems': 0, 'flag_pct': np.float64(1.8), 'moran_I': np.float64(0.048), 'p': np.float64(0.589)}
+{'product': 'IMPACT', 'area': 'Santa Cruz', 'cells': 258, 'n_cems': 3, 'flag_pct': np.float64(1.2), 'moran_I': np.float64(0.049), 'p': np.float64(0.199)}
+{'product': 'IMPACT', 'area': 'ALL', 'cells': 743, 'n_cems': 1500, 'flag_pct': np.float64(6.9), 'moran_I': np.float64(0.432), 'p': np.float64(0.001)}
+{'product': 'OSU', 'area': 'Caraballeda', 'cells': 187, 'n_cems': 1468, 'flag_pct': np.float64(42.6), 'moran_I': np.float64(0.373), 'p': np.float64(0.001)}
+{'product': 'OSU', 'area': 'Caracas', 'cells': 178, 'n_cems': 3, 'flag_pct': np.float64(2.5), 'moran_I': np.float64(0.301), 'p': np.float64(0.001)}
+{'product': 'OSU', 'area': 'San Felipe', 'cells': 316, 'n_cems': 14, 'flag_pct': np.float64(1.1), 'moran_I': np.float64(0.398), 'p': np.float64(0.001)}
+{'product': 'OSU', 'area': 'Santa Cruz', 'cells': 251, 'n_cems': 3, 'flag_pct': np.float64(0.9), 'moran_I': np.float64(0.041), 'p': np.float64(0.282)}
+{'product': 'OSU', 'area': 'ALL', 'cells': 957, 'n_cems': 1488, 'flag_pct': np.float64(7.9), 'moran_I': np.float64(0.493), 'p': np.float64(0.001)}
+{'product': 'UH', 'area': 'Caraballeda', 'cells': 134, 'n_cems': 1467, 'flag_pct': np.float64(9.4), 'moran_I': np.float64(0.527), 'p': np.float64(0.001)}
+{'product': 'UH', 'area': 'Caracas', 'cells': 145, 'n_cems': 3, 'flag_pct': np.float64(17.7), 'moran_I': np.float64(0.374), 'p': np.float64(0.001)}
+{'product': 'UH', 'area': 'Moron', 'cells': 49, 'n_cems': 26, 'flag_pct': np.float64(1.9), 'moran_I': np.float64(0.086), 'p': np.float64(0.429)}
+{'product': 'UH', 'area': 'Santa Cruz', 'cells': 198, 'n_cems': 3, 'flag_pct': np.float64(27.5), 'moran_I': np.float64(0.328), 'p': np.float64(0.001)}
+{'product': 'UH', 'area': 'ALL', 'cells': 526, 'n_cems': 1499, 'flag_pct': np.float64(19.3), 'moran_I': np.float64(0.401), 'p': np.float64(0.001)}
+
+ product      IMPACT    MS    OSU     UH
+area                                   
+ALL           0.432  0.54  0.493  0.401
+Caraballeda   0.263  0.54  0.373  0.527
+Caracas       0.279   NaN  0.301  0.374
+Moron         0.000   NaN    NaN  0.086
+San Felipe    0.048   NaN  0.398    NaN
+Santa Cruz    0.049   NaN  0.041  0.328
+wrote /Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ3-prioritization-error-structure/scripts/../rq3b_per_area_moran.csv
+--- exit 0 
+=== exploratory/paper/artefacts/RQ4-unep-enclosed-admin/scripts/rq4_enclosed_admin.py (10:29:12)
+== adm3 units with CEMS damage (candidate enclosed units) ==
+         adm3_name       adm2_name  cems_pts  area_frac_in_ext
+           Urimare          Vargas     613.0          0.538790
+       Caraballeda          Vargas     442.0          0.116676
+      Catia la Mar          Vargas     279.0          0.488091
+            Macuto          Vargas      71.0          0.158183
+      Urbana Morón  Juan José Mora      47.0          0.070397
+         La Guaira          Vargas      37.0          0.351963
+  Carlos Soublette          Vargas      14.0          0.245974
+Capital San Felipe      San Felipe      13.0          0.257854
+         Maiquetía          Vargas      12.0          0.189129
+    San Bernandino      Libertador       3.0          0.308261
+   Santiago Mariño Santiago Mariño       3.0          0.927265
+          Cocorote        Cocorote       1.0          0.111791
+          Naiguata          Vargas       1.0          0.041489
+
+HARD-HIT units (cems>=30): 6 -> ['Urbana Morón', 'Caraballeda', 'Catia la Mar', 'La Guaira', 'Macuto', 'Urimare']
+region area: 73.8 km2 | CEMS damage points in region: 1467
+  Microsoft    dmg=  7694 R=0.607 P=0.124 F1=0.206 overdet=5.2x rank_rho=0.408
+  IMPACT v2    dmg= 10061 R=0.624 P=0.110 F1=0.187 overdet=6.9x rank_rho=0.591
+  OSU          dmg= 22700 R=0.851 P=0.076 F1=0.139 overdet=15.5x rank_rho=0.595
+  UNEP debris  dmg=  7393 R=0.425 P=0.118 F1=0.185 overdet=5.0x rank_rho=0.311
+
+      source  dmg_in_region  recall  precision    f1  overdet_x  rank_rho
+  Microsoft           7694   0.607      0.124 0.206        5.2     0.408
+  IMPACT v2          10061   0.624      0.110 0.187        6.9     0.591
+        OSU          22700   0.851      0.076 0.139       15.5     0.595
+UNEP debris           7393   0.425      0.118 0.185        5.0     0.311 
+wrote /Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ4-unep-enclosed-admin/scripts/../rq4_enclosed_summary.csv
+wrote figs/rq4_enclosed_4way.png
+--- exit 0 
+=== exploratory/paper/artefacts/RQ5-ensemble/scripts/rq5_ensemble.py (10:29:27)
+inputs: buildings 684342 | cems pts 1536
+  ms: 68,115 buildings in AOI
+  impact: 561,099 buildings in AOI
+  osu: 602,097 buildings in AOI
+  uh: 349,038 buildings in AOI
+MS             n= 58,705 flag= 9,217 cems=1,467 km2=   65.3  P=0.081 R=0.474 F1=0.138
+IMPACT         n=339,699 flag=23,491 cems=1,500 km2=  392.4  P=0.032 R=0.457 F1=0.060
+OSU            n=412,635 flag=32,643 cems=1,488 km2=  490.7  P=0.036 R=0.681 F1=0.068
+UH             n=290,646 flag=55,951 cems=1,499 km2=  263.2  P=0.009 R=0.336 F1=0.018
+MS∧IMPACT      n= 58,705 flag= 2,375 cems=1,467 km2=   65.3  P=0.192 R=0.299 F1=0.234
+MS∧IMPACT (quad) n= 57,241 flag= 2,375 cems=1,467 km2=   60.8  P=0.192 R=0.299 F1=0.234
+MS∧OSU         n= 58,705 flag= 5,032 cems=1,467 km2=   65.3  P=0.133 R=0.427 F1=0.202
+MS∧OSU (quad)  n= 57,241 flag= 5,031 cems=1,467 km2=   60.8  P=0.133 R=0.427 F1=0.202
+MS∧UH          n= 57,241 flag= 1,016 cems=1,467 km2=   60.8  P=0.372 R=0.259 F1=0.305
+MS∧UH (quad)   n= 57,241 flag= 1,016 cems=1,467 km2=   60.8  P=0.372 R=0.259 F1=0.305
+IMPACT∧OSU     n=329,403 flag= 8,690 cems=1,474 km2=  377.6  P=0.080 R=0.431 F1=0.135
+IMPACT∧OSU (quad) n= 57,241 flag= 7,871 cems=1,467 km2=   60.8  P=0.088 R=0.431 F1=0.146
+IMPACT∧UH      n=290,646 flag= 3,935 cems=1,499 km2=  263.2  P=0.081 R=0.213 F1=0.117
+IMPACT∧UH (quad) n= 57,241 flag= 1,290 cems=1,467 km2=   60.8  P=0.240 R=0.213 F1=0.226
+OSU∧UH         n=280,809 flag= 3,925 cems=1,473 km2=  251.8  P=0.111 R=0.295 F1=0.161
+OSU∧UH (quad)  n= 57,241 flag= 2,956 cems=1,467 km2=   60.8  P=0.146 R=0.294 F1=0.196
+1-of-4         n= 57,241 flag=34,539 cems=1,467 km2=   60.8  P=0.037 R=0.761 F1=0.071
+2-of-4         n= 57,241 flag=13,182 cems=1,467 km2=   60.8  P=0.078 R=0.633 F1=0.138
+3-of-4         n= 57,241 flag= 2,990 cems=1,467 km2=   60.8  P=0.201 R=0.404 F1=0.269
+4-of-4         n= 57,241 flag=   459 cems=1,467 km2=   60.8  P=0.516 R=0.160 F1=0.244
+wrote /Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ5-ensemble/scripts/../rq5_summary.csv
+wrote figs/rq5_pr_frontier_r10.png
+consensus 4-of-4: 459 | candidate CEMS gaps: 124 (27%)
+wrote figs/rq5_consensus_gaps.png
+--- exit 0 
+=== exploratory/paper/artefacts/RQ5-ensemble/scripts/rq5b_six_member.py (10:29:51)
+core region: 60.8 km2 | buildings 57,241 | CEMS pts 1,467 | field pts 367 | crowd tasks 7,663
+{'rule': 'MS', 'flagged': 9138, 'P_cems': 0.081, 'R_cems': 0.474, 'F1_cems': 0.139, 'R_field_r20': 0.75, 'FP_crowd_damaged': np.float64(0.18), 'P_crowd_adj': np.float64(0.242)}
+{'rule': 'IMPACT', 'flagged': 10788, 'P_cems': 0.069, 'R_cems': 0.462, 'F1_cems': 0.12, 'R_field_r20': 0.71, 'FP_crowd_damaged': np.float64(0.2), 'P_crowd_adj': np.float64(0.256)}
+{'rule': 'OSU', 'flagged': 25882, 'P_cems': 0.045, 'R_cems': 0.688, 'F1_cems': 0.084, 'R_field_r20': 0.92, 'FP_crowd_damaged': np.float64(0.19), 'P_crowd_adj': np.float64(0.23)}
+{'rule': 'UH', 'flagged': 5362, 'P_cems': 0.093, 'R_cems': 0.337, 'F1_cems': 0.146, 'R_field_r20': 0.54, 'FP_crowd_damaged': np.float64(0.36), 'P_crowd_adj': np.float64(0.418)}
+{'rule': 'LIST', 'flagged': 15904, 'P_cems': 0.057, 'R_cems': 0.564, 'F1_cems': 0.103, 'R_field_r20': 0.82, 'FP_crowd_damaged': np.float64(0.2), 'P_crowd_adj': np.float64(0.242)}
+{'rule': 'UNEP', 'flagged': 5605, 'P_cems': 0.086, 'R_cems': 0.313, 'F1_cems': 0.135, 'R_field_r20': 0.6, 'FP_crowd_damaged': np.float64(0.18), 'P_crowd_adj': np.float64(0.253)}
+{'rule': 'IMPACT∧OSU', 'flagged': 7871, 'P_cems': 0.088, 'R_cems': 0.431, 'F1_cems': 0.146, 'R_field_r20': 0.7, 'FP_crowd_damaged': np.float64(0.21), 'P_crowd_adj': np.float64(0.279)}
+{'rule': 'MS∧UH', 'flagged': 1016, 'P_cems': 0.372, 'R_cems': 0.259, 'F1_cems': 0.305, 'R_field_r20': 0.49, 'FP_crowd_damaged': np.float64(0.42), 'P_crowd_adj': np.float64(0.637)}
+{'rule': 'MS∧LIST', 'flagged': 3372, 'P_cems': 0.15, 'R_cems': 0.342, 'F1_cems': 0.209, 'R_field_r20': 0.63, 'FP_crowd_damaged': np.float64(0.21), 'P_crowd_adj': np.float64(0.329)}
+{'rule': 'LIST∧UH', 'flagged': 1825, 'P_cems': 0.202, 'R_cems': 0.255, 'F1_cems': 0.226, 'R_field_r20': 0.46, 'FP_crowd_damaged': np.float64(0.45), 'P_crowd_adj': np.float64(0.562)}
+{'rule': 'UNEP∧OSU', 'flagged': 3392, 'P_cems': 0.134, 'R_cems': 0.294, 'F1_cems': 0.184, 'R_field_r20': 0.57, 'FP_crowd_damaged': np.float64(0.21), 'P_crowd_adj': np.float64(0.314)}
+{'rule': 'MS∧UNEP', 'flagged': 3533, 'P_cems': 0.118, 'R_cems': 0.275, 'F1_cems': 0.165, 'R_field_r20': 0.56, 'FP_crowd_damaged': np.float64(0.19), 'P_crowd_adj': np.float64(0.283)}
+{'rule': '1-of-6', 'flagged': 37644, 'P_cems': 0.034, 'R_cems': 0.768, 'F1_cems': 0.066, 'R_field_r20': 0.96, 'FP_crowd_damaged': np.float64(0.18), 'P_crowd_adj': np.float64(0.208)}
+{'rule': '2-of-6', 'flagged': 21060, 'P_cems': 0.056, 'R_cems': 0.71, 'F1_cems': 0.104, 'R_field_r20': 0.95, 'FP_crowd_damaged': np.float64(0.19), 'P_crowd_adj': np.float64(0.24)}
+{'rule': '3-of-6', 'flagged': 9409, 'P_cems': 0.101, 'R_cems': 0.605, 'F1_cems': 0.173, 'R_field_r20': 0.87, 'FP_crowd_damaged': np.float64(0.2), 'P_crowd_adj': np.float64(0.283)}
+{'rule': '4-of-6', 'flagged': 3347, 'P_cems': 0.187, 'R_cems': 0.419, 'F1_cems': 0.259, 'R_field_r20': 0.74, 'FP_crowd_damaged': np.float64(0.24), 'P_crowd_adj': np.float64(0.383)}
+{'rule': '5-of-6', 'flagged': 1005, 'P_cems': 0.339, 'R_cems': 0.232, 'F1_cems': 0.276, 'R_field_r20': 0.51, 'FP_crowd_damaged': np.float64(0.33), 'P_crowd_adj': np.float64(0.56)}
+{'rule': '6-of-6', 'flagged': 214, 'P_cems': 0.64, 'R_cems': 0.093, 'F1_cems': 0.163, 'R_field_r20': 0.26, 'FP_crowd_damaged': np.float64(0.81), 'P_crowd_adj': np.float64(0.932)}
+wrote rq5b_six_member.csv
+--- exit 0 
+=== exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py (10:30:09)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+/Users/zackarno/Documents/CHD/repos/ds-geospatial-impact-estimates/exploratory/paper/artefacts/RQ6-diy-sar/scripts/rq6_score.py:118: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+  a = src.read(1)
+Caraballeda universe: 56,280 buildings with z, 1,468 CEMS pts
+ thresh  n_flag  flag_pct  precision  recall    f1
+   1.00   33772      60.0      0.030   0.646 0.058
+   1.25   24197      43.0      0.037   0.576 0.069
+   1.50   16598      29.5      0.044   0.480 0.081
+   1.75   11157      19.8      0.055   0.407 0.097
+   2.00    7409      13.2      0.066   0.328 0.110
+   2.25    4994       8.9      0.081   0.276 0.126
+   2.50    3465       6.2      0.094   0.221 0.131
+   2.75    2425       4.3      0.110   0.181 0.137
+   3.00    1732       3.1      0.125   0.151 0.137
+   3.25    1281       2.3      0.144   0.129 0.137
+   3.50     963       1.7      0.158   0.104 0.126
+   3.75     721       1.3      0.168   0.082 0.111
+   4.00     548       1.0      0.188   0.072 0.104
+   4.25     438       0.8      0.212   0.065 0.099
+   4.50     357       0.6      0.221   0.053 0.086
+   4.75     299       0.5      0.241   0.048 0.080
+   5.00     259       0.5      0.232   0.041 0.069
+   5.25     217       0.4      0.258   0.038 0.066
+   5.50     184       0.3      0.283   0.035 0.063
+   5.75     148       0.3      0.318   0.032 0.058
+   6.00     124       0.2      0.339   0.028 0.052
+  t=2.0 s=1: 16437 objects  tune P=0.016 R=0.185 F1=0.030
+  t=2.0 s=3: 5069 objects  tune P=0.032 R=0.117 F1=0.050
+  t=2.0 s=5: 2776 objects  tune P=0.044 R=0.086 F1=0.058
+  t=2.0 s=10: 997 objects  tune P=0.055 R=0.037 F1=0.044
+  t=2.0 s=20: 312 objects  tune P=0.074 R=0.015 F1=0.025
+  t=2.5 s=1: 7725 objects  tune P=0.029 R=0.146 F1=0.048
+  t=2.5 s=3: 2252 objects  tune P=0.059 R=0.086 F1=0.070
+  t=2.5 s=5: 1189 objects  tune P=0.077 R=0.060 F1=0.067
+  t=2.5 s=10: 393 objects  tune P=0.097 R=0.021 F1=0.034
+  t=2.5 s=20: 111 objects  tune P=0.119 R=0.006 F1=0.011
+  t=3.0 s=1: 3726 objects  tune P=0.044 R=0.109 F1=0.063
+  t=3.0 s=3: 1113 objects  tune P=0.077 R=0.058 F1=0.067
+  t=3.0 s=5: 599 objects  tune P=0.091 R=0.034 F1=0.050
+  t=3.0 s=10: 192 objects  tune P=0.077 R=0.007 F1=0.013
+  t=3.0 s=20: 50 objects  tune P=0.067 R=0.001 F1=0.002
+  t=3.5 s=1: 2048 objects  tune P=0.070 R=0.094 F1=0.080
+  t=3.5 s=3: 630 objects  tune P=0.120 R=0.049 F1=0.070
+  t=3.5 s=5: 343 objects  tune P=0.138 R=0.025 F1=0.043
+  t=3.5 s=10: 93 objects  tune P=0.152 R=0.006 F1=0.011
+  t=3.5 s=20: 29 objects  tune P=0.250 R=0.002 F1=0.005
+  t=4.0 s=1: 1220 objects  tune P=0.090 R=0.078 F1=0.084
+  t=4.0 s=3: 391 objects  tune P=0.129 R=0.029 F1=0.047
+  t=4.0 s=5: 189 objects  tune P=0.107 R=0.009 F1=0.017
+  t=4.0 s=10: 58 objects  tune P=0.150 R=0.003 F1=0.007
+  t=4.0 s=20: 14 objects  tune P=0.500 R=0.001 F1=0.002
+  t=5.0 s=1: 553 objects  tune P=0.147 R=0.053 F1=0.078
+  t=5.0 s=3: 168 objects  tune P=0.182 R=0.016 F1=0.030
+  t=5.0 s=5: 78 objects  tune P=0.167 R=0.006 F1=0.011
+  t=5.0 s=10: 24 objects  tune P=0.286 R=0.002 F1=0.005
+  t=5.0 s=20: 8 objects  tune P=1.000 R=0.001 F1=0.002
+
+BEST on tune (t=4.0, s=1): HELD-OUT east: P=0.052 R=0.059 F1=0.055
+
+flag %% by area (negative controls):
+ thresh       2.5  3.0  4.0
+area                      
+Caraballeda  6.2  3.1  1.0
+Caracas      3.5  1.3  0.2
+Santa Cruz   8.0  3.5  0.8
+wrote figs/rq6_curve_vs_frontier.png
+--- exit 0 
+=== exploratory/paper/artefacts/RQ7-mapswipe-validation/scripts/rq7_west_cluster.py (10:30:27)
+MapSwipe MS-flagged tasks: 3,895 (west/3179: 3,462, east/3178: 433)
+res-8 cells with both RQ3b residual and crowd data: 88 (covering 3,771 tasks, 22,853 votes)
+
+Spearman residual vs crowd REJECTION share: rho=+0.093 (p=0.39)
+Spearman residual vs crowd CONFIRMATION share: rho=-0.092 (p=0.39)
+
+Top-quintile residual cells (n=18, the 'cluster'): rejection 0.51, confirmation 0.23
+Rest (n=70): rejection 0.49, confirmation 0.24
+Mann-Whitney (top rejection > rest): p=0.33
+WEST Catia La Mar: maj-No 71%, maj-Yes 13%, maj-Unsure 17%  (n=3,462)
+EAST Caraballeda: maj-No 49%, maj-Yes 48%, maj-Unsure 3%  (n=433)
+wrote figs/rq7_west_cluster_adjudication.png
+--- exit 0 
+=== exploratory/paper/artefacts/RQ7-mapswipe-validation/scripts/rq7_consensus_fp_adjudication.py (10:30:38)
+MapSwipe tasks with h3 + >=4 votes: 7,663 (res: {11.0: np.int64(7587), 12.0: np.int64(76)})
+{'rule': '3-of-4 vote', 'flagged': 2990, 'cems_matched_TP': 602, 'cems_unmatched_FP': 2388, 'FP_adjudicated': 2008, 'FP_crowd_damaged': np.float64(0.26), 'FP_crowd_no': np.float64(0.66), 'FP_crowd_unsure': np.float64(0.08), 'TP_adjudicated': 570, 'TP_crowd_damaged': np.float64(0.58), 'TP_crowd_no': np.float64(0.38), 'TP_crowd_unsure': np.float64(0.05), 'precision_cems_floor': 0.201, 'precision_crowd_adjusted': np.float64(0.409)}
+{'rule': '4-of-4 vote', 'flagged': 459, 'cems_matched_TP': 237, 'cems_unmatched_FP': 222, 'FP_adjudicated': 216, 'FP_crowd_damaged': np.float64(0.62), 'FP_crowd_no': np.float64(0.34), 'FP_crowd_unsure': np.float64(0.04), 'TP_adjudicated': 234, 'TP_crowd_damaged': np.float64(0.68), 'TP_crowd_no': np.float64(0.29), 'TP_crowd_unsure': np.float64(0.03), 'precision_cems_floor': 0.516, 'precision_crowd_adjusted': np.float64(0.816)}
+wrote rq7_consensus_fp_adjudication.csv
+--- exit 0 
+BATCH DONE 10:30:52

@@ -1,0 +1,1388 @@
+---
+title: "Evaluating rapid satellite building-damage products against imperfect references: the 2026 Venezuela earthquake"
+author: "Z. Arno, L. Milano — OCHA Centre for Humanitarian Data *(draft v0.3 — internal)*"
+date: last-modified
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+jupyter: python3
+---
+
+::: {.callout-note appearance="minimal"}
+*Internal draft for review. Numbers are frozen to the 2026-07-15 data snapshot. Two
+analyses are still pending and are flagged where they belong: the timeliness axis (waiting
+on provider date confirmations) and bootstrap confidence intervals on headline numbers.*
+:::
+
+## Abstract {.unnumbered}
+
+After the M7.5 earthquake that struck coastal Venezuela on 24 June 2026, at least eight
+organisations released satellite-derived building-damage products. We evaluated the six that
+published an analysed extent, scoring them not against a single expert reference but against
+three with complementary blind spots: expert damage points from Copernicus EMS, crowd review of
+AI-flagged locations, and 415 field reports. This lets the references check each other, and the
+expert reference did not pass: it captured 94% of field-reported destroyed buildings but only
+49% of those reported as significantly damaged. Every precision measured against it is
+therefore a floor — Microsoft's rises from 0.08 to roughly 0.24 once crowd-confirmed damage is
+counted.
+
+At building level, every product performed poorly. As delivered, precision ranged from 0.01 to
+0.08 (recall 0.31–0.69); even in the one damage-dense area where all six score best — the Caraballeda AOI, where
+96% of the reference sits, it reached only 0.04–0.09. None separated itself from a null model
+built on coastline distance, building density and shaking intensity, which matched or beat
+three of the six there and four of the six across their full delivered footprints. At
+neighbourhood scale the products are usable — they ranked sectors by damage burden reliably —
+though the same null ranked those sectors about as well, so this is where the products work
+rather than where they add.
+
+The rest of their value lies in their disagreement. Requiring more products to agree traces a
+usable operating curve, from flagging every building any product marked (97% of known damage,
+but 26 visits per damaged building found) to flagging only unanimous buildings (93% of flags
+correct, 18% of the damage). Counting agreement across sensing modalities roughly doubles the
+accuracy of any single product and requires no weights, no training data and no reference,
+which makes it the only method we tested that is both effective and computable during a
+response; a learned fusion scores 18% higher but is fitted on the damage map responders are
+still waiting for.
+
+One product alone published per-building acquisition metadata, and it was the only one whose
+principal failure could be diagnosed: flags that crowd reviewers judged 71% undamaged traced to
+an area covered by a single satellite scene, processed with no cross-scene check. These
+findings come from one event and should be read as a case study and a reusable evaluation
+method, not as general laws.
+
+## Introduction
+
+In the first days after a major earthquake, responders need to know where the damage is
+and how bad it is, before ground access is possible. Satellite-derived damage products
+fill this window, and their supply has grown quickly. The 2026 Venezuela earthquake drew
+products from a government rapid-mapping service (Copernicus EMS), academic radar groups
+(Oregon State University; IMPACT Initiatives), optical AI pipelines (Microsoft AI for
+Good; University of Houston; a WFP/LIST/CERN collaboration), debris modelling (UNEP/OCHA
+Joint Environment Unit), and volunteer AI platforms (HOT fAIr, DISHA). These products
+disagree with each other, sometimes dramatically. A coordinator receiving several of them
+in the same week has no established way to decide which to trust, for what purpose, and
+at what spatial scale.
+
+Evaluations of such products usually score them against an expert-interpreted reference
+and treat that reference as complete truth. The assumption deserves scrutiny. The
+reference is produced under the same time pressure, from the same kinds of imagery, and
+with the same physical limits as the products it judges. If the reference systematically
+misses lighter damage, then every published precision figure is understated, and it is
+understated most in exactly the damage class where products are weakest.
+
+Our approach is to use three references instead of one, chosen so that their failure
+modes do not overlap. An expert reference (CEMS) covers both error types but only inside
+its mapped extents. A crowd reference (MapSwipe) saw only locations that AI products had
+flagged, so it can refute false alarms but cannot see misses. A field reference (ChatMap)
+contains only confirmed damage, so it can reveal misses but says nothing about false
+alarms. Each reference is used only for the question it can answer, and the three can be
+used to check each other.
+
+The paper makes three contributions:
+
+1. A corrected scorecard for the six evaluable products of this event, including
+   estimates of how far below the truth the conventionally measured numbers sit, and the
+   observation that per-building accuracy and area-ranking accuracy are almost unrelated.
+2. An operational result: the number of products that agree on a building acts as a
+   reliable operating point, and we price each setting in field visits per damaged
+   building found, so that responders can choose a setting rather than being handed one.
+3. A diagnostic result: with published per-building metadata and a crowd campaign, a
+   product's main failure could be traced to its cause during the response itself. Five
+   of the six products publish no such metadata, and their failures remain undiagnosable.
+
+Everything here comes from one event in one coastal, dense-urban geography. The method
+transfers; the specific numbers and rule orderings should be treated as hypotheses until
+they are replicated. We identify a suitable replication event in the Discussion.
+
+## The event and the products
+
+An M7.5 earthquake, preceded about 40 seconds earlier by an M7.2, struck near Yumare on
+the Venezuelan coast at 22:05 UTC on 24 June 2026. Severe damage was concentrated along
+the La Guaira coastal strip, in western Caracas, and in several inland towns. Copernicus
+EMS rapid mapping was activated the same night (EMSR884).
+
+We evaluate the six products that published a defined or defensible analysed extent, that
+is, the area the product actually examined (@tbl-products). Without an analysed extent,
+neither misses nor false-alarm rates can be counted fairly, because "no flag" cannot be
+distinguished from "never looked". Two further AI products (HOT fAIr and DISHA) published
+no extent and are included in the availability inventory only. For analyses that combine
+products, all products were mapped onto a common base of Overture building footprints. For
+scoring against references, each product keeps its own native geometry. The reason for
+this separation is explained in Methods.
+
+| Product | Provider | Sensing basis | Analysed buildings | Damage flags* |
+|---|---|---|---|---|
+| Microsoft AI4G | Microsoft | very-high-res optical + AI classifier | 72,162 (own footprints) | 8,410 |
+| IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar coherence change | swath (~372 km²) | 22,954 |
+| OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~471 km²) | 31,259 |
+| UH QuakeDamage | Univ. of Houston | optical imagery + vision model, graded footprints | 447,263 incl. intact | ~91k dmg/destroyed |
+| LIST | WFP / LIST / CERN | ResNet pre/post model | 163,225 | 15,904 in core region |
+| UNEP debris | UNEP/OCHA JEU | SAR-derived debris mass per footprint | no extent (assumption, see Methods) | 96,046 |
+
+: Products evaluated. *Flag counts as harmonised to the common footprint base within each
+product's own region; totals differ from providers' native counts because of
+footprint-base differences. OSU figures refer to its v0 delivery, the version available
+during the response; a revised v1 arrived after the study window and is compared in
+@sec-casestudy. {#tbl-products}
+
+Radar and optical products fail in different ways, which matters later in the paper.
+Optical products (Microsoft, UH, LIST) classify what damage looks like from above. Radar
+coherence products (IMPACT, OSU) measure something else: whether the fine-scale
+arrangement of radar reflectors inside each pixel stayed stable between satellite passes.
+An intact building is a stable reflector and keeps high coherence; a collapse rearranges
+the reflectors and coherence drops. Vegetation never holds coherence in the first place,
+so coherence methods are largely immune to the farmland and vegetation changes that
+produce false alarms in optical and amplitude-based methods. We verify this empirically
+below.
+
+## Three references, three failure modes {#sec-refs}
+
+![The three reference datasets at a glance. Two of them are HOT-run and easily confused:
+**MapSwipe** is remote volunteers voting on ~50 m hex cells (not building points), used to
+adjudicate false alarms; **ChatMap** is field teams reporting building-level points from the
+ground, used to reveal misses. They are used separately, each only for the error type its
+geometry and sampling permit.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refarch}
+
+**Copernicus EMS (CEMS) building-damage points.** Trained analysts interpret
+very-high-resolution imagery and mark each damaged building as a graded point. Within its
+mapped extents we treat this as reference grade for both error types, under one explicit
+assumption: a building without a CEMS point, inside an area CEMS analysed, is genuinely
+undamaged. We use the latest monitoring product for each area (3,119 points, of which
+1,467 damaged-or-destroyed points fall inside the core comparison region). The rest of
+the paper tests the completeness assumption directly (@sec-crossexam).
+
+**MapSwipe crowd validation.** A Humanitarian OpenStreetMap Team campaign in which more
+than 400 volunteers reviewed roughly 8,000 locations where an AI product had flagged
+damage, voting "damaged", "no damage", or "not sure" on each ~50 m cell. The median cell
+received 6–13 votes; we require at least 4 votes and take the majority. Four is a quorum
+rather than a tuned threshold: every completed project delivered at least four votes on
+every cell, so the rule's effect is to exclude cells from the unfinished follow-up
+projects, which averaged about one vote per cell, where a verdict would rest on a single
+volunteer. Volunteers only ever saw AI-flagged places, so this dataset can adjudicate
+false alarms but can never reveal a missed building.
+
+**ChatMap field reports.** 415 damage points reported from the ground by field teams and
+graded minimal, significant, or complete. A ground observation is strong evidence that
+damage is real, but the collection was opportunistic, with no defined survey area, so the
+absence of a point means nothing. This dataset measures misses and cannot measure false
+alarms. Its points extend inland well beyond the CEMS extents.
+
+Used together, the three references cover each other's blind spots. CEMS provides the
+two-sided scorecard inside its bounds. ChatMap measures what CEMS and the products miss.
+MapSwipe settles disputes between a product and CEMS on the false-alarm side.
+
+**Which reference is used where.** CEMS is the primary reference: every headline precision
+and recall in this paper is computed against it, at r = 10 m, unless labelled otherwise.
+The other two enter only for the questions their geometry permits. ChatMap plays two
+distinct roles from the same 415 points: *unioned* with CEMS it forms a fuller
+building-level reference (both are damage points), and *held separate* it is what exposes
+CEMS's own grade-blindness (@sec-crossexam) — the same dataset, two purposes, never
+conflated. MapSwipe is a lens rather than a reference: its verdicts are per ~50 m cell and
+were collected only over AI-flagged locations, so it can adjudicate false alarms (the
+crowd-adjusted precision) and probe CEMS's completeness, but it cannot serve as a
+building-level reference or fairly score a model it never saw — for instance the geography
+baseline of @sec-dial, which it would penalise for flags the crowd never adjudicated. We
+keep CEMS-only as the default because unioning ChatMap changes nothing material: across all
+six products it lifts precision by at most 0.006 and recall by at most 0.026. Where the
+strengthened value carries signal we report it in parentheses, e.g. Microsoft precision
+0.081 (0.087).
+
+## Methods
+
+### Matching products to references
+
+The product and reference use different geometries — CEMS drops points on damaged
+buildings, while each product flags its own footprints on its own building base — so there
+is no shared list of instances on which to build a single confusion matrix. We therefore
+score by *proximity*, the standard approach for detection-style evaluation: precision
+anchors on the product (of its flagged buildings, how many have a CEMS damage point within
+radius r?), and recall anchors on the reference (of the CEMS damage points, how many have a
+product flag within r?). Each metric carries its own denominator. Because the two metrics
+are precision and recall, neither uses the undamaged background (true negatives) — which we
+could not enumerate anyway, since CEMS never labels the undamaged stock.
+
+```{python}
+#| fig-cap: "Dual-anchored matching. Left: a product is scored only where it AND the reference both looked. Middle: recall anchors on the reference — each CEMS damage point asks whether a product flag lies within radius r. Right: precision anchors on the product — each flagged building asks whether a CEMS point lies within r. Each metric brings its own denominator."
+import matplotlib.pyplot as plt
+import matplotlib.patches as mp
+import numpy as np
+from shapely.geometry import Point
+
+R = 0.16
+fig, ax = plt.subplots(1, 3, figsize=(13, 5.1))
+a0 = ax[0]
+c1, c2 = Point(-0.28, 0).buffer(0.75), Point(0.28, 0).buffer(0.75)
+inter = c1.intersection(c2)
+a0.add_patch(mp.Polygon(np.asarray(inter.exterior.coords), closed=True, fc="#c8e6c9", ec="none"))
+for c, col, lab, xy in ((c1, "tab:blue", "CEMS analysed extent", (-0.75, 0.62)),
+                        (c2, "tab:orange", "product AOI", (0.42, 0.62))):
+    a0.add_patch(mp.Polygon(np.asarray(c.exterior.coords), closed=True, fc="none", ec=col, lw=2))
+    a0.annotate(lab, xy, fontsize=9, color=col)
+a0.annotate("scored HERE only", (0, -0.05), fontsize=10, ha="center", weight="bold", color="#2e7d32")
+a0.set_title("1 · where scoring happens", fontsize=10)
+a1 = ax[1]
+for x, y in [(-0.38, 0.22), (0.05, -0.32), (-0.6, -0.5), (0.62, -0.15)]:
+    a1.scatter(x, y, marker="s", s=70, c="tab:orange", zorder=3)
+for x, y, hit in [(-0.45, 0.3, True), (0.15, -0.25, True), (0.45, 0.42, False)]:
+    a1.add_patch(mp.Circle((x, y), R, fc="none", ec="grey", ls="--"))
+    a1.scatter(x, y, marker="*", s=180, c="k", zorder=4)
+    a1.annotate("TP" if hit else "FN (missed)", (x + 0.05, y + 0.13), fontsize=9,
+                color="#2e7d32" if hit else "#c62828", weight="bold")
+a1.set_title("2 · RECALL — anchor on each CEMS point", fontsize=10)
+a2 = ax[2]
+for x, y in [(-0.36, 0.25), (0.2, -0.14)]:
+    a2.scatter(x, y, marker="*", s=180, c="k", zorder=4)
+for x, y, hit in [(-0.45, 0.32, True), (0.1, -0.2, True), (0.5, 0.45, False), (-0.15, -0.6, False)]:
+    a2.add_patch(mp.Circle((x, y), R, fc="none", ec="grey", ls="--"))
+    a2.scatter(x, y, marker="s", s=70, c="tab:orange", zorder=3)
+    a2.annotate("TP" if hit else "FP (false alarm)", (x + 0.05, y + 0.13), fontsize=9,
+                color="#2e7d32" if hit else "#c62828", weight="bold")
+a2.set_title("3 · PRECISION — anchor on each product flag", fontsize=10)
+for a in ax:
+    a.set_xlim(-1.05, 1.05); a.set_ylim(-1.0, 0.9)
+    a.set_aspect("equal"); a.set_xticks([]); a.set_yticks([])
+h = [plt.Line2D([], [], marker="*", ls="", ms=13, c="k", label="CEMS damage point"),
+     plt.Line2D([], [], marker="s", ls="", ms=8, c="tab:orange", label="product-flagged building"),
+     plt.Line2D([], [], ls="--", c="grey", label="match radius r")]
+fig.legend(handles=h, loc="lower center", ncol=3, frameon=False, fontsize=9)
+fig.tight_layout(rect=(0, 0.07, 1, 0.97))
+plt.show()
+```
+
+A product is only accountable where both it and the reference actually looked, so all
+scoring is restricted to the intersection of analysed extents. UNEP debris publishes no
+extent. Based on its density across the study region, we make the explicit assumption
+that it fully covers the ~61 km² core comparison region, the same logic used for its
+stand-alone evaluation in fully enclosed administrative units.
+
+An analysed extent says where a product looked, not whether it could see. Cloud can hide
+individual buildings inside a declared extent. Only Microsoft publishes a per-building
+visibility field, and a robustness check against it found the effect negligible in this
+event: 3.6% of buildings are mostly obscured, precision is unchanged under any visibility
+filter, and exactly one missed reference point falls on an obscured building. The model
+abstains under cloud rather than flagging into it. We therefore score all products
+without visibility corrections, noting that the check is impossible for the five products
+that publish no such field.
+
+The matching radius comes from the urban fabric rather than from convenience. The median
+distance between neighbouring building centroids in the core region is 9.7 m, and 93% of
+buildings have a neighbour within 20 m. We therefore use r = 10 m as the largest radius
+at which "did the product flag this building" is still a meaningful question. Larger
+radii answer a different and equally legitimate question, namely whether the flag put a
+responder within sight of real damage. We use named scales for those: 30 m (line of
+sight), 60 m (same block), 100 m (right area).
+
+**The measurement frames used in this paper.** Because the analyses ask different
+questions, they use different matching frames, and numbers are not comparable across
+frames. To keep them straight:
+
+| frame | radius | matched against | used for | why this radius |
+|---|---|---|---|---|
+| **Primary** *(default everywhere)* | **10 m** | CEMS points | all precision/recall, the pairwise rules, the voting table, the learned fusion and the geography null | tight enough that a flag must land on or beside the right building |
+| **Line-of-sight** | **30 m** | CEMS points | coverage and visits-per-find columns of @tbl-dial only | answers a different question: "would a responder sent here *see* the damage" |
+| **Field** | **20 m** | ChatMap field points | recall against ground reports only | absorbs phone-GPS error in the field reports |
+
+: The measurement frames. Every CEMS-based number in this paper uses the 10 m primary frame,
+so all of them are directly comparable. The two exceptions exist because they answer different
+questions or use a different reference, and are always labelled where used.
+{#tbl-allframes}
+
+Earlier drafts of this work reported the fusion analysis at a 20 m radius while the headline
+figures used 10 m, which made two sets of precision values circulate that were not comparable.
+That is resolved: **everything CEMS-based is now reported at 10 m**. The 20 m radius survives in
+one place only, as a model-fitting detail — the learned fusion needs enough positives in each
+spatial block to fit stably, and halving the radius halves the positive class (2,733 buildings
+labelled damaged at 20 m, 1,350 at 10 m) — so the fusion models are *fitted* on the wider label
+and *evaluated* at 10 m like everything else. The full 20 m results are reported in the
+Appendix (@tbl-radius) for anyone who wants them.
+
+These are not four different measurement philosophies, and it is worth being precise about
+what actually separates them, because the wrong picture makes the numbers look arbitrary.
+Matching a flag to a reference point by building centroid rather than by native geometry turns
+out to be worth almost nothing: re-running the fusion analysis at r = 10 m reproduces the
+scorecard precisions to within 0.005 for every product (Microsoft 0.081 against 0.080, OSU
+0.045 against 0.040, and so on). **The only thing that materially separates these frames is the
+radius.** Microsoft's precision is 0.08 at 10 m and 0.138 at 20 m; the same product, the same
+flags, the same reference, and two different definitions of what counts as a hit.
+
+That leaves one genuine design question — why the fusion analysis was built at 20 m when the
+paper's headline frame is 10 m. The reason is label construction rather than measurement: a
+per-building model needs enough positives in every spatial block to fit stably, and halving the
+radius halves the positive class. That justifies *training* at the wider radius; it does not
+justify reporting only there, so the fusion results are given at both radii below
+(@tbl-radius), and the r = 10 m column is directly comparable to every headline number in this
+paper.
+- **Fusion frame** (building-centroid matching at 20 m against CEMS): used in the
+  learned-fusion section, where every building needs a label. Its precision values run
+  noticeably higher than the scorecard frame's; only within-frame comparisons are valid.
+
+Before the numbers, one point about what the radius *is*, because it is easy to picture it as a
+tolerance applied to the products alone. It is not. The radius defines the **label** — the
+target every predictor is trained and scored against:
+
+> A building counts as damaged if a CEMS damage point lies within *r* metres of it.
+
+Nothing else in the analysis carries a radius. The geography null's inputs are coast distance,
+building density and shaking intensity; none of them knows anything about *r*. What changes when
+*r* changes is the definition of the truth all predictors are chasing. In the core region, r =
+20 m labels about 2,733 buildings damaged and r = 10 m about 1,350 — half as many positives
+from the identical CEMS points. This matters for interpretation: a wide radius smears each
+reference point into a small blob of neighbouring buildings, making the target patchy and
+area-shaped, which is precisely the shape a smooth geography surface predicts well. A tighter
+radius concentrates the positives onto individual buildings, where per-building discrimination
+is required. The comparison between products and the null is therefore mildly radius-dependent,
+and we quantify that below rather than leave it implicit.
+
+One reassurance follows from holding the radius fixed. The learned-fusion analysis matches
+flags to reference points by building centroid, while the headline scorecard matches on native
+geometry, and it would be reasonable to worry that this alone shifts the numbers. It does not.
+Evaluated at the same 10 m radius, the two agree to within 0.005 for every product:
+
+| product | scorecard (native geometry) | fusion analysis (centroid) | difference |
+|---|---|---|---|
+| UH | 0.090 | 0.093 | +0.003 |
+| UNEP | 0.090 | 0.086 | −0.004 |
+| Microsoft | 0.080 | 0.081 | +0.001 |
+| IMPACT | 0.070 | 0.069 | −0.001 |
+| LIST | 0.060 | 0.057 | −0.003 |
+| OSU | 0.040 | 0.045 | +0.005 |
+
+: Precision at r = 10 m under the two matching methods. Centroid versus native-geometry
+matching is worth at most 0.005; once the radius is held fixed the two are effectively the same
+measurement. {#tbl-frames}
+
+This is why the earlier inconsistency mattered so much and is worth stating plainly: the large
+gaps between numbers in earlier drafts were caused *entirely* by the radius, not by any
+difference in matching method or philosophy. With the radius now fixed at 10 m throughout,
+every CEMS-based precision in this paper is directly comparable to every other.
+
+### Area ranking and error structure
+
+For questions about where damage is concentrated, we aggregate per-building flags to
+hexagonal grid cells at two sizes, roughly 0.74 km² and 5.2 km² (the larger approximates
+a triage sector), and compare each product's ranking of cells against the ranking implied
+by CEMS, using rank correlation and top-k overlap.
+
+Whether a ranking survives noisy per-building labels depends on how the noise is arranged
+in space, so we test that directly. A Poisson regression predicts each cell's flag count
+from its CEMS damage count, with the cell's building stock as an exposure offset so that
+"more flags because more buildings" cannot register as bias. The residuals, meaning over-
+or under-flagging not explained by real damage, are then tested in two ways: for spatial
+clustering, using Moran's I with significance from permutations over the same cell
+lattice (this controls for the shape of the built-up area itself), and for correlation
+with variables that would corrupt a ranking, namely building density, distance to the
+coast, and modelled shaking intensity.
+
+### Combining products, and adjudicating disagreements with the reference
+
+For per-building questions, each product's flags are projected onto the shared Overture
+footprint base and combined by voting. A building passes the "k-of-6" rule when at least
+k of the six products flag it. Throughout the paper, k-of-6 names a rule, never a score.
+Voting rules are scored exactly as single products are.
+
+Because CEMS itself has gaps, precision measured against CEMS is a lower bound. A
+reference gap can turn a correct flag into an apparent false positive, but never the
+reverse, so the true precision lies at or above the measured value. We estimate how far
+above by adjudication: for every flagged building with no CEMS point within 10 m, we look
+up the MapSwipe majority verdict for its cell and count the share that volunteers judged
+damaged. "Crowd-adjusted precision" adds those confirmed flags back to the numerator.
+Each precision estimate in this paper is therefore an interval, from the CEMS-measured
+lower bound to the crowd-adjusted value. One caveat sets the character of the upper end:
+MapSwipe verdicts are per ~50 m cell, not per building (@fig-refarch), so a
+crowd-confirmed flag means "damage somewhere in this cell," not "this building." The
+crowd-adjusted value is therefore an *upper* estimate of building-level precision, and the
+truth lies between it and the CEMS floor. A second, independent check uses ChatMap instead:
+because its field points are building-level, they can be unioned directly with the CEMS
+points, which raises measured precision by a smaller, sharper 5–9% (the field data is
+sparse — 415 points — but geometrically exact).
+
+Recall has no such correction, and its bias runs the other way. Adjudication re-judges
+flags; it cannot add the damage CEMS never recorded to recall's denominator — the crowd
+saw only AI-flagged places, and the field reports are positives-only with no survey
+frame, so the full denominator is unknowable. Because the reference over-represents
+destruction, which is the damage class every product detects best, recall measured
+against it is flattered rather than understated. The rule of thumb for this whole paper:
+**against an incomplete reference, measured precision is a floor and measured recall is
+a ceiling.** The grade-stratified field-frame measurements in @sec-crossexam quantify
+how much the recall ceiling gives back.
+
+### The geography null model and weighted fusion {#sec-dayzero}
+
+Two of this paper's constructions are models rather than products, and both are built the
+same way. The **geography null model** exists to calibrate what the accuracy numbers mean: it
+asks how much of the damage pattern is recoverable from coarse spatial structure and shaking
+alone, so that a product's score can be read against something other than zero. It uses three
+context variables computed per building, all available within hours of the shaking: distance
+to the coastline (metres), local building density (buildings per H3 res-9 cell, ~0.1 km²), and
+ground-motion intensity from the USGS ShakeMap (MMI). These predict per-building CEMS damage
+(grades {2,3}) through a class-balanced logistic regression. Validation is **spatially
+blocked**: the model is trained and scored on disjoint ~5 km² zones, because neighbouring
+buildings share both their features and their labels, and a random train/test split would leak
+that structure into an inflated score (@fig-dayzero-build).
+
+Because a null is only meaningful if it is the *strongest* honest account of "just geography" —
+a weak one would flatter the products by construction — we fit every feature set with both a
+class-balanced logistic regression and a random forest (400 trees, minimum leaf 20), and report
+whichever scores higher in that frame, disclosing both:
+
+| feature set | random forest | logistic |
+|---|---|---|
+| all inputs (weighted fusion) | 0.283 | 0.284 |
+| context only, core region | 0.045 | **0.060** |
+| context only, full delivered footprints | **stronger for 5 of 6** | stronger for MS only |
+| products only | 0.258 | 0.271 |
+
+: Average precision by learner and feature set, spatial-block CV. Where products are involved
+the learner is irrelevant; for the null it is not, and which learner wins depends on the
+frame. {#tbl-learners}
+
+Wherever products enter, the two learners are indistinguishable, so no fusion result depends on
+that choice. The null is a different matter, and the two analysis layers do not agree on which
+model represents geography better. In the compact core region the logistic wins (0.060 against
+0.045): shaking is near-constant there and the remaining relationship is smooth, so the forest
+mostly fits block-specific structure that does not generalise. Across the full delivered
+footprints the ranking reverses for five of six products, sometimes sharply, because those regions span real variation in shaking that
+interacts non-linearly with coast distance and density. We therefore use the logistic null in
+the core-region analysis and the forest null in the as-delivered analysis, which is simply the
+rule stated above applied twice. That the two layers need different model classes to describe
+geography well is itself a signal that they are different regimes — the same conclusion the
+feature importances reach below.
+
+We call it a *null model* rather than a baseline, and deliberately avoid naming it after
+day zero, because the distinction is easy to blur and consequential. Its three inputs are genuinely
+available on day zero; its fitted coefficients are not. Estimating them requires the very
+damage labels a responder is waiting for, so the model cannot be run on the day it names. It
+is not an alternative anyone could have deployed. What it provides instead is a reference
+level — the standard role of a null model, like a majority-class or stratified-random
+comparator — and because we allow it to be fitted with hindsight, it is a *generous* null. The
+two directions therefore read differently. A product that beats it has demonstrated real
+information beyond spatial structure, and the inference is strong precisely because the null
+was given every advantage. A product that loses to it has flags placed no better than an
+obvious retrospective geography prior, which is a serious finding about that product — but it
+is not a claim that geography was an available substitute.
+
+How much the null knows about *this* earthquake also depends on which of the paper's two
+analysis layers it is fitted in, and the difference is stark. Within the Caraballeda core
+region, ShakeMap intensity is effectively constant, and its measured importance is exactly
+0.000: there, the model runs on distance-to-coast and density alone, both static, and carries
+no event-specific information whatsoever. Its skill in that layer is a hindsight description
+of where damage happened to fall. Across the full delivered footprints, which span far more
+ground and much more variation in shaking, MMI carries 0.25–0.31 of the importance, and the
+null is genuinely using event information. The exception proves the mechanism: Microsoft
+shipped only the coastal strip, so its footprint nearly coincides with the core region and its
+MMI importance falls back to 0.000. The as-delivered comparison is consequently the better
+founded of the two, and the core-region comparison should be read strictly as a null.
+
+Two aspects of the fitting deserve to be separated, because they carry different risks. The
+model's *coefficients* are estimated strictly out-of-fold: each building's score comes from a
+forest that never saw its block, so no building is graded by a model trained on it. The
+*decision threshold* — the cut that turns the continuous risk into a flag list — is a second,
+separate choice, and where a single operating point is reported we select it inside the
+training folds and apply it blind to the held-out data, so that it too is never fitted to the
+scores it is judged on. Only the first of these is handled by cross-validation; the second is
+a separate operation that blocked CV does nothing to protect. The difference it makes here is
+small: selecting the cut out-of-sample yields F1 0.129 against 0.128 for a cut chosen in
+hindsight (@sec-dial) — a difference of 0.001, i.e. none. That is a fact about
+this sample size — a single scalar estimated from hundreds of thousands of buildings is pinned
+down closely either way — and not a general licence: on a small reference the same shortcut
+could flatter a model materially, and the distinction is worth preserving in the method.
+
+The model's output is a continuous per-building risk in [0, 1], not a flag list — and that
+distinction governs how it is compared. Any threshold on the score defines a flag list, so
+sweeping the threshold traces a whole *family* of no-satellite predictors: a full
+precision–recall curve. A single product, by contrast, is one binary flag list — one point
+in that plane, because the provider already fixed the threshold. The two are therefore
+compared point-against-curve, or summarised by average precision (the area under the PR
+curve), a quantity that is defined for a continuous score but degenerate for a binary one.
+It is worth being exact about the degeneracy, because the intuition that a one-point
+predictor's AP simply *is* its precision is close but wrong, and the difference is what
+misleads. Average precision is a recall-weighted sum over the steps of the PR curve, and a
+binary flag list has two: the flagged set itself, and the trivial "flag everything" endpoint.
+It therefore evaluates to
+$$\mathrm{AP}_{\text{binary}} = P\cdot R + (1-R)\cdot \pi$$
+where $\pi$ is the prevalence of damage. The second term is free credit that any predictor
+whatsoever collects for the flag-everything endpoint. Because $\pi$ (0.047 here) is far below
+every product's precision, that term drags each product's AP *down toward prevalence*, and it
+does so hardest for the products with the lowest recall. The effect is to compress genuinely
+different products into a narrow band — 0.076–0.092 across our six, whose precisions actually
+range from 0.087 to 0.148 — sitting close to where a mediocre continuous score also lands.
+Two products can share an AP because one has high precision and low recall while the other
+has the reverse; the number conceals exactly the trade-off an operational reader cares about.
+This is why we report AP only among
+the continuous scores — the geography null, flat voting, and weighted fusion — and place the products
+as points, never as AP bars beside them. The **weighted fusion** adds the six product flags
+and their confidence fields to these same three context variables, so the geography null is
+that model with the product inputs ablated away. One detail matters for reading the numbers
+literally: the headline fusion is reported from a logistic regression, which here scores
+identically to a random forest (AP 0.28 either way), while the ablations — the null and its
+products-only mirror — are both fitted with the forest, so that the two ablations are directly
+comparable to each other. Both are refit for each frame they are reported in — on the small core region for the
+fusion result (@sec-dial) and on each product's full delivered footprint for the
+as-delivered benchmark (@sec-crossexam) — always under the same blocked validation. Two
+cautions: the learned weights are calibrated to this single event and should not be assumed
+to transfer, and within the small core region the ShakeMap term is nearly constant, so the
+null-model skill there comes mostly from coast distance and density.
+
+Two questions of fairness follow from putting a fitted model beside an unfitted product, and
+both deserve explicit answers. The first is whether the two are scored on the same data. They
+are. Cross-validation here is not a subsample of the evaluation: the folds partition the
+buildings, every building sits in exactly one held-out fold, and its score is the prediction
+of a model that never saw it. So the model and the products are scored on **identical
+building sets with identical denominators** — the resampling only guarantees that no model is
+graded on data it was trained on, which makes the models' numbers *more* conservative, not
+less. The second question is the one that genuinely bites, and it runs in the models' favour:
+the geography null model is fitted to *this event's* reference labels. Spatial blocking stops it
+from memorising a building's neighbours, but each fold still learns event-level structure —
+how steeply damage falls off with distance from this coastline, at this shaking level. A
+responder on the actual day zero possessed no such fitted coefficient. The geography null model
+should therefore be read as an **upper bound on geography-only skill for this event**: the
+best a three-variable context model could have done *had it known* the event's damage
+gradient. The products, by contrast, never saw the reference at all. The defensible claim is
+consequently one about information content — *the six products add little building-level
+information beyond what three context variables already carry* — and not the operational
+claim that responders held this null model in hand on day zero. We return to this in the
+Limitations.
+
+![How the geography null model is built. Three context variables known within hours of the
+earthquake — coast distance, building density, and ShakeMap intensity — feed one
+spatially-blocked random forest whose target is CEMS damage. Its output is a *continuous*
+per-building risk, so every threshold on it is a different flag list and the score traces an
+entire precision–recall curve, against which a single product is one already-thresholded
+point. No satellite product enters this model. Note what the diagram cannot show: fitting it
+requires the damage labels themselves, which is why it is a retrospective null rather than
+something available on the day its inputs
+are.](artefacts/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png){#fig-dayzero-build}
+
+## Results I — building-level accuracy is poor, area ranking is not {#sec-scorecard}
+
+Scored per building at r = 10 m against CEMS, every product performed poorly — and how
+poorly depends on a choice of frame that this paper refuses to make silently. Scored *as
+delivered* — each product across everything CEMS mapped, which is what a responder
+actually received — precision ranged from 0.009 to 0.081. Restricted to the
+damage-dense Caraballeda AOI, where the products score best and 96% of the reference
+lives (@sec-crossexam), precision ranged from 0.04 to 0.09 and recall from 0.31 to
+0.69. Even in that best case, for every flag that matched a CEMS damage point, ten to
+twenty did not. The rest of this paper quotes the best-case numbers unless labeled
+otherwise, because outside Caraballeda the reference is too thin to interpret failure
+cleanly — but the as-delivered figures are the operationally honest ones, since no
+responder knew in advance which zones the products would get right.
+
+A baseline puts them in perspective. Three variables are available within hours of any
+earthquake, before a single satellite is tasked: distance to the coast, neighbourhood
+building density, and the USGS ShakeMap intensity estimate. A model given only these
+context variables, and no satellite observations at all, performs comparably to the products
+themselves at building level (the comparison is made formally in @sec-dial, in that section's
+own measurement frame: F1 0.128 for geography against 0.148 for the best product and
+0.085–0.142 for the rest, with three of the six falling below it even at their own list
+sizes). One caveat governs the reading throughout: this model is fitted to the event's own
+damage labels, so it is a retrospective diagnostic rather than something a responder could
+have run — the claim is about how much information the products add over coarse spatial
+structure, not about what was operationally in hand. Under that reading, no individual product
+demonstrated building-level skill clearly beyond what coastline distance, building density and
+shaking already encode — while their *combination* did, which is the more useful finding.
+
+The area-level picture is different in kind, though not in the way that flatters the products.
+At the ~5 km² sector scale, Microsoft and OSU correctly identified 80–85% of the 20 worst-hit
+cells (rank correlation ρ ≈ 0.57), and ranking skill improved as cells got coarser, because the
+per-building noise averages out. This is the scale at which the products are genuinely usable.
+It is not, however, a scale at which they demonstrate information beyond geography: the same
+null model ranks these cells better for five of the six products (@tbl-nullrank) — though that
+comparison is dominated by telling Caraballeda apart from the quiet AOIs; within Caraballeda the
+six split evenly against it.
+Area ranking is therefore where these products *work*, not where they *add* — a distinction we
+return to in the Discussion.
+
+Because area ranking is the products' strongest result, it deserves the same null test as the
+building-level numbers. We aggregated the geography null's out-of-fold predicted probabilities
+to exactly the cells used above — its expected damage count per cell, needing no threshold —
+and correlated those with the CEMS count the same way:
+
+| scale | product | ρ product | ρ geography null | difference |
+|---|---|---|---|---|
+| ~5 km² (res 7) | Microsoft | 0.585 | **0.631** | -0.046 |
+| ~5 km² (res 7) | OSU | **0.540** | 0.485 | +0.055 |
+| ~5 km² (res 7) | IMPACT v2 | 0.433 | **0.673** | -0.240 |
+| ~5 km² (res 7) | LIST | 0.404 | **0.500** | -0.096 |
+| ~5 km² (res 7) | UNEP | 0.220 | **0.501** | -0.281 |
+| ~5 km² (res 7) | UH | -0.085 | **0.701** | -0.786 |
+| ~0.7 km² (res 8) | OSU | **0.505** | 0.478 | +0.027 |
+| ~0.7 km² (res 8) | Microsoft | 0.466 | **0.568** | -0.102 |
+| ~0.7 km² (res 8) | IMPACT v2 | 0.292 | **0.594** | -0.303 |
+| ~0.7 km² (res 8) | LIST | 0.276 | **0.445** | -0.169 |
+| ~0.7 km² (res 8) | UNEP | 0.068 | **0.451** | -0.383 |
+| ~0.7 km² (res 8) | UH | -0.114 | **0.580** | -0.694 |
+
+: Spearman rank correlation with the CEMS damage count per cell, product against
+geography null, on identical cells within each product's shared region, all six
+evaluated products. Only OSU exceeds the null, at either scale. {#tbl-nullrank}
+
+The result is uncomfortable but clear: **geography alone ranks these areas better than the
+products do**, beating five of the six at the sector scale and five of six again at the finer
+scale. The margins are not marginal — IMPACT 0.673 against 0.433, UNEP 0.501 against 0.220 —
+and UH's rank correlation is *negative* (−0.085), meaning its sector ordering is slightly worse
+than no information at all. Only OSU is ahead of the null, and only narrowly (0.540 against
+0.485).
+
+That comparison spans all five mapped areas, however, and 96% of the reference damage sits in
+one of them. Much of what it rewards is therefore the coarse discrimination of Caraballeda from
+four quiet AOIs — a task coastline distance and building density solve almost by definition. The
+sharper question is whether the products can out-rank geography *within* the damage zone, and
+there the picture is different. Restricting every region to Caraballeda and re-running at
+~0.7 km² cells, the six split evenly: LIST (0.668 against 0.543), OSU (0.642 against 0.562) and
+IMPACT (0.548 against 0.456) beat the null, while Microsoft (0.466 against 0.568), UNEP (0.451
+against 0.524) and UH (0.389 against 0.597) fall below it; at ~0.1 km² the same three-three
+split holds. **So the products do carry real information about where within a damaged area to
+go first — what they do not add is knowledge of which area that is**, which is the part
+geography already encodes. The headline five-of-six should be read as a statement about the
+coarse task, not as evidence that the products are uninformative at every scale.
+
+| product | ρ product | ρ geography null | difference |
+|---|---|---|---|
+| LIST | 0.668 | 0.543 | +0.125 |
+| IMPACT v2 | 0.548 | 0.456 | +0.092 |
+| OSU | 0.642 | 0.562 | +0.080 |
+| UNEP | 0.451 | 0.524 | -0.074 |
+| Microsoft | 0.466 | 0.568 | -0.102 |
+| UH | 0.389 | 0.597 | -0.208 |
+
+: The same test restricted to the Caraballeda AOI, ~0.7 km² cells. Within the damage
+zone the six split evenly against the null, and the same three-three split holds at
+~0.1 km². {#tbl-nullrank-cara}
+
+The interpretation is otherwise the same as at building level, and
+carries the same limitation. The null is fitted on this event's damage labels, so this says the
+damage pattern was largely recoverable from coastline distance, building density and shaking
+*in hindsight* — not that a responder had this ranking available on day one, which they did not
+and the products were. What it does rule out is the reading that area ranking demonstrates the
+products are extracting damage information the geography does not already contain. At this
+scale they are reproducing a spatial pattern, competently, that was largely predictable from
+the map.
+
+The error-structure test explains why ranking survives. The residual over-flagging is
+strongly clustered in space (Moran's I 0.45–0.60, p = 0.001 for each of the three
+products this test covers — Microsoft, IMPACT, and OSU, the members whose extents
+overlap CEMS broadly enough for the cell-level regression; extending it to the newer
+members is open work), so the errors are not random noise. But once building stock is controlled, the clustering
+follows the earthquake itself: residuals rise toward the coast and with modelled shaking,
+and show no association with building density. A direct test of the concern that flags
+merely reproduce the building map is also negative once exposure is controlled. In short,
+the products over-call most where damage is genuinely worst. That error structure
+preserves area rankings. The dangerous alternative, errors that track urban form, is what
+the test rules out.
+
+![Exposure-adjusted residual maps (red = over-flagging beyond what CEMS damage
+explains) for the three products the error-structure test covers. Each panel autoscales
+to its own analysed region, which is why they look so different: Microsoft analysed a
+single ~30 km coastal strip, so its few hundred grid cells appear as individual dots,
+while IMPACT and OSU are Sentinel-1 swaths spanning roughly 200 km, whose thousands of
+cells merge visually. IMPACT and OSU residuals follow the coastal severity gradient.
+Microsoft's error is a single hard cluster at the west end of its
+region.](artefacts/RQ3-prioritization-error-structure/figs/rq3_residual_maps_res8.png)
+
+One product does not fit this benign pattern. Microsoft's residual error is not a
+gradient but a single dense cluster in the western coastal strip, and no covariate
+explains it. At this point in the analysis we cannot say what the cluster is: real
+over-detection and a local gap in the reference would look identical. Section
+@sec-casestudy resolves the question with the other two references.
+
+That ambiguity applies to every number in this section, not just the anomaly. Everything
+above assumes CEMS is complete within its extents. The next section tests that
+assumption.
+
+## Results II — testing the reference itself {#sec-crossexam}
+
+**CEMS misses about half of significant damage.** We scored CEMS itself against the 415
+field-reported damage points that fall inside its extents, using r = 20 m to absorb
+phone-GPS error (@tbl-field). The result is a consistent gradient by damage grade.
+
+| dataset scored | "complete" damage found | "significant" found | "minimal" found |
+|---|---|---|---|
+| CEMS (expert reference) | **0.94** | **0.49** | 0.17 |
+| OSU | 0.92 | 0.71 | 0.21 |
+| LIST | 0.83 | 0.70 | 0.21 |
+| Microsoft | 0.82 | 0.33 | — |
+| IMPACT v2 | 0.73 | 0.46 | 0.25 |
+| UNEP debris (core region) | 0.66 | 0.23 | — |
+| UH | 0.59 | 0.23 | 0.45 |
+| any of the six products (union, core region) | 0.97 | 0.87 | — |
+
+: How much ground-truthed damage each dataset caught, by damage grade. Every row —
+including CEMS — is scored against the ChatMap field points, the one reference that can
+measure the expert reference's own misses. Each cell is the share of field-reported
+damage points of that grade that the dataset flagged within 20 m; each dataset is scored
+only on the points inside its own analysed extent (UNEP, which publishes none, is scored
+in the core comparison region under the coverage assumption stated in Methods), so
+denominators differ by row (complete: 316–328 points; significant: 47–63; minimal:
+11–24, with cells left blank below 10 points). The union row combines the six products
+and does not include CEMS. Minimal-grade cells are indicative only; confidence intervals
+are pending. {#tbl-field}
+
+Every satellite product, and the expert reference itself, detects destruction well and
+lighter damage poorly. CEMS matched 94% of field-reported complete destruction but only
+49% of significant damage within its own mapped extents. The same asymmetry has been
+reported independently for the platform behind the Microsoft product, evaluated on the
+2023 Turkey earthquakes (Ramachandran et al. 2025): 43% sensitivity — the same quantity
+we call recall — against 94% specificity, the share of *intact* buildings correctly left
+unflagged. High specificity with low sensitivity is precisely the signature of a detector
+that only sees destruction, so this appears to be a general property of imagery-based
+damage assessment rather than a quirk of this event.
+
+Three consequences follow. First, satellite damage detection is, in practice,
+destruction detection. Totals derived from it undercount the damaged-but-standing
+buildings that dominate shelter needs. Second, every precision figure in @sec-scorecard
+is a lower bound, and the bias is largest exactly where damage is lighter. Third, the
+mirror image for recall: CEMS's damage list over-represents destruction, the class
+products find best, so recall measured against CEMS is flattered — a ceiling, where
+precision has a floor. @fig-gradeslope shows the corrective measurement: when the
+denominator is field-reported *significant* damage instead of destruction, recall drops
+for every dataset (CEMS 0.94 → 0.49; the six-product union 0.97 → 0.87; Microsoft
+0.82 → 0.33).
+
+![Recall by damage grade, field frame. Each line is one dataset's recall against
+field-reported damage, at "complete" destruction versus "significant" damage. Every line
+slopes down — the products and the expert reference alike find lighter damage far less
+often. Because CEMS's own damage list is destruction-heavy, any recall measured against
+it inherits the left end of these slopes: measured recall is a ceiling on true recall,
+just as measured precision is a floor on true
+precision.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-gradeslope}
+
+**Crowd review shows the lower bounds sit well below the truth.** For each product we
+took the flags with no CEMS match and looked up the crowd's verdict on them. Counting the
+crowd-confirmed flags as correct raises Microsoft's per-building precision from 0.08 to
+about 0.24. A factor of three, and it reflects the reference, not the product. The
+correction is not uniform across products or places, which is why a single scaling
+factor cannot substitute for adjudication against a second reference.
+
+**Some damage escapes everything.** About 11% of field-reported damage points, mostly in
+inland hill communities, had no flag from any product within 20 m, despite lying inside
+product analysed extents. These are collective misses in the areas where response
+attention was already thinnest, and they are invisible to any evaluation that stays on
+the coast. Taken together, the products still find nearly all field-reported damage:
+within the core region, at least one of the six flagged within 20 m of 96% of field
+points (97% of complete destruction, 87% of significant damage). The ecosystem's combined
+recall is genuinely high; the inland gap is the shared blind spot within it.
+
+![Field-reported damage points coloured by how many of the five extent-publishing
+products flagged damage within 20 m (UNEP, which publishes no extent, is not counted
+here). The coastal strip is well covered. The inland cluster was missed by
+everyone.](artefacts/RQ2-cems-footprint-points/figs/rq2_chatmap_found_by.png)
+
+A final observation completes the picture. In the hard-hit coastal strip, the UH
+product's flags have the best per-building precision of any single product. In
+agricultural control areas where CEMS found essentially no damage, the same product
+flagged up to 27.5% of buildings, in spatially clustered patterns that indicate
+systematic model failure rather than noise. An evaluation confined to the damage-dense
+strip would have certified a product that fails badly elsewhere.
+
+**The pooled scorecard is one place's scorecard.** That cautionary tale generalizes,
+and it bounds every headline number in this paper. CEMS activated five separate AOIs,
+but 96% of its damage points sit in one of them: Caraballeda (1,468 points, against 26
+in Morón, 14 in San Felipe, and 3 each in Caracas and Santa Cruz). Splitting the
+scorecard by AOI (@fig-peraoi) shows two things. First, the pooled numbers *are*
+Caraballeda's numbers — the per-AOI Caraballeda row reproduces the headline scorecard
+almost exactly. Second, outside Caraballeda every product keeps flagging at scale —
+IMPACT marks 9,445 buildings in the Caracas AOI, UH marks 32,145 (27.5% of the stock)
+in Santa Cruz — while measured precision collapses to 0.00–0.02 everywhere. We state
+plainly what those zeros can and cannot mean. They are floors against a reference that
+recorded almost nothing in those AOIs, so two explanations are confounded: the products
+hallucinating where damage is sparse (the same low-damage-zone mechanism as the UH
+agricultural case and the Microsoft west strip), and CEMS under-recording damage in
+AOIs it mapped thinly. The crowd cannot arbitrate here — the MapSwipe campaign
+concentrated on the coastal strip, and at most 12% of these out-of-Caraballeda flags
+fall on voted cells. Recall is measurable only in Morón (26 points), where the best
+product finds 19% of it. What survives the ambiguity is the conditional: every
+performance claim in this paper describes dense-damage coastal terrain, and in the four
+low-damage AOIs the products' flags are almost entirely uncorroborated by any reference
+we have.
+
+Pooling all five AOIs gives the *as-delivered* scorecard — the product as a responder
+received it, junk zones included. As-delivered precision: Microsoft 0.081, OSU 0.036,
+IMPACT 0.032, UNEP 0.027, LIST 0.026, UH 0.009. Two things stand out. UH's number is
+ten times worse than its best-case 0.093, because most of its flags sit in the
+low-damage AOIs (32,145 in Santa Cruz alone). And Microsoft's number is *unchanged* —
+not because its model behaves differently, but because it only published flags for the
+coastal strip it had analysed carefully. Restraint in coverage is itself a product
+property: shipping fewer, better-scoped zones protected Microsoft's as-delivered
+precision, while shipping everywhere destroyed UH's. (The voting and fusion analyses of
+@sec-dial operate in the core region and therefore sit on top of best-case numbers;
+their relative orderings are unaffected, but their absolute levels inherit the
+best-case flattery.)
+
+Two mechanisms make the as-delivered numbers what they are, and both are worth stating
+because they answer the obvious objection — *shouldn't precision be destroyed outside the
+one dense zone?* The first is arithmetic. Because the four low-damage AOIs record almost no
+damage, precision there is essentially zero, and the pooled figure is a flag-weighted
+average — so a product's as-delivered precision falls by almost exactly the share of its
+flags that land outside Caraballeda: Microsoft 0% of flags and 0% lost, OSU 17% and 16%,
+IMPACT and LIST 52% and 52%, UNEP 68% and 68%, UH 90% and 90% (every product lands on the
+diagonal *precision lost = share of flags in the dead zones*; plotted in @fig-deadzone,
+in the Appendix). Precision is not *resisting* the false alarms; it collapses in direct
+proportion to where each product chose to flag. The second mechanism means even this understates the problem: the
+as-delivered frame can only score flags that fall inside a CEMS extent, and most products
+flag far beyond one. Of each product's total flags, the share landing outside every CEMS
+extent — where no reference can score them at all — is 4% for Microsoft but 43% for OSU,
+71% for IMPACT, 76% for UNEP, and 79% for LIST. Since damage was concentrated on the coast,
+the bulk of those unscoreable flags are almost certainly false positives. So every precision
+figure in this paper, as-delivered included, is measured on each product's most favourable,
+reference-covered subset; the true precision across a product's full output is very likely
+lower, and unmeasurably so.
+
+The as-delivered frame also re-runs this paper's harshest benchmark. We trained the
+geography null model — coast distance, building density, and ShakeMap intensity, constructed
+as described in @sec-dayzero — on each product's full delivered footprint under the same
+spatially blocked validation, then cut its continuous risk score to *exactly* the number
+of flags that product shipped. Compared this way, operating point against operating point
+at each product's own delivered list size, **four of the six products are matched or
+beaten by the geography null on both precision and recall**: IMPACT (product precision 0.032,
+recall 0.55) against the null's 0.040 / 0.68; UH (0.009 / 0.37) against 0.022 / 0.92; LIST
+(0.026 / 0.65) against 0.032 / 0.78; and UNEP (0.027 / 0.35) against 0.045 / 0.57 — at UH's own
+list size the geography rule reaches 92% of the reference damage at more than twice UH's
+precision. Only two products stay ahead of geography alone: Microsoft (0.081 / 0.55 against
+0.053 / 0.36), which shipped only its carefully analysed strip, and OSU (0.036 / 0.85 against
+0.032 / 0.77), which flagged so widely it bought recall the null could not match at that list
+length. This result is unchanged by the matching radius: repeated at 20 m it is the same four
+products, in the same direction (Appendix). One caveat cuts across all
+of this: outside Caraballeda the reference is thin, and the penalty for flagging there
+falls on the products, which did flag, not on the baseline, which did not. To whatever
+extent CEMS under-recorded those areas, part of the gap would close. But a responder in
+the first week had exactly the same information deficit, which is the point of the
+as-delivered frame.
+
+![Per-AOI scorecard, scorecard frame. Left: precision floor per product per CEMS AOI;
+right: recall where the reference is thick enough to support it (suppressed below 20
+CEMS points). Columns ordered by reference size; 96% of all CEMS damage points are in
+the first column. Outside Caraballeda, measured precision is 0.00–0.02 despite flag
+shares up to 27.5% — a floor against a nearly-empty reference, in which product
+over-flagging and reference incompleteness cannot be separated with current data
+("no overlap" = the product did not analyse that
+AOI).](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
+
+## Results III — combining products: agreement as an operating point {#sec-dial}
+
+### No single product can be tuned into a usable building list
+
+Could a better single product fix per-building precision? Four independent experiments
+in this event say no. The limit behaves like a property of the sensing modality rather
+than of any particular product. We refer to it as the modality ceiling: a precision level
+that single-sensor tuning does not rise above. (Note that this is the opposite kind of
+bound from the reference-driven lower bounds of @sec-crossexam: those mean the truth is
+higher than measured; the ceiling means single-product performance stops improving.)
+
+1. **Same-sensor agreement barely helps.** Requiring both Sentinel-1 coherence products
+   (IMPACT and OSU) to agree raises precision only to 0.088, barely above the single
+   products. Products that share sensor physics share false positives, so voting cannot
+   remove them.
+2. **A tunable rebuild saturates at the same level.** We built our own Sentinel-1
+   amplitude-change product (per-pixel z-scores against a 30-scene pre-event baseline)
+   and swept its threshold fully. Its best F1 (the harmonic mean of precision and
+   recall — a single number that is only high when both are) ties the best shipped
+   product, and no point on its curve approaches the multi-product rules. Its false alarms concentrated in
+   farmland (8.0% of buildings flagged in an agricultural control area where CEMS found
+   almost nothing), which confirms the advantage of radar coherence over amplitude for
+   rural false alarms.
+3. **Product confidence scores add nothing.** Sweeping Microsoft's continuous
+   damage-fraction score (within its own analysed region, where its baseline numbers run
+   higher than in the core region) trades recall 0.66→0.10 for precision 0.10→0.19. The
+   shipped binary flag already sits near the best F1 on that curve. There is no hidden headroom
+   in the confidence field.
+4. **Agreement within one product plateaus too.** Microsoft flags corroborated by a
+   second satellite scene are 2.5 times more precise than single-scene flags (0.245
+   versus 0.097). That is a real gain and worth publishing. But it stalls below every
+   cross-modal pair, and in the low-damage zone where two scenes overlap, even flags
+   confirmed by both scenes were rejected by 72% of crowd reviews. Agreement inside one
+   model inherits that model's calibration failures.
+
+### Agreement across modalities is different
+
+Voting across sensing modalities works because an optical model and a radar product
+rarely make the same mistake. Requiring their agreement removes false positives faster
+than it removes real detections. The clearest example: pairing Microsoft with UH, the
+product whose full-region precision is the worst we measured (0.009, driven by the
+agricultural false alarms described above), produces the strongest two-product rule in
+the study (precision at least 0.372, crowd-adjusted 0.64). A product with serious failure
+zones is still a valuable voter wherever its errors are independent of its partner's.
+The same-sensor pair, by contrast, is the weakest of all fifteen pairings. We present
+this as a mechanism, not a recipe: which pairing wins is probably event-dependent; that
+modality diversity is the active ingredient is the durable claim.
+
+Scored against all three references at once, the number of agreeing products behaves as
+a well-ordered operating point. Every step from 1-of-6 to 6-of-6 raises precision (both
+the CEMS lower bound and the crowd-adjusted value) and lowers coverage:
+
+| rule | flags | CEMS precision floor | crowd-adjusted precision | damage coverage (CEMS, 30 m) | visits per verified find (30 m) |
+|---|---|---|---|---|---|
+| 1-of-6 (union) | 37,644 | 0.03 | 0.21 | 0.97 | 26.5 |
+| 3-of-6 | 9,409 | 0.10 | 0.28 | 0.86 | 7.5 |
+| 4-of-6 | 3,347 | 0.19 | 0.38 | 0.67 | 3.4 |
+| 6-of-6 | 214 | 0.64 | 0.93 | 0.18 | 0.8 |
+
+: The voting rules, priced. "Crowd-adjusted precision" adds back the CEMS-unmatched flags
+that MapSwipe volunteers judged damaged. "Damage coverage" is the share of CEMS damage
+points with a flagged building within 30 m. "Visits per verified find" is the number of
+flagged locations a responder must visit, per CEMS-verified damage point reached, at the
+same 30 m scale. {#tbl-dial}
+
+Two things should be read honestly from @tbl-dial. First, the false-positive cost is real
+and dominates at low agreement: every single product wastes 80–86% of field visits even
+at the generous 30 m scale (a wasted visit meaning a flagged stop with no CEMS damage
+within 30 m), and the union wastes 89%. There are simply many more flags than damaged
+buildings, and only requiring agreement pays that cost down. Second, the unanimous rule
+is an anchor, not a practical operating point. It reaches near-certainty (crowd-adjusted
+precision 0.93) but covers only 18% of the damage. Its value is what it reveals: 81% of
+unanimous flags that CEMS did not record were judged damaged by the crowd, which makes
+full agreement the sharpest available detector of the reference's own gaps, and a
+ready-made field-validation queue for the reference provider.
+
+![The six-member voting frontier, scorecard frame. Every marker is one flag list: grey
+dots are the six products as shipped, hollow circles are two-product agreement rules
+(the strongest, Microsoft ∧ UH, labeled), and the numbered blue squares are the k-of-6
+voting rules from @tbl-dial. Each vertical whisker is that rule's precision *interval*:
+the marker sits at the CEMS-measured floor, the whisker top at the crowd-adjusted value.
+Single products cluster in the low-precision band at the bottom; each added vote of
+required agreement trades recall for precision along the blue line. Whiskers adjust
+precision only: adjudication re-judges flags and cannot add unrecorded damage to
+recall's denominator, so in-frame recall is fixed — recall's own, downward uncertainty
+is the grade-gradient result of
+@sec-crossexam.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png)
+
+### Weighted fusion, and the geography-only baseline
+
+Flat voting weights every product equally. As a final step we fitted a logistic
+regression that predicts per-building CEMS damage from the six flags, the products' own
+confidence fields, and three context variables (building density, coastline distance,
+shaking intensity). Validation is spatially blocked: the model is trained and tested on
+disjoint ~5 km² zones, because neighbouring buildings share both features and labels and
+a random split would leak that structure.
+
+Because the models in this section output continuous scores rather than fixed flag lists,
+they are compared on **average precision (AP)** — a metric that must not be confused with
+precision itself. Precision and recall describe *one* flag list: the share of its flags
+that are right, and the share of true damage it catches. AP describes a *score*: sweep
+the score through every possible threshold, record the precision achieved at each level
+of recall, and average — one number summarising the entire precision–recall curve. A high
+AP means the score ranks damaged buildings ahead of intact ones well at every list size,
+not that any particular list is precise. On this metric the weighted model reaches AP
+0.284, against 0.194 for flat voting (the vote count 0–6 treated as a score), and a random
+forest does no better than the logistic model — the useful signal is additive, and an
+interpretable weighted vote captures essentially all of it.
+
+That 46% AP advantage over flat voting should not be read as the practical margin, and the
+reason is again a property of the metric rather than of the predictors. The vote count is an
+*ordinal* score with seven levels, so it can be cut in only six places; its precision–recall
+"curve" is six points, and integrating across them penalises the coarseness of the grid as
+much as any deficit in ranking. Judged instead at the single operating point each would
+actually be deployed at — the threshold maximising F1 — the gap narrows from 46% to **18%**
+(voting 0.290 against fusion 0.343; @fig-bestf1).
+
+That 18% is the price of the single most consequential distinction in this paper, and it is
+worth paying deliberately. **The weighted fusion cannot be run during a response.** Its weights
+are estimated from this event's reference labels — the very damage map a responder is waiting
+for — so it is a retrospective instrument, subject to exactly the objection that disqualifies
+the geography null as an operational tool (@sec-dayzero). Flat voting carries no such debt.
+It requires no weights, no training data, and no reference: count how many products flag a
+building. It is computable the hour the second product lands, by anyone, with a spreadsheet.
+
+Set against that, the arithmetic is favourable. Voting reaches F1 0.290 where the best single
+product manages 0.148 — **roughly twice the accuracy of any product taken alone** — and gives
+up 18% against a fitted model that nobody could have fitted in time. On the evidence here,
+counting agreement is the only method that is simultaneously effective and available on day
+one, and that combination, rather than the fusion result, is what we would put in front of an
+operational team.
+
+Three qualifications keep the recommendation honest. First, "flat" conceals an assumption:
+weighting every product equally means trusting them equally, and UH — whose as-delivered
+precision was 0.009 — casts a full vote. That it *helped* rather than hurt is a real finding,
+but one we could only establish with a reference in hand. Second, and following from the
+pairwise results above, the transferable rule is not "count votes" but **"count agreement
+across sensing modalities"**: the same-sensor pair was the weakest of all fifteen, and a slate
+of five correlated optical products would inherit their common bias no matter how many of them
+agreed. Modality is knowable without labels, so this sharpens the rule rather than weakening
+it. Third, the choice of *k* remains, and while it can be made without labels — flag counts
+are observable, so "we can visit three thousand buildings, therefore k = 4" is a legitimate
+day-one decision — the precision that choice buys is not knowable at the time. A responder
+picking k is choosing a workload, not a guaranteed hit rate.
+
+The ablation is the result worth remembering. With the product inputs removed, the
+geography null model (coast distance, building density, ShakeMap intensity — inputs available
+within hours of the shaking, though the fit itself is retrospective; @sec-dayzero) reaches
+AP 0.060. Since a single product is one binary flag list, not a score, it has no meaningful AP
+of its own to set beside that number; the honest comparison is made point-against-curve. Every
+threshold on the null score is a flag list, so its precision–recall curve is a whole family of
+no-satellite predictors (@fig-geobaseline), and each product is one point in that plane.
+
+Reading those points against the curve at **matched list sizes** — cutting the null at whatever
+threshold produces exactly as many flags as that product shipped, so the two lists are the same
+length and directly comparable — the products' advantage is slight and not universal. Three
+products clear the null: UH (precision 0.093 against 0.065 at 5,362 flags), UNEP (0.086 against
+0.068) and Microsoft (0.081 against 0.073). The other **three fall below it on precision and
+recall alike**: IMPACT (0.069 against 0.071), LIST (0.057 against 0.062) and OSU (0.045 against
+0.047). Even in the region where every product scores best, geography is not a floor the
+products clear comfortably — half of them do not clear it at all, and the gap to fusion dwarfs
+every one of these margins.
+
+A second like-for-like comparison sharpens the same point and is easier to read, because it
+puts every predictor on one number at one operating point. A provider ships exactly one flag
+list, so a product's F1 is simply that list's F1. Our three continuous scores can be cut
+anywhere, so we report each at its best single cut. That raises an obvious objection — the
+products' thresholds were fixed by their providers without ever seeing the reference, while
+ours are chosen knowing the labels — so we tested how much that asymmetry is worth. Selecting
+the null model's threshold strictly out-of-sample, on an inner validation split held out from
+the training blocks and then applied blind to the test fold, gives F1 0.129 against 0.128 for
+the hindsight-chosen cut — a difference of 0.001. Hindsight buys nothing here, and at this
+sample size a single scalar cut is estimated closely from training data alone.
+
+The result is that geography sits *inside* the product range rather than beneath it. The null
+reaches **F1 0.128** against 0.148 for the strongest product, UH — a shortfall of about 14% —
+while matching or beating three of the six: IMPACT 0.123, LIST 0.104 and OSU 0.085. The two
+remaining products, Microsoft (0.142) and UNEP (0.139), sit between (@fig-bestf1). No product
+separates itself from a geography-only model by a margin that would survive a change of
+reference or a redrawn study area. Two clarifications keep this from being read for more, or
+less, than it is worth.
+
+The first concerns average precision, which should not be used to make this comparison at all
+even though it is the obvious summary to reach for. A product's AP looks superficially
+comparable to the null's, but the two are different quantities: the null's is a genuine
+integral over a full precision–recall curve, while a binary flag list's evaluates to
+$P\cdot R + (1-R)\pi$ as described in @sec-dayzero, a value compressed toward prevalence that
+lands near 0.08 for almost any product regardless of quality. Comparisons on that metric are
+coincidences of value, not statements about performance, which is why the operating-point
+comparison above is the one we rely on.
+
+The second is what geography's parity does and does not imply. It does not mean the products
+are uninformative: combining them reaches F1 0.290 by flat voting and 0.343 by weighted
+fusion, well over twice the best single product and well beyond anything geography alone attains, so
+there is real and complementary information in the set. What it means is that **no individual
+product, in the region where all of them score best, separates itself clearly from a
+hindsight model built on coastline distance, building density and shaking**. The value in
+these products is in their disagreements with each other, not in any one of them taken alone.
+And the two frames read consistently: where the products were carefully analysed they roughly
+tie the geography null; across everything they actually shipped, most fall below it.
+
+![Like-for-like at one operating point each. Grey bars: the six products at the single flag
+list each provider shipped — the threshold was their choice, so this is simply that list's F1.
+Coloured bars: our scores at their best single cut. The **geography null (logistic, 0.128)** is
+the primary null and lands inside the product range, above IMPACT, LIST and OSU and below
+UH, Microsoft and UNEP; the paler **random-forest null (0.099)** is the same feature set fitted
+with the weaker learner, shown for robustness and more favourable to the products
+(@tbl-learners). Choosing the cut strictly out-of-sample instead — on validation data held out
+from the training blocks — moves the primary null from 0.128 to 0.129, so nothing here depends
+on having had label access when thresholding. Flat voting (0.290) and weighted fusion (0.343)
+reach more than twice the best single product, which is where the products' real value shows.
+Precision and recall at each point are printed beside the bars. All values use the 10 m primary
+frame (@tbl-allframes) and are directly comparable to every other number in this paper; the
+20 m version is in the
+Appendix.](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){#fig-bestf1}
+
+Combination, flat or weighted, is what changes the picture — not any single product, and not
+geography alone.
+
+![The geography null model, in three views. **Top — the map**: colour is the damage risk
+predicted by a model with no satellite input, only coast distance, building density, and
+ShakeMap intensity; black dots are actual CEMS damage points. The context variables
+alone already draw the damage map. **Middle — overall ranking skill (average precision)**:
+average precision is defined only for a *continuous* score, so only the three continuous
+predictors appear here — the geography null (red, logistic, AP 0.060), flat 6-member voting (mid
+blue), and weighted fusion (dark blue). Each bar summarises how well that score ranks
+damaged buildings ahead of intact ones across *all* thresholds; it is not a precision
+value. The six single products are binary flag lists, whose "AP" would simply be their
+precision, so they are deliberately absent here and appear instead as points in the bottom
+panel. **Bottom — the individual flag lists**: each marker is one concrete list with its
+recall (x) and precision (y). Grey dots: the six products as shipped (one point each — the
+provider already chose the threshold; UH and UNEP nearly coincide and are leader-lined).
+Red dashed curve: every flag list the continuous geography null score can produce as its
+threshold sweeps; the red diamond marks the one operating point of median product size
+(9,963 flags). Numbered blue squares: the six flat-voting rules — "k" means *a building
+flagged by at least k of the six products, whichever they are*, so square 1 is "any
+product" (not any one product) and square 6 is "all six agree". Requiring more agreement
+climbs from the single-product level onto the weighted-fusion curve (solid blue, all lists
+the learned score can produce). All values use the 10 m primary frame (@tbl-allframes), so they
+are directly comparable to every other number in this paper.](artefacts/RQ8-learned-fusion/figs/rq8_geography_baseline_r10.png){#fig-geobaseline}
+
+## Results IV — diagnosing a product failure from its own metadata {#sec-casestudy}
+
+Results I left the Microsoft west-strip anomaly unexplained. It can now be resolved
+completely, and the resolution is the paper's best argument for metadata transparency.
+
+The crowd settles what the cluster is. In the western strip, volunteers judged 71% of
+Microsoft-flagged locations "no damage", against a roughly even split in the damage-dense
+east. Independent people looking at post-event imagery saw nothing at most of the places
+the cluster flags. The cluster is real over-detection, not a gap in the reference.
+
+The product's own metadata explains where it came from. Every building in the strip has
+`num_observations = 1`: the zone was covered by exactly one satellite scene. The platform
+behind the product (HASTE; Robinson, Ortiz et al. 2026) trains a fresh model for each
+scene and uses agreement between overlapping scenes as its only internal check. The west
+never got that check. Cloud is ruled out as an alternative explanation: the west is the
+most cloud-free zone in the product, and the visibility check in Methods moved nothing.
+Splitting the product at the scene boundary shows what the headline number was hiding.
+The single-scene west flags 28.7% of its buildings, with precision 0.05 and F1 0.10. The
+multi-scene east flags 7.6%, with precision 0.21 and F1 0.30, the best single-product
+zone we measured anywhere in this study. The same product contains both.
+
+A head-to-head test of the two overlapping scenes pins down the mechanism. Scored
+independently on the ~24,700 buildings both scenes covered, the "better" scene's
+advantage turns out to be restraint, not accuracy: it flags 4.9% of buildings against the
+other's 27.8%, but its flags are crowd-confirmed at a lower rate (7% versus 14%).
+Microsoft's merge rule, which resolved conflicts in favour of that scene, was
+directionally right (68% of the overruled flags were crowd-rejected) but silently
+discarded roughly 845 flags on buildings the crowd judged damaged. And buildings flagged
+by both scenes were still 72% crowd-rejected in this low-damage zone. The failure unit is
+the calibration of each per-scene model, not the satellite, the provider, or the product
+as a whole.
+
+Three things about this case study generalize. First, a single product-level metric
+averaged over a 4× internal quality split, and the split was only detectable because
+per-building provenance was published. Second, the provider's own validation missed the
+failure: the failing scene was exactly the one absent from their labeled validation set,
+and the platform's previous external evaluation (Turkey) showed the opposite bias,
+conservative under-flagging. Per-scene behaviour in a new event was not predictable from
+the track record. Third, the diagnosis was available during the response: the crowd
+campaign that rejected 71% of the strip's flags finished within days of the flags being
+published, but no channel existed to carry that signal to the provider. For the five
+products that publish no per-building provenance, we can show that they fail but never
+why.
+
+### A version postscript: what a product revision changes
+
+One provider revised its product after the study window: OSU delivered a v1 on 22 July
+(confidence tiers, ~8% expanded coverage, 69,431 flags versus v0's 58,870). The paper
+scores v0 throughout, because v0 is what responders had during the response; the
+operational dashboard has moved to v1. Since both versions key to the same building
+base, they can be scored identically on the common extent against the same 1,488 CEMS
+points (this comparison spans OSU's full extent, so its precision runs lower than the
+core-region scorecard figure). The result: precision 0.036 (v0) versus 0.034 (v1),
+recall 0.68 versus 0.64 — no measurable accuracy change — while **more than half the flag list turned over** (v1
+dropped 30,565 of v0's 57,066 flags and added 42,723 new ones). A revision that
+relabels half the buildings without moving precision or recall is itself evidence for
+this paper's central reading: at the individual-building level these products are
+noise-dominated, and version-to-version stability deserves a place beside accuracy in
+how such products are judged. The area-level signal, by contrast, is robust to exactly
+this kind of churn.
+
+## Results V — timeliness: when the products arrived {#sec-timeline}
+
+The operational question a scorecard cannot answer alone is *when*: a modestly accurate map
+on day two can matter more than a better one on day eight. We reconstruct each product's
+availability from the earthquake using the earliest date we can defend — the timestamp at
+which each product was integrated into our own pipeline — which is a conservative *upper
+bound* on when it was actually available (true provider-release dates are earlier and are
+still being confirmed).
+
+![Product availability, measured from the M7.5 mainshock. Circles mark a release or version;
+a filled star marks the final product actually evaluated (Microsoft's merged union; IMPACT
+v2). Positions are our-integration dates — an upper bound on availability — so true release
+is earlier. Red markers are dates still to confirm.](timeline/timeline_products.png){#fig-timeline}
+
+Three points stand (@fig-timeline). First, the entire ecosystem arrived inside about eight
+days — the field went from nothing to a dozen independent products in a single week.
+Second, several products were not single artefacts but sequences: Microsoft delivered
+scene-by-scene across five areas before merging them into the union we evaluate, and both
+IMPACT (raster v1 → vector v2) and OSU (v0 → a later v1) shipped successive versions — so
+"the product" has a delivery history, and the version a responder acted on depended on when
+they looked. Third, and honestly, we stop at *availability*: the decision-relevant analysis
+— accuracy interacted with arrival date, so that a fast-but-rough product can be scored
+against a slow-but-better one — requires confirmed provider-release dates we do not yet
+hold, and is deferred. What the timeline already shows is that timeliness varied by days
+across products, enough to matter operationally.
+
+## Discussion
+
+Two negative results are worth recording because they close tempting shortcuts. First,
+reference-free reliability prediction failed. Spatial signatures of the flags themselves
+(their rate, their clustering, even cross-product agreement) do not predict measured
+reliability across areas; all correlations were non-significant over fifteen product-area
+pairs. The reasons are structural. Pathological flags cluster the same way real damage
+clusters, so clustering statistics cannot separate a severity gradient from a land-cover
+artifact without reference data. And error decorrelation, which is decisive at building
+level, does not aggregate: products' failure zones overlap regionally even when their
+building-level errors are independent. Assessing reliability beyond a reference's
+coverage therefore requires field or crowd data, or models trained across multiple
+events. Second, and more positive: within reference coverage, local spatial statistics do
+localize known failures. Local indicators of spatial association turn each product's
+region into a reliability surface, with 78–86% of territory showing locally random error
+(the benign regime) and the failures concentrated in identifiable pockets. That suggests
+reliability-aware fusion, weighting votes by local error structure, as a natural next
+step; we develop it in the register but do not rely on it here.
+
+The strongest way to harden every claim in this paper is replication, and a specific
+candidate exists: the 2025 Myanmar earthquake has a comparable multi-product,
+crowd-validated landscape. The method transfers as-is. Whether the modality ceiling, the
+monotone ordering of the voting rules, and the grade gradient hold there is exactly what
+one event cannot establish.
+
+## Recommendations
+
+The results above imply changes in practice for three audiences. We collect them here,
+once, rather than threading them through the analysis.
+
+::: {.callout-tip title="For responders"}
+**Do not spend time choosing a product; spend it counting agreement between products.** On
+this event no single product was meaningfully better than a model of coastline distance and
+building density, but the number of products agreeing on a building roughly doubled the
+accuracy of any of them alone — and unlike a fitted model, counting requires no weights, no
+training data and no reference, so it can be done the hour the second product arrives. Weight
+the count toward *different sensing modalities*: optical and radar fail in different places,
+and agreement between them is what carries information, while agreement within one modality
+carried the least in our tests. Then set the threshold from your own capacity — @tbl-dial gives
+the flag counts and visit costs at each level — remembering that you are choosing a workload,
+not a guaranteed hit rate. Used at sector scale, any major product ranks where to go first: trust that ranking, not the
+building counts — while noting that coarse geography ranks about as well, so the ranking is
+useful without being evidence that the product saw anything the map did not. Nothing in the current ecosystem sees lighter
+damage reliably, so plan shelter assessments accordingly.
+:::
+
+::: {.callout-tip title="For providers"}
+Publish an analysed extent; without one, a product cannot be evaluated or safely used.
+Publish per-building acquisition metadata (scene count and dates); those fields are what
+allowed this paper to trace a failure to its cause. Surface corroboration to users as a
+confidence tier rather than leaving it in an archive column. Validate where the product
+is deployed, not where validation data happens to exist; the failing scene here was the
+unvalidated one. Check new products against a geography-only baseline, which every single
+product in this event merely tied. And accept feedback during the activation: a crowd
+campaign rejected 71% of one zone's flags within days, and no channel existed to carry
+that signal back while reprocessing could still help.
+:::
+
+::: {.callout-tip title="For evaluators and coordinators"}
+A single expert reference understates precision most where damage is lighter. Publish
+measured precision as a lower bound, or better, adjudicate the disputed flags against a
+second reference and publish the interval. Note that unanimous product agreement without
+expert corroboration turned out to be mostly real damage, so consensus doubles as a
+detector of reference gaps and a field-validation queue. Finally, coverage is an
+ecosystem property: the inland communities missed by every product were inside analysed
+extents, and nobody knew that nobody was seeing them. A shared, live picture of who is
+looking where costs providers nothing and closes the one gap here that no amount of
+fusion can.
+:::
+
+## Limitations
+
+This is one event in one coastal, dense-urban geography, and the core comparison region
+is only ~61 km². More restrictive still, 96% of the CEMS reference sits in a single AOI
+(Caraballeda), so every pooled number is effectively that AOI's number; in the four
+low-damage AOIs, measured precision (0.00–0.02) cannot distinguish product
+over-flagging from reference incompleteness (@fig-peraoi). The specific rule orderings
+and magnitudes are hypotheses elsewhere. The
+cross-modal versus same-sensor contrast rests on a single same-sensor pair. The crowd
+reference was seeded from two AI products' flags, so it scrutinizes products unevenly
+(100% of one product's contested zone had crowd votes, versus 59% for another) and cannot
+see any product's misses. Crowd volunteers are not damage-assessment experts. Their
+imagery, identified from the campaign's tile configurations, was fresh post-event VHR
+(Vantor WorldView-3 via OpenAerialMap, acquired one to six days after the quake). The
+contested western strip's scene is confirmed as 27 June from embedded metadata, two days
+after the AI's problem scene, so damage persistence makes the crowd's rejections there
+conservative; acquisition dates for some other areas rest on upload bounds rather than
+image tags. Field reports are undated, positives-only, and skewed toward destruction
+(79% complete), and their collection area is undefined, so the inland-gap estimate is a
+lower bound. The voting analysis inherits the shared footprint base, where co-flagging
+can fail for alignment reasons as well as genuine disagreement, so unanimous-rule recall
+is understated. The learned fusion weights are calibrated within this event, and the same
+applies to the geography null model, in a way that matters for how its result is read: the
+baseline is fitted to this event's reference labels, so although it is scored strictly
+out-of-fold on the same buildings as the products, it enjoys an event-specific calibration
+the products never had and no responder possessed on the actual day zero. It is an upper
+bound on geography-only skill, and the claim it supports is about information content — the
+products add little beyond three context variables — rather than about what was operationally
+in hand. A prior model fitted on *previous* earthquakes, which is what a responder would
+really have, would score somewhere below this bound and remains untested here; building and
+transferring one is the single clearest way to convert this null into an operational claim.
+How much the null knows about the event itself also varies by layer, and the core-region
+result is the weaker of the two: there ShakeMap intensity is effectively constant and
+contributes nothing (importance 0.000), so the null reduces to static geography whose
+discrimination comes entirely from hindsight fitting, whereas across the full delivered
+footprints shaking carries 0.25–0.31 of the importance and the null is using genuinely
+day-zero-available event information. OSU's
+revised v1, delivered after the study window, is used by the operational dashboard but
+enters this paper only in the dedicated comparison (@sec-casestudy); all other OSU
+numbers are v0. Bootstrap
+confidence intervals and population-weighted prioritisation are in progress and absent from
+this draft. The timeliness axis is partly built: @sec-timeline reconstructs *availability*
+(as an upper bound), but the decision-relevant interaction of accuracy with arrival date
+awaits confirmed provider-release dates. Input imagery details and release dates for two
+products (UH, LIST) await provider confirmation.
+
+## Conclusion
+
+Six damage products that disagree building by building agree, measurably and usefully, about
+where this earthquake did its worst. But none of them stands out, and the comparison that
+matters is not between products. In the region where all six score best, no single product
+separates itself clearly from a model built on coastline distance, building density and shaking
+alone; across their full delivered footprints, four of six place their flags no better than
+that; and at the neighbourhood scale where they are genuinely usable, the same model ranks areas about
+as well as they do — beating five of six across all mapped areas, though splitting three-three
+within the damage zone itself. The value in this ecosystem is not in picking the right product,
+because on this evidence there was no right product to pick.
+
+It is in their disagreement. Because the products fail in different ways — and most sharply
+when they fail across sensing modalities rather than within one — the number that agree on a
+building is a usable confidence measure, and counting that agreement roughly doubles the
+accuracy of any product alone. That result carries an operational weight the rest of this paper
+does not. A weighted fusion scores higher, but its weights are learned from the reference map a
+responder is still waiting for; like the geography baseline, it is an instrument for
+understanding an event afterwards, not for working through one. Counting cross-modal agreement
+needs no weights, no training data and no reference, costs about 18% against the fitted model,
+and can be computed the hour the second product arrives. **It is the only method we tested that
+is both effective and available on day one**, and it is the finding we would hand to a response
+team.
+
+What made any of this visible was not a better product but better references: three imperfect
+datasets whose blind spots do not overlap, and which, turned on the expert reference itself,
+showed that every published precision figure is a lower bound. The remaining practical changes
+are collected in the Recommendations rather than repeated here. One finding stands apart from
+all of them: as of this event, everything, products and references alike, sees destruction, not
+damage.
+
+## Appendix {.unnumbered}
+
+### The 20 m label radius {.unnumbered}
+
+All CEMS-based results in this paper use a 10 m matching radius (@tbl-allframes). The learned
+fusion is *fitted* on a 20 m label because the model needs enough positives in each spatial
+block to be stable — 20 m labels 2,733 buildings damaged in the core region against 1,350 at
+10 m — but it is evaluated at 10 m alongside everything else. For completeness, the same
+analysis evaluated end-to-end at 20 m gives:
+
+| | evaluated at 10 m (reported) | evaluated at 20 m |
+|---|---|---|
+| best single product | 0.148 (UH) | 0.212 (MS, IMPACT) |
+| geography null | 0.128 | 0.206 |
+| null as a share of the best product | 86% | 97% |
+| products the null matches or beats (best-F1) | 3 of 6 | 4 of 6 |
+| flat k-of-6 voting | 0.290 | 0.342 |
+| weighted fusion | 0.343 | 0.386 |
+| fusion as a multiple of the best product | **2.3×** | 1.8× |
+
+: F1 at each predictor's operating point under both label radii. {#tbl-radius}
+
+Every conclusion in the paper holds under both. The wider radius raises all absolute values,
+because a flag one building away from a recorded damage point starts to count as a hit. It
+also flatters the geography null specifically, for a reason worth understanding: a wide radius
+smears each reference point into a blob of neighbouring buildings, making the target
+area-shaped, which is exactly the shape a smooth spatial predictor captures well. The tighter
+10 m label concentrates the positives onto individual buildings, where per-building
+discrimination is required — and there the case for *combining* products strengthens, from 1.8×
+to 2.3× the best single product. Reporting at 10 m is therefore both the more consistent choice
+and the more demanding one.
+
+![Why as-delivered precision falls the way it does. Each product's as-delivered precision
+(y) is plotted against the share of its flags that land outside Caraballeda (x), where the
+reference records essentially no damage. Every product lies on the diagonal — precision
+lost equals the share of flags in the dead zones — so the as-delivered precision is
+governed almost entirely by *where* a product chose to flag, not by any resistance to false
+alarms. Microsoft is spared only because it flagged nowhere else. This is the arithmetic
+behind the first mechanism in
+@sec-crossexam.](artefacts/RQ2-cems-footprint-points/figs/rq2m_deadzone_dilution.png){#fig-deadzone}
+
+## Reproducibility note {.unnumbered}
+
+All analyses run from immutable data snapshots (frozen 2026-07-15) in the project's
+open-format data lake. Per-question scripts, running notes, and the full findings
+register, including every negative and superseded result, accompany this draft in the
+project repository. The matching, voting, and adjudication code totals roughly 1,500
+lines of Python against DuckDB and GeoPandas. No analysis requires proprietary software.

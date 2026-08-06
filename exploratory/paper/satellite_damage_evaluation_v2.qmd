@@ -1,0 +1,307 @@
+---
+title: "Six satellite damage products, one earthquake"
+subtitle: "A post-event comparison against three reference datasets, and how to read it · M7.5 Venezuela, 24 June 2026 · CHD Data Science"
+date: last-modified
+format:
+  revealjs:
+    theme: [default, gie_slides.scss]
+    slide-number: true
+    center: true
+    embed-resources: true
+    fig-align: center
+    include-in-header: password.html
+    include-after-body: hdx-bg.html
+---
+
+<!-- Distilled results deck (v2). Supersedes satellite_damage_evaluation_v1.qmd: every number here is the corrected,
+     radius-unified (10 m) set, and it includes the two null-model findings that were not in
+     the earlier deck (building level AND area level). Styling + animated particle background
+     borrowed from ds-aa-lac-dry-corridor/analysis/2026_cadc_drought_v3.
+     All figures are pre-built PNGs; embed-resources inlines them so the .html is standalone. -->
+
+## Three questions
+
+::: {.smaller}
+1. **Can a responder act on a single flagged building?**
+2. **Do they at least rank neighbourhoods well enough to triage?**
+3. **What is the sensible way to use them** in the next event?
+:::
+
+::: {.takeaway}
+Short answers: **no**; **yes, though geography would have told you much the same**; and
+**stop shopping for the best product — start counting how many of them agree**.
+:::
+
+::: {.tiny}
+M7.5, coastal Venezuela, 24 June 2026. At least 8 organisations released damage products; we
+evaluated the 6 that published an analysed extent. Numbers frozen to the 2026-07-15 snapshot.
+:::
+
+## What arrived, and when
+
+![](timeline/timeline_products.png){.r-stretch}
+
+::: {.takeaway}
+Eight organisations put out damage products, and almost everything landed within eight days.
+Microsoft shipped scene by scene and merged at the end; IMPACT and OSU each revised once.
+Whatever else we found, the ecosystem was fast.
+:::
+
+::: {.tiny}
+x-axis is our ingest date, an upper bound on availability. Provider release dates for UH and
+LIST still to confirm.
+:::
+
+## We scored against three references, not one
+
+![](artefacts/RQ0-matching-basis/figs/reference_architecture.png){.r-stretch}
+
+::: {.takeaway}
+Expert damage points from Copernicus EMS, crowd review of AI flags via MapSwipe, and 415
+reports from teams on the ground. Each is blind to something the others can see, which lets us
+turn them on **each other** as well as on the products.
+:::
+
+## The reference has its own blind spot
+
+::: {.cols}
+::: {.col}
+Copernicus EMS captured:
+
+::: {.bignum}
+94%
+:::
+::: {.bignum-sub}
+of field-reported **destroyed** buildings
+:::
+
+::: {.bignum}
+49%
+:::
+::: {.bignum-sub}
+of field-reported **damaged** buildings
+:::
+:::
+::: {.col}
+![](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png)
+:::
+:::
+
+::: {.takeaway}
+So the expert map is thorough about destruction and patchy about everything short of it.
+Any precision scored against it is therefore a **floor**: Microsoft's climbs from 0.08 to
+roughly 0.24 once the crowd confirms damage that CEMS never recorded.
+:::
+
+## What "right" and "wrong" mean here {.smaller}
+
+::: {.cols}
+::: {.col style="flex:1.35"}
+![](artefacts/RQ0-matching-basis/figs/fig_dual_anchor_matching.png)
+:::
+::: {.col}
+A few streets in Caraballeda, Microsoft against the expert map.
+
+- **Green** — a flagged building with expert-recorded damage within 10 m. A hit.
+- **Orange** — a flagged building with nothing recorded near it.
+- **Black dots** — expert damage points the product caught.
+- **Red circles** — expert damage points it missed. There are a lot of them.
+
+::: {.takeaway}
+**Precision** asks what share of the coloured footprints are green. **Recall** asks what share
+of the points are black rather than red. Neither needs a count of the grey buildings, which is
+why "how many did it get right out of everything" is the wrong question.
+:::
+:::
+:::
+
+## Building by building, precision is low across the board
+
+::: {.cols}
+::: {.col}
+::: {.bignum}
+0.01 – 0.08
+:::
+::: {.bignum-sub}
+precision **as delivered**, across everything the expert reference mapped
+:::
+
+::: {.bignum}
+0.04 – 0.09
+:::
+::: {.bignum-sub}
+precision in the **one damage-dense area (the Caraballeda AOI)** where all six score best — and
+where 96% of the reference sits
+:::
+:::
+::: {.col}
+![](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png)
+:::
+:::
+
+::: {.takeaway}
+They do find damage — recall runs 0.31–0.69. What they also produce is an enormous number of
+flags with nothing wrong underneath them.
+:::
+
+## The benchmark we measured against
+
+![](artefacts/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png){.r-stretch}
+
+::: {.takeaway-hot}
+Three things you know within hours of any earthquake: how far a building sits from the coast,
+how densely built its neighbourhood is, and how hard the ground shook. Fitting them into a model
+does require the damage map itself, so read the red caveat — this is a **yardstick we can only
+hold up afterwards**, not a tool anyone had on the day.
+:::
+
+## No single product clearly beats it
+
+![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){.r-stretch}
+
+::: {.takeaway-hot}
+The yardstick scores **0.128**. The six products land between **0.085 and 0.148** — three of
+them below it. Only when you combine products (0.290 by voting, 0.343 by weighting) does
+anything pull clear.
+:::
+
+## Zoom out, though, and they do a decent job
+
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3_priority_map.png){.r-stretch}
+
+::: {.takeaway}
+Stop asking about individual buildings and ask which *neighbourhoods* to go to first, and the
+picture improves a lot. Microsoft and OSU each pick 6 of the 10 worst-hit sectors, and rank
+correlation with the expert damage count runs about 0.54–0.59. This is the scale at which the
+products are genuinely useful.
+:::
+
+## Except geography ranks them just as well
+
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking.png){.r-stretch}
+
+::: {.takeaway-hot}
+Run the same test on the geography yardstick and it out-ranks **five of the six**. But read that
+carefully: across all five mapped areas, 96% of the damage is in Caraballeda, so this task is
+largely *"find Caraballeda"* — which coast-plus-density does trivially. **Zoom inside
+Caraballeda and it splits 3–3** (LIST, OSU and IMPACT ahead; Microsoft, UNEP and UH behind). So
+the products do carry information about where *within* a damage zone to go — they just don't
+tell you which zone, which is the part geography already knew.
+:::
+
+## What actually works: their disagreement
+
+::: {.smaller}
+| rule | flags | precision floor | crowd-adjusted | damage coverage | visits per find |
+|---|---|---|---|---|---|
+| any of 6 | 37,644 | 0.03 | 0.21 | 0.97 | 26.5 |
+| 3 of 6 | 9,409 | 0.10 | 0.28 | 0.86 | 7.5 |
+| **4 of 6** | **3,347** | **0.19** | **0.38** | **0.67** | **3.4** |
+| all 6 | 214 | 0.64 | 0.93 | 0.18 | 0.8 |
+:::
+
+::: {.takeaway}
+The products fail in **different** places, so the number of them agreeing on a building tells
+you how much to believe it. That gives you a dial with a known price at every setting: choose
+by how many teams you have and how much a wasted trip costs you.
+:::
+
+## Agreement across *modalities* is the active ingredient
+
+![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
+
+::: {.takeaway}
+Pair Microsoft with **UH**, the weakest product we measured, and you get the best two-product
+rule in the study. Optical and radar go wrong in different places, so each covers for the other.
+Pair two products that see the same way and you get the worst of all fifteen combinations.
+:::
+
+## The one finding to take into the next event
+
+::: {.hero}
+2×
+:::
+::: {.hero-sub}
+Counting agreement **across sensing modalities** roughly doubles the accuracy of any single
+product
+:::
+
+::: {.smaller}
+- It needs **no weights, no training data, no reference** — computable the hour the second
+  product lands.
+- A learned fusion scores 18% higher, **but its weights come from the damage map you are still
+  waiting for.** Like the geography yardstick, it explains an event afterwards; it cannot run
+  during one.
+:::
+
+::: {.takeaway-hot}
+**It is the only method we tested that is both effective and available on day one.**
+:::
+
+## Three honest caveats on that
+
+::: {.smaller}
+1. **"Flat" means equal trust.** UH, with as-delivered precision 0.009, casts a full vote. That
+   it *helped* is real — but we could only establish that with a reference in hand.
+2. **Count across modalities, not just products.** Five correlated optical products would
+   inherit one shared bias no matter how many agreed.
+3. **Choosing *k* buys a workload, not a hit rate.** Flag counts are observable without labels;
+   the precision they deliver is not.
+:::
+
+::: {.takeaway}
+None of this changes the advice. It does change how carefully we should phrase it.
+:::
+
+## Why one product's failure could be diagnosed
+
+![](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png){.r-stretch}
+
+::: {.smaller}
+Left: where Microsoft flags far more damage than the expert map records. Right: where
+volunteers said there was nothing there. **The two patterns are the same place.** That cluster
+sat under a **single satellite scene**, processed on its own with no cross-scene check —
+reviewers judged 71% of its flags undamaged.
+:::
+
+::: {.takeaway}
+Microsoft was alone in publishing **per-building acquisition metadata**, and that is exactly
+why it is the only product whose biggest failure we could explain instead of merely notice. The
+others may well have similar problems. We simply have no way to look.
+:::
+
+## What we would ask for
+
+::: {.smaller}
+**Responders** — do not spend time choosing a product; spend it counting agreement across
+modalities. Use area rankings for triage. Nothing here sees light damage reliably.
+
+**Providers** — publish an analysed extent (without one a product cannot be evaluated at all),
+publish per-building acquisition metadata, and validate where you deploy rather than where
+validation data happens to exist. The failing scene here was the unvalidated one.
+
+**Evaluators** — publish precision as a lower bound, or adjudicate against a second reference
+and publish the interval. Check new products against a geography-only yardstick.
+:::
+
+::: {.takeaway}
+And close the coverage gap: inland communities missed by **every** product were inside analysed
+extents, and nobody knew nobody was looking.
+:::
+
+## Where this is weakest
+
+::: {.smaller}
+- **One event, one coastal urban geography.** 96% of the reference sits in a single AOI, so
+  pooled numbers are effectively that AOI's numbers.
+- **The geography yardstick is fitted on this event's labels** — an information-content claim,
+  not an operational one. A model trained on *previous* earthquakes is the honest next step and
+  is untested.
+- **Confidence intervals are pending**, as is the accuracy-versus-arrival-date analysis.
+- Rankings and orderings are robust; absolute magnitudes inherit a thin reference.
+:::
+
+::: {.takeaway}
+Treat this as one carefully worked case and a method you can re-run, rather than a verdict on
+these products in general.
+:::

@@ -1,0 +1,16 @@
+product,area,flag_pct,moran_flags,peer_agree,precision,lift,enrichment
+MS,Caraballeda,14.5,0.543,0.77,0.081,3.5,3.0
+IMPACT,Caraballeda,17.8,0.55,0.83,0.066,3.1,2.6
+OSU,Caraballeda,42.6,0.599,0.68,0.043,2.0,1.6
+UH,Caraballeda,8.5,0.467,0.68,0.093,3.9,3.6
+IMPACT,Caracas,8.5,0.395,0.35,0.0,7.9,7.9
+OSU,Caracas,2.5,0.255,0.98,0.001,26.3,26.3
+UH,Caracas,16.3,0.522,0.22,0.0,5.6,5.6
+IMPACT,Moron,6.7,0.115,0.11,0.005,3.0,2.9
+OSU,Moron,3.9,0.477,0.99,0.0,,
+UH,Moron,1.9,-0.066,0.14,0.019,10.5,10.1
+IMPACT,San Felipe,0.1,0.229,0.17,0.0,,
+OSU,San Felipe,1.1,0.277,0.96,0.0,0.0,0.0
+IMPACT,Santa Cruz,1.2,0.013,0.46,0.001,83.2,27.7
+OSU,Santa Cruz,0.9,0.021,0.95,0.001,111.0,37.0
+UH,Santa Cruz,22.2,0.443,0.08,0.0,3.6,1.2

@@ -1,0 +1,16 @@
+feature,rf_importance,logit_coef
+dist_coast,0.239,-0.64
+density9,0.197,-0.56
+ms_pct,0.112,0.25
+osu_dmg,0.083,0.21
+osu_class,0.081,0.21
+list_class,0.058,0.17
+list_dmg,0.048,0.17
+ms_dmg,0.045,0.29
+sar_dmg,0.037,0.17
+sar_class,0.037,0.17
+debris_dmg,0.019,0.11
+uh_class,0.015,0.34
+uh_dmg,0.014,-0.17
+ms_nobs,0.014,0.22
+mmi,0.0,0.0

@@ -1,0 +1,4 @@
+feature_set,rf,logit
+all (fusion),0.283,0.284
+context only (geography null),0.045,0.06
+products only,0.258,0.271
