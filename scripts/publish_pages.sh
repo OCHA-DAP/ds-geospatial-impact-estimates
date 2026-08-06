@@ -2,10 +2,14 @@
 #
 # Publish the paper artefacts to the Pages site: render, encrypt, commit.
 #
-#   ./scripts/publish_pages.sh            # both
+#   ./scripts/publish_pages.sh            # both: render, encrypt, commit
 #   ./scripts/publish_pages.sh deck       # just the results deck
 #   ./scripts/publish_pages.sh paper      # just the manuscript
+#   ./scripts/publish_pages.sh --ship     # ...and push + open a PR against v1
 #   ./scripts/publish_pages.sh deck --no-commit
+#
+# --ship stops at the PR. Merging is what makes an artefact public, so it stays a decision
+# someone makes on purpose rather than a side effect of running this.
 #
 # Why this script exists: the site serves `content.enc`, an encrypted snapshot of the *rendered*
 # HTML. Pushing .qmd changes does not update the site. Rendering cannot run in CI — the figure
@@ -16,7 +20,8 @@
 # It never pushes. Pushing to trunk is what triggers the public deploy, and that stays a
 # decision you make, not a side effect of running this.
 #
-# Paths, overridable when the paper sources and pages/ live in different worktrees:
+# Paths, overridable when the paper sources and pages/ live in different worktrees. Set them once
+# in scripts/publish_pages.env (gitignored, sourced automatically) instead of typing them:
 #   GIE_PAPER_DIR   default <repo>/exploratory/paper
 #   GIE_PAGES_DIR   default <repo>/pages
 # Passphrase: GIE_PAGE_PASS, else ~/.gie-page-passphrase, else encrypt_page.py prompts.
@@ -28,17 +33,29 @@ step() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 
 TARGET=all
 COMMIT=yes
+SHIP=no
 for arg in "$@"; do
   case "$arg" in
     deck|paper|all) TARGET="$arg" ;;
     --no-commit)    COMMIT=no ;;
-    -h|--help)      sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *)              die "unknown argument '$arg' (expected: deck | paper | all | --no-commit)" ;;
+    --ship)         SHIP=yes ;;
+    -h|--help)      sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *)              die "unknown argument '$arg' (expected: deck | paper | all | --ship | --no-commit)" ;;
   esac
 done
+[[ $SHIP == yes && $COMMIT == no ]] && die "--ship and --no-commit contradict each other"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
+
+# Local, gitignored overrides so the paths are configured once rather than typed every time.
+# Needed while the paper branch is unmerged and the sources live in a different worktree.
+if [[ -r $SCRIPT_DIR/publish_pages.env ]]; then
+  # shellcheck disable=SC1091
+  source "$SCRIPT_DIR/publish_pages.env"
+  echo "config: scripts/publish_pages.env"
+fi
+
 PAPER_DIR="${GIE_PAPER_DIR:-$REPO_ROOT/exploratory/paper}"
 PAGES_DIR="${GIE_PAGES_DIR:-$REPO_ROOT/pages}"
 ENCRYPT="$REPO_ROOT/scripts/encrypt_page.py"
@@ -60,6 +77,20 @@ elif [[ -n ${GIE_PAGE_PASS:-} ]]; then
   echo "passphrase: from GIE_PAGE_PASS"
 else
   echo "passphrase: none found — encrypt_page.py will prompt"
+fi
+
+PAGES_REPO="$(git -C "$PAGES_DIR" rev-parse --show-toplevel)"
+
+# --ship publishes for real, so set up the branch BEFORE rendering: switching branches later,
+# with a freshly encrypted content.enc in the way, would conflict against the published version.
+if [[ $SHIP == yes ]]; then
+  git -C "$PAGES_REPO" diff --quiet && git -C "$PAGES_REPO" diff --cached --quiet \
+    || die "--ship needs a clean tree in $PAGES_REPO; commit or stash first"
+  step "Preparing a branch off v1"
+  git -C "$PAGES_REPO" fetch -q origin
+  SHIP_BRANCH="republish-$(date -u +%Y%m%d-%H%M%S)"
+  git -C "$PAGES_REPO" checkout -q -b "$SHIP_BRANCH" origin/v1
+  echo "  $SHIP_BRANCH (from origin/v1)"
 fi
 
 # Quarto needs a Python carrying the notebook stack; the project venv does not have it, and the
@@ -111,11 +142,14 @@ if [[ $COMMIT == no ]]; then
   exit 0
 fi
 
-PAGES_REPO="$(git -C "$PAGES_DIR" rev-parse --show-toplevel)"
 if git -C "$PAGES_REPO" diff --quiet -- "$PAGES_DIR" && \
    git -C "$PAGES_REPO" diff --cached --quiet -- "$PAGES_DIR"; then
   step "Nothing to commit"
   echo "  The re-rendered artefacts are byte-identical to what is already published."
+  if [[ $SHIP == yes ]]; then
+    git -C "$PAGES_REPO" checkout -q -; git -C "$PAGES_REPO" branch -q -D "$SHIP_BRANCH"
+    echo "  Dropped the empty branch; the live site is already current."
+  fi
   exit 0
 fi
 
@@ -127,12 +161,41 @@ Re-rendered from exploratory/paper and re-encrypted. Content only; no code chang
 git -C "$PAGES_REPO" --no-pager log --oneline -1
 
 BRANCH="$(git -C "$PAGES_REPO" rev-parse --abbrev-ref HEAD)"
-cat <<EOF
+
+if [[ $SHIP == no ]]; then
+  cat <<EOF
 
 Committed on '$BRANCH'. Nothing is public yet — the deploy fires when pages/ lands on v1:
 
   git -C $PAGES_REPO push origin $BRANCH
-  gh pr create --base v1 --head $BRANCH --fill && gh pr merge --merge
+  gh pr create --base v1 --head $BRANCH --fill
+
+Or re-run with --ship to do both automatically.
+
+Then check: https://ocha-dap.github.io/ds-geospatial-impact-estimates/
+EOF
+  exit 0
+fi
+
+# --ship pushes and opens the PR. It deliberately stops short of merging: merging to v1 is what
+# makes the artefact public, and that stays a decision someone makes on purpose, not a side
+# effect of a publish script.
+step "Pushing and opening a PR"
+git -C "$PAGES_REPO" push -q origin "$BRANCH" || die "push failed — nothing is public"
+PR_URL="$(cd "$PAGES_REPO" && gh pr create --base v1 --head "$BRANCH" \
+  --title "pages: republish $( [[ $TARGET == all ]] && echo 'deck and manuscript' || echo "$TARGET" )" \
+  --body "Re-rendered from \`exploratory/paper\` and re-encrypted. Content only; no code change.
+
+Opened by \`scripts/publish_pages.sh --ship\`.")" \
+  || die "could not open a PR — the branch is pushed, so finish it by hand"
+
+cat <<EOF
+
+  $PR_URL
+
+Review it, then merge to publish — that fires the deploy:
+
+  gh pr merge $PR_URL --merge
 
 Then check: https://ocha-dap.github.io/ds-geospatial-impact-estimates/
 EOF
