@@ -53,13 +53,20 @@ LIST still to confirm.
 
 ## Where each product looked
 
-![](artefacts/RQ0-matching-basis/figs/fig_extents_map.png){.r-stretch}
-
+::: {.cols}
+::: {.col style="flex:1.9"}
+![](artefacts/RQ0-matching-basis/figs/fig_extents_map.png)
+:::
+::: {.col style="display:flex;flex-direction:column;justify-content:center"}
 ::: {.takeaway}
 Analysed extents span **three orders of magnitude** — LIST covered two whole Sentinel
-scenes, Microsoft one coastal strip. Scores only exist where a product overlaps the expert
-reference, and the like-for-like comparisons live in the **red core region: 61 km²** where
-all five published extents and the reference coincide.
+scenes, Microsoft one coastal strip.
+
+Scores only exist where a product overlaps the expert reference, and the like-for-like
+comparisons live in the **red core region: 61 km²**, where all five published extents and
+the reference coincide.
+:::
+:::
 :::
 
 ## We scored against three references, not one
