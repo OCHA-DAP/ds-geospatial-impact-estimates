@@ -1,5 +1,13 @@
 """RQ8b deck bar chart — best-case vs as-delivered, against the day-zero baseline.
 
+DEPRECATED (2026-08-06). No document references this figure, and it violates two conventions
+the paper later adopted: it bars SINGLE-PRODUCT AP against a continuous score's AP (the
+manuscript's Methods derive why that comparison is degenerate — AP_binary = P*R + (1-R)*pi),
+and its reference line uses the RANDOM-FOREST null, the weaker learner in the common area,
+where the logistic is primary. It is kept runnable against the r=20 CSVs it was built from
+(renamed *_r20 on the same date) purely as history. Do not embed it in anything; the
+operating-point comparison in rq8_best_f1_fig.py is the sanctioned replacement.
+
 Unified figure (user design, 2026-07-27): two bars per product —
   - best case: single-product AP in the COMMON area (core region ≈ Caraballeda), where
     every product and the day-zero baseline are scored on the same buildings;
@@ -26,8 +34,8 @@ import matplotlib.pyplot as plt
 HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "figs")
 
-summ = pd.read_csv(os.path.join(HERE, "..", "rq8_summary.csv")).set_index("model")["avg_precision"]
-asdel = pd.read_csv(os.path.join(HERE, "..", "rq8b_asdelivered_baseline.csv")).set_index("product")
+summ = pd.read_csv(os.path.join(HERE, "..", "rq8_summary_r20.csv")).set_index("model")["avg_precision"]
+asdel = pd.read_csv(os.path.join(HERE, "..", "rq8b_asdelivered_baseline_r20.csv")).set_index("product")
 baseline = float(summ["rf context-only (NO products)"])   # day-zero AP in the common area
 
 prods = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]

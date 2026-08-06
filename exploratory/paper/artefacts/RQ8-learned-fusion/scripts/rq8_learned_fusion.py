@@ -1,7 +1,7 @@
 """RQ8 — learned fusion: logistic + random forest over the six products vs the k-of-6 dial.
 
 See ../DESIGN.md. Spatial block CV (GroupKFold on H3 res-7), label = CEMS {2,3} within
-GIE_LABEL_R metres (default 20 for fitting; the paper reports r=10 — set GIE_LABEL_R=10),
+GIE_LABEL_R metres (default 10, the paper's reported frame; GIE_LABEL_R=20 = appendix refit),
 crowd-gap buildings weight-0 in training (sensitivity: weight 1). All reported numbers are
 pooled out-of-fold predictions.
 
@@ -30,10 +30,12 @@ HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "figs")
 os.makedirs(FIGS, exist_ok=True)
 POS = (2, 3)
-# radius sensitivity: override to test whether the products-vs-null result survives a
-# tighter match radius (a smooth risk surface is flattered by a lenient radius).
-LABEL_R = int(os.environ.get("GIE_LABEL_R", 20))
-SUF = "" if LABEL_R == 20 else f"_r{LABEL_R}"
+# Label radius. Default = the paper's reported frame (r = 10). Pass GIE_LABEL_R=20 for the
+# appendix sensitivity refit (a smooth risk surface is flattered by a lenient radius, so the
+# tighter frame is the demanding one). Outputs ALWAYS carry an explicit _r<N> suffix so a run
+# in one frame can never silently overwrite the other frame's CSVs.
+LABEL_R = int(os.environ.get("GIE_LABEL_R", 10))
+SUF = f"_r{LABEL_R}"
 FLAGS = {"MS": "ms_dmg", "IMPACT": "sar_dmg", "OSU": "osu_dmg",
          "UH": "uh_dmg", "LIST": "list_dmg", "UNEP": "debris_dmg"}
 CLASSES = ["uh_class", "sar_class", "osu_class", "list_class"]
@@ -244,7 +246,7 @@ def main():
     fig.suptitle("RQ8 — learned fusion vs the flat voting dial")
     fig.tight_layout()
     fig.savefig(os.path.join(FIGS, f"rq8_learned_fusion{SUF}.png"), dpi=130)
-    print("wrote figs/rq8_learned_fusion.png")
+    print(f"wrote figs/rq8_learned_fusion{SUF}.png")
 
     # ---- figure: the day-zero baseline vs every single product ------------------
     # Top: map of what the no-satellite model predicts, with real CEMS damage on top.
@@ -253,8 +255,9 @@ def main():
     # PR plane — the continuous scores are curves (every threshold = a different
     # binary rule), shipped products are single points (provider already thresholded).
     from matplotlib.patches import Polygon as MplPolygon
-    # PRIMARY null = LOGISTIC: it is the stronger of the two (AP 0.106 vs 0.080), and a null
-    # must be the best available account of "just geography" or the products are flattered.
+    # PRIMARY null = LOGISTIC: it is the stronger of the two in the core region (AP 0.060 vs
+    # 0.045 at r = 10; 0.106 vs 0.080 at r = 20), and a null must be the best available
+    # account of "just geography" or the products are flattered.
     geo_ap = average_precision_score(y, abl_scores_logit["context-only"])
     fus_ap = average_precision_score(y, oof["logit"])
     vote_ap = average_precision_score(y, votes)
@@ -380,7 +383,7 @@ def main():
     fig.tight_layout(h_pad=3.8)
     fig.subplots_adjust(left=0.18)  # room for the bar-chart labels
     fig.savefig(os.path.join(FIGS, f"rq8_geography_baseline{SUF}.png"), dpi=150)
-    print("wrote figs/rq8_geography_baseline.png")
+    print(f"wrote figs/rq8_geography_baseline{SUF}.png")
 
     # ---- best-F1 comparison: products as SHIPPED vs our scores at their BEST threshold --
     # A provider ships one operating point, so its F1 is simply that point's F1. Our three
@@ -407,9 +410,10 @@ def main():
         f1_rows.append(dict(predictor=nm, kind="product (as shipped)",
                             precision=round(prec, 3), recall=round(rec, 3),
                             f1=round(f1v, 3), n_flags=nflag, threshold=np.nan))
-    # Report BOTH geography nulls. The logistic null is the stronger of the two (AP 0.106 vs
-    # 0.080), so it is the honest headline: a null should be the best available account of
-    # "just geography", or the products are flattered by comparison with a weak one.
+    # Report BOTH geography nulls. The logistic null is the stronger of the two in this core
+    # region (AP 0.060 vs 0.045 at r = 10; 0.106 vs 0.080 at r = 20), so it is the honest
+    # headline: a null should be the best available account of "just geography", or the
+    # products are flattered by comparison with a weak one.
     for nm, sc in (("geography null (logistic)", risk),
                    ("geography null (rand. forest)", risk_rf),
                    ("flat k-of-6 voting", votes),
@@ -448,7 +452,7 @@ def main():
              transform=axf.transAxes, ha="right", fontsize=9, style="italic", color="#5a6570")
     figf.tight_layout()
     figf.savefig(os.path.join(FIGS, f"rq8_best_f1{SUF}.png"), dpi=150)
-    print("wrote figs/rq8_best_f1.png")
+    print(f"wrote figs/rq8_best_f1{SUF}.png")
 
     # ---- how much does picking the threshold on the test scores actually flatter us? ----
     # The best-F1 numbers above choose the cut by maximising F1 on the SAME out-of-fold

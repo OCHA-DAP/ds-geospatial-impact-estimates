@@ -6,7 +6,8 @@ outright, because products blanket-flag low-damage AOIs and geography would not.
 Counter-mechanism: Caracas has high density + high MMI, so two of three day-zero inputs
 vote "flag".
 
-Design: fusion frame (gold centroids OSU v0-pinned; label = CEMS {2,3} within 20 m).
+Design: fusion frame (gold centroids OSU v0-pinned; label = CEMS {2,3} within GIE_LABEL_R,
+default 10 m — the reported frame).
 For each product, region = union(CEMS latest extents) ∩ product extent (UNEP: all AOIs,
 coverage assumption). Within each region: day-zero RF (same spec as RQ8) with spatial
 block CV (GroupKFold, H3 res-7) -> AP; product binary flag -> AP; plus binary
@@ -32,8 +33,10 @@ import gie_paper as gp  # noqa: E402
 
 HERE = os.path.dirname(__file__)
 POS = (2, 3)
-LABEL_R = int(os.environ.get("GIE_LABEL_R", 20))
-SUF = "" if LABEL_R == 20 else f"_r{LABEL_R}"
+# Default = the paper's reported frame (r = 10); GIE_LABEL_R=20 = the appendix sensitivity
+# refit. Outputs always carry an explicit _r<N> suffix (see rq8_learned_fusion.py).
+LABEL_R = int(os.environ.get("GIE_LABEL_R", 10))
+SUF = f"_r{LABEL_R}"
 MEMBERS = {"MS": "ms_dmg", "IMPACT": "sar_dmg", "OSU": "osu_dmg",
            "UH": "uh_dmg", "LIST": "list_dmg", "UNEP": "debris_dmg"}
 
@@ -148,7 +151,7 @@ def main():
 
     out = pd.DataFrame(rows)
     out.to_csv(os.path.join(HERE, "..", f"rq8b_asdelivered_baseline{SUF}.csv"), index=False)
-    print("wrote rq8b_asdelivered_baseline.csv")
+    print(f"wrote rq8b_asdelivered_baseline{SUF}.csv")
 
 
 if __name__ == "__main__":

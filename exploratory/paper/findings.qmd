@@ -984,7 +984,7 @@ CEMS {2,3} within 20 m (fabric-derived training tolerance), crowd-identified CEM
 weight-0 in training. All numbers pooled out-of-fold.
 
 ```{python}
-tbl("RQ8-learned-fusion/rq8_summary.csv")
+tbl("RQ8-learned-fusion/rq8_summary_r20.csv")  # r=20 as originally run; renamed 2026-08-06
 ```
 
 ![Out-of-fold precision-recall + random-forest importances.](artefacts/RQ8-learned-fusion/figs/rq8_learned_fusion.png)
@@ -1129,7 +1129,9 @@ tbl("RQ8-learned-fusion/rq8_summary.csv")
   ran the fusion/null analysis at r=20 while every headline number used r=10, so two
   incomparable sets of precisions circulated. Root cause: r=20 was a *model-fitting* choice
   (halving the radius halves the positive class: 2,733 -> 1,350 in the core region), never a
-  measurement decision. Now: fusion is FITTED at 20 m, EVALUATED at 10 m like everything else.
+  measurement decision. Now: everything is reported at r=10. ~~fusion is FITTED at 20 m,
+  EVALUATED at 10 m like everything else~~ (CORRECTED 2026-08-06, entry below: no such split
+  exists in the code — each frame is fitted AND evaluated at its own single radius).
   - **Key diagnostic:** at MATCHED radius, centroid vs native-geometry matching differs by
     <=0.005 per product (MS 0.081 vs 0.080, OSU 0.045 vs 0.040...). So the old "scorecard frame
     vs fusion frame" gap was **entirely the radius** — there was never a methodological
@@ -1149,6 +1151,34 @@ tbl("RQ8-learned-fusion/rq8_summary.csv")
   - Scripts take `GIE_LABEL_R` (outputs suffixed `_r10`); `rq8_best_f1_fig.py` split out so the
     bar chart redraws from CSV without refitting. r=20 table lives in the manuscript Appendix.
   - Verified: 21/21 manuscript numbers cross-checked against artefact CSVs.
+
+- 🔴 **RADIUS BOOKKEEPING CORRECTED (2026-08-06).** Four fixes, no reported number changes:
+  - **The "FITTED at 20 m, EVALUATED at 10 m" claim above was never what the code did.**
+    `rq8_learned_fusion.py` / `rq8b_asdelivered_baseline.py` build ONE label per run
+    (`GIE_LABEL_R`) and fit AND evaluate on it — the r=10 headline numbers come from models
+    fitted at r=10. Manuscript Methods + Appendix, README and this register now describe the
+    frames as self-contained (fit + eval at one radius each; r=20 = appendix sensitivity
+    refit). The real stability evidence is that the two fits reach the same conclusions.
+    **Verified empirically 2026-08-06:** a bare re-run at the new r=10 default reproduces all
+    six committed `_r10` CSVs byte-identical — the published numbers ARE the fit-at-10 numbers,
+    and the freeze + OSU pin hold for the whole RQ8 pipeline.
+  - **Bare re-runs can no longer overwrite the wrong frame.** `GIE_LABEL_R` now defaults to 10
+    (the reported frame) and outputs ALWAYS carry an explicit `_r<N>` suffix; the unsuffixed
+    r=20 CSVs are renamed `*_r20.csv` (git mv, contents untouched — the tables rendered above
+    now point at the renamed files). `rq8b_bars_fig.py` (single-product AP bars + RF-null
+    reference line, both since outlawed; embedded in no document) is marked DEPRECATED and
+    pinned to its original `_r20` inputs.
+  - **Last r=20 residue purged from the manuscript:** the AP-degeneracy passage quoted π=0.047
+    and band 0.076–0.092 / precisions 0.087–0.148 (all r=20 values, unlabelled) inside the
+    10 m paper — now π=0.023, AP 0.042–0.055, precisions 0.045–0.093
+    (`rq8_summary_r10.csv` + `rq8_best_f1_r10.csv`). An orphaned "Fusion frame (…at 20 m…)"
+    Methods bullet claiming the fusion section used 20 m is rewritten to r=10.
+  - **rq2i zero-reference cells:** product × AOI overlaps holding ZERO CEMS points (Morón/OSU,
+    San Felipe/IMPACT) were recorded as `P_cems = 0.0` and printed on the heatmap identically
+    to measured zeros. Now NaN → "no ref (n=0)" on the figure. Re-run 2026-08-06: the diff is
+    exactly those two cells; **every other value reproduced byte-identical** (incidental freeze
+    verification for the whole rq2i pipeline). The remaining 0.00 cells (Caracas, Santa Cruz,
+    n=3) are genuinely measured-and-confounded per flag #1.
 
 - **NULL-MODEL LEARNER — RESOLVED (2026-07-29).** The paper had been comparing a *logistic*
   fusion against a *random-forest* null (different learners on the two sides). Rule now applied
@@ -1247,7 +1277,7 @@ User hypothesis, confirmed. Script `scripts/rq8b_asdelivered_baseline.py`: geogr
 footprint (all CEMS AOIs ∩ product extent; fusion frame, 422,931 buildings max):
 
 ```{python}
-tbl("RQ8-learned-fusion/rq8b_asdelivered_baseline.csv")
+tbl("RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv")  # r=20 original; renamed 2026-08-06
 ```
 
 - **HEADLINE (operating points, 2026-07-29 reframe):** cut the geography null score to *exactly*

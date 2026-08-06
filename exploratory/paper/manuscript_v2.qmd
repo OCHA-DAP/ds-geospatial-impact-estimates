@@ -296,11 +296,13 @@ questions or use a different reference, and are always labelled where used.
 Earlier drafts of this work reported the fusion analysis at a 20 m radius while the headline
 figures used 10 m, which made two sets of precision values circulate that were not comparable.
 That is resolved: **everything CEMS-based is now reported at 10 m**. The 20 m radius survives in
-one place only, as a model-fitting detail — the learned fusion needs enough positives in each
-spatial block to fit stably, and halving the radius halves the positive class (2,733 buildings
-labelled damaged at 20 m, 1,350 at 10 m) — so the fusion models are *fitted* on the wider label
-and *evaluated* at 10 m like everything else. The full 20 m results are reported in the
-Appendix (@tbl-radius) for anyone who wants them.
+one place only, as a sensitivity frame. The concern that kept it was fit stability — a
+per-building model needs enough positives in each spatial block, and halving the radius halves
+the positive class (2,733 buildings labelled damaged at 20 m, 1,350 at 10 m). Each frame is
+therefore self-contained: every model is fitted *and* evaluated at a single radius, the
+reported numbers come from the 10 m fit, and the full 20 m refit is in the Appendix
+(@tbl-radius). The two fits support the same conclusions — no single product separates from
+the null, combination does — which is the evidence the tighter label did not starve the fit.
 
 These are not four different measurement philosophies, and it is worth being precise about
 what actually separates them, because the wrong picture makes the numbers look arbitrary.
@@ -311,16 +313,12 @@ scorecard precisions to within 0.005 for every product (Microsoft 0.081 against 
 radius.** Microsoft's precision is 0.08 at 10 m and 0.138 at 20 m; the same product, the same
 flags, the same reference, and two different definitions of what counts as a hit.
 
-That leaves one genuine design question — why the fusion analysis was built at 20 m when the
-paper's headline frame is 10 m. The reason is label construction rather than measurement: a
-per-building model needs enough positives in every spatial block to fit stably, and halving the
-radius halves the positive class. That justifies *training* at the wider radius; it does not
-justify reporting only there, so the fusion results are given at both radii below
-(@tbl-radius), and the r = 10 m column is directly comparable to every headline number in this
-paper.
-- **Fusion frame** (building-centroid matching at 20 m against CEMS): used in the
-  learned-fusion section, where every building needs a label. Its precision values run
-  noticeably higher than the scorecard frame's; only within-frame comparisons are valid.
+That leaves the one frame not yet described:
+
+- **Fusion frame** (building-centroid matching against CEMS, r = 10 m like everything else):
+  used in the learned-fusion section, where every building needs a label rather than only the
+  flagged ones. Its 20 m refit — every precision 1.6–2.2× higher, the same conclusions — is
+  the Appendix sensitivity frame (@tbl-radius); only within-frame comparisons are valid.
 
 Before the numbers, one point about what the radius *is*, because it is easy to picture it as a
 tolerance applied to the products alone. It is not. The radius defines the **label** — the
@@ -507,11 +505,12 @@ binary flag list has two: the flagged set itself, and the trivial "flag everythi
 It therefore evaluates to
 $$\mathrm{AP}_{\text{binary}} = P\cdot R + (1-R)\cdot \pi$$
 where $\pi$ is the prevalence of damage. The second term is free credit that any predictor
-whatsoever collects for the flag-everything endpoint. Because $\pi$ (0.047 here) is far below
+whatsoever collects for the flag-everything endpoint. Because $\pi$ (0.023 here) is far below
 every product's precision, that term drags each product's AP *down toward prevalence*, and it
 does so hardest for the products with the lowest recall. The effect is to compress genuinely
-different products into a narrow band — 0.076–0.092 across our six, whose precisions actually
-range from 0.087 to 0.148 — sitting close to where a mediocre continuous score also lands.
+different products into a narrow band — 0.042–0.055 across our six, whose precisions actually
+range from 0.045 to 0.093 — sitting right where a mediocre continuous score also lands (the
+forest null's AP is 0.045).
 Two products can share an AP because one has high precision and low recall while the other
 has the reverse; the number conceals exactly the trade-off an operational reader cares about.
 This is why we report AP only among
@@ -1345,11 +1344,11 @@ damage.
 
 ### The 20 m label radius {.unnumbered}
 
-All CEMS-based results in this paper use a 10 m matching radius (@tbl-allframes). The learned
-fusion is *fitted* on a 20 m label because the model needs enough positives in each spatial
-block to be stable — 20 m labels 2,733 buildings damaged in the core region against 1,350 at
-10 m — but it is evaluated at 10 m alongside everything else. For completeness, the same
-analysis evaluated end-to-end at 20 m gives:
+All CEMS-based results in this paper use a 10 m matching radius (@tbl-allframes), and every
+model is fitted and evaluated at that radius. The fusion analysis was originally built at
+20 m out of concern for fit stability — 20 m labels 2,733 buildings damaged in the core region
+against 1,350 at 10 m — and that frame is retained here as the sensitivity check. The same
+analysis run end-to-end at 20 m gives:
 
 | | evaluated at 10 m (reported) | evaluated at 20 m |
 |---|---|---|

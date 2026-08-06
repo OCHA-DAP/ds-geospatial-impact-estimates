@@ -10,9 +10,10 @@ low precision cannot distinguish product failure from reference incompleteness
 
 Per product x AOI: n_cems, n_flags, flag_share (of buildings in the region), P (CEMS
 floor), R, crowd coverage of the CEMS-unmatched flags, share crowd-judged damaged, and
-crowd-adjusted precision. Recall is suppressed (NaN) where n_cems < 20.
+crowd-adjusted precision. Recall is suppressed (NaN) where n_cems < 20; precision is NaN
+(not 0.0) where the overlap holds zero CEMS points, since nothing was measured there.
 
-Run: uv run --group etl --with scipy python \
+Run: uv run --group etl --with scipy --with matplotlib python \
        exploratory/paper/artefacts/RQ2-cems-footprint-points/scripts/rq2i_per_aoi_scorecard.py
 """
 from __future__ import annotations
@@ -121,7 +122,10 @@ def main():
                 rd = ft.query(np.c_[ca.geometry.x, ca.geometry.y], k=1)[0] <= R
                 row["R_cems"] = round(float(rd.mean()), 3) if len(ca) >= MIN_CEMS_FOR_RECALL else np.nan
             elif len(fl):
-                row["P_cems"] = 0.0 if len(ca) == 0 else np.nan
+                # Zero CEMS points in this product x AOI overlap: precision is UNMEASURABLE
+                # there, not zero. Recording 0.0 (as this used to) printed "no reference
+                # here" identically to a measured zero on the heatmap.
+                row["P_cems"] = np.nan
                 row["R_cems"] = np.nan
             # crowd adjudication of the CEMS-unmatched flags
             if len(fl):
@@ -169,7 +173,9 @@ def main():
                     ax.text(j, i, "no\noverlap", ha="center", va="center", fontsize=8,
                             color="#777")
                 elif np.isnan(M[i, j]):
-                    ax.text(j, i, "ref too\nthin", ha="center", va="center", fontsize=8,
+                    # distinguish "zero reference points here" from "reference too thin"
+                    txt = ("no ref\n(n=0)" if int(r.n_cems.iloc[0]) == 0 else "ref too\nthin")
+                    ax.text(j, i, txt, ha="center", va="center", fontsize=8,
                             color="#777")
                 else:
                     dark = M[i, j] > 0.6 * np.nanmax(M)

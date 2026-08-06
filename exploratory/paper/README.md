@@ -53,9 +53,10 @@ Figure-only scripts read the CSVs and take seconds, so restyle with these rather
 ## Conventions that will bite you if ignored
 
 - **One matching radius: 10 m.** Every CEMS-based number uses it. A 20 m radius changes every
-  precision by 1.6–2.2×, so numbers from different radii are never comparable. The fusion model
-  is *fitted* on a 20 m label (it needs the positives) but *evaluated* at 10 m like everything
-  else; the 20 m results are in the manuscript appendix.
+  precision by 1.6–2.2×, so numbers from different radii are never comparable. The fusion is
+  fitted *and* evaluated within one radius per frame — the reported numbers are the 10 m fit;
+  the 20 m refit (twice the positives, kept as a sensitivity check) is in the manuscript
+  appendix.
 - **OSU is pinned to v0.** The provider shipped v1 after the freeze and gold/platinum silently
   moved to it. All paper numbers read gold through `gp.building_flags()`, which re-derives OSU
   from silver `version=v0`. The dashboard serves v1 — do not "fix" the mismatch.
@@ -69,5 +70,5 @@ Figure-only scripts read the CSVs and take seconds, so restyle with these rather
 
 | variable | effect |
 |---|---|
-| `GIE_LABEL_R` | matching radius for the RQ8 scripts (default 20 for fitting; pass `10` for the reported frame). Outputs get an `_r<N>` suffix. |
+| `GIE_LABEL_R` | matching radius for the RQ8 scripts (default 10 — the reported frame; pass `20` for the appendix sensitivity refit). Outputs always carry an explicit `_r<N>` suffix. |
 | `GIE_SCOPE` | `caraballeda` restricts RQ3f to that AOI, the sharper within-damage-zone ranking test |

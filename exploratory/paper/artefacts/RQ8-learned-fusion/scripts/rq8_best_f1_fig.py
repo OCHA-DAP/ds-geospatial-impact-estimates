@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "figs")
 R = int(sys.argv[1]) if len(sys.argv) > 1 else 10
-SUF = "" if R == 20 else f"_r{R}"
+SUF = f"_r{R}"  # CSVs always carry an explicit radius suffix (renamed 2026-08-06)
 
 df = pd.read_csv(os.path.join(HERE, "..", f"rq8_best_f1{SUF}.csv"))
 prod = df[df.kind.str.startswith("product")].sort_values("f1")
