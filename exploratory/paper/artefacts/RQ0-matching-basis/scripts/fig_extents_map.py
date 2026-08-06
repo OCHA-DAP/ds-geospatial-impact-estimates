@@ -103,12 +103,18 @@ def main() -> None:
                     xytext=NUDGE.get(row.aoi_name, (0, 14)),
                     textcoords="offset points", zorder=8)
 
-    # frame the whole scene
+    # Frame on everything EXCEPT LIST: its two full Sentinel scenes (~224,000 km²) would
+    # force a square frame that shrinks the coast to a sliver. LIST bleeds off-frame and
+    # an annotation says so — the legend carries its true area.
     minx, miny, maxx, maxy = gpd.GeoSeries(
-        [cems_u, *aois.values()], crs=gp.METRIC_CRS).total_bounds
-    padx, pady = (maxx - minx) * 0.04, (maxy - miny) * 0.10
+        [cems_u, *(a for nm, a in aois.items() if nm != "LIST")],
+        crs=gp.METRIC_CRS).total_bounds
+    padx, pady = (maxx - minx) * 0.05, (maxy - miny) * 0.14
     ax.set_xlim(minx - padx, maxx + padx)
     ax.set_ylim(miny - pady, maxy + pady)
+    ax.annotate("LIST extent continues ~300 km south + west (223,708 km²) →",
+                xy=(0.015, 0.03), xycoords="axes fraction", fontsize=9.5,
+                color=COL["LIST"], style="italic", zorder=8)
     ax.set_aspect("equal")
     ax.set_xticks([])
     ax.set_yticks([])

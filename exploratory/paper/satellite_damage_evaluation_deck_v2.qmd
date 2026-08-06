@@ -62,11 +62,6 @@ reference, and the like-for-like comparisons live in the **red core region: 61 k
 all five published extents and the reference coincide.
 :::
 
-::: {.tiny}
-UH's extent is derived from its own classified footprints; UNEP publishes none and is
-scored under a stated coverage assumption.
-:::
-
 ## We scored against three references, not one
 
 ![](artefacts/RQ0-matching-basis/figs/reference_architecture.png){.r-stretch}
