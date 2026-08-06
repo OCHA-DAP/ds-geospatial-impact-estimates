@@ -78,25 +78,30 @@ re-renders, re-encrypts and lands it on `v1`. Nothing warns you if that is skipp
 keeps serving the older version.
 
 ```bash
-./scripts/publish_pages.sh            # both artefacts
+./scripts/publish_pages.sh            # both artefacts: render, encrypt, commit
 ./scripts/publish_pages.sh deck       # results deck only
 ./scripts/publish_pages.sh paper      # manuscript only
+./scripts/publish_pages.sh --ship     # ...and push + open a PR against v1
 ./scripts/publish_pages.sh deck --no-commit
 ```
 
-It renders, encrypts and commits, then prints the push/PR commands. It deliberately **does not
-push** — that is what makes things public.
+`--ship` branches off `origin/v1`, commits, pushes and opens the PR, then prints the merge
+command. It stops there on purpose: **merging is what makes an artefact public**, so that stays a
+decision someone makes rather than a side effect of running a script.
 
 The passphrase comes from `$GIE_PAGE_PASS`, else `~/.gie-page-passphrase`, else a prompt. It is
 read up front, so a missing passphrase fails before you spend minutes rendering. The passphrase
 is not in this repository; it lives wherever the team keeps shared credentials.
 
 If the sources and `pages/` are on different worktrees — as they are while the paper branch is
-unmerged — point the script at each:
+unmerged — set the paths once in `scripts/publish_pages.env`, which is gitignored and sourced
+automatically:
 
 ```bash
-GIE_PAPER_DIR=/path/to/paper-branch/exploratory/paper ./scripts/publish_pages.sh deck
+GIE_PAPER_DIR=/path/to/paper-branch/exploratory/paper
 ```
+
+Delete that file once the paper branch merges and both live in one tree.
 
 Underneath it is the `quarto render` incantation from `exploratory/paper/README.md` followed by
 `scripts/encrypt_page.py`, which you can still run by hand.

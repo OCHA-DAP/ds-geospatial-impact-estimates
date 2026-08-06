@@ -39,3 +39,6 @@ figs/
 
 # Local-only notes (decide later where/whether to commit)
 docs/deployment.md
+
+# Local publish paths (per-machine worktree layout)
+scripts/publish_pages.env
