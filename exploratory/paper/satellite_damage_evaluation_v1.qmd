@@ -1,0 +1,387 @@
+---
+title: "Can we trust rapid satellite damage maps?"
+subtitle: "A six-product, three-reference evaluation of the 2026 Venezuela earthquake"
+author: "Z. Arno · L. Milano — OCHA Centre for Humanitarian Data"
+date: last-modified
+format:
+  revealjs:
+    embed-resources: true
+    slide-number: true
+    theme: default
+    width: 1280
+    height: 720
+execute:
+  echo: false
+  warning: false
+jupyter: python3
+---
+
+```{=html}
+<style>
+.reveal h2 { font-size: 1.02em; margin-bottom: 0.15em; }
+.reveal section img { max-height: 600px; max-width: 95%; border: none;
+  box-shadow: none; margin: 0.1em auto; }
+.reveal p, .reveal li, .reveal td, .reveal th { font-size: 0.8em; line-height: 1.25; }
+.reveal .smaller p, .reveal .smaller li,
+.reveal .smaller td, .reveal .smaller th { font-size: 0.7em; line-height: 1.2; }
+.reveal ul, .reveal ol { margin: 0.1em 0; }
+.tldr { background:#f4f6f9; border-left:5px solid #2a78d6; padding:0.35em 0.9em;
+  margin:0.3em 0; }
+.ask { background:#fcf3f2; border-left:5px solid #e34948; padding:0.35em 0.9em;
+  margin:0.3em 0; }
+.win { color:#2e7d32; font-weight:bold; }
+.fail { color:#c62828; font-weight:bold; }
+.big { font-size:1.4em; font-weight:bold; text-align:center; margin-top:0.4em; }
+</style>
+```
+
+## The situation {.smaller}
+
+Within days of the M7.5 quake (24 June 2026), **eight+ organisations** published satellite
+building-damage maps — government (Copernicus), academic radar (OSU, IMPACT), optical AI
+(Microsoft, U. Houston, WFP/LIST), debris models (UNEP), volunteer AI (HOT, DISHA).
+
+They **disagreed with each other, sometimes wildly.** A coordinator had no principled way to
+answer: *which do I trust, for what, and at what scale?*
+
+::: {.tldr}
+**What we did** — scored the six products that published an analysed extent against **three
+reference datasets whose blind spots don't overlap**, so they check each other and the products.
+:::
+
+::: {.tldr}
+**Bottom line** — as delivered, most single products carried **less usable per-building
+information than a no-satellite baseline**. But they *are* good at ranking neighbourhoods,
+combining helps within limits, and the real leverage is **reference quality + provider
+transparency**.
+:::
+
+## Three questions — kept strictly separate {.smaller}
+
+::: {.tldr}
+- **1 · Where is it worst?** — ranking neighbourhoods for triage
+- **2 · Which buildings?** — a list you could send a crew to
+- **3 · What does everyone miss?** — including the "ground truth" itself
+:::
+
+And two performance frames we **never mix**:
+
+- **Best case** — Caraballeda, the dense-damage zone where **96% of the expert reference
+  lives.** Where most published numbers implicitly come from.
+- **As delivered** — the whole product, every zone it shipped, junk included. What a
+  responder actually received.
+
+<p class="big">That split is itself a finding.</p>
+
+## The three references — who they are {.smaller}
+
+![](artefacts/RQ0-matching-basis/figs/reference_architecture.png)
+
+::: {.notes}
+Read this before anything else. Two HOT datasets, confusingly named: MapSwipe = REMOTE
+VOLUNTEERS voting on AI-flagged ~50m hex cells (NOT building points) — it sharpens PRECISION
+by adjudicating flags, but its verdict is per-cell so the 0.24 is an upper estimate. ChatMap =
+FIELD TEAMS reporting building-level points from the ground — it extends RECALL inland and
+can union with CEMS points (+5-9%). CEMS = the expert points, anchors both sides. They're
+used SEPARATELY because their blind spots don't overlap.
+:::
+
+## How we score each product
+
+::: {.tldr}
+- **Precision** — of the buildings a product *flagged*, how many are next to real (CEMS)
+  damage? *(are its flags trustworthy?)*
+- **Recall** — of the *real damage points*, how many did the product flag? *(how much did it
+  catch?)*
+:::
+
+A flag and a damage point count as a match within **10 m** (set by building spacing). Target
+throughout: buildings the expert graded **damaged or destroyed** — not destruction alone.
+
+## How matching works
+
+![](artefacts/RQ0-matching-basis/figs/fig_dual_anchor_matching.png)
+
+::: {.notes}
+An illustrative block. Green footprints = product flags that sit within 10 m of a CEMS damage
+point (correct). Orange = flags with no damage nearby (false alarms). Red circles = CEMS
+damage points the product missed. Precision counts from the flags' side; recall counts from
+the damage points' side. If asked "is this a standard method?" — yes: it's proximity matching,
+the normal way to score detections when the prediction and the reference use different
+geometries. We only score where both the product and the reference looked.
+:::
+
+## Their most useful capability — ranking neighbourhoods {.smaller}
+
+:::: {.columns}
+::: {.column width="56%"}
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3_priority_map.png)
+:::
+::: {.column width="44%"}
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3_rank_scatter_all.png)
+:::
+::::
+
+<p style="text-align:center; font-size:0.72em;">Left: each product's worst-hit picks land on
+the really-damaged cells. Right: **all six products** rank neighbourhoods about equally well
+(ρ ≈ 0.77–0.83 within the damage zone) — closer to the dashed line = better.</p>
+
+::: {.notes}
+Left = map: cells shaded by REAL damage, blue outline = product's top-10 picks. Right = the
+same relationship as a scatter with a trend line: more real damage per cell → more flags,
+Spearman rho 0.81 within Caraballeda. CAVEATS to hold: (1) this is the dense damage zone,
+coarse ~5km2 scale — over the full region rho drops to ~0.5-0.6, and finer scale degrades;
+(2) we have NOT checked whether the day-zero geography baseline ranks areas equally well — it
+plausibly does. So present as "products' most useful capability," not a clean win over the
+free baseline. Don't quote a top-N percentage.
+:::
+
+## Where they struggle — the per-building list
+
+Target: **damaged *or* destroyed** buildings (expert classes 2–3). In Caraballeda, where
+products score highest:
+
+<p class="big">precision 0.04 – 0.09</p>
+
+Counting **only expert-recorded damage**, for every flag that hits, **10–20 miss.**
+*(Crediting damage the expert missed — from crowd/field data — cuts this to ~4–5; see the
+operating-cost slide. Same buildings, stricter vs. fairer scoring.)*
+
+::: {.tldr}
+The benchmark that should worry us: a model given **only day-zero geography** — coast
+distance, building density, ShakeMap intensity, all available *before any satellite is
+tasked* — matches the best single product.
+:::
+
+## The benchmark that should give us pause
+
+![](artefacts/RQ8-learned-fusion/figs/rq8b_asdelivered_bars.png)
+
+::: {.notes}
+Two bars per product: light = best case (scored only in the common area ≈ Caraballeda, where
+all products AND the day-zero baseline see the same buildings); dark = as delivered (over the
+product's full shipped footprint). Red line = the no-satellite day-zero baseline in the common
+area (0.08), a single number since it's one area. Story: in the best zone every product merely
+TIES the baseline; as delivered most fall BELOW it. Microsoft holds only because it shipped
+just its best zone — coverage restraint is a virtue. Caveat: as-delivered bars are on full
+footprints where the reference is thin, so that penalty leans on sparse reference; but a
+responder faced the same deficit. AP = one number summarising the whole precision-recall curve.
+:::
+
+## The reference has its own blind spot {.smaller}
+
+<p style="text-align:center; font-size:0.75em; color:#52514e;">Recall vs the **415 ChatMap
+field reports** · grades: *complete / significant* · every row (incl. CEMS) scored against
+the ground</p>
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png)
+
+::: {.notes}
+Scoring Copernicus against the field reports: 94% of COMPLETE destruction found, but only 49%
+of SIGNIFICANT damage. Every product shows the same downward slope (this panel = recall vs
+ChatMap field grades). So: (1) satellite damage detection is really destruction detection —
+shelter needs under-counted; (2) measured precision is a FLOOR, measured recall is a CEILING.
+MapSwipe volunteers lift Microsoft's precision 0.08 -> ~0.24 — the gap is in the reference, not
+the product.
+:::
+
+## The destruction bias shows in precision too {.smaller}
+
+<p style="text-align:center; font-size:0.75em; color:#52514e;">Different validation set:
+vs **CEMS's own 1,467 points** · grades: *Damaged / Destroyed* · numbers not comparable to
+the previous slide — the shared message is the slope</p>
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2l_grade_pr.png)
+
+::: {.notes}
+Companion to the previous slide, but on the EXPERT's own grades (Damaged class 2 vs Destroyed
+class 3), so precision is well-defined (field data too sparse for precision). Both panels: every
+product finds/flags Destroyed better than Damaged. Steep lines = destruction-biased (MS, UH,
+UNEP — appearance/debris). Flat lines = grade-neutral (OSU, IMPACT radar coherence — they sense
+structural change, not just visible collapse; LIST sides with them, so it's a tendency not a
+clean optical-vs-radar law). This is why the ecosystem under-serves shelter (lighter-damage)
+needs — confirmed on both metrics, from the expert reference itself.
+:::
+
+## One product is many scorecards
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png)
+
+::: {.notes}
+96% of reference damage in Caraballeda (first column = pooled/as-delivered). Outside it,
+products keep flagging at scale (UH: 32k flags in Santa Cruz) while measured precision collapses
+to 0.00-0.02 — BUT we cannot separate "product hallucination" from "reference too thin" there.
+Honest verdict: every headline number describes dense-damage coastal terrain.
+:::
+
+## Even within one product, performance flips across the coast {.smaller}
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2j_deck_ms_hex.png)
+
+::: {.notes}
+Microsoft, its full coastal extent, res-7 cells. Top: precision — dark = trustworthy flags,
+pale = mostly false alarms. Bottom: field visits per real damaged building found (reversed
+scale, dark = cheap/good). The WEST end is pale/expensive (the single-scene over-flagged
+cluster), the EAST end trustworthy/cheap. Same product, opposite verdicts by location — which
+is why a single product-level number misleads.
+:::
+
+## Precision across Caraballeda, by product (1/2) {.smaller}
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2j_caraballeda_p1.png)
+
+::: {.notes}
+All three on the SAME scale, zoomed to the dense-damage zone. MS has the most dark
+(high-precision) cells, concentrated in the east; IMPACT lighter; OSU palest (it floods flags
+→ high recall but low precision everywhere). Grey = <20 flags in that cell. Even here, in the
+best zone, no product is uniformly trustworthy.
+:::
+
+## Precision across Caraballeda, by product (2/2) {.smaller}
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2j_caraballeda_p2.png)
+
+::: {.notes}
+UH, LIST, UNEP, same scale as the previous slide. All pale — low per-cell precision throughout
+even in the dense zone. Recall and F1 versions of every product are in the register if wanted.
+:::
+
+## Does combining products fix it? Partly.
+
+![](artefacts/RQ5-ensemble/figs/rq5c_operational_dial.png)
+
+::: {.notes}
+Each bar spans the honest cost range: TOP = strict (only expert-recorded damage counts — this
+is the "10-20 per hit" from the earlier slide); BOTTOM square/dot = best estimate (also counts
+damage the expert missed, crowd-confirmed). Same buildings, two scorings. Agreement trades
+precision vs coverage: at ~4-of-6 you reach 74% of damaged-or-destroyed buildings at ~3-5
+visits per find; full agreement is nearly clean but covers a quarter. No rule is both cheap and
+complete — a prioritisation DIAL, not a work order. The dial itself is the value single
+products don't give: each product hands you one fixed point.
+:::
+
+## Is the ensemble just "flagging fewer things"? No.
+
+![](artefacts/RQ5-ensemble/figs/rq5d_filtering_null.png)
+
+::: {.notes}
+The skeptic's question: agreement rules flag far fewer buildings — maybe any thinning raises
+precision. Test: randomly remove flags from the union (100 draws per size). Result: random
+thinning is DEAD FLAT at 0.034 no matter how few you keep (grey) — you drop true and false
+positives in the same proportion. The actual k-of-6 rules (blue) climb to 0.64. At every
+matched flag count the agreement point sits far above the random band. So the gain is
+SELECTION — agreement concentrates on real damage — not filtering. This is the rigorous
+rebuttal to "your ensemble just flags less."
+:::
+
+## Transparency lets you fix failures
+
+![](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png)
+
+::: {.notes}
+Microsoft's one bad zone (western strip) flagged 28.7% of buildings; crowd rejected 71% as
+undamaged. We root-caused it FROM MICROSOFT'S OWN METADATA: single satellite pass, per-scene
+model, no cross-check. It was the ONLY failure we could diagnose — the only product publishing
+per-building provenance. Auditability is a product property. And the correction signal (the
+crowd campaign) existed within days and reached no one.
+:::
+
+## What we would recommend {.smaller}
+
+::: {.tldr}
+**Providers** — publish an analysed extent (non-negotiable); publish per-building provenance
+(scene count + dates); *scope* your coverage rather than blanket-ship; clear a geography-only
+baseline before release.
+:::
+
+::: {.tldr}
+**Evaluators** — one expert reference under-counts light damage. Publish precision as a
+*floor*, or adjudicate against a second reference and publish an *interval*. Crowd and field
+data are first-class, not afterthoughts.
+:::
+
+::: {.tldr}
+**Responders** — trust the *area ranking*, not the building counts; set the agreement dial to
+your own cost of a wasted visit vs. a missed building. Nothing here sees light damage reliably
+— plan shelter assessments accordingly.
+:::
+
+## Where this is solid — and where it isn't {.smaller}
+
+**Solid** — six products, three independent references, ~1,500 lines of reproducible open
+code. The area-ranking win, the day-zero result, the per-zone collapse, and the west-cluster
+diagnosis all hold across frames.
+
+**Honest limits:**
+
+- **One event, one geography** (coastal, dense-urban); 96% of reference in one AOI.
+- Outside Caraballeda the reference is too thin to cleanly separate product error from
+  reference gaps — the as-delivered penalty leans on that.
+- **No confidence intervals yet** — needed before leaning on the ±0.01 gaps.
+- The **timeliness axis** (accuracy × how fast each product arrived) isn't built yet —
+  arguably the most decision-relevant variable.
+
+## The asks {.smaller}
+
+::: {.ask}
+**1 · Back writing this up.** The framework — three-reference triangulation, the floor/ceiling
+correction, the geography baseline as a validation bar — is novel and travels beyond this event.
+:::
+
+::: {.ask}
+**2 · Support taking findings to providers.** Constructive and evidence-based; their own
+metadata is the hero. This strengthens the ecosystem, doesn't just critique it.
+:::
+
+::: {.ask}
+**3 · Resource the two gaps that make it bulletproof** — confidence intervals, and the
+timeliness axis (needs provider release dates, an ask we can make together).
+:::
+
+## One line to carry out of the room
+
+<p class="big" style="line-height:1.4; font-size:1.25em;">As delivered, most single damage
+products barely beat a coastline-and-shakemap model.<br>Their value is in ranking areas and in
+combination — and the biggest lever is better reference data and provider transparency, not
+better single models.</p>
+
+::: {.notes}
+Working documents: findings register (findings.qmd) and manuscript (manuscript_v2.qmd). All
+figures regenerate from frozen data via committed scripts.
+:::
+
+# Appendix {.smaller}
+
+Backup slides for likely questions.
+
+## Appendix — why precision falls outside Caraballeda {.smaller}
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2m_deadzone_dilution.png)
+
+::: {.notes}
+Likely question: "shouldn't precision get destroyed outside Caraballeda, where CEMS reports
+almost no damage?" Yes — and it does, in proportion to how many flags a product places there.
+The four non-Caraballeda CEMS AOIs hold ~46 damage points total, so any flag there is a false
+positive. Pooled precision is a flag-weighted average, so precision lost ≈ share of flags in
+those dead zones — every product lands on the diagonal. MS is spared only because it flagged
+nowhere else (100% in Caraballeda); UH collapses because 90% of its flags are in dead zones.
+Two honest caveats: (1) this is only the flags inside CEMS extents — most products also flag
+tens of thousands of buildings BEYOND any reference, which we cannot score at all; (2) so every
+precision number we report is measured on each product's most favourable, damage-dense subset.
+:::
+
+## Appendix — the strict numbers are floors {.smaller}
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2n_crowd_adjusted_bars.png)
+
+::: {.notes}
+Likely question: "isn't it less bad if we credit damage the expert missed?" Yes — crediting
+MapSwipe-confirmed damage lifts every product's as-delivered precision ~2-3x above the strict
+CEMS floor. TWO honesty guards, both on the figure: (1) the boost is only as good as crowd
+COVERAGE — MS's rests on 98% of its flags being crowd-voted (trustworthy), UH's on just 2%
+(extrapolated, red). (2) We deliberately do NOT put the day-zero baseline on this chart:
+MapSwipe only voted on AI-flagged locations, so crediting it cannot fairly score the baseline
+(it never saw where the baseline would flag) — that comparison would be circular. So this slide
+softens the precision floors into intervals; it does NOT overturn the "products barely beat a
+no-satellite baseline" result, which stands on the strict, apples-to-apples numbers.
+:::

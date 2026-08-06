@@ -1,0 +1,5 @@
+version,flags,cems_pts,P,R,F1,field_pts,R_field
+v0 (own extent ∩ CEMS),32643,1488,0.036,0.681,0.068,381,0.89
+v1 (own extent ∩ CEMS),35345,1514,0.031,0.635,0.059,381,0.87
+v0 (common extent),32643,1488,0.036,0.681,0.068,381,0.89
+v1 (common extent),32185,1488,0.034,0.64,0.064,381,0.87

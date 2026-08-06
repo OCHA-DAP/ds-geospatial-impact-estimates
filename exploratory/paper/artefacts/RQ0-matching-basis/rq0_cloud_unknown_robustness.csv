@@ -1,0 +1,4 @@
+threshold,P,flags_kept,R,cems_pts_kept,missed_on_obscured
+none,0.089,7949,0.459,1467,0
+0.5,0.089,7927,0.508,1327,1
+0.25,0.089,7914,0.508,1327,1

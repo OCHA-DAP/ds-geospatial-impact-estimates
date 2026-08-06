@@ -1,0 +1,15 @@
+product,area,cells,n_cems,flag_pct,moran_I,p,diagnosis
+MS,Caraballeda,140,1467,15.7,0.54,0.001,"damage zone, clustered residuals — severity-aligned or CEMS gaps (RQ3b); rankings OK, per-building floor applies"
+IMPACT,Caraballeda,187,1468,17.8,0.263,0.001,"damage zone, clustered residuals — severity-aligned or CEMS gaps (RQ3b); rankings OK, per-building floor applies"
+IMPACT,Caracas,178,3,8.5,0.279,0.001,SYSTEMATIC FAILURE — clustered mass FP in no-damage zone
+IMPACT,Moron,49,26,6.7,0.0,0.999,"diffuse FP — noisy, discount counts"
+IMPACT,San Felipe,71,0,1.8,0.048,0.589,TRUSTWORTHY SILENCE (quiet + random)
+IMPACT,Santa Cruz,258,3,1.2,0.049,0.199,TRUSTWORTHY SILENCE (quiet + random)
+OSU,Caraballeda,187,1468,42.6,0.373,0.001,"damage zone, clustered residuals — severity-aligned or CEMS gaps (RQ3b); rankings OK, per-building floor applies"
+OSU,Caracas,178,3,2.5,0.301,0.001,localized FP pocket — small but systematic
+OSU,San Felipe,316,14,1.1,0.398,0.001,localized FP pocket — small but systematic
+OSU,Santa Cruz,251,3,0.9,0.041,0.282,TRUSTWORTHY SILENCE (quiet + random)
+UH,Caraballeda,134,1467,9.4,0.527,0.001,"damage zone, clustered residuals — severity-aligned or CEMS gaps (RQ3b); rankings OK, per-building floor applies"
+UH,Caracas,145,3,17.7,0.374,0.001,SYSTEMATIC FAILURE — clustered mass FP in no-damage zone
+UH,Moron,49,26,1.9,0.086,0.429,TRUSTWORTHY SILENCE (quiet + random)
+UH,Santa Cruz,198,3,27.5,0.328,0.001,SYSTEMATIC FAILURE — clustered mass FP in no-damage zone
