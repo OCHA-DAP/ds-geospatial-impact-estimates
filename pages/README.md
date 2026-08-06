@@ -46,13 +46,24 @@ gate page.
 
 ### What this protects, and what it does not
 
-**Does protect** against this repository being public, the site being public, a forwarded link,
-and search indexing. Browsing the repo gets you ciphertext.
+**Read this before assuming the gate makes anything confidential. It does not.**
 
-**Does not protect** against anyone who has the passphrase, or anyone they pass it to. There is
-no per-person access and no revocation short of re-encrypting with a new passphrase. This is the
-right tool for "not ready to publish"; it is not the right tool for "must never be seen by
-person X". For that, use a host with server-side auth.
+`exploratory/paper/manuscript_v2.qmd` and `satellite_damage_evaluation_v2.qmd` are **tracked in
+this public repository**. Anyone who finds them reads the prose, the numbers and the conclusions,
+with no passphrase involved. That is a deliberate choice — the sources are fine being public.
+
+So what the gate protects is the **publication surface**, not the findings:
+
+- **Does protect:** nobody can forward a link to a finished, citable-looking deck or manuscript;
+  search engines cannot index them; the polished artefact is not casually shareable before it is
+  ready to be. Browsing the repo gets you `content.enc`, which is ciphertext.
+- **Does not protect:** the findings themselves, which sit in the `.qmd` next door. Nor against
+  anyone who has the passphrase or is given it. There is no per-person access and no revocation
+  short of re-encrypting.
+
+It is the right tool for "not ready to *present*". It is the wrong tool for "these numbers must
+not get out" — that would additionally require the sources to stop being public, which is a
+separate decision from this one. For per-person access, use a host with server-side auth.
 
 Note the difference from `OCHA-DAP/ds-geospatial-impact-exposure`, which gates with a published
 SHA-256 hash and a CSS overlay — cosmetic by its own admission, and correctly so: that app
@@ -115,15 +126,19 @@ Then re-render and re-encrypt as above. The client loads inside the decrypted do
 because `document.write` leaves the URL unchanged, annotations anchor to `/manuscript/` stably
 across re-publishes.
 
-**The `group` is not optional in practice.** Without it, annotations land in Hypothesis's public
-layer, where anyone can read them — on a document we went to the trouble of encrypting. Create a
-private group, add the reviewers, and put its id above.
+**The `group` is not optional, and the reason is the reviewers, not the manuscript.** Without it
+annotations land in Hypothesis's public layer, readable by anyone.
 
-**Know what this discloses.** Annotations, including the passages they quote, are stored on
-Hypothesis's servers, not ours. A private group controls who can *read* them; it does not keep
-excerpts of a pre-publication manuscript inside our infrastructure. If that is not acceptable for
-a given document, review it as a `.docx` instead (`quarto render manuscript_v2.qmd --to docx`) and
-leave `comments` out.
+Be precise about what is at stake, because it is easy to get backwards. The manuscript text is
+**already public** in `manuscript_v2.qmd`, so Hypothesis quoting a passage discloses nothing new.
+What would be newly public is the **reviewers' own commentary** — candid critique of the method,
+of how hard a named provider gets criticised, of which flags are still open. That is the thing a
+public annotation layer would expose, and it is why a private group is required.
+
+Annotations are stored on Hypothesis's servers either way. A private group controls who can read
+them; it does not put them inside our infrastructure. If a given review needs to stay entirely
+in-house, do it as a `.docx` (`quarto render manuscript_v2.qmd --to docx`) and leave `comments`
+out.
 
 **The deck cannot use this.** Quarto's `comments` is an HTML-format feature — its
 `hypothesis.ejs` lives under `formats/html/` — and does not apply to `revealjs`. Comments on the

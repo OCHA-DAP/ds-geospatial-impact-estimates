@@ -195,10 +195,31 @@ Run against the real artefacts (deck 6.34 MB, manuscript 4.01 MB) with a throwaw
 | Stale cached passphrase self-clears | Chrome, `sessionStorage` seeded with a wrong value | form offered with **no** error text, cache dropped, no retry loop |
 | Landing page, desktop and 375 px | Chrome screenshots | hero, cards, chips correct; single column and no horizontal overflow on mobile |
 
-**Not verified — needs a human.** The **deck** decrypting is confirmed (its own inline `data:`
-assets are fetched by the browser after `document.write`), but no rendered screenshot could be
-captured: reveal.js's `requestAnimationFrame` loop prevents headless Chrome's compositor from
-settling, so `Page.captureScreenshot` and `Runtime.evaluate` both hang — with `fromSurface:
+**The deck's headless hang is the deck, not the gate — established by A/B.** This was challenged,
+so it was tested three ways against the same Chrome instance:
+
+| run | passphrase | outcome |
+|---|---|---|
+| deck served **plain**, no gate, no encryption | — | `Runtime.evaluate` and `captureScreenshot` both **hang** |
+| deck **through the gate** | correct | both **hang** — identically |
+| deck **through the gate** | wrong | completes, 0 `<section>`, screenshot fine |
+
+The hang tracks whether the deck *renders*, not whether the gate is involved: removing the gate
+entirely does not help, and keeping the gate but failing decryption does. So the hang is a
+property of the reveal.js document under headless Chrome, and the gate is exonerated.
+
+Usefully, this inverts into a positive test. A hang **is** the signature of successful
+decryption-and-render, so publishing was verified by the differential: real passphrase → hang,
+wrong passphrase → clean completion with zero slides.
+
+A competing diagnosis — that a synchronous `window.prompt()` blocks the parse and wipes the body —
+describes the **superseded** `exploratory/paper/password.html` gate, which this design replaces.
+This gate uses an async DOM form with no modal dialog, and the passphrase is seeded via
+`Page.addScriptToEvaluateOnNewDocument` before any page script runs, so there is nothing to block.
+
+**Still not verified — needs a human.** No *rendered image* of the deck could be
+captured, so nothing confirms the slides look right:
+`Page.captureScreenshot` and `Runtime.evaluate` both hang — with `fromSurface:
 false` too. The manuscript exercises the identical code path and renders fully. **Someone should
 open the deck in a real browser once and click through a few slides.**
 

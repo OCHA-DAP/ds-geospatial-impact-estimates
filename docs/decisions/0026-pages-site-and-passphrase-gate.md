@@ -71,6 +71,12 @@ machinery.
 * Neutral, because gating is per-artefact and all-or-nothing: there is no per-person access and
   no revocation short of re-encrypting. Adequate for "not ready to publish", not for
   "must never be seen by person X".
+* **Scope, stated plainly so nobody over-trusts it:** the `.qmd` sources are tracked in this
+  public repository and are meant to stay that way, so the gate protects the **publication
+  surface** — the finished, forwardable, indexable artefact — and **not the findings**, which
+  anyone can read in `manuscript_v2.qmd`. Withholding the findings would be a separate decision
+  requiring the sources to stop being public. `pages/README.md` repeats this at the point of use,
+  because a gate that resembles confidentiality without providing it is worse than no gate.
 
 ## Pros and Cons of the Options
 
