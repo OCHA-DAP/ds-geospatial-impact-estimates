@@ -83,15 +83,26 @@ def main() -> None:
             ax.fill(*g.exterior.xy, facecolor=fc, edgecolor=ec, lw=lw,
                     alpha=alpha, ls=ls, hatch=hatch, zorder=z)
 
-    fig, ax = plt.subplots(figsize=(15, 8.2))
-    ax.set_facecolor("#dcebf5")
-    draw(ax, land, fc="#f4f3ee", ec="#b9b7ae", lw=0.8, z=0)
-    for nm, a in aois.items():
-        # one pass: filled at low alpha with a modest outline, so OSU's thin scene
-        # strips read as context rather than dominating the frame
-        draw(ax, a, fc=COL[nm], ec=COL[nm], lw=1.0, alpha=0.16, z=2)
-    draw(ax, cems_u, ec="#1b1f24", lw=1.3, ls="--", z=4)
-    draw(ax, core, fc=CORE, ec=CORE, lw=1.2, alpha=0.85, z=5)
+    fig, axs = plt.subplots(2, 1, figsize=(15, 11.6),
+                            gridspec_kw={"height_ratios": [1.55, 1], "hspace": 0.14})
+    for a in axs:
+        a.set_facecolor("#dcebf5")
+    # Two stacked frames (user feedback 2026-08-06: the inset obscured the overview, and
+    # six translucent fills went muddy). Extents are now near-transparent fills with
+    # strong distinct outlines, and the core-region zoom is its own bottom frame.
+    def extents(ax, lw_scale=1.0):
+        draw(ax, land, fc="#f4f3ee", ec="#b9b7ae", lw=0.8, z=0)
+        for nm, a in aois.items():
+            draw(ax, a, fc=COL[nm], ec="none", alpha=0.045, z=1)
+            draw(ax, a, ec=COL[nm], lw=1.9 * lw_scale, z=3)
+        draw(ax, cems_u, ec="#1b1f24", lw=1.4 * lw_scale, ls="--", z=4)
+        draw(ax, core, fc=CORE, ec=CORE, lw=1.0, alpha=0.85, z=5)
+        ax.set_aspect("equal")
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+    ax, axz = axs
+    extents(ax)
 
     # label the CEMS AOIs from their own geometry; per-AOI nudges keep the two
     # neighbouring capital-area labels (Caraballeda coast / Caracas inland) apart
@@ -115,53 +126,40 @@ def main() -> None:
     ax.annotate("LIST extent continues ~300 km south + west (223,708 km²) →",
                 xy=(0.015, 0.03), xycoords="axes fraction", fontsize=9.5,
                 color=COL["LIST"], style="italic", zorder=8)
-    ax.set_aspect("equal")
-    ax.set_xticks([])
-    ax.set_yticks([])
 
-    # inset: the Caraballeda coastal strip, where the core region actually lives
+    # bottom frame: the Caraballeda coastal strip, where the core region actually lives
     cminx, cminy, cmaxx, cmaxy = gpd.GeoSeries([core], crs=gp.METRIC_CRS).total_bounds
-    ipx, ipy = (cmaxx - cminx) * 0.18, (cmaxy - cminy) * 0.55
-    axi = ax.inset_axes([0.40, 0.05, 0.585, 0.34])
-    axi.set_facecolor("#dcebf5")
-    draw(axi, land, fc="#f4f3ee", ec="#b9b7ae", lw=0.8, z=0)
-    for nm, a in aois.items():
-        draw(axi, a, fc=COL[nm], ec=COL[nm], lw=1.2, alpha=0.14, z=2)
-    draw(axi, cems_u, ec="#1b1f24", lw=1.1, ls="--", z=4)
-    draw(axi, core, fc=CORE, ec=CORE, lw=1.0, alpha=0.85, z=5)
-    axi.set_xlim(cminx - ipx, cmaxx + ipx)
-    axi.set_ylim(cminy - ipy, cmaxy + ipy)
-    axi.set_aspect("equal")
-    axi.set_xticks([])
-    axi.set_yticks([])
-    axi.set_title(f"the core region — every extent at once ({core.area / 1e6:,.0f} km²)",
-                  fontsize=10.5, color=CORE, weight="bold")
-    for s in axi.spines.values():
+    ipx, ipy = (cmaxx - cminx) * 0.16, (cmaxy - cminy) * 0.85
+    extents(axz, lw_scale=0.8)
+    axz.set_xlim(cminx - ipx, cmaxx + ipx)
+    axz.set_ylim(cminy - ipy, cmaxy + ipy)
+    axz.set_title(f"zoom: the core region — every extent at once "
+                  f"({core.area / 1e6:,.0f} km²)", fontsize=11.5, color=CORE, weight="bold")
+    for s in axz.spines.values():
         s.set_edgecolor(CORE)
         s.set_linewidth(1.4)
     ax.add_patch(Rectangle((cminx - ipx, cminy - ipy), (cmaxx - cminx) + 2 * ipx,
-                           (cmaxy - cminy) + 2 * ipy, fill=False, ec=CORE, lw=1.2, zorder=7))
+                           (cmaxy - cminy) + 2 * ipy, fill=False, ec=CORE, lw=1.4, zorder=7))
 
-    handles = [Patch(facecolor=COL[nm], edgecolor=COL[nm], alpha=0.45,
-                     label=f"{nm} analysed extent ({aois[nm].area / 1e6:,.0f} km²)"
-                           + (" — derived from its footprints" if nm == "UH" else ""))
+    handles = [Line2D([], [], color=COL[nm], lw=2.2,
+                      label=f"{nm} analysed extent ({aois[nm].area / 1e6:,.0f} km²)"
+                            + (" — derived from its footprints" if nm == "UH" else ""))
                for nm in aois]
-    handles += [Line2D([], [], color="#1b1f24", ls="--", lw=1.3,
+    handles += [Line2D([], [], color="#1b1f24", ls="--", lw=1.4,
                        label="CEMS expert-mapped AOIs (the reference)"),
                 Patch(facecolor=CORE, alpha=0.85,
                       label=f"core region = CEMS ∩ all five ({core.area / 1e6:,.0f} km²)")]
     ax.legend(handles=handles, loc="upper left", fontsize=9.5, framealpha=0.95)
     ax.set_title("Who analysed where — six products, one shared yardstick area",
                  fontsize=14.5, weight="bold")
-    ax.text(0.005, -0.02,
-            "UNEP debris publishes no analysed extent and is not drawn: the analysis assumes "
-            "it covers the core region (see Methods). Scoring happens only where a product "
-            "and the reference both looked.",
-            transform=ax.transAxes, fontsize=9, color="#5a6570", va="top")
+    fig.text(0.5, 0.045,
+             "UNEP debris publishes no analysed extent and is not drawn: the analysis assumes "
+             "it covers the core region (see Methods).\nScoring happens only where a product "
+             "and the reference both looked.",
+             ha="center", fontsize=9.5, color="#5a6570", va="top")
 
-    fig.tight_layout()
     out = os.path.join(FIGS, "fig_extents_map.png")
-    fig.savefig(out, dpi=150)
+    fig.savefig(out, dpi=150, bbox_inches="tight")
     print(f"wrote {out}")
 
 

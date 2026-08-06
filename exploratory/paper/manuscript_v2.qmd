@@ -146,7 +146,7 @@ so that immunity is not assumed for it; UNEP's debris mass is likewise SAR-deriv
 verify the coherence claim empirically below.
 
 ![Who analysed where. Each product's analysed extent, the five expert-mapped CEMS AOIs
-(dashed black), and — in red, with the inset zoom — the core region: the intersection of
+(dashed black), and — in red, with the zoom frame below — the core region: the intersection of
 the CEMS extents with all five extent-publishing products (~61 km²), where the head-to-head,
 ensemble and fusion analyses live. The extents span three orders of magnitude, from
 Microsoft's single coastal strip (210 km²) to LIST's two full Sentinel scenes (~224,000
