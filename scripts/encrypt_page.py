@@ -107,6 +107,27 @@ def decrypt(blob: bytes, passphrase: str) -> bytes:
     return gzip.decompress(AESGCM(key).decrypt(nonce, blob[HEADER_BYTES:], None))
 
 
+def reject_legacy_gate(plaintext: bytes, src: Path) -> None:
+    """Refuse to publish a document that still carries the superseded client-side gate.
+
+    ``exploratory/paper/password.html`` was a cosmetic gate: a synchronous ``window.prompt``
+    hardcoded to one password, which wipes the body and shows "Access denied" on a mismatch.
+    Encrypting a document that contains it produces a page nobody can read — this gate decrypts
+    correctly, and then the document's own gate denies the reader, who has no way to know why.
+    It also blocks headless browsers, because an undismissed dialog stalls the renderer.
+
+    Detected on the old gate's sessionStorage key, which is specific to it.
+    """
+    if b"gie-auth" not in plaintext:
+        return
+    raise EncryptError(
+        f"{src} still contains the superseded client-side password gate (password.html).\n"
+        "  Encrypted, it would decrypt fine and then deny every reader with 'Access denied'.\n"
+        "  Fix: remove `include-in-header: password.html` from the .qmd and re-render.\n"
+        "  This gate replaces it; two gates on one document is never what you want."
+    )
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Encrypt a rendered HTML page for the passphrase-gated Pages site."
@@ -131,6 +152,7 @@ def main() -> int:
 
         passphrase = read_passphrase()
         plaintext = args.src.read_bytes()
+        reject_legacy_gate(plaintext, args.src)
         blob = encrypt(plaintext, passphrase, args.iterations)
 
         # Round-trip before writing. Catches a format or parameter bug here, rather than
