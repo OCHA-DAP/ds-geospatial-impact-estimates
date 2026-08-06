@@ -1,0 +1,44 @@
+name: Deploy pages site to GitHub Pages
+
+# Publishes pages/ — the landing page plus the encrypted paper artefacts — to GitHub Pages.
+#
+# There is no build step. pages/ is the site: its directory layout is the URL layout, so this
+# workflow only uploads it. Nothing here needs credentials, a Python environment, or the data
+# lake, which is deliberate: a deploy must not be able to fail over an unrelated dependency.
+#
+# The artefacts are rendered LOCALLY from exploratory/paper/*.qmd and encrypted with
+# scripts/encrypt_page.py before being committed. CI cannot render them — figures are gitignored
+# (the global figs/ rule) and rebuilding them needs Azure blob credentials.
+#
+# Shape matches OCHA-DAP/ds-geospatial-impact-exposure's deploy-pages.yml (artifact deploy, no
+# gh-pages branch); it triggers on v1 rather than main because that is this repo's trunk.
+
+on:
+  push:
+    branches: [v1]
+    paths: ["pages/**", ".github/workflows/deploy-pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,110 @@
+/* HDX v2 design tokens, copied from OCHA-DAP/ds-storm-impact-harmonisation's pages template so
+ * the two sites read as one system. Kept in step with exploratory/paper/gie_slides.scss, which
+ * styles the decks this site publishes.
+ *
+ * Light mode only, matching the reference: there is deliberately no prefers-color-scheme rule.
+ * The only media queries are the 640px breakpoint and prefers-reduced-motion. */
+:root {
+  --b5:#269777; --b6:#1e795f; --b7:#18614c; --b05:#e9f5f1; --b1:#d4eae4;
+  --n9:#1f2324; --n8:#3f4748; --n7:#5e6a6b; --n05:#f5f7f7;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--n05); color:var(--n9);
+  font-family:'Roboto',system-ui,-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  line-height:1.5;
+}
+.wrap { max-width:1080px; margin:0 auto; background:#fff; min-height:100vh;
+        box-shadow:0 0 40px rgba(31,35,36,.06); }
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+.hero { position:relative; overflow:hidden; background:var(--b6); padding:56px 44px 48px; }
+.hero canvas { position:absolute; inset:0; width:100%; height:100%; z-index:0; }
+.hero .inner { position:relative; z-index:1; }
+.eyebrow { font-size:11px; letter-spacing:.15em; text-transform:uppercase; font-weight:700;
+           color:rgba(255,255,255,.88); margin:0 0 12px;
+           text-shadow:0 1px 8px rgba(0,0,0,.25); }
+.hero h1 { font-family:'Merriweather',Georgia,'Times New Roman',serif; font-weight:700;
+           font-size:34px; line-height:1.2; color:#fff; margin:0 0 14px;
+           text-shadow:0 2px 16px rgba(0,0,0,.28); }
+.hero p { margin:0; font-size:15px; line-height:1.6; color:#fff; max-width:64ch;
+          text-shadow:0 1px 10px rgba(0,0,0,.25); }
+
+/* ── cards ────────────────────────────────────────────────────────────── */
+main { padding:36px 44px 8px; }
+.label { font-size:11px; font-weight:700; letter-spacing:.11em; text-transform:uppercase;
+         color:var(--n7); margin:0 0 16px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+
+.k { display:flex; flex-direction:column; text-decoration:none; color:inherit;
+     background:#fff; border:1px solid #e2e7e7; border-top:3px solid var(--b5);
+     border-radius:5px; padding:18px 19px 14px;
+     transition:box-shadow .18s ease, transform .18s ease; }
+.k:hover, .k:focus-visible { box-shadow:0 4px 20px rgba(31,35,36,.10);
+                             transform:translateY(-2px); outline:none; }
+.k:focus-visible { border-color:var(--b5); box-shadow:0 0 0 3px var(--b1); }
+.k h2 { font-family:'Merriweather',Georgia,serif; margin:0 0 8px; font-size:16px;
+        font-weight:700; color:var(--b6); line-height:1.25; }
+.k p { margin:0 0 14px; font-size:13.5px; color:var(--n8); line-height:1.55; flex:1; }
+.k .foot { display:flex; justify-content:space-between; align-items:center; gap:10px;
+           font-size:10.5px; color:var(--n7); text-transform:uppercase;
+           letter-spacing:.06em; border-top:1px solid #f0f3f3; padding-top:10px; }
+.k .foot em { font-style:normal; color:var(--b5); font-weight:500; }
+
+.chip { display:inline-block; font-size:9px; padding:2.5px 7px; border-radius:10px;
+        margin-left:7px; text-transform:uppercase; letter-spacing:.07em; font-weight:700;
+        vertical-align:2.5px; font-family:'Roboto',sans-serif; }
+.chip-ext { background:var(--b05); color:var(--b7); border:1px solid var(--b1); }
+/* Not in the reference site — this repo gates two products, and every card states its access
+ * up front so nobody meets an unexplained prompt. Built from the same tokens. */
+.chip-gate { background:#fff; color:var(--b7); border:1px solid var(--b5); }
+
+/* ── notes / footer ───────────────────────────────────────────────────── */
+.note { margin:30px 44px 40px; padding:13px 17px; border-radius:4px;
+        background:var(--b05); border-left:5px solid var(--b5);
+        font-size:12.5px; color:var(--n8); line-height:1.6; }
+.note code { background:#fff; border:1px solid var(--b1); padding:1.5px 6px;
+             border-radius:3px; font-size:11.5px; color:var(--b7); }
+.note a { color:var(--b6); }
+.note p { margin:0 0 9px; }
+.note p:last-child { margin-bottom:0; }
+
+/* ── gate page ────────────────────────────────────────────────────────── */
+/* A gated product's index.html is only this form; the artefact itself arrives as ciphertext
+ * and replaces the whole document once decrypted. */
+.gate-page { min-height:100vh; display:flex; align-items:center; justify-content:center;
+             padding:40px 22px; }
+.gate { max-width:420px; width:100%; background:#fff; border:1px solid #e2e7e7;
+        border-top:3px solid var(--b5); border-radius:5px; padding:26px 28px 22px; }
+.gate .eyebrow { color:var(--n7); text-shadow:none; margin-bottom:10px; }
+.gate h1 { font-family:'Merriweather',Georgia,serif; font-size:19px; font-weight:700;
+           color:var(--b6); line-height:1.3; margin:0 0 8px; }
+.gate .lede { font-size:13.5px; color:var(--n8); line-height:1.55; margin:0 0 18px; }
+.gate label { display:block; font-size:11px; font-weight:700; letter-spacing:.09em;
+              text-transform:uppercase; color:var(--n7); margin:0 0 6px; }
+.gate input { width:100%; padding:9px 11px; font-size:14px; font-family:inherit;
+              color:var(--n9); background:#fff; border:1px solid #ccd3d3; border-radius:4px; }
+.gate input:focus-visible { outline:none; border-color:var(--b5); box-shadow:0 0 0 3px var(--b1); }
+.gate input:disabled { background:var(--n05); color:var(--n7); }
+.gate button { width:100%; margin-top:12px; padding:10px; border:0; border-radius:4px;
+               background:var(--b6); color:#fff; font-family:inherit; font-size:14px;
+               font-weight:700; cursor:pointer; }
+.gate button:hover:not(:disabled) { background:var(--b7); }
+.gate button:focus-visible { outline:none; box-shadow:0 0 0 3px var(--b1); }
+.gate button:disabled { background:var(--n7); cursor:progress; }
+/* Reserved height so the panel does not jump when a message appears. */
+.gate .msg { min-height:19px; margin:9px 2px 0; font-size:12px; line-height:1.5; }
+.gate .msg[data-kind="error"] { color:#b8272d; font-weight:500; }
+.gate .msg[data-kind="busy"] { color:var(--n7); }
+.gate .back { display:block; margin:18px 0 0; padding-top:14px; border-top:1px solid #f0f3f3;
+              font-size:11.5px; color:var(--n7); }
+.gate .back a { color:var(--b6); }
+
+@media (max-width:640px) {
+  .hero { padding:40px 22px 34px; }
+  .hero h1 { font-size:26px; }
+  main { padding:26px 22px 4px; }
+  .note { margin:24px 22px 32px; }
+}
+/* Respect users who ask for less motion — the canvas paints one static frame. */
+@media (prefers-reduced-motion:reduce) { .hero canvas { animation:none; } }
