@@ -41,6 +41,7 @@ import os
 import sys
 from pathlib import Path
 
+from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 MAGIC = b"GIEENC01"
@@ -138,6 +139,10 @@ def main() -> int:
         "--iterations", type=int, default=DEFAULT_ITERATIONS,
         help=f"PBKDF2 iterations (default {DEFAULT_ITERATIONS:,})",
     )
+    ap.add_argument(
+        "--skip-if-unchanged", action="store_true",
+        help="leave --out alone if it already decrypts to exactly this input",
+    )
     args = ap.parse_args()
 
     try:
@@ -153,6 +158,21 @@ def main() -> int:
         passphrase = read_passphrase()
         plaintext = args.src.read_bytes()
         reject_legacy_gate(plaintext, args.src)
+
+        # Every run draws a fresh salt and nonce, so re-encrypting identical input still produces
+        # completely different bytes. Without this check a no-op republish commits several MB of
+        # incompressible blob that git cannot delta against the previous one — and since the
+        # ciphertext always differs, "nothing changed" can never be detected downstream.
+        if args.skip_if_unchanged and args.dst.exists():
+            try:
+                if decrypt(args.dst.read_bytes(), passphrase) == plaintext:
+                    print(f"{args.dst} is already this exact document — left untouched")
+                    return 0
+            except (EncryptError, InvalidTag, OSError, gzip.BadGzipFile):
+                # Unreadable, truncated, or encrypted under a different passphrase: fall through
+                # and overwrite. Not a reason to abort, but not a reason to claim "unchanged".
+                print(f"note: existing {args.dst.name} could not be compared; re-encrypting")
+
         blob = encrypt(plaintext, passphrase, args.iterations)
 
         # Round-trip before writing. Catches a format or parameter bug here, rather than
