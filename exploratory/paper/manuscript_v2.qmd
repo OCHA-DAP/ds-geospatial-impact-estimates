@@ -296,20 +296,14 @@ radii answer a different and equally legitimate question, namely whether the fla
 responder within sight of real damage. We use named scales for those: 30 m (line of
 sight), 60 m (same block), 100 m (right area).
 
-**The measurement frames used in this paper.** Different analyses ask different
-questions, so three matching rules appear in what follows, and numbers are only
-comparable within one rule:
-
-| frame | radius | matched against | used for | why this radius |
-|---|---|---|---|---|
-| **Primary** *(default everywhere)* | **10 m** | CEMS points | all precision/recall, the pairwise rules, the voting table, the learned fusion and the geography null | tight enough that a flag must land on or beside the right building |
-| **Line-of-sight** | **30 m** | CEMS points | coverage and visits-per-find columns of @tbl-dial only | answers a different question: "would a responder sent here *see* the damage" |
-| **Field** | **20 m** | ChatMap field points | recall against ground reports only | absorbs phone-GPS error in the field reports |
-
-: The measurement frames. Every CEMS-based number in this paper uses the 10 m primary frame,
-so all of them are directly comparable. The two exceptions exist because they answer different
-questions or use a different reference, and are always labelled where used.
-{#tbl-allframes}
+**One matching rule, two labelled exceptions.** Every CEMS-based precision and recall in
+this paper uses the 10 m radius, so all of them are directly comparable. Two labelled
+exceptions appear later, each because it answers a different question: the coverage and
+visits-per-find columns of the voting table use 30 m, the line-of-sight scale ("would a
+responder sent here *see* the damage"), and recall against the ChatMap ground reports
+uses 20 m, absorbing phone-GPS error in field-collected points. Both are restated where
+they are used. (That field-matching 20 m is unrelated to the 20 m *label radius* of the
+Appendix sensitivity re-run, which is an alternative definition of the target itself.)
 
 Separately from the matching radius, results are reported in one of two *regions*, and
 numbers are comparable only within one:
@@ -1323,7 +1317,7 @@ UH product flagged 27.5% (@sec-crossexam).
 
 ### The 20 m label radius {.unnumbered}
 
-All CEMS-based results in this paper use a 10 m matching radius (@tbl-allframes), and every
+All CEMS-based results in this paper use a 10 m matching radius, and every
 model is fitted and evaluated at that radius. The fusion analysis was originally built at
 20 m out of concern for fit stability (20 m labels 2,733 buildings damaged in the core region
 against 1,350 at 10 m), and that frame is retained here as the sensitivity check. The same
