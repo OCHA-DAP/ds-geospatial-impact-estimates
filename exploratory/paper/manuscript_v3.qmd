@@ -146,7 +146,11 @@ confirm.](timeline/timeline_products.png){#fig-timeline}
 **The three references, and what each can see.** Copernicus EMS provides trained-analyst
 damage points and is the primary reference: every headline precision and recall is
 computed against it, under one matching rule (a building counts as damaged if a CEMS
-point lies within 10 m; the Appendix gives the reasoning and sensitivity). MapSwipe is a
+point lies within 10 m; the Appendix gives the reasoning and sensitivity). Three other
+distances appear in this paper, each doing exactly one job: 20 m absorbs phone-GPS
+error when matching against field reports; a separate 20 m re-run of the label itself
+is the Appendix's sensitivity check; and 30 m prices field visits in the voting table,
+the line-of-sight scale a wasted trip is judged at. MapSwipe is a
 crowd campaign in which more than 400 volunteers reviewed ~50 m cells at locations AI
 products had flagged: it can refute false alarms but can never reveal a miss, so it is
 used to adjudicate disputed flags, never as ground truth. ChatMap is 415 building-level
@@ -179,7 +183,7 @@ because outside Caraballeda the reference is too thin to interpret failure clean
 as-delivered numbers are the operationally honest ones. Matching details, the radius
 sensitivity, and the two reporting regions are in the Appendix.
 
-![Per-AOI scorecard. Left: precision floor per product per CEMS AOI; right: recall where
+![**Region: each CEMS AOI separately, plus the pooled as-delivered total.** Per-AOI scorecard. Left: precision floor per product per CEMS AOI; right: recall where
 the reference is thick enough to support it. 96% of all CEMS damage points are in the
 first column. Outside Caraballeda, measured precision is 0.00–0.02 despite flag shares
 up to 27.5%: a floor against a nearly-empty reference, in which product over-flagging
@@ -214,7 +218,7 @@ beyond coarse spatial structure; a product that loses to it has placed flags no 
 than a retrospective geography prior. The construction, the fairness safeguards, and
 why average precision is quoted only for continuous scores are in the Appendix.
 
-![Every predictor at one operating point, F1 side by side. Grey bars are the six
+![**Region: Caraballeda core (61 km²).** Every predictor at one operating point, F1 side by side. Grey bars are the six
 products exactly as shipped; coloured bars are our constructions at their best single
 cut. The geography null (0.128) lands inside the product range, while flat voting
 (0.290) and weighted fusion (0.343) reach more than twice the best single product,
@@ -242,7 +246,7 @@ re-vote of the crowd campaign at three times the depth confirmed the adjustment'
 stability (13.2% versus 11.5% of flags confirmed). The adjudication mechanics, their
 granularity caveats, and the re-vote are in the Appendix.
 
-![Recall by damage grade, field frame. Each line is one dataset's recall against
+![**Region: core; reference: field reports (20 m GPS tolerance).** Recall by damage grade. Each line is one dataset's recall against
 field-reported damage, at "complete" destruction versus "significant" damage. Every
 line slopes down: the products and the expert reference alike find lighter damage far
 less often, which is why measured recall is a ceiling and measured precision a
@@ -267,7 +271,7 @@ cells and each product's ordering of cells is compared with the expert ordering 
 correlation, with the geography model's expected damage count ranked the same way. The
 cell lattices, the per-area tables, and a priority map are in the Appendix.
 
-![Area-ranking skill, product against the geography null, across the five mapped areas.
+![**Region: all five mapped areas pooled (as delivered); the within-Caraballeda split is quoted in the text.** Area-ranking skill, product against the geography null.
 The null out-ranks five of the six pooled; within the damage zone the comparison splits
 three–three.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking.png){#fig-nullranking}
 
@@ -291,9 +295,10 @@ one.
 | 4-of-6 | 3,347 | 0.19 | 0.38 | 0.67 | 3.4 |
 | 6-of-6 | 214 | 0.64 | 0.93 | 0.18 | 0.8 |
 
-: The voting rules, priced. "Crowd-adjusted precision" adds back the expert-unmatched
-flags that crowd volunteers judged damaged. Coverage and visits-per-find use a 30 m
-line-of-sight scale: would a responder sent there see the damage. {#tbl-dial}
+: **Region: Caraballeda core (61 km²).** The voting rules, priced. Two scales appear
+by design: the precision columns use the strict 10 m building rule, while coverage and
+visits-per-find use a 30 m line-of-sight scale (would a responder sent there *see* the
+damage), which is the scale a wasted trip is actually judged at. {#tbl-dial}
 
 The active ingredient is **independence of method, not diversity of sensors**. The
 strongest two-product rule in the study pairs Microsoft with UH, the weakest product we
@@ -312,7 +317,7 @@ cross-product rules (Appendix). And choosing the agreement threshold buys a work
 not a hit rate: flag counts are observable on day one, the precision they deliver is
 not. What this section implies for practice is collected in the Recommendations.
 
-![The fifteen two-product rules. Pairing across independent methods lifts precision;
+![**Region: Caraballeda core (61 km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
 the pair sharing its entire method is the weakest of
 all.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){#fig-frontier}
 
@@ -335,7 +340,7 @@ second crowd campaign over the same cells later reproduced the confirmation side
 verdict. Details, including what the re-vote could and could not re-test, are in the
 Appendix.
 
-![The western strip. Top left: where Microsoft flags far more than the expert map
+![**Region: the western half of Microsoft's delivered strip (Catia La Mar).** The western strip. Top left: where Microsoft flags far more than the expert map
 records. Bottom left: where crowd volunteers said nothing is there. Right: cell by cell
 the two do not track; the agreement is at the scale of the strip, which sat under a
 single satellite
