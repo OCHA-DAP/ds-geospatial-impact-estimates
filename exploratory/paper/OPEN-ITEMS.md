@@ -72,13 +72,12 @@ Decided 2026-08-07 to keep content review separate from the language pass. Queue
 
 ## Editorial / publishing
 
-**5. Humanizer pass over `manuscript_v2.qmd` (in progress, iterative with review).**
-Done: Abstract, Introduction, event/products, three-references (~iterations 1–2).
-Remaining: Methods, Results I–V, Recommendations, Conclusion, Appendix (~170 em dashes
-at last count, plus pattern fixes). Ground rules agreed: em dashes go; numeric-range en
-dashes stay; technical terms keep their names with a plain gloss at first use; numbers,
-crossrefs, math, code untouched; one section per iteration, user reviews each diff.
-Manuscript only — deck explicitly out of scope for now.
+**5. ~~Humanizer pass over `manuscript_v2.qmd`~~ — COMPLETE 2026-08-07 (pending user's
+final read).** All ~190 prose em dashes resolved across five iterations (Abstract →
+Appendix); survivors are exempt (table empty-cell markers, figure-code strings,
+numeric-range and precision–recall en dashes). Ground rules that applied: technical
+terms keep their names with a plain gloss; numbers, crossrefs, math, code untouched.
+Deck was explicitly out of scope. Remaining: user read-through, then republish.
 
 **6. Deck one-word fix (with next deck republish).**
 "Independent failure modes" slide says UH ran on "the same commercial imagery source as

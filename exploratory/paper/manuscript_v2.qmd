@@ -1,6 +1,6 @@
 ---
 title: "Evaluating rapid satellite building-damage products against imperfect references: the 2026 Venezuela earthquake"
-author: "Z. Arno, L. Milano — OCHA Centre for Humanitarian Data *(draft v0.3 — internal)*"
+author: "Z. Arno, L. Milano · OCHA Centre for Humanitarian Data *(draft v0.3, internal)*"
 date: last-modified
 format:
   html:
@@ -845,24 +845,24 @@ higher than measured; the ceiling means single-product performance stops improvi
 
 ### Agreement between independent methods is different
 
-Voting across products works when their errors are independent — when two products
+Voting across products works when their errors are independent: when two products
 rarely make the same mistake in the same place. Requiring their agreement then removes
 false positives faster than it removes real detections. The clearest example: pairing
 Microsoft with UH, the product whose full-region precision is the worst we measured
 (0.009, driven by the agricultural false alarms described above), produces the strongest
 two-product rule in the study (precision at least 0.372, crowd-adjusted 0.64). Both are
-optical products — and they even overlap in imagery source, since UH's authors confirm it
+optical products, and they even overlap in imagery source, since UH's authors confirm it
 ran exclusively on Vantor imagery, the vendor behind several of Microsoft's scenes
 including its failing one. What they do not share is the model, and that is where the
 independence lives: their failure zones sit at opposite ends of the study area
 (Microsoft's on the western coast, UH's in inland agriculture). A product with
 serious failure zones is still a valuable voter wherever its errors are independent of
-its partner's. The pair that shares its entire method — the two Sentinel-1 coherence
-products — is by contrast the weakest of all fifteen pairings. We present this as a
+its partner's. The pair that shares its entire method (the two Sentinel-1 coherence
+products) is by contrast the weakest of all fifteen pairings. We present this as a
 mechanism, not a recipe: which pairing wins is probably event-dependent. The durable
 claims are that error independence is the active ingredient, that sharing a sensing
-method is the one reliable way to forfeit it, and that the usual day-one proxy —
-modality diversity — did not predict the ranking here: the best pair shared a modality,
+method is the one reliable way to forfeit it, and that the usual day-one proxy,
+modality diversity, did not predict the ranking here: the best pair shared a modality,
 and the worst shared a method.
 
 Scored against all three references at once, the number of agreeing products behaves as
@@ -901,9 +901,9 @@ the marker sits at the CEMS-measured floor, the whisker top at the crowd-adjuste
 Single products cluster in the low-precision band at the bottom; each added vote of
 required agreement trades recall for precision along the blue line. Whiskers adjust
 precision only: adjudication re-judges flags and cannot add unrecorded damage to
-recall's denominator, so in-frame recall is fixed — recall's own, downward uncertainty
+recall's denominator, so in-frame recall is fixed (recall's own, downward uncertainty
 is the grade-gradient result of
-@sec-crossexam.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png)
+@sec-crossexam).](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png)
 
 ### Weighted fusion, and the geography-only baseline
 
@@ -915,52 +915,53 @@ disjoint ~5 km² zones, because neighbouring buildings share both features and l
 a random split would leak that structure.
 
 Because the models in this section output continuous scores rather than fixed flag lists,
-they are compared on **average precision (AP)** — a metric that must not be confused with
+they are compared on **average precision (AP)**, a metric that must not be confused with
 precision itself. Precision and recall describe *one* flag list: the share of its flags
 that are right, and the share of true damage it catches. AP describes a *score*: sweep
 the score through every possible threshold, record the precision achieved at each level
-of recall, and average — one number summarising the entire precision–recall curve. A high
-AP means the score ranks damaged buildings ahead of intact ones well at every list size,
-not that any particular list is precise. On this metric the weighted model reaches AP
-0.284, against 0.194 for flat voting (the vote count 0–6 treated as a score), and a random
-forest does no better than the logistic model — the useful signal is additive, and an
-interpretable weighted vote captures essentially all of it.
+of recall, and average, giving one number that summarises the entire precision–recall
+curve. A high AP means the score ranks damaged buildings ahead of intact ones well at
+every list size, not that any particular list is precise. On this metric the weighted
+model reaches AP 0.284, against 0.194 for flat voting (the vote count 0–6 treated as a
+score), and a random forest does no better than the logistic model: the useful signal is
+additive, and an interpretable weighted vote captures essentially all of it.
 
 That 46% advantage over flat voting overstates the practical margin, for a reason that
 belongs to the metric rather than the predictors: a vote count of 0–6 can only be cut in
 six places, and averaging over so few steps penalises the coarseness itself. Judged
-instead at the single operating point each would actually be deployed at — the threshold
-with the best F1 — the gap narrows from 46% to **18%** (voting 0.290 against fusion
+instead at the single operating point each would actually be deployed at (the threshold
+with the best F1), the gap narrows from 46% to **18%** (voting 0.290 against fusion
 0.343; @fig-bestf1).
 
 That 18% is the price of the single most consequential distinction in this paper, and it is
 worth paying deliberately. **The weighted fusion cannot be run during a response.** Its weights
-are estimated from this event's reference labels — the very damage map a responder is waiting
-for — so it is a retrospective instrument, subject to exactly the objection that disqualifies
+are estimated from this event's reference labels, the very damage map a responder is waiting
+for, so it is a retrospective instrument, subject to exactly the objection that disqualifies
 the geography null as an operational tool (@sec-dayzero). Flat voting carries no such debt.
 It requires no weights, no training data, and no reference: count how many products flag a
 building. It is computable the hour the second product lands, by anyone, with a spreadsheet.
 
 Set against that, the arithmetic is favourable. Voting reaches F1 0.290 where the best single
-product manages 0.148 — **roughly twice the accuracy of any product taken alone** — and gives
+product manages 0.148, **roughly twice the accuracy of any product taken alone**, and gives
 up 18% against a fitted model that nobody could have fitted in time. On the evidence here,
 counting agreement is the only method that is simultaneously effective and available on day
 one, and that combination, rather than the fusion result, is what we would put in front of an
 operational team.
 
 Three qualifications keep the recommendation honest. First, "flat" conceals an assumption:
-weighting every product equally means trusting them equally, and UH — whose as-delivered
-precision was 0.009 — casts a full vote. That it *helped* rather than hurt is a real finding,
+weighting every product equally means trusting them equally, and UH, whose as-delivered
+precision was 0.009, casts a full vote. That it *helped* rather than hurt is a real finding,
 but one we could only establish with a reference in hand. Second, and following from the
 pairwise results above, the transferable rule is not "count votes" but **"count agreement
 between independent methods"**: the pair sharing its entire method was the weakest of all
 fifteen, and a slate of five products sharing one method would inherit their common bias no
-matter how many of them agreed. What products share — sensor, platform, model — is knowable
+matter how many of them agreed. What products share (sensor, platform, model) is knowable
 without labels, so this sharpens the rule rather than weakening it; this event also showed
 the converse, in that the two optical products with nothing else in common formed the
-strongest pair. Third, the choice of *k* remains, and while it can be made without labels — flag counts
-are observable, so "we can visit three thousand buildings, therefore k = 4" is a legitimate
-day-one decision — the precision that choice buys is not knowable at the time. A responder
+strongest pair. Third, the choice of *k* remains. It can be made without labels, since flag
+counts are observable ("we can visit three thousand buildings, therefore k = 4" is a
+legitimate day-one decision), but the precision that choice buys is not knowable at the
+time. A responder
 picking k is choosing a workload, not a guaranteed hit rate.
 
 The comparison worth remembering comes from stripping the model down. Remove the six
@@ -971,26 +972,26 @@ point-against-curve. Every threshold on the null's score is a different flag lis
 precision–recall curve is a whole family of no-satellite predictors (@fig-geobaseline),
 and each product is one point in that plane.
 
-Reading those points against the curve at **matched list sizes** — cutting the null at whatever
+Reading those points against the curve at **matched list sizes** (cutting the null at whatever
 threshold produces exactly as many flags as that product shipped, so the two lists are the same
-length and directly comparable — the products' advantage is slight and not universal. Three
+length and directly comparable), the products' advantage is slight and not universal. Three
 products clear the null: UH (precision 0.093 against 0.065 at 5,362 flags), UNEP (0.086 against
 0.068) and Microsoft (0.081 against 0.073). The other **three fall below it on precision and
 recall alike**: IMPACT (0.069 against 0.071), LIST (0.057 against 0.062) and OSU (0.045 against
 0.047). Even in the region where every product scores best, geography is not a floor the
-products clear comfortably — half of them do not clear it at all, and the gap to fusion dwarfs
+products clear comfortably: half of them do not clear it at all, and the gap to fusion dwarfs
 every one of these margins.
 
 A second like-for-like comparison sharpens the same point and is easier to read, because it
 puts every predictor on one number at one operating point. A provider ships exactly one flag
 list, so a product's F1 is simply that list's F1. Our three continuous scores can be cut
-anywhere, so we report each at its best single cut. The obvious objection — the products'
+anywhere, so we report each at its best single cut. The obvious objection (the products'
 thresholds were fixed without ever seeing the reference, while ours are chosen knowing the
-labels — turns out to be worth 0.001 of F1: choosing the null's cut on held-out data
+labels) turns out to be worth 0.001 of F1: choosing the null's cut on held-out data
 instead of in hindsight moves it from 0.128 to 0.129 (mechanics in the Appendix).
 
 The result is that geography sits *inside* the product range rather than beneath it. The null
-reaches **F1 0.128** against 0.148 for the strongest product, UH — a shortfall of about 14% —
+reaches **F1 0.128** against 0.148 for the strongest product, UH (a shortfall of about 14%),
 while matching or beating three of the six: IMPACT 0.123, LIST 0.104 and OSU 0.085. The two
 remaining products, Microsoft (0.142) and UNEP (0.139), sit between (@fig-bestf1). No product
 separates itself from a geography-only model by a margin that would survive a change of
@@ -999,9 +1000,9 @@ less, than it is worth.
 
 The first concerns average precision, which should not be used to make this comparison at
 all, even though it is the obvious summary to reach for. A product's "AP" looks
-comparable to the null's but is a different quantity — for a one-list product it
+comparable to the null's but is a different quantity: for a one-list product it
 collapses to a value near 0.08 almost regardless of quality (the derivation is in the
-Appendix) — so comparisons on that metric are coincidences of value, not statements
+Appendix), so comparisons on that metric are coincidences of value, not statements
 about performance. The operating-point comparison above is the one we rely on.
 
 The second is what geography's parity does and does not imply. It does not mean the products
@@ -1016,25 +1017,25 @@ tie the geography null; across everything they actually shipped, most fall below
 
 ![Every predictor at one operating point, F1 side by side. Grey bars are the six products
 exactly as shipped; coloured bars are our constructions at their best single cut. The
-geography null (0.128) lands *inside* the product range — above IMPACT, LIST and OSU,
-below UH, Microsoft and UNEP — while flat voting (0.290) and weighted fusion (0.343)
+geography null (0.128) lands *inside* the product range (above IMPACT, LIST and OSU,
+below UH, Microsoft and UNEP), while flat voting (0.290) and weighted fusion (0.343)
 reach more than twice the best single product, which is where the products' real value
 shows. The paler bar is the weaker of the two null learners, shown for robustness;
 threshold-selection checks and the 20 m version are in the
 Appendix.](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){#fig-bestf1}
 
-Combination, flat or weighted, is what changes the picture — not any single product, and not
+Combination, flat or weighted, is what changes the picture: not any single product, and not
 geography alone.
 
 ![The geography null model in three views. Top: the damage risk it predicts from coast
-distance, building density and shaking alone — no satellite input — with actual CEMS
+distance, building density and shaking alone (no satellite input), with actual CEMS
 damage points on top; the context variables already draw the damage map. Middle: overall
-ranking skill (average precision) for the three continuous scores only — geography null
-(red), flat voting, weighted fusion — since a shipped product has no meaningful AP
+ranking skill (average precision) for the three continuous scores only (geography null
+in red, flat voting, weighted fusion), since a shipped product has no meaningful AP
 (Appendix). Bottom: the precision–recall plane. Grey dots are the six products as shipped,
 one point each; the red dashed curve is everything the geography score can produce as its
 threshold sweeps; the numbered squares are the voting rules, where *k* means "flagged by
-at least k of the six products" — requiring more agreement climbs from the single-product
+at least k of the six products". Requiring more agreement climbs from the single-product
 level onto the fusion curve (solid
 blue).](artefacts/RQ8-learned-fusion/figs/rq8_geography_baseline_r10.png){#fig-geobaseline}
 
@@ -1071,7 +1072,7 @@ the calibration of each per-scene model, not the satellite, the provider, or the
 as a whole.
 
 A cross-product control seals that attribution. UH's authors confirm their analysis ran
-exclusively on Vantor imagery — the same commercial source as the failing scene — and over
+exclusively on Vantor imagery (the same commercial source as the failing scene) and over
 the same strip UH shows the opposite pattern: it flags 3.4% of buildings in the west at
 precision 0.138 (its best zone anywhere), against Microsoft's 32.4% at 0.033. Same imagery
 vendor, different model, no cluster; the failure travelled with the per-scene calibration,
@@ -1099,7 +1100,7 @@ operational dashboard has moved to v1. Since both versions key to the same build
 base, they can be scored identically on the common extent against the same 1,488 CEMS
 points (this comparison spans OSU's full extent, so its precision runs lower than the
 core-region scorecard figure). The result: precision 0.036 (v0) versus 0.034 (v1),
-recall 0.68 versus 0.64 — no measurable accuracy change — while **more than half the flag list turned over** (v1
+recall 0.68 versus 0.64, no measurable accuracy change, while **more than half the flag list turned over** (v1
 dropped 30,565 of v0's 57,066 flags and added 42,723 new ones). A revision that
 relabels half the buildings without moving precision or recall is itself evidence for
 this paper's central reading: at the individual-building level these products are
@@ -1111,25 +1112,25 @@ this kind of churn.
 
 The operational question a scorecard cannot answer alone is *when*: a modestly accurate map
 on day two can matter more than a better one on day eight. We reconstruct each product's
-availability from the earthquake using the earliest date we can defend — the timestamp at
-which each product was integrated into our own pipeline — which is a conservative *upper
+availability from the earthquake using the earliest date we can defend (the timestamp at
+which each product was integrated into our own pipeline), which is a conservative *upper
 bound* on when it was actually available (true provider-release dates are earlier and are
 still being confirmed).
 
 ![Product availability, measured from the M7.5 mainshock. Circles mark a release or version;
 a filled star marks the final product actually evaluated (Microsoft's merged union; IMPACT
-v2). Positions are our-integration dates — an upper bound on availability — so true release
+v2). Positions are our-integration dates (an upper bound on availability), so true release
 is earlier. Red markers are dates still to confirm.](timeline/timeline_products.png){#fig-timeline}
 
 Three points stand (@fig-timeline). First, the entire ecosystem arrived inside about eight
-days — the field went from nothing to a dozen independent products in a single week.
+days: the field went from nothing to a dozen independent products in a single week.
 Second, several products were not single artefacts but sequences: Microsoft delivered
 scene-by-scene across five areas before merging them into the union we evaluate, and both
-IMPACT (raster v1 → vector v2) and OSU (v0 → a later v1) shipped successive versions — so
+IMPACT (raster v1 → vector v2) and OSU (v0 → a later v1) shipped successive versions, so
 "the product" has a delivery history, and the version a responder acted on depended on when
 they looked. Third, and honestly, we stop at *availability*: the decision-relevant analysis
-— accuracy interacted with arrival date, so that a fast-but-rough product can be scored
-against a slow-but-better one — requires confirmed provider-release dates we do not yet
+(accuracy interacted with arrival date, so that a fast-but-rough product can be scored
+against a slow-but-better one) requires confirmed provider-release dates we do not yet
 hold, and is deferred. What the timeline already shows is that timeliness varied by days
 across products, enough to matter operationally.
 
@@ -1139,7 +1140,7 @@ Two of this evaluation's results are negative, and we record them deliberately, 
 each one closes a shortcut that will tempt whoever has to judge the next event's products.
 
 The first tempting shortcut is judging a product's trustworthiness from its own flags,
-with no reference data at all. If it worked, it would matter enormously — most of the
+with no reference data at all. If it worked, it would matter enormously: most of the
 world will never have an expert damage survey to score against. It does not work. We
 tried to predict how reliable each product actually was in each area from things the
 flags themselves reveal: how many buildings it marks, how tightly they bunch together,
@@ -1147,21 +1148,21 @@ how often it agrees with the other products. None of it predicts anything; acros
 fifteen product-and-area combinations, every correlation was statistically
 indistinguishable from zero. The reason appears to be built into the problem rather
 than fixable with better statistics. A patch of false alarms bunches together on the
-map in exactly the way real damage does — real damage clusters too — so no amount of
+map in exactly the way real damage does (real damage clusters too), so no amount of
 staring at the pattern can tell a neighbourhood that genuinely shook apart from a
 stretch of terrain that fooled a model, unless something independent of the product says
 which is which. Nor can the products vouch for each other: their errors are usefully
 independent building by building, but their *zones* of failure still overlap at
 neighbourhood scale, so agreement between products stops being informative exactly when
 you zoom out. Judging reliability where the reference does not reach needs information
-the flags cannot supply — field reports, a crowd, or a model trained on previous
+the flags cannot supply: field reports, a crowd, or a model trained on previous
 earthquakes.
 
 The second result is the encouraging counterpart: *where* reference data exists, a
 product's failures can be mapped, not just measured. For each product we tested, block
 by block, whether its errors scatter randomly or pile up somewhere. Across 78–86% of
-each product's territory the errors are scattered — the harmless kind of wrong, noise
-rather than bias — and the real trouble concentrates in a few identifiable pockets
+each product's territory the errors are scattered (the harmless kind of wrong, noise
+rather than bias) and the real trouble concentrates in a few identifiable pockets
 (Microsoft's western strip is the worked example in this paper). That points to a
 natural next step: when combining products by vote, discount each product's vote inside
 its known bad pockets. We sketch that in the project's findings register but do not
@@ -1182,14 +1183,15 @@ once, rather than threading them through the analysis.
 **Do not spend time choosing a product; spend it counting agreement between products.** On
 this event no single product was meaningfully better than a model of coastline distance and
 building density, but the number of products agreeing on a building roughly doubled the
-accuracy of any of them alone — and unlike a fitted model, counting requires no weights, no
+accuracy of any of them alone. Unlike a fitted model, counting requires no weights, no
 training data and no reference, so it can be done the hour the second product arrives. Weight
 the count toward *independent methods*: products that share a sensing method fail together
 and their agreement carried the least information in our tests, while products with nothing
-in common but the event cover for each other's failure zones. Then set the threshold from your own capacity — @tbl-dial gives
-the flag counts and visit costs at each level — remembering that you are choosing a workload,
-not a guaranteed hit rate. Used at sector scale, any major product ranks where to go first: trust that ranking, not the
-building counts — while noting that coarse geography ranks about as well, so the ranking is
+in common but the event cover for each other's failure zones. Then set the threshold from
+your own capacity (@tbl-dial gives the flag counts and visit costs at each level),
+remembering that you are choosing a workload, not a guaranteed hit rate. Used at sector
+scale, any major product ranks where to go first: trust that ranking, not the building
+counts, while noting that coarse geography ranks about as well, so the ranking is
 useful without being evidence that the product saw anything the map did not. Nothing in the current ecosystem sees lighter
 damage reliably, so plan shelter assessments accordingly.
 :::
@@ -1234,9 +1236,9 @@ product's contested zone had crowd votes, versus 59% for another) and can never 
 product's misses; its volunteers are not damage-assessment experts. Their imagery,
 identified from the campaign's tile configurations, was fresh post-event Vantor
 WorldView-3 acquired one to six days after the quake; the contested western strip's
-scene is confirmed as 27 June from embedded metadata — two days *after* the AI's problem
-scene, so damage persistence makes the crowd's rejections there conservative — while
-dates for some other areas rest on upload bounds rather than image tags. The field
+scene is confirmed as 27 June from embedded metadata, two days *after* the AI's problem
+scene, so damage persistence makes the crowd's rejections there conservative; dates for
+some other areas rest on upload bounds rather than image tags. The field
 reports are undated, positives-only, skewed toward destruction (79% complete), and come
 with no defined collection area, so the inland-gap estimate is a lower bound.
 
@@ -1256,7 +1258,7 @@ strict-agreement rules is understated.
 event's reference labels; although it is scored strictly on held-out buildings, it
 carries an event-specific calibration no responder possessed on the actual day zero. It
 is an upper bound on geography-only skill, and the claim it supports is about information
-content — the products add little beyond three context variables — not about what was
+content (the products add little beyond three context variables), not about what was
 operationally in hand. A model fitted on *previous* earthquakes, which is what a
 responder would really have, would score somewhere below this bound and remains untested;
 building and transferring one is the clearest way to convert this null into an
@@ -1279,12 +1281,12 @@ matters is not between products. In the region where all six score best, no sing
 separates itself clearly from a model built on coastline distance, building density and shaking
 alone; across their full delivered footprints, four of six place their flags no better than
 that; and at the neighbourhood scale where they are genuinely usable, the same model ranks areas about
-as well as they do — beating five of six across all mapped areas, though splitting three-three
+as well as they do, beating five of six across all mapped areas, though splitting three-three
 within the damage zone itself. The value in this ecosystem is not in picking the right product,
 because on this evidence there was no right product to pick.
 
-It is in their disagreement. Because the products fail in different ways — and agreement is
-most informative between products that share no method — the number that agree on a
+It is in their disagreement. Because the products fail in different ways (and agreement is
+most informative between products that share no method), the number that agree on a
 building is a usable confidence measure, and counting that agreement roughly doubles the
 accuracy of any product alone. That result carries an operational weight the rest of this paper
 does not. A weighted fusion scores higher, but its weights are learned from the reference map a
@@ -1308,8 +1310,8 @@ damage.
 
 All CEMS-based results in this paper use a 10 m matching radius (@tbl-allframes), and every
 model is fitted and evaluated at that radius. The fusion analysis was originally built at
-20 m out of concern for fit stability — 20 m labels 2,733 buildings damaged in the core region
-against 1,350 at 10 m — and that frame is retained here as the sensitivity check. The same
+20 m out of concern for fit stability (20 m labels 2,733 buildings damaged in the core region
+against 1,350 at 10 m), and that frame is retained here as the sensitivity check. The same
 analysis run end-to-end at 20 m gives:
 
 | | evaluated at 10 m (reported) | evaluated at 20 m |
@@ -1330,14 +1332,14 @@ also flatters the geography null specifically, for a reason worth understanding:
 smears each reference point into a blob of neighbouring buildings, making the target
 area-shaped, which is exactly the shape a smooth spatial predictor captures well. The tighter
 10 m label concentrates the positives onto individual buildings, where per-building
-discrimination is required — and there the case for *combining* products strengthens, from 1.8×
+discrimination is required, and there the case for *combining* products strengthens, from 1.8×
 to 2.3× the best single product. Reporting at 10 m is therefore both the more consistent choice
 and the more demanding one.
 
 A second implementation check belongs beside this one. The headline scorecard matches
 flags to CEMS points on each product's native geometry, while the fusion analysis matches
 by building centroid; a reader could reasonably worry that this difference alone shifts
-the numbers. It does not — at the same 10 m radius the two implementations agree to
+the numbers. It does not: at the same 10 m radius the two implementations agree to
 within 0.005 for every product:
 
 | product | scorecard (native geometry) | fusion analysis (centroid) | difference |
@@ -1381,7 +1383,7 @@ relationship is smooth, so the forest mostly fits block-specific structure that 
 generalise. Across the full delivered footprints the ranking reverses for five of six
 products, because those regions span real variation in shaking that interacts
 non-linearly with coast distance and density. The paper therefore uses the logistic null
-in the core region and the forest null in the as-delivered analysis — the
+in the core region and the forest null in the as-delivered analysis: the
 report-the-stronger rule applied twice. One further reporting detail: the headline fusion
 number comes from the logistic regression, which scores identically to the forest (AP
 0.28 either way), while the null and its products-only mirror are both fitted with the
@@ -1389,11 +1391,11 @@ forest so that those two are directly comparable to each other.
 
 **Coefficients and thresholds are protected separately.** The model's coefficients are
 estimated strictly out-of-fold: each building's score comes from a model that never saw
-its block. The decision threshold — the cut that turns the continuous risk into a flag
-list — is a second, separate choice that blocked validation does nothing to protect, so
+its block. The decision threshold (the cut that turns the continuous risk into a flag
+list) is a second, separate choice that blocked validation does nothing to protect, so
 where a single operating point is reported the cut is selected inside the training folds
-and applied blind to the held-out data. The difference this makes here is nil — F1 0.129
-with the cut chosen out-of-sample against 0.128 chosen in hindsight — but that is a fact
+and applied blind to the held-out data. The difference this makes here is nil (F1 0.129
+with the cut chosen out-of-sample against 0.128 chosen in hindsight), but that is a fact
 about this sample size (a single scalar estimated from hundreds of thousands of
 buildings is pinned down closely either way), not a general licence: on a small reference
 the same shortcut could flatter a model materially.
@@ -1407,8 +1409,8 @@ where $\pi$ is the prevalence of damage. The second term is free credit that any
 predictor whatsoever collects for the flag-everything endpoint. Because $\pi$ (0.023
 here) is far below every product's precision, the term drags each product's AP down
 toward prevalence, hardest for the products with the lowest recall. The effect is to
-compress genuinely different products into a narrow band — 0.042–0.055 across our six,
-whose precisions actually range from 0.045 to 0.093 — sitting right where a mediocre
+compress genuinely different products into a narrow band (0.042–0.055 across our six,
+whose precisions actually range from 0.045 to 0.093), sitting right where a mediocre
 continuous score also lands (the forest null's AP is 0.045). Two products can share an
 AP because one has high precision and low recall while the other has the reverse; the
 number conceals exactly the trade-off an operational reader cares about. This is why the
@@ -1417,14 +1419,14 @@ never as AP bars beside them.
 
 ![Why as-delivered precision falls the way it does. Each product's as-delivered precision
 (y) is plotted against the share of its flags that land outside Caraballeda (x), where the
-reference records essentially no damage. Every product lies on the diagonal — precision
-lost equals the share of flags in the dead zones — so the as-delivered precision is
+reference records essentially no damage. Every product lies on the diagonal (precision
+lost equals the share of flags in the dead zones), so the as-delivered precision is
 governed almost entirely by *where* a product chose to flag, not by any resistance to false
 alarms. Microsoft is spared only because it flagged nowhere else. This is the arithmetic
 behind the first mechanism in
 @sec-crossexam.](artefacts/RQ2-cems-footprint-points/figs/rq2m_deadzone_dilution.png){#fig-deadzone}
 
-### How the crowd adjustment works — and what happened when the crowd voted again {.unnumbered}
+### How the crowd adjustment works, and what happened when the crowd voted again {.unnumbered}
 
 Every crowd-adjusted precision in this paper comes from one simple rule, and
 @fig-crowdmech shows it acting on a real street in Catia La Mar. A flagged building with
@@ -1435,12 +1437,12 @@ counted as confirmed damage and improves the adjusted precision; if they said *n
 sure*, it stays a false alarm. Flags in cells the volunteers never saw are assumed to
 contain damage at the same rate as the flags the volunteers did see.
 
-In August 2026 — after this paper's numbers were frozen — the campaign over this strip was
+In August 2026, after this paper's numbers were frozen, the campaign over this strip was
 run a second time: 728 new volunteers re-judged exactly the same 3,482 cells, and each
 cell now received about sixteen votes instead of six. Same buildings, different people, a
 much harder look. Two caveats keep this from being a perfect replication. The answer
 buttons changed: round 2 offered no "no damage" option, so a volunteer who saw nothing
-wrong had to press "not sure" — which means round 1's headline finding for this strip
+wrong had to press "not sure", which means round 1's headline finding for this strip
 (71% of cells actively judged undamaged) simply cannot be re-measured. And the two rounds
 showed volunteers different, though similarly dated, satellite images.
 
@@ -1449,17 +1451,17 @@ held up. Of Microsoft's 7,661 flags in this strip with no expert match, the firs
 confirmed 13.2%; the second, deeper-looking crowd confirmed 11.5%. Two independent juries
 agree that roughly one flag in eight has crowd-visible damage under it. If anything, the
 harder look confirmed slightly *less*, so the crowd-adjusted values in this paper should
-be read as sitting a little high — consistent with their stated role as upper estimates.
+be read as sitting a little high, consistent with their stated role as upper estimates.
 
 What did not hold up is *which* cells were confirmed: only about a quarter of the cells
 the first crowd confirmed were confirmed again by the second (the purple outlines in
 @fig-crowdmech). That sounds alarming until one asks how much two small juries should
-agree even if volunteers were perfectly consistent — and the answer is, not much. Six
+agree even if volunteers were perfectly consistent, and the answer is: not much. Six
 votes on a borderline cell is close to a coin toss, and once that known voting noise is
 accounted for, the two rounds' underlying judgements agree well (correlation 0.63, versus
 0.29 before the correction). Most of the apparent chaos is small vote counts, not fickle
 volunteers. The practical lesson is the one this paper already follows: a single cell's
-verdict is too noisy to lean on, but sums over thousands of cells are steady — which is
+verdict is too noisy to lean on, but sums over thousands of cells are steady, which is
 why crowd verdicts appear here only inside aggregate numbers, never as building-level
 ground truth.
 
@@ -1471,10 +1473,10 @@ upward. No product overtakes another.
 
 ![How the MapSwipe crowd enters the precision calculation, and what an independent re-vote
 changed. Both panels show the same Catia La Mar neighbourhood; hexagons are the ~50 m crowd
-task cells, tinted by majority verdict. **A** — round 1: a flag matched by an expert point
+task cells, tinted by majority verdict. **A**, round 1: a flag matched by an expert point
 within 10 m is a true positive (green); an unmatched flag in a cell the crowd judged
 damaged is counted as confirmed and improves the adjusted precision (blue); in a cell
-judged undamaged or uncertain it remains a false alarm (orange). **B** — round 2 re-voted
+judged undamaged or uncertain it remains a false alarm (orange). **B**, round 2, re-voted
 the identical cells at ~16 votes each, with no "no damage" answer available (its "not
 sure" absorbs it): purple outlines mark cells whose verdict changed sides. Individual
 cells flip; the total the adjustment depends on barely moves (13.2% → 11.5% of the
