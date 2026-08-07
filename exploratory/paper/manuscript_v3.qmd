@@ -1,0 +1,163 @@
+---
+title: "Six satellite damage products, one earthquake: what responders could and could not have trusted"
+author: "Z. Arno, L. Milano · OCHA Centre for Humanitarian Data *(draft v3.0, internal)*"
+date: last-modified
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+jupyter: python3
+---
+
+::: {.callout-note appearance="minimal"}
+*Internal draft for review. Numbers are frozen to the 2026-07-15 data snapshot. This
+version supersedes `manuscript_v2` and is deliberately short: each result carries its
+takeaway, the one figure or table that shows it, and a few sentences of how; the
+Appendix holds the full methods detail. Two analyses remain pending and are flagged
+where they belong: the timeliness axis (waiting on provider date confirmations) and
+bootstrap confidence intervals on headline numbers.*
+:::
+
+## Abstract {.unnumbered}
+
+After the M7.5 earthquake that struck coastal Venezuela on 24 June 2026, at least eight
+organisations released satellite-derived building-damage products. We evaluated the six that
+published an analysed extent, scoring them not against a single expert reference but against
+three with complementary blind spots: expert damage points from Copernicus EMS, crowd review of
+AI-flagged locations, and 415 field reports. This lets the references check each other, and the
+expert reference did not pass: it captured 94% of field-reported destroyed buildings but only
+49% of those reported as significantly damaged. Every precision measured against it is
+therefore a floor: Microsoft's rises from 0.08 to roughly 0.24 once crowd-confirmed damage is
+counted.
+
+At building level, every product performed poorly. As delivered, precision ranged from 0.01 to
+0.08 (recall 0.31–0.69); even in the one damage-dense area where all six score best (the
+Caraballeda AOI, which holds 96% of the reference) it reached only 0.04–0.09. None separated
+itself from a deliberately simple benchmark that uses no satellite imagery at all: a model
+built on coastline distance, building density and shaking intensity, fitted with hindsight to
+this event's own damage map. That benchmark matched or beat three of the six there, and four
+of the six across their full delivered footprints. At neighbourhood scale the products are usable:
+they ranked sectors by damage burden reliably. But the same benchmark ranked those
+sectors about as well, so this is where the products work rather than where they add.
+
+The rest of their value lies in their disagreement. How many products must agree before a
+building is flagged works as a dial a responder can set, from flagging every building any
+product marked (97% of known damage, but 26 visits per damaged building found) to flagging
+only unanimous buildings (93% of flags correct, 18% of the damage). Counting agreement
+between methodologically independent products roughly doubles the accuracy of any single
+product and requires no weights, no training data and no reference, which makes it the
+only method we tested that is both effective and computable during a response; a
+statistically fitted combination scores 18% higher, but fitting it requires the damage map
+responders are still waiting for.
+
+These findings come from one event and should be read as a case study and a reusable
+evaluation method, not as general laws.
+
+## Introduction
+
+In the first days after a major earthquake, responders need to know where the damage is
+and how bad it is, before ground access is possible. Satellite-derived damage products
+fill this window, and their supply has grown quickly. The 2026 Venezuela earthquake drew
+products from a variety of organisations: the EU's rapid-mapping service (Copernicus
+EMS), a technology company (Microsoft AI for Good), universities (Oregon State
+University, working with NASA; the University of Houston), an NGO (IMPACT Initiatives),
+UN bodies (the UNEP/OCHA Joint Environment Unit; the World Food Programme, working with
+the LIST and CERN research institutes), and volunteer AI platforms (HOT fAIr, DISHA).
+These products disagree with each other, sometimes dramatically. A coordinator receiving
+several of them in the same week has no established way to decide which to trust, for
+what purpose, and at what spatial scale.
+
+We evaluated the six products that published an analysed extent, scoring them against
+three references rather than one: expert damage points (Copernicus EMS), a crowd review
+of AI-flagged locations (MapSwipe), and reports from field teams on the ground (ChatMap).
+Their blind spots differ (the crowd saw only flagged places, so it can refute false
+alarms but never reveal a miss; the field reports are the reverse), so each reference is
+used only for the question it can answer, and the three check each other. That checking
+mattered: the expert reference turned out to miss half of the lesser damage the field
+teams reported, so precision measured against it alone is a floor, not an estimate.
+
+The paper is organised around three questions a coordinator would actually ask. Can a
+responder act on a single flagged building? Do the products at least rank neighbourhoods
+well enough to triage? And what is the sensible way to use them in the next event? Each
+results section answers one piece, states how the answer was measured in a few
+sentences, and points to the Appendix for the full method. Everything here comes from
+one event in one coastal, dense-urban geography: the method transfers, and the specific
+numbers should be treated as hypotheses until they are replicated.
+
+## The event, the products, and the references
+
+An M7.5 earthquake, preceded about 40 seconds earlier by an M7.2, struck near Yumare on
+the Venezuelan coast at 22:05 UTC on 24 June 2026. Severe damage was concentrated along
+the La Guaira coastal strip, in western Caracas, and in several inland towns. Copernicus
+EMS rapid mapping was activated the same night (EMSR884).
+
+We evaluate the six products that published a defined or defensible analysed extent, the
+area the product actually examined (@tbl-products): without one, "no flag" cannot be
+distinguished from "never looked", so neither misses nor false alarms can be counted
+fairly. Two further AI products (HOT fAIr and DISHA) published no extent and appear in
+the availability inventory only.
+
+| Product | Provider | Sensing basis | Analysed buildings | Damage flags* |
+|---|---|---|---|---|
+| Microsoft AI4G | Microsoft | very-high-res optical + AI classifier | 72,162 (own footprints) | 8,410 |
+| IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar coherence change | swath (~372 km²) | 22,954 |
+| OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~471 km²) | 31,259 |
+| UH QuakeDamage | Univ. of Houston | very-high-res optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint | 447,263 incl. intact | ~91k dmg/destroyed |
+| LIST | WFP / LIST / CERN | AI change detection on before/after radar imagery (provider-stated) | 163,225 | 15,904 in core region |
+| UNEP debris | UNEP/OCHA JEU | radar-derived debris mass per footprint | no extent (assumption, see Appendix) | 96,046 |
+
+: Products evaluated. *Flag counts are as mapped onto the shared building-footprint base
+used throughout this paper; totals differ from providers' native counts because of
+footprint-base differences. OSU figures refer to its v0 delivery, the version available
+during the response; a revised v1 arrived after the study window (@sec-casestudy).
+{#tbl-products}
+
+The sensing bases fail in different ways, which matters when the products are combined:
+radar coherence methods are structurally resistant to the vegetation-change false alarms
+that can fool optical and radar-brightness methods (the Appendix's sensing primer
+explains why, with an agricultural control comparison from this event). Analysed extents
+span three orders of magnitude, from Microsoft's single coastal strip (210 km²) to
+LIST's two full Sentinel scenes (~224,000 km²); the like-for-like comparisons live in
+the ~61 km² core region where all published extents and the reference overlap
+(@fig-extents). Delivery timing is part of the picture, though this paper does not yet
+analyse it: @fig-timeline reconstructs availability from our own ingest dates (an upper
+bound; provider release dates are still being confirmed). The whole set arrived within
+about eight days of the mainshock, and several products were sequences rather than
+single artefacts, so the version a responder acted on depended on when they looked.
+
+![Who analysed where. Each product's analysed extent, the five expert-mapped CEMS AOIs
+(dashed black), and, in red with the zoom frame below, the ~61 km² core region where the
+head-to-head, ensemble and fusion analyses live. UH publishes no extent (its polygon is
+derived from its own classified footprints); UNEP publishes none at all and is scored
+under a stated coverage
+assumption.](artefacts/RQ0-matching-basis/figs/fig_extents_map.png){#fig-extents}
+
+![Product availability, measured from the M7.5 mainshock: preliminary, pending provider
+confirmation. Circles mark a release or version; a filled star marks the final product
+actually evaluated. Positions are our-integration dates (an upper bound on
+availability), so true release is earlier. Red markers are dates still to
+confirm.](timeline/timeline_products.png){#fig-timeline}
+
+**The three references, and what each can see.** Copernicus EMS provides trained-analyst
+damage points and is the primary reference: every headline precision and recall is
+computed against it, under one matching rule (a building counts as damaged if a CEMS
+point lies within 10 m; the Appendix gives the reasoning and sensitivity). MapSwipe is a
+crowd campaign in which more than 400 volunteers reviewed ~50 m cells at locations AI
+products had flagged: it can refute false alarms but can never reveal a miss, so it is
+used to adjudicate disputed flags, never as ground truth. ChatMap is 415 building-level
+damage reports from field teams, positives-only with no survey frame: it can reveal
+misses but says nothing about false alarms (@fig-refarch). Because their blind spots do
+not overlap, the three can be turned on each other, which is how the expert reference's
+own bias was measured (@sec-floor). One rule governs every number in this paper:
+**against an incomplete reference, measured precision is a floor and measured recall is
+a ceiling.**
+
+![The three reference datasets at a glance. Two are HOT-run and easily confused:
+MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
+ChatMap is field teams reporting building-level points from the ground, used to reveal
+misses.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refarch}

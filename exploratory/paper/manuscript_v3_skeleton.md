@@ -94,10 +94,9 @@ reproducibility note.
 
 ---
 
-Open questions for approval:
-1. Priority-map figure vs ranking table in 3.4 (deck uses the map; the map is more
-   readable, the table more precise).
-2. Does the west-strip section stay in Results (as 3.6) or move into the discussion?
-   Recommendation: Results, last position, low billing.
-3. Keep v2's "held mystery" tease of the west strip in 3.1, or let 3.6 stand alone?
-   Recommendation: one pointer sentence in 3.1, nothing more.
+Decisions (2026-08-07, user):
+1. Section 3.4 uses the deck's bar-chart figure (rq3f_null_ranking.png). The priority
+   map and both ranking tables move to the appendix; the new dumbbell figure
+   (rq3f_ranking_dumbbell.png) parks deep in the appendix too.
+2. West-strip section: Results, last position, low billing.
+3. No foreshadowing tease; 3.6 stands alone.
