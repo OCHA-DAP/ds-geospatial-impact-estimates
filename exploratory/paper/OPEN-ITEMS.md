@@ -1,5 +1,27 @@
 # Open items — VE damage-product evaluation paper
 
+## 0. TOP PRIORITY — two-region reframe (user directive, 2026-08-07)
+
+**Rule: the paper compares in exactly two regions, ever — the core region (61 km²
+Caraballeda-coast intersection, one shared cell set) and as-delivered. The Caraballeda
+AOI is retired as a comparison frame** (the user never intended it as one; it caused
+repeated confusion including for the author). Work, in order:
+
+1. Run the missing artefact: RQ3f ranking on the CORE region's shared cell set (one
+   geography value per panel). New script/scope; frozen inputs; write CSVs like the
+   existing rq3f pair. Until it exists, v3's ranking section has only test 1.
+2. Re-source the scorecard "best case" from core-region artefacts: per-product core
+   precisions exist (fusion-frame CSVs: 0.040–0.093; tbl-frames row set); recalls need
+   pulling from rq8/rq2 core artefacts and verifying pairwise before any swap of the
+   quoted 0.04–0.09 / 0.31–0.69 numbers in abstract + sec-flags.
+3. Rewrite v3 (abstract, sec-flags, sec-ranking, @tbl-regions back to TWO regions,
+   region tags) and re-verify every number against artefact CSVs.
+4. Decide the per-AOI figure's fate: keep as the reference-concentration/dead-zone
+   DIAGNOSTIC (relabelled so it cannot read as a reporting region) or drop to appendix.
+   User to confirm.
+5. Deck inherits the reframe at next deck touch (it quotes AOI-based best-case numbers).
+6. Supersedes OPEN-ITEMS 3c (the optional common-cells run is now mandatory step 1).
+
 Parked analysis gaps and improvements, so they survive session changes. Ordered by how
 much they protect the paper's claims, not by effort. Dated 2026-08-07; strike items here
 (with a date) rather than deleting them.
