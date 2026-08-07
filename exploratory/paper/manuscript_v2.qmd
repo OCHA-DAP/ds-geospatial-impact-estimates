@@ -557,10 +557,9 @@ one of them. Much of what it rewards is therefore the coarse discrimination of C
 four quiet AOIs, a task coastline distance and building density solve almost by definition. The
 sharper question is whether the products can out-rank geography *within* the damage zone, and
 there the picture is different. Restricting every region to Caraballeda and re-running at
-~0.7 km² cells, the six split evenly: LIST (0.668 against 0.543), OSU (0.642 against 0.562) and
-IMPACT (0.548 against 0.456) beat the null, while Microsoft (0.466 against 0.568), UNEP (0.451
-against 0.524) and UH (0.389 against 0.597) fall below it; at ~0.1 km² the same three-three
-split holds. **So the products do carry real information about where within a damaged area to
+~0.7 km² cells, the six split evenly (@tbl-nullrank-cara): LIST, OSU and IMPACT beat the
+null; Microsoft, UNEP and UH fall below it; and at ~0.1 km² the same three–three split
+holds. **So the products do carry real information about where within a damaged area to
 go first: what they do not add is knowledge of which area that is**, which is the part
 geography already encodes. The headline five-of-six should be read as a statement about the
 coarse task, not as evidence that the products are uninformative at every scale.
@@ -945,21 +944,15 @@ product manages 0.148, **roughly twice the accuracy of any product taken alone**
 up 18% against a fitted model that nobody could have fitted in time. What that arithmetic
 means for responders, providers and evaluators is collected in the Recommendations.
 
-Three qualifications keep the recommendation honest. First, "flat" conceals an assumption:
-weighting every product equally means trusting them equally, and UH, whose as-delivered
-precision was 0.009, casts a full vote. That it *helped* rather than hurt is a real finding,
-but one we could only establish with a reference in hand. Second, and following from the
-pairwise results above, the transferable rule is not "count votes" but **"count agreement
-between independent methods"**: the pair sharing its entire method was the weakest of all
-fifteen, and a slate of five products sharing one method would inherit their common bias no
-matter how many of them agreed. What products share (sensor, platform, model) is knowable
-without labels, so this sharpens the rule rather than weakening it; this event also showed
-the converse, in that the two optical products with nothing else in common formed the
-strongest pair. Third, the choice of *k* remains. It can be made without labels, since flag
-counts are observable ("we can visit three thousand buildings, therefore k = 4" is a
-legitimate day-one decision), but the precision that choice buys is not knowable at the
-time. A responder
-picking k is choosing a workload, not a guaranteed hit rate.
+Three qualifications keep the recommendation honest. First, "flat" means trusting every
+product equally: UH, with as-delivered precision 0.009, casts a full vote, and that it
+*helped* rather than hurt could only be established with a reference in hand. Second,
+the transferable rule is not "count votes" but **"count agreement between independent
+methods"**: the pair sharing its entire method was the weakest of all fifteen, and what
+products share (sensor, platform, model) is knowable without labels, so the rule is
+usable on day one. Third, choosing *k* is choosing a workload, not a hit rate: flag
+counts are observable ("we can visit three thousand buildings, therefore k = 4"), but
+the precision that choice buys is not knowable at the time.
 
 The comparison worth remembering comes from stripping the model down. Remove the six
 products' inputs and what remains is the geography null (@sec-dayzero), which reaches AP
