@@ -7,9 +7,11 @@ Caraballeda-coast intersection, one shared cell set) and as-delivered. The Carab
 AOI is retired as a comparison frame** (the user never intended it as one; it caused
 repeated confusion including for the author). Work, in order:
 
-1. Run the missing artefact: RQ3f ranking on the CORE region's shared cell set (one
-   geography value per panel). New script/scope; frozen inputs; write CSVs like the
-   existing rq3f pair. Until it exists, v3's ranking section has only test 1.
+1. Run the missing artefact: RQ3f ranking under the CORE lens, i.e. simply the
+   existing 61 km² core region (the same one voting/fusion use; by construction all
+   products share its cells, so the geography model gets one value). NOT a new or
+   combined region. Frozen inputs; write CSVs like the existing rq3f pair. Until it
+   exists, v3's ranking section has only the as-delivered test.
 2. Re-source the scorecard "best case" from core-region artefacts: per-product core
    precisions exist (fusion-frame CSVs: 0.040–0.093; tbl-frames row set); recalls need
    pulling from rq8/rq2 core artefacts and verifying pairwise before any swap of the
