@@ -83,3 +83,39 @@ timestamps (all items: uploaded 2026-06-26 → 06-30, bounding acquisition ≤ t
 Also verified: `tasks_<id>` files enumerate the full seeded hex universe and match the
 agg export 1:1 on finished projects (3179: 3,482 = 3,482, min 4 votes; 3211: 2,214 =
 2,214, min 9) — assessed-vs-never-shown is explicit; there are no zero-vote rows.
+
+## Round 2 — Catia La Mar re-vote, project 3248 (2026-08-07, POST-FREEZE)
+
+Completed 2026-08-05 (progress 1.0; 54,305 results vs 52,230 required; 728 contributors;
+votes 2026-07-15 → 2026-08-05). Re-serves the IDENTICAL 3,482 res-11 cells as 3179
+(h3 sets verified equal) at median 16 votes/task vs round 1's 6.
+
+**The instrument changed.** Options are 1 = "Yes" and 2 = "Not Sure", whose description
+explicitly absorbs "there is no damage"; the round-1 answer 0 = "No" does not exist (raw
+export contains only 1s and 2s across all 54,304 votes — same collapse as HOT's HDX
+synthesis). The frozen 71%-majority-No statistic is therefore not re-testable by design;
+only confirmation-side statistics transfer across rounds.
+
+**Imagery:** different OAM item from round 1 (r2: `6a43873f…`, uploaded 2026-06-30,
+credits "Vantor WorldView-3 via OAM"; r1's scene is TIFF-dated 2026-06-27). Same vendor
+pipeline and post-event vintage window, but not pixel-identical — cross-round verdict
+differences are partly attributable to imagery, not only to crowd or instrument.
+
+**Ingest & freeze protection:** landed additively via the new
+`pipelines/ingest_mapswipe.py --project 3248` mode (manifest merged, HDX skipped; blob
+etag diff verified nothing else changed). All pooled frozen loaders
+(rq2g/rq2i/rq5b/rq7_consensus/rq8) now skip post-freeze partitions via
+`gie_paper.MAPSWIPE_POSTFREEZE`; the pooled frozen-verdict series is md5-identical
+before/after ingest (`d6e0689c…`). Round-2 analysis opts in explicitly.
+
+**Scripts/outputs:** `rq7_round2_replication.py` → `rq7_round2_replication.csv`,
+`rq7_round2_crosstab.csv`, `rq7_round2_padj_sensitivity.csv`;
+`rq7_round2_explainer_fig.py` → `figs/rq7_crowd_adjustment_explainer.png` (the
+two-panel mechanism map, also embedded in the deck and manuscript appendices).
+
+Headlines (details in the register, RQ7c): confirmation replicates in aggregate
+(majority-Yes cells 12.9% → 11.1%; flag level, the rq2i quantity, 13.2% → 11.5% of MS's
+7,661 unmatched strip flags); per-hexagon verdicts are unstable but mostly from voting
+noise (share-variance is 68%/36% noise; reliability 0.32/0.64; latent cross-round
+correlation +0.63 vs raw +0.29); swapping r2 verdicts into the strip moves as-delivered
+P_crowd_adj by −0.031…+0.015 with no ordering changes.
