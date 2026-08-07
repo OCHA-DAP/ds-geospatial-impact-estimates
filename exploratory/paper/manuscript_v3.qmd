@@ -246,7 +246,7 @@ re-vote of the crowd campaign at three times the depth confirmed the adjustment'
 stability (13.2% versus 11.5% of flags confirmed). The adjudication mechanics, their
 granularity caveats, and the re-vote are in the Appendix.
 
-![**Region: core; reference: field reports (20 m GPS tolerance).** Recall by damage grade. Each line is one dataset's recall against
+![**Region: within the CEMS-analysed extents; reference: field reports (20 m GPS tolerance).** Recall by damage grade. Each line is one dataset's recall against
 field-reported damage, at "complete" destruction versus "significant" damage. Every
 line slopes down: the products and the expert reference alike find lighter damage far
 less often, which is why measured recall is a ceiling and measured precision a
@@ -277,8 +277,9 @@ cell set for each product: every product is compared on its own turf, and the mo
 value varies with whose turf it is graded on. The cell lattices, both tests' full tables, and a priority map are in the
 Appendix.
 
-![**Regions: test 1 spans all five mapped areas; test 2 uses only cells inside
-Caraballeda. In both, each row is that product's own footprint cells.** Both ranking
+![**Regions: test 1 spans all five mapped areas; test 2 uses only cells inside the
+Caraballeda AOI (not the smaller core region). In both, each row is that product's own
+footprint cells.** Both ranking
 tests: how well each product orders cells by damage (grey) against the geography model
 ordering the identical cells (red). The model itself never changes; its value differs
 per row, in both panels, because every comparison is graded on a different set of cells
@@ -583,11 +584,14 @@ numbers are comparable only within one:
 
 | reporting region | what it is | used for |
 |---|---|---|
-| **Best case** *(default)* | the ~61 km² core region where all published extents and the reference overlap (@fig-extents) | the headline scorecard, voting, fusion, and the core-region geography null |
-| **As delivered** | each product's full delivered footprint, wherever CEMS mapped | the as-delivered scorecard and geography benchmark (@sec-flags) |
+| **Caraballeda AOI** | the damage-dense CEMS-mapped area holding 96% of the reference | the scorecard's "best case" numbers; ranking test 2 (per-product cells within the AOI) |
+| **Core region** | the ~61 km² intersection of the CEMS extents with all five extent-publishing products (@fig-extents): one shared cell set | voting, the pairwise rules, fusion, and the best-F1 geography comparison |
+| **As delivered** | each product's full delivered footprint, wherever CEMS mapped: a different region per product | the as-delivered scorecard and geography benchmark; ranking test 1 |
 
-: The two reporting regions. Sections state which they use; the as-delivered region is
-the operationally honest one, the best case the analytically clean one. {#tbl-regions}
+: The three reporting regions. Sections and captions state which they use. Only the
+core region gives every predictor an identical cell set; the other two are
+per-product by design, which is why the geography model's score varies by row wherever
+they are used. {#tbl-regions}
 
 One point about what the radius *is*: it is not a tolerance applied to the products,
 but the definition of the target every predictor is scored against:

@@ -42,6 +42,15 @@ also leaves validation provenance unstated (no in/out-of-sample statement, no sa
 method, no annotator-independence note) — relevant if anyone cites their per-scene
 precision/recall against ours.
 
+**3c. Optional: common-cells core-region ranking run (2026-08-07).**
+Both rq3f ranking tests use per-product footprint cells (fair per row; geography value
+varies by row). A third variant on the core region's single shared cell set would give
+one geography value per panel — the design the user's intuition kept expecting. New
+artefact run (rq3f with a core-region scope); do it if the varying-null presentation
+keeps confusing readers, or before submission. Related fix already applied: v3's
+@tbl-regions now defines THREE regions (Caraballeda AOI / core / as-delivered) — the
+earlier two-region box conflated the AOI with the core.
+
 **4. Timeliness × accuracy.**
 Blocked on confirmed provider release dates for UH and LIST (register flag #7; our
 ingest dates are upper bounds only). The provider e-mail should also ask for LIST's
