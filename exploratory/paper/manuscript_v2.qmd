@@ -355,6 +355,14 @@ across the same cells many times, which controls for the shape of the built-up a
 itself), and for correlation with variables that would corrupt a ranking, namely building
 density, distance to the coast, and modelled shaking intensity.
 
+Two further tests use the same cell lattice. The first asks whether a product's
+reliability in an area can be predicted from its flag pattern alone (its flag rate, how
+tightly its flags cluster, how much it agrees with the other products), by correlating
+those signals with measured reliability across every product-and-area combination. The
+second classifies each product's territory cell by cell, using local versions of the
+same clustering score, into places where its errors scatter at random and places where
+they pile up.
+
 ### Combining products, and adjudicating disagreements with the reference
 
 For per-building questions, each product's flags are projected onto the shared Overture
@@ -449,10 +457,10 @@ governs how it is compared with the products. Every cutoff applied to the score 
 a different flag list, so the model traces a whole curve of precision–recall trade-offs;
 a product, whose provider already fixed the threshold, is a single point in that plane.
 The two are therefore compared point-against-curve or, among continuous scores only,
-summarised by **average precision**, the area under that curve. We never quote average
-precision for an individual product: applied to a one-point predictor the quantity
-collapses to a formula that squeezes genuinely different products into a narrow,
-meaningless band, and the derivation of why is in the Appendix.
+summarised by **average precision**, the area under that curve. Average precision is
+reported only for the continuous scores; a shipped product is a single flag list, and
+single lists are compared at their operating points (the Appendix shows why a one-list
+"average precision" would mislead).
 
 The **weighted fusion** is the same construction with the six products' flags and
 confidence fields added to the three context variables: the geography null is exactly
@@ -628,6 +636,15 @@ while IMPACT and OSU are Sentinel-1 swaths spanning roughly 200 km, whose thousa
 cells merge visually. IMPACT and OSU residuals follow the coastal severity gradient.
 Microsoft's error is a single hard cluster at the west end of its
 region.](artefacts/RQ3-prioritization-error-structure/figs/rq3_residual_maps_res8.png)
+
+The same cell lattice yields two results that the Discussion takes up. First, nothing in
+a product's own flag pattern predicts how reliable it is: across the fifteen
+product-and-area combinations, no correlation between the pattern signals (flag rate,
+clustering, agreement with other products) and measured reliability was statistically
+distinguishable from zero. Second, mapping each product's errors cell by cell, 78–86% of
+each product's territory shows errors scattered at random (noise rather than bias), with
+the failures concentrated in a few identifiable pockets; Microsoft's western strip,
+taken up in @sec-casestudy, is the largest.
 
 One product does not fit this benign pattern. Microsoft's residual error is not a
 gradient but a single dense cluster in the western coastal strip, and no covariate
@@ -811,7 +828,7 @@ AOI).](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig
 
 ### No single product can be tuned into a usable building list
 
-Could a better single product fix per-building precision? Four independent experiments
+Could a better single product fix per-building precision? Three independent experiments
 in this event say no. The limit behaves like a property of the sensing method rather
 than of any particular product. We refer to it as the modality ceiling: a precision level
 that single-method tuning does not rise above. (Note that this is the opposite kind of
@@ -822,20 +839,12 @@ higher than measured; the ceiling means single-product performance stops improvi
    (IMPACT and OSU) to agree raises precision only to 0.088, barely above the single
    products. Products that share sensor physics share false positives, so voting cannot
    remove them.
-2. **A tunable rebuild saturates at the same level.** We built our own Sentinel-1
-   radar-brightness product (scoring each pixel's post-event change against how much
-   that pixel normally varies across 30 pre-event scenes) and swept its threshold
-   fully. Its best F1 ties the best shipped product, and no point on its curve
-   approaches the multi-product rules. Its false alarms concentrated in
-   farmland (8.0% of buildings flagged in an agricultural control area where CEMS found
-   almost nothing), which confirms the advantage of radar coherence over amplitude for
-   rural false alarms.
-3. **Product confidence scores add nothing.** Sweeping Microsoft's continuous
+2. **Product confidence scores add nothing.** Sweeping Microsoft's continuous
    damage-fraction score (within its own analysed region, where its baseline numbers run
    higher than in the core region) trades recall 0.66→0.10 for precision 0.10→0.19. The
    shipped binary flag already sits near the best F1 on that curve. There is no hidden headroom
    in the confidence field.
-4. **Agreement within one product plateaus too.** Microsoft flags corroborated by a
+3. **Agreement within one product plateaus too.** Microsoft flags corroborated by a
    second satellite scene are 2.5 times more precise than single-scene flags (0.245
    versus 0.097). That is a real gain and worth publishing. But it remains well below the
    strongest two-product rule (0.372), and in the low-damage zone where two scenes overlap, even flags
@@ -998,12 +1007,11 @@ separates itself from a geography-only model by a margin that would survive a ch
 reference or a redrawn study area. Two clarifications keep this from being read for more, or
 less, than it is worth.
 
-The first concerns average precision, which should not be used to make this comparison at
-all, even though it is the obvious summary to reach for. A product's "AP" looks
-comparable to the null's but is a different quantity: for a one-list product it
-collapses to a value near 0.08 almost regardless of quality (the derivation is in the
-Appendix), so comparisons on that metric are coincidences of value, not statements
-about performance. The operating-point comparison above is the one we rely on.
+The first concerns the choice of summary. Average precision belongs to the continuous
+scores; a shipped product is a single list and is compared at its operating point (the
+Appendix shows why a one-list "average precision" would mislead: it lands near 0.08
+almost regardless of the product's quality). The operating-point comparison above is
+therefore the one to rely on.
 
 The second is what geography's parity does and does not imply. It does not mean the products
 are uninformative: combining them reaches F1 0.290 by flat voting and 0.343 by weighted
@@ -1118,9 +1126,9 @@ with no reference data at all. If it worked, it would matter enormously: most of
 world will never have an expert damage survey to score against. It does not work. We
 tried to predict how reliable each product actually was in each area from things the
 flags themselves reveal: how many buildings it marks, how tightly they bunch together,
-how often it agrees with the other products. None of it predicts anything; across
-fifteen product-and-area combinations, every correlation was statistically
-indistinguishable from zero. The reason appears to be built into the problem rather
+how often it agrees with the other products. None of it predicts anything; as reported
+in @sec-scorecard, across fifteen product-and-area combinations every correlation was
+statistically indistinguishable from zero. The reason appears to be built into the problem rather
 than fixable with better statistics. A patch of false alarms bunches together on the
 map in exactly the way real damage does (real damage clusters too), so no amount of
 staring at the pattern can tell a neighbourhood that genuinely shook apart from a
@@ -1133,11 +1141,10 @@ the flags cannot supply: field reports, a crowd, or a model trained on previous
 earthquakes.
 
 The second result is the encouraging counterpart: *where* reference data exists, a
-product's failures can be mapped, not just measured. For each product we tested, block
-by block, whether its errors scatter randomly or pile up somewhere. Across 78–86% of
-each product's territory the errors are scattered (the harmless kind of wrong, noise
-rather than bias) and the real trouble concentrates in a few identifiable pockets
-(Microsoft's western strip is the worked example in this paper). That points to a
+product's failures can be mapped, not just measured. As @sec-scorecard reported, across
+78–86% of each product's territory the errors are scattered (the harmless kind of
+wrong, noise rather than bias) and the real trouble concentrates in a few identifiable
+pockets (Microsoft's western strip is the worked example in this paper). That points to a
 natural next step: when combining products by vote, discount each product's vote inside
 its known bad pockets. We sketch that in the project's findings register but do not
 rely on it anywhere in this paper.
@@ -1297,9 +1304,8 @@ likewise radar-derived.
 
 The contrast is measurable in this event. Santa Cruz serves as a control case: the
 expert reference analysed it and found almost no damage, and much of it is agricultural.
-There the two coherence products flagged 1.2% and 0.9% of buildings; our own radar
-rebuild, which uses brightness change instead of coherence, flagged 8.0% (@sec-dial);
-and the optical UH product flagged 27.5% (@sec-crossexam).
+There the two coherence products flagged 1.2% and 0.9% of buildings, while the optical
+UH product flagged 27.5% (@sec-crossexam).
 
 ### The 20 m label radius {.unnumbered}
 
