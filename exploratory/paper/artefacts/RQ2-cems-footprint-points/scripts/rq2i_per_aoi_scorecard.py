@@ -54,6 +54,8 @@ def mapswipe_tasks():
     pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE")
     frames = []
     for b in cc.list_blobs(name_starts_with=pref):
+        if not gp.mapswipe_is_frozen(b.name):
+            continue  # post-freeze round-2 re-vote (see gie_paper.MAPSWIPE_POSTFREEZE)
         if "agg_results_by_task" in b.name and b.name.endswith(".geojson.gz"):
             feats = json.loads(gzip.decompress(cc.download_blob(b.name).readall()))["features"]
             rows = [f["properties"] for f in feats if f["properties"].get("h3")]

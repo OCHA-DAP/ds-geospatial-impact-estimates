@@ -40,6 +40,19 @@ def _read_gpkg(layer, *parts):
 # --- gold building flags, paper-pinned -----------------------------------------
 OSU_PAPER_VERSION = "v0"
 
+# MapSwipe projects ingested AFTER the 2026-07-15 freeze: round-2 re-votes of already
+# frozen cells (3248 = Catia La Mar round 2, completed 2026-08-05, and a 2-option
+# instrument — no "No damage" answer). Pooled loaders drop duplicate h3 ids with
+# keep="first", so without this exclusion a re-run after the round-2 ingest would mix
+# the two instruments on identical cells. Frozen numbers use round 1 only; round-2
+# analysis lives in RQ7-mapswipe-validation's round-2 scripts, which opt in explicitly.
+MAPSWIPE_POSTFREEZE = ("project=3248",)
+
+
+def mapswipe_is_frozen(blob_name: str) -> bool:
+    """True if a bronze MapSwipe blob belongs to the frozen (pre-2026-07-15) campaign."""
+    return not any(p in blob_name for p in MAPSWIPE_POSTFREEZE)
+
 
 def building_flags(columns=None):
     """Gold building_flags for PAPER use — osu_dmg/osu_class re-pinned to OSU v0.

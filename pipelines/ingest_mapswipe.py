@@ -19,11 +19,18 @@ Lands, exactly as received (ADM-0003):
 Re-running refreshes everything in place — MapSwipe re-exports as projects accrue votes
 (several were still ongoing in July 2026), so this loader doubles as the update path.
 
-Run: uv run --group etl python pipelines/ingest_mapswipe.py
+`--project <id>` (repeatable) ingests only the named project(s): additive — other
+projects' bronze files are not re-downloaded or touched, the manifest is merged rather
+than rewritten, and the HDX synthesis is skipped. Use this to land a new campaign round
+(e.g. 3248, the post-freeze Catia La Mar round 2) without refreshing the frozen rounds
+in place.
+
+Run: uv run --group etl python pipelines/ingest_mapswipe.py [--project 3248]
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 
 import ocha_stratus as stratus
@@ -62,11 +69,17 @@ def _gql(query: str) -> dict:
     return out["data"]
 
 
-def main() -> None:
+def main(project_ids: list[str] | None = None) -> None:
     settings = load_settings(STAGE)
     base = ("bronze", f"source={SOURCE}", f"adm0={ADM0}")
 
     projects = _gql(PROJECTS_QUERY)["publicProjects"]["results"]
+    if project_ids:
+        missing = set(project_ids) - {p["id"] for p in projects}
+        if missing:
+            raise RuntimeError(f"requested project(s) not found under the "
+                               f"'{NAME_FILTER}' campaign: {sorted(missing)}")
+        projects = [p for p in projects if p["id"] in project_ids]
     manifest, n_files = [], 0
     for p in projects:
         assets = {}
@@ -89,34 +102,50 @@ def main() -> None:
         })
         print(f"  project {p['id']}: {len(assets)} files  ({p['name'][:60]}…)")
 
-    # HOT's HDX synthesis (citable provenance; verdict = accepted/uncertain only)
-    rs = requests.get(HDX.format(HDX_SLUG), timeout=60).json()["result"]["resources"]
-    hdx_files = []
-    for r in rs:
-        if r["format"].lower() != "geojson":
-            continue
-        raw = requests.get(r["url"], timeout=120).content
-        dest = settings.blob_path(*base, "hdx", r["name"])
-        stratus.upload_blob_data(raw, dest, stage=STAGE, container_name=settings.container)
-        hdx_files.append(r["name"])
-        n_files += 1
-    print(f"  hdx: {', '.join(hdx_files)}")
+    if project_ids:
+        print("  (--project mode: HDX synthesis not re-downloaded)")
+    else:
+        # HOT's HDX synthesis (citable provenance; verdict = accepted/uncertain only)
+        rs = requests.get(HDX.format(HDX_SLUG), timeout=60).json()["result"]["resources"]
+        hdx_files = []
+        for r in rs:
+            if r["format"].lower() != "geojson":
+                continue
+            raw = requests.get(r["url"], timeout=120).content
+            dest = settings.blob_path(*base, "hdx", r["name"])
+            stratus.upload_blob_data(raw, dest, stage=STAGE, container_name=settings.container)
+            hdx_files.append(r["name"])
+            n_files += 1
+        print(f"  hdx: {', '.join(hdx_files)}")
 
     mdest = settings.blob_path(*base, "projects.json")
+    if project_ids:
+        # merge into the existing manifest — a filtered run must not shrink it
+        prior = json.loads(stratus.load_blob_data(mdest, stage=STAGE,
+                                                  container_name=settings.container))
+        merged = {p["id"]: p for p in prior}
+        merged.update({p["id"]: p for p in manifest})
+        manifest = sorted(merged.values(), key=lambda p: p["id"])
     stratus.upload_blob_data(json.dumps(manifest, indent=1).encode(), mdest,
                              stage=STAGE, container_name=settings.container)
 
     root = settings.blob_path(*base)
     print(f"bronze <- {root}  ({len(projects)} projects, {n_files} files + manifest)")
+    scope = (f"filtered additive ingest of project(s) {', '.join(project_ids)}"
+             if project_ids else f"{len(projects)} Validate projects + HDX synthesis")
     ledger.record(
         SOURCE,
         "bronze",
         "MapSwipe/HOT crowd validation of AI damage flags (0/1/2 votes per ~50 m H3 task)",
         root,
-        f"{len(projects)} Validate projects + HDX synthesis; false-alarm reference "
+        f"{scope}; false-alarm reference "
         f"(MS AI4G + fAIr seeds only, no miss detection); re-run to refresh",
     )
 
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--project", action="append", default=None, metavar="ID",
+                    help="ingest only this project id (repeatable); additive — other "
+                         "projects' bronze files are left untouched")
+    main(ap.parse_args().project)
