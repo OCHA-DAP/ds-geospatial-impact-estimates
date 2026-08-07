@@ -78,7 +78,7 @@ used only for the question it can answer, and the three check each other. That c
 mattered: the expert reference turned out to miss half of the lesser damage the field
 teams reported, so precision measured against it alone is a floor, not an estimate.
 
-The paper makes three contributions:
+The paper makes two contributions:
 
 1. A corrected scorecard for the six evaluable products of this event
    (@sec-scorecard, @sec-asdelivered), including estimates of how far below the truth
@@ -88,10 +88,6 @@ The paper makes three contributions:
    acts as a reliable operating point, and we price each setting in field visits per
    damaged building found, so that responders can choose a setting rather than being
    handed one.
-3. A diagnostic result (@sec-casestudy): one product's main failure could be traced to
-   a single satellite scene, using its published per-building metadata together with
-   the crowd campaign. The other five products publish no such metadata, so the same
-   tracing is not possible for them.
 
 Everything here comes from one event in one coastal, dense-urban geography. The method
 transfers; the specific numbers and rule orderings should be treated as hypotheses until
