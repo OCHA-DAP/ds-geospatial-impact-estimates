@@ -53,6 +53,23 @@ author-confirmed; per-scene attribution is not, which bounds how hard the RQ2o
 - RQ3's error-structure GLM covers only MS/IMPACT/OSU (extents); extending to the other
   three is flagged in the manuscript as open work.
 
+## Content pass (user-directed, AFTER the humanizer pass completes)
+
+Decided 2026-08-07 to keep content review separate from the language pass. Queued:
+
+- **Scrub the DIY radar rebuild from the manuscript** (user decision): remove the Santa
+  Cruz 8.0% clause from the coherence paragraph and the "tunable rebuild saturates"
+  item from Results III (renumber that list); the experiment stays in the findings
+  register (RQ6). Check the Santa Cruz control sentence still reads correctly with only
+  the coherence 1.2%/0.9% vs optical 27.5% contrast.
+- **Sweep for "documenting our own methodology corrections" tone**: the paper should
+  state its rules positively, not narrate how we discovered them. Known instances: the
+  Methods average-precision passage ("We never quote average precision for an individual
+  product: … collapses to a formula … the derivation of why is in the Appendix") and its
+  Results III sibling ("which should not be used to make this comparison at all…").
+  Rewrite as brief positive statements of practice with an Appendix pointer.
+- General content review (user, with fresh eyes once the language pass is done).
+
 ## Editorial / publishing
 
 **5. Humanizer pass over `manuscript_v2.qmd` (in progress, iterative with review).**
