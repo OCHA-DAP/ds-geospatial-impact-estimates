@@ -279,14 +279,11 @@ extent. Based on its density across the study region, we make the explicit assum
 that it fully covers the ~61 km² core comparison region, the same logic used for its
 stand-alone evaluation in fully enclosed administrative units.
 
-An analysed extent says where a product looked, not whether it could see. Cloud can hide
-individual buildings inside a declared extent. Only Microsoft publishes a per-building
-visibility field, and a robustness check against it found the effect negligible in this
-event: 3.6% of buildings are mostly obscured, precision is unchanged under any visibility
-filter, and exactly one missed reference point falls on an obscured building. The model
-abstains under cloud rather than flagging into it. We therefore score all products
-without visibility corrections, noting that the check is impossible for the five products
-that publish no such field.
+An analysed extent says where a product looked, not whether it could see: cloud can hide
+individual buildings inside a declared extent. A robustness check against the one
+product that publishes per-building visibility found the effect negligible in this
+event (details in the Appendix), so all products are scored without visibility
+corrections; the check is impossible for the five that publish no such field.
 
 The matching radius comes from the urban fabric rather than from convenience. The median
 distance between neighbouring building centroids in the core region is 9.7 m, and 93% of
@@ -316,21 +313,16 @@ numbers are comparable only within one:
 : The two reporting regions. Sections state which they use; the as-delivered region is
 the operationally honest one, the best case the analytically clean one. {#tbl-regions}
 
-One point about what the radius *is*, because it is easy to picture it as a tolerance
-applied to the products alone. It is not. The radius defines the target itself, the
-label every predictor, products and models alike, is scored against:
+One point about what the radius *is*: it is not a tolerance applied to the products,
+but the definition of the target every predictor is scored against:
 
 > A building counts as damaged if a CEMS damage point lies within *r* metres of it.
 
-Nothing else in the analysis carries a radius, so widening it changes the truth being
-chased, not the leniency of the scoring. At 20 m the identical CEMS points label 2,733
-core-region buildings damaged; at 10 m, 1,350. A wide radius smears each reference point
-into a small blob of neighbouring buildings, which makes the target patchy and
-area-shaped (exactly the shape a smooth geography surface predicts well), while a tight
-radius concentrates it onto individual buildings, where per-building discrimination is
-required. The product-versus-geography comparison is therefore mildly radius-dependent.
-Rather than leave that implicit, the whole analysis is re-run at 20 m in the Appendix
-(@tbl-radius): every precision rises 1.6–2.2×, and no conclusion changes.
+Widening it changes the truth being chased, not the leniency of the scoring: at 20 m
+the identical CEMS points label 2,733 core-region buildings damaged; at 10 m, 1,350.
+The product-versus-geography comparison is mildly radius-dependent as a result, so the
+whole analysis is re-run at 20 m in the Appendix (@tbl-radius, with the reasoning):
+every precision rises 1.6–2.2×, and no conclusion changes.
 
 Two implementation details complete the picture. The fusion analysis, which needs a label
 for every building rather than only the flagged ones, matches buildings to CEMS points by
@@ -439,37 +431,26 @@ was given every advantage. A product that loses to it has flags placed no better
 obvious retrospective geography prior, which is a serious finding about that product. It is
 not, however, a claim that geography was an available substitute.
 
-How much the null knows about *this* earthquake depends on where it is fitted, and the
-difference matters for reading the results. Within the compact core region the ShakeMap
-estimate barely varies, and the fitted model gives it no weight at all: there the null
-runs on coastline distance and building density alone, and its skill is a hindsight
-description of where damage happened to fall. Across the far larger delivered footprints,
-shaking varies for real and carries a quarter to a third of the model's weight; there
-the null genuinely uses information about this event. (Microsoft is the exception that
-proves the mechanism: it shipped only the coastal strip, and over that near-identical
-ground the shaking term again drops to zero.) The as-delivered comparison is consequently
-the better founded of the two, and the core-region comparison should be read strictly as
-a null.
+How much *event* information the null actually uses differs by analysis layer: in the
+core region the shaking estimate barely varies and the model runs on static geography
+alone, while across the delivered footprints shaking carries a quarter to a third of
+its weight. The as-delivered comparison is consequently the better founded of the two,
+and the core-region comparison should be read strictly as a null (the Appendix carries
+the detail).
 
-The model's output is not a flag list but a continuous risk score per building, and that
-governs how it is compared with the products. Every cutoff applied to the score produces
-a different flag list, so the model traces a whole curve of precision–recall trade-offs;
-a product, whose provider already fixed the threshold, is a single point in that plane.
-The two are therefore compared point-against-curve or, among continuous scores only,
-summarised by **average precision**, the area under that curve. Average precision is
-reported only for the continuous scores; a shipped product is a single flag list, and
-single lists are compared at their operating points (the Appendix shows why a one-list
-"average precision" would mislead).
+The model's output is not a flag list but a continuous risk score per building. Every
+cutoff on the score is a different flag list, so the model traces a whole curve of
+precision–recall trade-offs, while a product, whose provider already fixed the
+threshold, is a single point in that plane; the two are compared point-against-curve.
+**Average precision**, the area under that curve, is reported only for continuous
+scores; a shipped product is compared at its operating point instead (the Appendix
+shows why a one-list "average precision" would mislead).
 
 The **weighted fusion** is the same construction with the six products' flags and
 confidence fields added to the three context variables: the geography null is exactly
-this model with the product inputs removed. Both are refit for each analysis they appear
-in (the small core region for the fusion result of @sec-dial, each product's full
-footprint for the as-delivered benchmark of @sec-crossexam), always under the same
-blocked validation. Two cautions: the learned weights are calibrated to this single
-event and should not be assumed to transfer, and within the core region the shaking term
-is nearly constant, so the null's skill there comes mostly from coast distance and
-density.
+this model with the product inputs removed. Both are refit for each analysis they
+appear in, always under the same blocked validation. One caution: the learned weights
+are calibrated to this single event and should not be assumed to transfer.
 
 Two questions of fairness follow from putting a fitted model beside an unfitted product,
 and both have short answers. Are they scored on the same data? Yes: the validation folds
@@ -1364,6 +1345,12 @@ within 0.005 for every product:
 native-geometry matching is worth at most 0.005; with the radius held fixed the two are
 effectively the same measurement. {#tbl-frames}
 
+**The per-building visibility (cloud) check.** Only Microsoft publishes a per-building
+visibility field. Scored against it, the effect is negligible in this event: 3.6% of
+buildings are mostly obscured, precision is unchanged under any visibility filter, and
+exactly one missed reference point falls on an obscured building. The model abstains
+under cloud rather than flagging into it.
+
 ### Was the model-versus-product comparison fair? {.unnumbered}
 
 This section carries the machinery behind @sec-dayzero's fairness claims, for the reader
@@ -1397,6 +1384,15 @@ report-the-stronger rule applied twice. One further reporting detail: the headli
 number comes from the logistic regression, which scores identically to the forest (AP
 0.28 either way), while the null and its products-only mirror are both fitted with the
 forest so that those two are directly comparable to each other.
+
+**How much event information the null uses, by analysis layer.** Within the compact
+core region the ShakeMap estimate barely varies and its measured importance is exactly
+0.000: there the null runs on coastline distance and building density alone, and its
+skill is a hindsight description of where damage happened to fall. Across the full
+delivered footprints, shaking varies for real and carries 0.25–0.31 of the model's
+weight, so the null genuinely uses event information there. Microsoft is the exception
+that proves the mechanism: it shipped only the coastal strip, and over that
+near-identical ground the shaking term again drops to zero.
 
 **Coefficients and thresholds are protected separately.** The model's coefficients are
 estimated strictly out-of-fold: each building's score comes from a model that never saw
