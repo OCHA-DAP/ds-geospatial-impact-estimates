@@ -270,18 +270,21 @@ knowledge of which zone, the part geography already encodes.
 
 **How it was measured.** Flags and reference points are aggregated to hexagonal grid
 cells and each product's ordering of cells is compared with the expert ordering by rank
-correlation, with the geography model's expected damage count ranked the same way. Each
-comparison runs on the cells of that product's own analysed footprint, so the model is
-re-scored on a different cell set for each product: every product is compared on its
-own turf. The cell lattices, both tests' full tables, and a priority map are in the
+correlation, with the geography model's expected damage count ranked the same way. In
+both tests, each comparison runs on the cells of that product's own analysed footprint
+(test 2 restricts those cells to Caraballeda), so the model is re-scored on a different
+cell set for each product: every product is compared on its own turf, and the model's
+value varies with whose turf it is graded on. The cell lattices, both tests' full tables, and a priority map are in the
 Appendix.
 
-![**Regions: test 1 spans all five mapped areas on each product's own footprint; test 2
-uses only cells inside Caraballeda.** Both ranking tests: how well each product orders
-cells by damage (grey) against the geography model ordering the same cells (red). In
-test 1 the model's value differs per row because each comparison runs on that product's
-own analysed cells; it ranks better for five of six there, and the advantage disappears
-inside the damage zone, where the six split
+![**Regions: test 1 spans all five mapped areas; test 2 uses only cells inside
+Caraballeda. In both, each row is that product's own footprint cells.** Both ranking
+tests: how well each product orders cells by damage (grey) against the geography model
+ordering the identical cells (red). The model itself never changes; its value differs
+per row, in both panels, because every comparison is graded on a different set of cells
+(the product's own footprint, restricted in test 2 to Caraballeda: 112 cells for
+Microsoft, 134 for OSU, and so on). The model ranks better for five of six pooled; the
+advantage disappears inside the damage zone, where the six split
 three–three.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){#fig-nullranking}
 
 ## Agreement between independent products is the operating point {#sec-dial}
