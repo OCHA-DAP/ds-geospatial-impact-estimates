@@ -331,3 +331,17 @@ extents, and nobody knew nobody was looking.
 Treat this as one carefully worked case and a method you can re-run, rather than a verdict on
 these products in general.
 :::
+
+## Appendix · how the crowd adjustment works — and its independent re-test
+
+![](artefacts/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png){.r-stretch}
+
+::: {.tiny}
+Every "crowd-adjusted" number in this deck is this mechanism: an unmatched flag is adjudicated
+by its ~50 m crowd cell, and a majority-"Yes" cell adds it back to the precision numerator. In
+Jul–Aug 2026 an independent crowd re-voted the same 3,482 cells at 3× the vote depth: individual
+cells flip (purple), but the share of flags confirmed barely moves — **13.2% → 11.5%** — so the
+adjusted numbers hold as (mildly generous) upper estimates. Round 2 offered no "No damage"
+answer, so round 1's 71%-said-No statistic is not re-testable; the confirmation side is what
+replicates.
+:::

@@ -109,7 +109,13 @@ projects; the west-adjudication project (Catia La Mar 1, 20,354 votes) is FINISH
 identical to bronze; no new projects or areas. **Watch item:** project 3248 (*Catia La Mar
 round 2*) is a fresh crowd pass over the contested west zone but sits PAUSED at ~1 vote/task
 — if completed it would independently re-adjudicate the 71% rejection; re-check before
-submission.
+submission. **2026-08-07: watch item CLOSED** — 3248 completed 2026-08-05 (54,305 votes,
+728 contributors) and is analysed as a post-freeze replication in RQ7c below. The frozen
+numbers are untouched: 3248 landed as an additive bronze partition and all pooled loaders
+now pin to the frozen rounds (`gie_paper.MAPSWIPE_POSTFREEZE`; pooled verdict series
+verified md5-identical before/after ingest). One nuance: round 2's redesigned answer
+options cannot re-test the 71% *active rejection* (no "No" button); what it re-tests, and
+replicates, is the confirmation side.
 
 **Robustness — per-building cloud visibility (checked 2026-07-20, negligible).** Microsoft's
 merged file carries `unknown_pct`, the fraction of each building's buffer that was
@@ -979,6 +985,64 @@ tbl("RQ7-mapswipe-validation/rq7_consensus_fp_adjudication.csv")
   5, not 1 in 2. CEMS under-enumeration (RQ2e) and consensus-as-CEMS-gap-detector (RQ5
   finding 5) are now the same, quantified phenomenon.
 
+## RQ7c — round 2 independently replicates the strip verdict, and stress-tests the crowd adjustment (2026-08-07, post-freeze)
+
+MapSwipe project 3248 (*Catia La Mar round 2*) completed 2026-08-05: a fresh crowd of 728
+volunteers re-judged the **identical 3,482 res-11 cells** as round 1 (project 3179) at
+2.7× the vote depth (median 16 votes/task vs 6). Two things changed besides the crowd:
+the **instrument** (options are now Yes / Not-Sure only — "Not sure" explicitly absorbs
+"there is no damage", so the 71%-majority-No statistic is untestable by design; all
+54,304 raw votes are 1s and 2s) and, partly, the **imagery** (a different OAM item,
+uploaded 2026-06-30, Vantor WV-3 credits, vs round 1's 27-June scene — same vendor
+pipeline and vintage window, not the same pixels). Everything below is post-freeze and
+touches no frozen number; scripts and CSVs in `RQ7-mapswipe-validation/` (`rq7_round2_*`).
+
+```{python}
+tbl("RQ7-mapswipe-validation/rq7_round2_replication.csv")
+```
+
+```{python}
+tbl("RQ7-mapswipe-validation/rq7_round2_crosstab.csv")
+```
+
+- **What replicates — the confirmation side, in aggregate.** Majority-Yes cells 12.9% →
+  11.1%; at flag level (the exact quantity the rq2i adjustment consumes) the crowd
+  confirms 13.2% → 11.5% of Microsoft's 7,661 unmatched strip flags. Non-confirmation
+  88% → 89%. An independent crowd, looking three times as hard at the same buildings,
+  lands within two points: the west-strip conclusion (Microsoft's flags there are mostly
+  not confirmable) is replicated. Deeper voting made the crowd slightly *less*
+  confirming, so round-1-based upper estimates run mildly generous.
+- **Per-hexagon verdicts are unstable across rounds — but that is mostly voting noise,
+  now quantified.** Raw majority agreement is 18% (crosstab above; only 26% of round-1
+  majority-Yes cells stay majority-Yes). Variance decomposition of the per-cell Yes-shares
+  against known binomial vote noise: round 1's shares are **68% noise** (reliability
+  0.32), round 2's 36% (0.64); the noise-corrected cross-round correlation of the
+  underlying cell propensities is **+0.63** (raw +0.29). A ~6-vote majority verdict is a
+  two-thirds-noise measurement of a single hexagon — the quantified reason crowd
+  statistics in this paper are used only in aggregate (adjustment counts, strip shares),
+  never per cell.
+- **Sensitivity of the paper's upper estimates.** Swapping round-2 verdicts into the
+  strip (arithmetic on rq2i's frozen row via P_adj = (tp + U·conf)/N — nothing
+  re-scored) moves as-delivered crowd-adjusted precision by **−0.031 to +0.015**:
+  MS 0.237 → 0.223, UNEP 0.074 → 0.043 (95% of its covered FPs sit in this strip),
+  IMPACT and UH tick *up*. No ordering changes, no claim flips. Read it as a
+  sensitivity bound, not a corrected value — it splices two instruments.
+
+```{python}
+tbl("RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv")
+```
+
+![How the crowd enters the precision calculation, and what round 2 changed: same
+Catia La Mar window under round-1 (A) and round-2 (B) verdicts; purple outlines mark
+cells whose confirmation status flipped. Built by
+`rq7_round2_explainer_fig.py`.](artefacts/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png)
+
+- Confidence: **high** for the aggregate replication (both directions computed from raw
+  exports); the sensitivity carries ±0.002 slop from rq2i's rounded CSV values. Caveats:
+  instrument mixing (round 2's "Yes" is a stricter bar), imagery not pixel-identical
+  across rounds, and MapSwipe remains a false-alarm lens — none of this adds miss
+  detection.
+
 # RQ8 — learned fusion: a meta-model beats the flat dial, and the skill IS the products
 
 User proposal (2026-07-15): stack the six products (+ their confidences + context) into a
@@ -991,7 +1055,8 @@ weight-0 in training. All numbers pooled out-of-fold.
 tbl("RQ8-learned-fusion/rq8_summary_r20.csv")  # r=20 as originally run; renamed 2026-08-06
 ```
 
-![Out-of-fold precision-recall + random-forest importances.](artefacts/RQ8-learned-fusion/figs/rq8_learned_fusion.png)
+![Out-of-fold precision-recall + random-forest importances (r=20 frame, as originally
+run).](artefacts/RQ8-learned-fusion/figs/rq8_learned_fusion_r20.png)
 
 - ⚠️ **QUALIFIED 2026-07-29:** the "+40% AP" headline below overstates the practical gap.
   Voting is a **7-level ordinal** score (0–6) → only 6 cut points, so its AP integral is
@@ -1265,7 +1330,7 @@ are curves (continuous scores = families of binary rules), the red diamond is th
 score binarized at median product size (9,963 flags), and the six k-of-6 voting rules are
 numbered squares climbing from the singles' level onto the fusion curve (frame = centroid
 r20, NOT comparable to the dual-anchor r10 dial-table
-numbers).](artefacts/RQ8-learned-fusion/figs/rq8_geography_baseline.png)
+numbers).](artefacts/RQ8-learned-fusion/figs/rq8_geography_baseline_r20.png)
 - Caveats: weights are event-specific calibration ("what was learnable in-event"), not a
   transferable model; MMI was constant in the core region (importance 0 — uninformative
   here, not generally); the crowd-gap weighting changed results negligibly (reported
