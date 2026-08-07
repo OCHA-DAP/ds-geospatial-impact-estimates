@@ -55,26 +55,33 @@ author-confirmed; per-scene attribution is not, which bounds how hard the RQ2o
 
 ## Content pass (user-directed, AFTER the humanizer pass completes)
 
-Decided 2026-08-07 to keep content review separate from the language pass. Queued:
+Decided 2026-08-07 to keep content review separate from the language pass. Status:
 
-- **Scrub the DIY radar rebuild from the manuscript** (user decision): remove the Santa
-  Cruz 8.0% clause from the coherence paragraph and the "tunable rebuild saturates"
-  item from Results III (renumber that list); the experiment stays in the findings
-  register (RQ6). Check the Santa Cruz control sentence still reads correctly with only
-  the coherence 1.2%/0.9% vs optical 27.5% contrast.
-- **Sweep for "documenting our own methodology corrections" tone**: the paper should
-  state its rules positively, not narrate how we discovered them. Known instances: the
-  Methods average-precision passage ("We never quote average precision for an individual
-  product: … collapses to a formula … the derivation of why is in the Appendix") and its
-  Results III sibling ("which should not be used to make this comparison at all…").
-  Rewrite as brief positive statements of practice with an Appendix pointer.
+- ~~Scrub the DIY radar rebuild from the manuscript~~ — DONE 2026-08-07 (commit
+  "content pass A"): Results list item removed and renumbered; sensing appendix keeps
+  the coherence 1.2%/0.9% vs optical 27.5% contrast only. Register keeps RQ6.
+- ~~Positive-voice AP passages~~ — DONE 2026-08-07 (pass A): both passages state the
+  practice; appendix keeps the derivation.
+- ~~Structure review implementation~~ — DONE 2026-08-07 (passes B and C, per
+  reviews/2026-08-07-structure-quick-review.md): Results II split (new "Results III:
+  the scorecard in both frames", #sec-asdelivered; old III/IV renumbered IV/V);
+  @tbl-nulltally tally table + three signposts (issue 2 implemented as
+  table+signposts, NOT full relocation — the three comparisons answer different
+  questions in place); @tbl-regions reporting-regions box in Methods; flattery caveat
+  moved into sec-dial; Discussion's two unanchored results promoted (Methods test
+  descriptions + Results I numbers); Methods fairness trim; hedge dedup (conservative:
+  Results I second repetition only); crowd re-vote collapse in Methods; Results IV
+  ends on arithmetic; contribution bullets carry section refs.
 - **Causal framing of the Microsoft west-strip failure** (user flag, 2026-08-07): the
   solid claim is "traced to a single scene"; whether the cause was the image itself or
   the model's handling of it is open at scene level (the UH cross-check is vendor-level
-  only). Sweep Results IV, the Discussion-adjacent recommendations, and the deck for
-  phrasing that asserts per-scene *processing/calibration* as established cause;
-  metadata sentence already cut from the abstract.
-- General content review (user, with fresh eyes once the language pass is done).
+  only). Sweep Results V, the recommendations, and the deck for phrasing that asserts
+  per-scene *processing/calibration* as established cause; metadata sentence already
+  cut from the abstract. STILL OPEN.
+- General content review (user, with fresh eyes). STILL OPEN. Note: the deck is now
+  structurally out of sync with the manuscript in minor ways (section numbering
+  references, the rebuild still appears on no deck slide — verify) — reconcile at next
+  deck touch.
 
 ## Editorial / publishing
 
