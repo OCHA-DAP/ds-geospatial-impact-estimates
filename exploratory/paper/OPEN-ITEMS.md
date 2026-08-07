@@ -27,12 +27,11 @@ close calls (products 0.085–0.148 vs null 0.128) may not survive intervals. Mu
 and should be built on whatever CV design survives item 1. Population-weighted
 prioritisation is promised in the same Limitations sentence and is also unstarted.
 
-**3. Coherence-claim symmetry (small, new 2026-08-07).**
-The manuscript claims coherence methods resist rural false alarms, and shows the
-*converse* evidence only: optical UH flagged up to 27.5% of buildings in agricultural
-control areas, and our amplitude rebuild flagged 8.0% — but never prints IMPACT's and
-OSU's flag rates in those same areas. Compute them from the frozen artefacts; one
-sentence of payoff, closes the asymmetry.
+**3. ~~Coherence-claim symmetry~~ — CLOSED 2026-08-07.**
+The coherence-side numbers already existed in the frozen artefacts (rq2_density_null.csv:
+IMPACT 1.2%, OSU 0.9% flag rate in the Santa Cruz control, vs amplitude rebuild 8.0% and
+optical UH 27.5%). The full four-way comparison is now printed in "The event and the
+products", stated as flag rates only (no mechanism attributed to UH's failure).
 
 **4. Timeliness × accuracy.**
 Blocked on confirmed provider release dates for UH and LIST (register flag #7; our

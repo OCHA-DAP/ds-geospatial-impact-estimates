@@ -144,10 +144,11 @@ produce false alarms in optical and amplitude-based methods. LIST also runs on r
 but not on coherence: per the provider it is a deep-learning change-detection model (a
 ResNet) applied to before-and-after radar images (no methodology document accompanied
 the delivery), so we do not assume it shares that protection. UNEP's debris mass is
-likewise radar-derived. The farmland problem is not hypothetical in this event: an
-optical product flagged up to 27.5% of buildings in agricultural control areas where the
-expert reference found essentially nothing (@sec-crossexam), and our own non-coherence
-radar rebuild concentrated its false alarms the same way (@sec-dial).
+likewise radar-derived. The contrast is measurable in this event. Santa Cruz serves as a
+control case: the expert reference analysed it and found almost no damage, and much of
+it is agricultural. There the two coherence products flagged 1.2% and 0.9% of buildings;
+our own radar rebuild, which uses brightness change instead of coherence, flagged 8.0%
+(@sec-dial); and the optical UH product flagged 27.5% (@sec-crossexam).
 
 ![Who analysed where. Each product's analysed extent, the five expert-mapped CEMS AOIs
 (dashed black), and, in red with the zoom frame below, the core region: the intersection of
