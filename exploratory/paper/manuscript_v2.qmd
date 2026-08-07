@@ -410,15 +410,15 @@ lower bound to the crowd-adjusted value. One caveat sets the character of the up
 MapSwipe verdicts are per ~50 m cell, not per building (@fig-refarch), so a
 crowd-confirmed flag means "damage somewhere in this cell," not "this building." The
 crowd-adjusted value is therefore an *upper* estimate of building-level precision, and the
-truth lies between it and the CEMS floor. How stable is that adjudication? A second,
-independent crowd re-voted the identical Catia La Mar cells at 2.7× the vote depth in
-July–August 2026 (after this paper's data freeze), and the answer is: unstable per cell,
-stable in aggregate. Individual ~6-vote majority verdicts are roughly two-thirds voting
-noise, but the quantity the adjustment actually consumes — the share of a product's
-unmatched flags in crowd-confirmed cells — moved only from 13.2% to 11.5% (Microsoft, that
-strip), so the upper estimates here should be read as mildly generous; the mechanism, the
-re-test, and its effect on each product's interval are in the Appendix
-(@fig-crowdmech). A second, independent check uses ChatMap instead:
+truth lies between it and the CEMS floor. How stable is that crowd verdict? In
+July–August 2026, after this paper's data freeze, an independent second crowd re-voted the
+identical Catia La Mar cells with nearly three times as many votes per cell. Any single
+cell's verdict proved noisy — with about six votes, much of what separates one cell's
+verdict from another's is voting luck — but the number the adjustment is actually built
+on, the share of a product's unmatched flags the crowd confirms, barely moved: 13.2%
+under the first crowd, 11.5% under the second. The upper estimates in this paper should
+therefore be read as sitting slightly high; the mechanism and the full re-test are shown
+in the Appendix (@fig-crowdmech). A second, independent check uses ChatMap instead:
 because its field points are building-level, they can be unioned directly with the CEMS
 points, which raises measured precision by a smaller, sharper 5–9% (the field data is
 sparse — 415 points — but geometrically exact).
@@ -1425,46 +1425,65 @@ alarms. Microsoft is spared only because it flagged nowhere else. This is the ar
 behind the first mechanism in
 @sec-crossexam.](artefacts/RQ2-cems-footprint-points/figs/rq2m_deadzone_dilution.png){#fig-deadzone}
 
-### The crowd adjustment, mechanically — and its independent re-test {.unnumbered}
+### How the crowd adjustment works — and what happened when the crowd voted again {.unnumbered}
 
-The crowd-adjusted precision used throughout this paper has a simple mechanism, shown on
-real buildings in @fig-crowdmech: a flagged building with an expert point within 10 m is a
-true positive and the crowd plays no role; every other flag is adjudicated by the ~50 m
-MapSwipe cell it sits in, and a majority-"Yes" cell adds it back to the numerator (cells
-the crowd never voted on contribute at the confirmed *rate*, extrapolated). In August 2026
-— after this paper's data freeze — HOT completed a second campaign over the same Catia La
-Mar strip: 728 fresh volunteers re-judged the identical 3,482 cells at median 16 votes per
-cell against round 1's 6. It is a genuine but imperfect replication: the response options
-changed (no "No damage" answer exists in round 2, so round 1's *active rejection* rate is
-not re-testable), and the imagery, while the same vendor and vintage window, is not
-pixel-identical. What transfers is the confirmation side, and it replicates: 13.2% of
-Microsoft's 7,661 unmatched flags in that strip sat in crowd-confirmed cells under round
-1, 11.5% under round 2's much deeper vote. *Which* cells confirm is far less stable —
-per-cell majority verdicts from ~6 votes are roughly two-thirds voting noise (the
-noise-corrected cross-round correlation of the underlying cell propensities is 0.63,
-against a raw 0.29) — which is the quantified reason this paper uses crowd verdicts only
-in aggregate and never as building-level ground truth. Substituting round-2 verdicts into
-the strip moves each product's as-delivered crowd-adjusted precision by between −0.031 and
-+0.015 (Microsoft 0.237 → 0.223; UNEP, with 95% of its covered false positives in this one
-strip, 0.074 → 0.043; IMPACT and UH tick upward) with no ordering changes — the price of a
-deeper, stricter jury, and a measure of how much slack the upper estimates carry.
+Every crowd-adjusted precision in this paper comes from one simple rule, and
+@fig-crowdmech shows it acting on a real street in Catia La Mar. A flagged building with
+an expert damage point within 10 m counts as a hit outright; the crowd plays no part in
+that. Every other flag sits inside one of the ~50 m cells that MapSwipe volunteers voted
+on, and the rule is: if most volunteers who saw that cell said *yes, damaged*, the flag is
+counted as confirmed damage and improves the adjusted precision; if they said *no* or *not
+sure*, it stays a false alarm. Flags in cells the volunteers never saw are assumed to
+contain damage at the same rate as the flags the volunteers did see.
+
+In August 2026 — after this paper's numbers were frozen — the campaign over this strip was
+run a second time: 728 new volunteers re-judged exactly the same 3,482 cells, and each
+cell now received about sixteen votes instead of six. Same buildings, different people, a
+much harder look. Two caveats keep this from being a perfect replication. The answer
+buttons changed: round 2 offered no "no damage" option, so a volunteer who saw nothing
+wrong had to press "not sure" — which means round 1's headline finding for this strip
+(71% of cells actively judged undamaged) simply cannot be re-measured. And the two rounds
+showed volunteers different, though similarly dated, satellite images.
+
+What can be compared across the rounds is how much damage the crowd *confirmed*, and that
+held up. Of Microsoft's 7,661 flags in this strip with no expert match, the first crowd
+confirmed 13.2%; the second, deeper-looking crowd confirmed 11.5%. Two independent juries
+agree that roughly one flag in eight has crowd-visible damage under it. If anything, the
+harder look confirmed slightly *less*, so the crowd-adjusted values in this paper should
+be read as sitting a little high — consistent with their stated role as upper estimates.
+
+What did not hold up is *which* cells were confirmed: only about a quarter of the cells
+the first crowd confirmed were confirmed again by the second (the purple outlines in
+@fig-crowdmech). That sounds alarming until one asks how much two small juries should
+agree even if volunteers were perfectly consistent — and the answer is, not much. Six
+votes on a borderline cell is close to a coin toss, and once that known voting noise is
+accounted for, the two rounds' underlying judgements agree well (correlation 0.63, versus
+0.29 before the correction). Most of the apparent chaos is small vote counts, not fickle
+volunteers. The practical lesson is the one this paper already follows: a single cell's
+verdict is too noisy to lean on, but sums over thousands of cells are steady — which is
+why crowd verdicts appear here only inside aggregate numbers, never as building-level
+ground truth.
+
+Finally, the cost in numbers. Recomputing each product's crowd-adjusted precision with the
+second round's verdicts in place of the first moves it by at most 0.03 in either
+direction: Microsoft's falls from 0.237 to 0.223, UNEP's from 0.074 to 0.043 (nearly all
+of its crowd-reviewed flags sit in this one strip), and IMPACT's and UH's tick slightly
+upward. No product overtakes another.
 
 ![How the MapSwipe crowd enters the precision calculation, and what an independent re-vote
 changed. Both panels show the same Catia La Mar neighbourhood; hexagons are the ~50 m crowd
 task cells, tinted by majority verdict. **A** — round 1: a flag matched by an expert point
-within 10 m is a true positive (green); an unmatched flag in a majority-"Yes" cell is
-crowd-confirmed and added to the adjusted numerator (blue); in a majority-"No" or
-"Not-sure" cell it remains a false positive (orange). **B** — round 2 re-voted the
-identical cells at ~16 votes each with no "No damage" option (its "Not sure" absorbs it):
-purple outlines mark cells whose confirmation status flipped. Individual cells flip;
-the aggregate the adjustment consumes barely moves (13.2% → 11.5% of the strip's
-unmatched Microsoft
-flags).](artefacts/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
+within 10 m is a true positive (green); an unmatched flag in a cell the crowd judged
+damaged is counted as confirmed and improves the adjusted precision (blue); in a cell
+judged undamaged or uncertain it remains a false alarm (orange). **B** — round 2 re-voted
+the identical cells at ~16 votes each, with no "no damage" answer available (its "not
+sure" absorbs it): purple outlines mark cells whose verdict changed sides. Individual
+cells flip; the total the adjustment depends on barely moves (13.2% → 11.5% of the
+strip's unmatched Microsoft flags confirmed).](artefacts/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
 
 ## Reproducibility note {.unnumbered}
 
-All analyses run from immutable data snapshots (frozen 2026-07-15) in the project's
-open-format data lake. Per-question scripts, running notes, and the full findings
-register, including every negative and superseded result, accompany this draft in the
-project repository. The matching, voting, and adjudication code totals roughly 1,500
-lines of Python against DuckDB and GeoPandas. No analysis requires proprietary software.
+All analyses run from immutable data snapshots, frozen on 2026-07-15 and stored as
+Parquet, GeoParquet, CSV, and GeoJSON files in the project's Azure blob storage.
+Per-question scripts, running notes, and the full findings register, including every
+negative and superseded result, accompany this draft in the project repository.
