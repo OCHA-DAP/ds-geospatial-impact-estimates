@@ -33,6 +33,15 @@ IMPACT 1.2%, OSU 0.9% flag rate in the Santa Cruz control, vs amplitude rebuild 
 optical UH 27.5%). The full four-way comparison is now printed in "The event and the
 products", stated as flag rates only (no mechanism attributed to UH's failure).
 
+**3b. Candidate fourth reference: terremotovenezuela.com citizen reports (2026-08-07).**
+Microsoft's public report validates against 221 citizen damage reports (of 925 total)
+from terremotovenezuela.com, severity-graded, with location error they characterise as
+median 2.1 m plus a long tail. We have never used this source. Check: overlap with
+ChatMap's 415 points, ingestibility, and whether it adds inland coverage. Their report
+also leaves validation provenance unstated (no in/out-of-sample statement, no sampling
+method, no annotator-independence note) — relevant if anyone cites their per-scene
+precision/recall against ours.
+
 **4. Timeliness × accuracy.**
 Blocked on confirmed provider release dates for UH and LIST (register flag #7; our
 ingest dates are upper bounds only). The provider e-mail should also ask for LIST's

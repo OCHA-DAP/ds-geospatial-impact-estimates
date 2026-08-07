@@ -1043,6 +1043,31 @@ cells whose confirmation status flipped. Built by
   across rounds, and MapSwipe remains a false-alarm lens — none of this adds miss
   detection.
 
+## 2026-08-07 — Microsoft's public report, cross-read against our findings
+
+Read their report (visualizers.aiforgood.ai/damage-assessment/venezuela_earthquake_2026_report.html)
+after the v3 draft. Four takeaways:
+
+- **Producer-side corroboration of the west-strip mechanism**: they name the Catia La
+  Mar overlap as their single largest inter-scene disagreement — the Vantor 25 June
+  scene flags ~2,600 buildings the Planet 26 June scene calls intact — resolved in
+  overlap zones by preferring Planet. Our contested strip is exactly where no second
+  scene existed to overrule the first. Added to manuscript v3's case-study section.
+  Their 17.5% multi-scene disagreement rate also squares with RQ2d's corroboration
+  signal.
+- **Self-validated per-scene metrics** (e.g. Caraballeda recall 92% / precision 100%)
+  come from 200–300 footprints per scene labeled by their own annotators on the same
+  imagery; the report states no held-out status, no sampling method, no annotator
+  independence, and no stratification by their own `unknown_pct` or confidence fields.
+  Not a contradiction of our interval (0.08 floor → ~0.24 crowd-adjusted): theirs
+  measures model-vs-visible-in-image, ours measures flags-vs-ground references. The
+  in-event instance of the self-validation gap (cf. the Turkey citation).
+- **Their cloud figure (4.2% obscured) is consistent with our RQ0 check (3.6%
+  majority-obscured, precision unchanged under any visibility filter).**
+- **New candidate reference**: 925 terremotovenezuela.com citizen reports (221 in their
+  area), severity-graded, location error median 2.1 m with a long tail. Logged in
+  OPEN-ITEMS as a possible fourth reference; check overlap with ChatMap first.
+
 # RQ8 — learned fusion: a meta-model beats the flat dial, and the skill IS the products
 
 User proposal (2026-07-15): stack the six products (+ their confidences + context) into a

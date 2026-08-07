@@ -331,8 +331,14 @@ scenes overlap, the same product's precision is four times higher (0.205 against
 confirm it ran exclusively on imagery from the same vendor, flags only 3% of that strip
 where Microsoft flags 32%. The failure is established to travel with the scene; whether
 the cause was the image itself or the model's handling of it cannot be separated with
-current data. Microsoft was the only product publishing metadata at this granularity,
-which is why its failure is the only one that could be examined this way.
+current data. Microsoft's own public report corroborates the mechanism from the
+producer's side: it names the Catia La Mar overlap as its single largest source of
+inter-scene disagreement, with the Vantor 25 June scene flagging ~2,600 buildings as
+damaged that the Planet 26 June scene calls intact, resolved in overlap zones by
+preferring the later Planet read. The strip in question is where no second scene was
+available to overrule the first. Microsoft was the only product publishing metadata at
+this granularity, which is why its failure is the only one that could be examined this
+way.
 
 **How it was measured.** The crowd campaign's verdicts were aggregated over the strip
 and compared with the product's per-building scene counts and dates; an independent
