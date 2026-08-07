@@ -80,16 +80,18 @@ teams reported, so precision measured against it alone is a floor, not an estima
 
 The paper makes three contributions:
 
-1. A corrected scorecard for the six evaluable products of this event, including
-   estimates of how far below the truth the conventionally measured numbers sit, and the
-   observation that per-building accuracy and area-ranking accuracy are almost unrelated.
-2. An operational result: the number of products that agree on a building acts as a
-   reliable operating point, and we price each setting in field visits per damaged
-   building found, so that responders can choose a setting rather than being handed one.
-3. A diagnostic result: one product's main failure could be traced to a single
-   satellite scene, using its published per-building metadata together with the crowd
-   campaign. The other five products publish no such metadata, so the same tracing is
-   not possible for them.
+1. A corrected scorecard for the six evaluable products of this event
+   (@sec-scorecard, @sec-asdelivered), including estimates of how far below the truth
+   the conventionally measured numbers sit, and the observation that per-building
+   accuracy and area-ranking accuracy are almost unrelated.
+2. An operational result (@sec-dial): the number of products that agree on a building
+   acts as a reliable operating point, and we price each setting in field visits per
+   damaged building found, so that responders can choose a setting rather than being
+   handed one.
+3. A diagnostic result (@sec-casestudy): one product's main failure could be traced to
+   a single satellite scene, using its published per-building metadata together with
+   the crowd campaign. The other five products publish no such metadata, so the same
+   tracing is not possible for them.
 
 Everything here comes from one event in one coastal, dense-urban geography. The method
 transfers; the specific numbers and rule orderings should be treated as hypotheses until
@@ -147,7 +149,7 @@ The sensing bases in @tbl-products fail in different ways, and that difference m
 when the products are combined later in the paper: radar coherence methods are
 structurally resistant to the vegetation-change false alarms that can fool optical and
 radar-brightness methods. A short primer on why, with the agricultural control comparison
-from this event, is in the Appendix (@sec-sensing).
+from this event, is in the Appendix ("Radar and optical: why they fail differently").
 
 ![Who analysed where. Each product's analysed extent, the five expert-mapped CEMS AOIs
 (dashed black), and, in red with the zoom frame below, the core region: the intersection of
@@ -392,15 +394,11 @@ lower bound to the crowd-adjusted value. One caveat sets the character of the up
 MapSwipe verdicts are per ~50 m cell, not per building (@fig-refarch), so a
 crowd-confirmed flag means "damage somewhere in this cell," not "this building." The
 crowd-adjusted value is therefore an *upper* estimate of building-level precision, and the
-truth lies between it and the CEMS floor. How stable is that crowd verdict? In
-July–August 2026, after this paper's data freeze, an independent second crowd re-voted the
-identical Catia La Mar cells with nearly three times as many votes per cell. Any single
-cell's verdict proved noisy: with about six votes, much of what separates one cell's
-verdict from another's is voting luck. But the number the adjustment is actually built
-on, the share of a product's unmatched flags the crowd confirms, barely moved: 13.2%
-under the first crowd, 11.5% under the second. The upper estimates in this paper should
-therefore be read as sitting slightly high; the mechanism and the full re-test are shown
-in the Appendix (@fig-crowdmech). A second, independent check uses ChatMap instead:
+truth lies between it and the CEMS floor. The stability of that crowd verdict was itself
+re-tested: an independent second crowd re-voted the same cells at three times the depth
+after this paper's freeze and confirmed 11.5% of the same flags where the first crowd
+confirmed 13.2%, so the upper estimates here sit slightly high; the mechanism and the
+full re-test are in the Appendix (@fig-crowdmech). A second, independent check uses ChatMap instead:
 because its field points are building-level, they can be unioned directly with the CEMS
 points, which raises measured precision by a smaller, sharper 5–9% (the field data is
 sparse, 415 points, but geometrically exact).
@@ -484,24 +482,15 @@ is nearly constant, so the null's skill there comes mostly from coast distance a
 density.
 
 Two questions of fairness follow from putting a fitted model beside an unfitted product,
-and both deserve explicit answers. The first: are they scored on the same data? Yes. The
-validation folds partition the buildings: every building sits in exactly one held-out
-fold, scored by a model that never saw it. Models and products therefore face identical
-building sets with identical denominators, and the held-out scoring can only make the
-models' numbers more conservative, not less. (The remaining mechanics, including how the
-model's decision threshold is chosen without peeking at the data it is judged on, are in
-the Appendix.) The second question genuinely bites, and it runs in the model's favour:
-the null is fitted to *this event's* reference labels. Spatial blocking stops it from
-memorising a building's neighbours, but each fold still learns event-level structure:
-how steeply damage falls off with distance from this coastline, at this shaking level. No
-responder on the actual day zero held such a fitted model. The null should therefore be
-read as an **upper bound on geography-only skill for this event**: the best a
-three-variable model could have done *had it known* the event's damage gradient. The
-products, by contrast, never saw the reference at all. The defensible claim is
-consequently one about information content: *the six products add little building-level
-information beyond what three context variables already carry*. It is not the operational
-claim that responders held this null model in hand on day zero. We return to this in the
-Limitations.
+and both have short answers. Are they scored on the same data? Yes: the validation folds
+partition the buildings, every building is scored by a model that never saw it, so
+models and products face identical building sets with identical denominators (the
+threshold-selection mechanics are in the Appendix). Is the model advantaged by
+hindsight? Yes, deliberately: it is fitted to this event's reference labels, so it is an
+**upper bound on geography-only skill for this event**, and the claim it supports is
+about information content (the products add little beyond what three context variables
+carry), never the operational claim that responders held such a model on day zero. The
+Limitations return to this.
 
 ![How the geography null model is built. Three context variables known within hours of the
 earthquake (coast distance, building density, and ShakeMap intensity) feed one
@@ -618,12 +607,11 @@ coarse task, not as evidence that the products are uninformative at every scale.
 zone the six split evenly against the null, and the same three-three split holds at
 ~0.1 km². {#tbl-nullrank-cara}
 
-The interpretation is otherwise the same as at building level, and
-carries the same limitation. The null is fitted on this event's damage labels, so this says the
-damage pattern was largely recoverable from coastline distance, building density and shaking
-*in hindsight*: not that a responder had this ranking available on day one, which they did not
-and the products were. What it does rule out is the reading that area ranking demonstrates the
-products are extracting damage information the geography does not already contain. At this
+The interpretation carries the caveat already stated: the null is hindsight-fitted
+(@sec-dayzero), so this says the damage pattern was largely recoverable from geography
+*after the fact*, not that a responder had this ranking on day one. What it does rule
+out is the reading that area ranking demonstrates the products are extracting damage
+information the geography does not already contain. At this
 scale they are reproducing a spatial pattern, competently, that was largely predictable from
 the map.
 
@@ -897,8 +885,8 @@ independence lives: their failure zones sit at opposite ends of the study area
 (Microsoft's on the western coast, UH's in inland agriculture). A product with
 serious failure zones is still a valuable voter wherever its errors are independent of
 its partner's. The pair that shares its entire method (the two Sentinel-1 coherence
-products; @sec-sensing explains what that method measures) is by contrast the weakest of
-all fifteen pairings. We present this as a
+products; the Appendix's sensing primer explains what that method measures) is by
+contrast the weakest of all fifteen pairings. We present this as a
 mechanism, not a recipe: which pairing wins is probably event-dependent. The durable
 claims are that error independence is the active ingredient, that sharing a sensing
 method is the one reliable way to forfeit it, and that the usual day-one proxy,
@@ -983,10 +971,8 @@ building. It is computable the hour the second product lands, by anyone, with a 
 
 Set against that, the arithmetic is favourable. Voting reaches F1 0.290 where the best single
 product manages 0.148, **roughly twice the accuracy of any product taken alone**, and gives
-up 18% against a fitted model that nobody could have fitted in time. On the evidence here,
-counting agreement is the only method that is simultaneously effective and available on day
-one, and that combination, rather than the fusion result, is what we would put in front of an
-operational team.
+up 18% against a fitted model that nobody could have fitted in time. What that arithmetic
+means for responders, providers and evaluators is collected in the Recommendations.
 
 Three qualifications keep the recommendation honest. First, "flat" conceals an assumption:
 weighting every product equally means trusting them equally, and UH, whose as-delivered
@@ -1320,7 +1306,7 @@ damage.
 
 ## Appendix {.unnumbered}
 
-### Radar and optical: why they fail differently {.unnumbered #sec-sensing}
+### Radar and optical: why they fail differently {#sec-sensing .unnumbered}
 
 Optical products (Microsoft, UH) classify what damage looks like from above. Radar
 coherence products (IMPACT, OSU) measure something else: whether the fine-scale
