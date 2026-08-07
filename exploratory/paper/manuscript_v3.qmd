@@ -258,22 +258,31 @@ floor.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-grad
 the picture improves a lot: at the ~5 km² sector scale the best products correctly
 identify 80–85% of the twenty worst-hit cells, with rank correlations around 0.54–0.59.
 This is the scale at which the products are genuinely usable. It is not, however, a
-scale at which they demonstrate information beyond geography: the same hindsight model
-out-ranks five of the six across the five mapped areas (@fig-nullranking). Read that
-carefully, because 96% of the reference sits in Caraballeda, so the pooled task is
-largely "find Caraballeda", which coast-plus-density solves almost by definition.
-Restricted to cells *within* Caraballeda the six split three–three against the model.
-So the products do carry real information about where within a damage zone to go first;
-what they do not add is knowledge of which zone, the part geography already encodes.
+scale at which they demonstrate information beyond geography, and we tested that two
+ways. The first test spans all five mapped areas: there the hindsight geography model
+out-ranks five of the six products (@fig-nullranking). Read it carefully, because 96%
+of the reference sits in Caraballeda, so this pooled task is largely "find
+Caraballeda", which coast-plus-density solves almost by definition. The second test
+removes that advantage by re-running the comparison only on cells inside Caraballeda:
+there the six split three–three against the model. So the products do carry real
+information about where within a damage zone to go first; what they do not add is
+knowledge of which zone, the part geography already encodes.
 
 **How it was measured.** Flags and reference points are aggregated to hexagonal grid
 cells and each product's ordering of cells is compared with the expert ordering by rank
-correlation, with the geography model's expected damage count ranked the same way. The
-cell lattices, the per-area tables, and a priority map are in the Appendix.
+correlation, with the geography model's expected damage count ranked the same way. Each
+comparison runs on the cells of that product's own analysed footprint, so the model is
+re-scored on a different cell set for each product: every product is compared on its
+own turf. The cell lattices, both tests' full tables, and a priority map are in the
+Appendix.
 
-![**Region: all five mapped areas pooled (as delivered); the within-Caraballeda split is quoted in the text.** Area-ranking skill, product against the geography null.
-The null out-ranks five of the six pooled; within the damage zone the comparison splits
-three–three.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking.png){#fig-nullranking}
+![**Region: all five mapped areas, each product's own footprint.** The first ranking
+test: per ~5 km² sector, how well each product orders the sectors by damage (grey)
+against the geography model ordering the same cells (red). The model's value differs
+per row because each comparison runs on that product's own analysed cells. It ranks
+better for five of six; the second test, restricted to cells inside Caraballeda,
+splits three–three (tables in the
+Appendix).](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking.png){#fig-nullranking}
 
 ## Agreement between independent products is the operating point {#sec-dial}
 
