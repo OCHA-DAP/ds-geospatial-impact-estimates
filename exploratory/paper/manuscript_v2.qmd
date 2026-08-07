@@ -313,6 +313,17 @@ so all of them are directly comparable. The two exceptions exist because they an
 questions or use a different reference, and are always labelled where used.
 {#tbl-allframes}
 
+Separately from the matching radius, results are reported in one of two *regions*, and
+numbers are comparable only within one:
+
+| reporting region | what it is | used for |
+|---|---|---|
+| **Best case** *(default)* | the ~61 km² core region where all published extents and the reference overlap (@fig-extents) | the headline scorecard, voting, fusion, and the core-region geography null |
+| **As delivered** | each product's full delivered footprint, wherever CEMS mapped | the as-delivered scorecard and geography benchmark (@sec-asdelivered) |
+
+: The two reporting regions. Sections state which they use; the as-delivered region is
+the operationally honest one, the best case the analytically clean one. {#tbl-regions}
+
 One point about what the radius *is*, because it is easy to picture it as a tolerance
 applied to the products alone. It is not. The radius defines the target itself, the
 label every predictor, products and models alike, is scored against:
@@ -514,8 +525,8 @@ damage-dense Caraballeda AOI, where the products score best and 96% of the refer
 lives (@sec-crossexam), precision ranged from 0.04 to 0.09 and recall from 0.31 to
 0.69. Even in that best case, for every flag that matched a CEMS damage point, ten to
 twenty did not. The rest of this paper quotes the best-case numbers unless labeled
-otherwise, because outside Caraballeda the reference is too thin to interpret failure
-cleanly. But the as-delivered figures are the operationally honest ones, since no
+otherwise (the two reporting regions are defined at @tbl-regions), because outside
+Caraballeda the reference is too thin to interpret failure cleanly. But the as-delivered figures are the operationally honest ones, since no
 responder knew in advance which zones the products would get right.
 
 A baseline puts them in perspective. Three variables are available within hours of any
@@ -546,7 +557,8 @@ Area ranking is therefore where these products *work*, not where they *add*, a d
 return to in the Discussion.
 
 Because area ranking is the products' strongest result, it deserves the same null test as the
-building-level numbers. We summed the geography model's predicted per-building risk (each
+building-level numbers (the first of this paper's three product-versus-geography
+comparisons; @tbl-nulltally collects all three). We summed the geography model's predicted per-building risk (each
 building's risk always taken from a model fit that had never seen its neighbourhood)
 over exactly the cells used above, giving an expected damage count per cell that needs no
 threshold,
@@ -741,6 +753,8 @@ flagged up to 27.5% of buildings, in spatially clustered patterns that indicate
 systematic model failure rather than noise. An evaluation confined to the damage-dense
 strip would have certified a product that fails badly elsewhere.
 
+## Results III: the scorecard in both frames {#sec-asdelivered}
+
 **The pooled scorecard is one place's scorecard.** That cautionary tale generalizes,
 and it bounds every headline number in this paper. CEMS activated five separate AOIs,
 but 96% of its damage points sit in one of them: Caraballeda (1,468 points, against 26
@@ -770,10 +784,7 @@ low-damage AOIs (32,145 in Santa Cruz alone). And Microsoft's number is *unchang
 not because its model behaves differently, but because it only published flags for the
 coastal strip it had analysed carefully. Restraint in coverage is itself a product
 property: shipping fewer, better-scoped zones protected Microsoft's as-delivered
-precision, while shipping everywhere destroyed UH's. (The voting and fusion analyses of
-@sec-dial operate in the core region and therefore sit on top of best-case numbers;
-their relative orderings are unaffected, but their absolute levels inherit the
-best-case flattery.)
+precision, while shipping everywhere destroyed UH's.
 
 Two mechanisms make the as-delivered numbers what they are, and both are worth stating
 because they answer the obvious objection: *shouldn't precision be destroyed outside the
@@ -794,7 +805,8 @@ figure in this paper, as-delivered included, is measured on each product's most 
 reference-covered subset; the true precision across a product's full output is very likely
 lower, and unmeasurably so.
 
-The as-delivered frame also re-runs this paper's harshest benchmark. We trained the
+The as-delivered frame also re-runs this paper's harshest benchmark (the second of the
+three product-versus-geography comparisons of @tbl-nulltally). We trained the
 geography null model (coast distance, building density, and ShakeMap intensity,
 constructed as described in @sec-dayzero) on each product's full delivered footprint
 under the same spatially blocked validation, then had it flag exactly as many buildings
@@ -824,7 +836,26 @@ over-flagging and reference incompleteness cannot be separated with current data
 ("no overlap" = the product did not analyse that
 AOI).](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 
-## Results III: agreement between products as an operating point {#sec-dial}
+The paper compares individual products against the geography null in three places, under
+three metrics that answer three different questions; @tbl-nulltally collects them so the
+central claim can be checked in one look.
+
+| comparison | region | metric | outcome |
+|---|---|---|---|
+| Area ranking, all five AOIs (@tbl-nullrank) | as delivered | rank correlation ρ | geography ranks better for 5 of 6 (OSU the exception) |
+| Area ranking, within Caraballeda (@tbl-nullrank-cara) | damage zone | rank correlation ρ | 3–3 split |
+| Building lists at matched size (this section) | as delivered | precision and recall | 4 of 6 matched or beaten; Microsoft and OSU stay ahead |
+| Building lists at best cut (@sec-dial, @fig-bestf1) | best case | F1 | null 0.128 sits inside the product range; matches or beats 3 of 6 |
+
+: Every single-product-versus-geography comparison in this paper, in one place. No
+individual product separates itself in any frame; combining products is what pulls
+clear (@sec-dial). {#tbl-nulltally}
+
+## Results IV: agreement between products as an operating point {#sec-dial}
+
+A frame note before the results: everything in this section is fitted and scored in the
+best-case core region (@tbl-regions). Relative orderings are unaffected by that choice,
+but absolute levels sit on top of best-case numbers, as @sec-asdelivered showed.
 
 ### No single product can be tuned into a usable building list
 
@@ -992,7 +1023,8 @@ products clear comfortably: half of them do not clear it at all, and the gap to 
 every one of these margins.
 
 A second like-for-like comparison sharpens the same point and is easier to read, because it
-puts every predictor on one number at one operating point. A provider ships exactly one flag
+puts every predictor on one number at one operating point (this is the third and final
+product-versus-geography comparison; the tally is @tbl-nulltally). A provider ships exactly one flag
 list, so a product's F1 is simply that list's F1. Our three continuous scores can be cut
 anywhere, so we report each at its best single cut. The obvious objection (the products'
 thresholds were fixed without ever seeing the reference, while ours are chosen knowing the
@@ -1047,7 +1079,7 @@ at least k of the six products". Requiring more agreement climbs from the single
 level onto the fusion curve (solid
 blue).](artefacts/RQ8-learned-fusion/figs/rq8_geography_baseline_r10.png){#fig-geobaseline}
 
-## Results IV: diagnosing a product failure from its own metadata {#sec-casestudy}
+## Results V: diagnosing a product failure from its own metadata {#sec-casestudy}
 
 Results I left the Microsoft west-strip anomaly unexplained. It can now be resolved
 completely, and the resolution is the paper's best argument for metadata transparency.
