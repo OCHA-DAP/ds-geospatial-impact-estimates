@@ -599,8 +599,8 @@ but the definition of the target every predictor is scored against:
 Widening it changes the truth being chased, not the leniency of the scoring: at 20 m
 the identical CEMS points label 2,733 core-region buildings damaged; at 10 m, 1,350.
 The product-versus-geography comparison is mildly radius-dependent as a result, so the
-whole analysis is re-run at 20 m in the Appendix ("Sensitivity to the label radius"): every
-precision rises 1.6–2.2×, and no conclusion changes.
+whole analysis is re-run at 20 m and 30 m in the Appendix ("Performance versus
+matching radius", @tbl-radii): every number rises with the radius, and no conclusion changes.
 
 Two implementation details complete the picture. The fusion analysis, which needs a label
 for every building rather than only the flagged ones, matches buildings to CEMS points by
@@ -1063,19 +1063,40 @@ expert reference analysed it and found almost no damage, and much of it is agric
 There the two coherence products flagged 1.2% and 0.9% of buildings, while the optical
 UH product flagged 27.5% (@sec-floor).
 
-### Sensitivity to the label radius {.unnumbered}
+### Performance versus matching radius {.unnumbered}
 
 All CEMS-based results in this paper use a 10 m matching radius, and every model is
-fitted and evaluated at that radius. Because the radius defines the target itself, it
-deserves a sensitivity check, and 20 m is the natural alternative: it is the widest
-radius still compatible with the urban fabric, and it doubles the positive class (2,733
-buildings labelled damaged in the core region against 1,350 at 10 m), which tests
-whether the tighter label starves the models. Re-run end-to-end at 20 m, every number
-rises: the best single product's F1 moves from
-0.148 to 0.212, the geography null from 0.128 to 0.206 (now 97% of the best product,
-matching or beating four of six instead of three), flat voting from 0.290 to 0.342, and
-the weighted fusion from 0.343 to 0.386, so the fusion's advantage over the best single
-product narrows from 2.3× to 1.8×. Every conclusion in the paper holds under both. The wider radius raises all absolute values,
+fitted and evaluated at that radius. Because the radius defines the target itself, the
+whole analysis is re-run at 20 m (doubling the positive class: 2,733 labelled buildings
+against 1,350) and at 30 m (the line-of-sight scale), and @tbl-radii shows every
+predictor at every radius, measured by one machinery throughout.
+
+| predictor | P₁₀ | R₁₀ | F1₁₀ | P₂₀ | R₂₀ | F1₂₀ | P₃₀ | R₃₀ | F1₃₀ |
+|---|---|---|---|---|---|---|---|---|---|
+| Microsoft (as shipped) | 0.081 | 0.552 | 0.142 | 0.138 | 0.461 | 0.212 | 0.184 | 0.383 | 0.249 |
+| IMPACT v2 (as shipped) | 0.069 | 0.552 | 0.123 | 0.133 | 0.523 | 0.212 | 0.205 | 0.503 | 0.291 |
+| OSU (as shipped) | 0.045 | 0.858 | 0.085 | 0.087 | 0.826 | 0.158 | 0.137 | 0.810 | 0.235 |
+| UH (as shipped) | 0.093 | 0.369 | 0.148 | 0.148 | 0.291 | 0.196 | 0.197 | 0.241 | 0.217 |
+| LIST (as shipped) | 0.057 | 0.667 | 0.104 | 0.111 | 0.646 | 0.190 | 0.172 | 0.622 | 0.269 |
+| UNEP (as shipped) | 0.086 | 0.359 | 0.139 | 0.143 | 0.293 | 0.193 | 0.188 | 0.240 | 0.211 |
+| geography null (logistic) | 0.073 | 0.502 | 0.128 | 0.125 | 0.575 | 0.206 | 0.186 | 0.578 | 0.282 |
+| geography null (random forest) | 0.055 | 0.494 | 0.099 | 0.096 | 0.458 | 0.158 | 0.141 | 0.537 | 0.223 |
+| flat k-of-6 voting (best cut) | 0.339 | 0.253 | 0.290 | 0.311 | 0.380 | 0.342 | 0.267 | 0.572 | 0.364 |
+| weighted fusion (best cut) | 0.297 | 0.407 | 0.343 | 0.396 | 0.377 | 0.386 | 0.379 | 0.489 | 0.427 |
+
+: Precision, recall, and F1 for every product and model at matching radii of 10, 20,
+and 30 m (core region; products at their shipped operating point, models at their best
+single cut). {#tbl-radii}
+
+Three patterns to read from it. Every number rises with the radius, because a flag one
+or two buildings away from recorded damage starts to count as a hit. The geography null
+gains fastest: a wider radius smears each expert point into a blob of neighbouring
+buildings, making the target area-shaped, which is exactly the shape a smooth spatial
+predictor captures well, and by 30 m the null's F1 matches or beats five of the six
+products. And combination stays ahead at every radius (voting 0.290/0.342/0.364, fusion
+0.343/0.386/0.427), so the paper's conclusions do not depend on the radius choice; the
+tight 10 m label is simply the most demanding reading, and the one where a building-level
+claim means a building. The wider radius raises all absolute values,
 because a flag one building away from a recorded damage point starts to count as a hit. It
 also flatters the geography null specifically, for a reason worth understanding: a wide radius
 smears each reference point into a blob of neighbouring buildings, making the target

@@ -1,0 +1,3 @@
+method,precision,recall,f1
+"nested, per-fold threshold, blind to test",0.1948,0.4191,0.266
+"hindsight, one global cut on the test scores",,,0.282

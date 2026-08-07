@@ -1083,6 +1083,12 @@ tbl("RQ8-learned-fusion/rq8_summary_r20.csv")  # r=20 as originally run; renamed
 ![Out-of-fold precision-recall + random-forest importances (r=20 frame, as originally
 run).](artefacts/RQ8-learned-fusion/figs/rq8_learned_fusion_r20.png)
 
+- **2026-08-07 — r30 refit for the unified radius table.** rq8 re-run at GIE_LABEL_R=30
+  (new frozen `_r30` CSVs) so manuscript v3's appendix can show every predictor at
+  10/20/30 m from one machinery (@tbl-radii there). Pattern: all numbers rise with
+  radius; the null gains fastest (F1 0.128/0.206/0.282, matching or beating 3/4/5 of 6
+  products) — the smeared-target mechanism confirmed at a third point; voting
+  (0.290/0.342/0.364) and fusion (0.343/0.386/0.427) stay ahead at every radius.
 - ⚠️ **QUALIFIED 2026-07-29:** the "+40% AP" headline below overstates the practical gap.
   Voting is a **7-level ordinal** score (0–6) → only 6 cut points, so its AP integral is
   penalised for grid coarseness, not just for worse ranking. At the **best-F1 operating point**
