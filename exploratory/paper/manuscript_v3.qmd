@@ -36,8 +36,8 @@ therefore a floor: Microsoft's rises from 0.08 to roughly 0.24 once crowd-confir
 counted.
 
 At building level, every product performed poorly. As delivered, precision ranged from 0.01 to
-0.08 (recall 0.31–0.69); even in the one damage-dense area where all six score best (the
-Caraballeda AOI, which holds 96% of the reference) it reached only 0.04–0.09. None separated
+0.08 (recall 0.31–0.69); even in the ~61 km² core region where all six products and the
+expert reference overlap, their best case, it reached only 0.05–0.09. None separated
 itself from a deliberately simple benchmark that uses no satellite imagery at all: a model
 built on coastline distance, building density and shaking intensity, fitted with hindsight to
 this event's own damage map. That benchmark matched or beat three of the six there, and four
@@ -170,16 +170,17 @@ misses.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refa
 
 **Result.** Scored per building, every product performed poorly. Across everything the
 expert reference mapped, as the products were actually delivered, precision ran from
-0.009 (UH) to 0.081 (Microsoft). Even in the one damage-dense area where all six score
-best, the Caraballeda AOI, precision reached only 0.04–0.09 against recall of 0.31–0.69:
-ten to twenty misses for every hit, in the products' best terrain (@fig-peraoi). The
+0.009 (UH) to 0.081 (Microsoft). Even in the core region, where all six products and
+the reference overlap and every product scores best, precision reached only 0.045–0.093
+against recall of 0.31–0.69: ten to twenty misses for every hit, in the products' best
+case (@fig-peraoi). The
 products do find damage; what they also produce is an enormous number of flags with
 nothing recorded underneath them.
 
 **How it was measured.** A flag counts as a hit if an expert damage point lies within
 10 m of the building, a radius chosen from the urban fabric (median neighbour spacing is
-9.7 m). Results are quoted in the damage-dense best case unless labelled as-delivered,
-because outside Caraballeda the reference is too thin to interpret failure cleanly; the
+9.7 m). Results are quoted in the core region unless labelled as-delivered, because outside
+the damage zone the reference is too thin to interpret failure cleanly; the
 as-delivered numbers are the operationally honest ones. Matching details, the radius
 sensitivity, and the two reporting regions are in the Appendix.
 
@@ -204,7 +205,7 @@ of six on both precision and recall at their own list sizes.
 | Area ranking (@fig-nullranking) | as delivered | rank correlation ρ | geography ranks better for 5 of 6 (OSU the exception) |
 | Area ranking (@fig-nullranking) | core | rank correlation ρ | single geography score 0.65; products split 3–3 around it |
 | Building lists at matched size | as delivered | precision and recall | 4 of 6 matched or beaten; Microsoft and OSU stay ahead |
-| Building lists at best cut | best case | F1 | null 0.128 sits inside the product range; matches or beats 3 of 6 |
+| Building lists at best cut | core | F1 | null 0.128 sits inside the product range; matches or beats 3 of 6 |
 
 : Every single-product-versus-geography comparison in this paper, in one place. No
 individual product separates itself in any frame; combining products is what pulls
@@ -218,7 +219,7 @@ beyond coarse spatial structure; a product that loses to it has placed flags no 
 than a retrospective geography prior. The construction, the fairness safeguards, and
 why average precision is quoted only for continuous scores are in the Appendix.
 
-![**Region: Caraballeda core (61 km²).** Every predictor at one operating point, F1 side by side. Grey bars are the six
+![**Lens: core region (61 km²).** Every predictor at one operating point, F1 side by side. Grey bars are the six
 products exactly as shipped; coloured bars are our constructions at their best single
 cut. The geography null (0.128) lands inside the product range, while flat voting
 (0.290) and weighted fusion (0.343) reach more than twice the best single product,
@@ -306,7 +307,7 @@ one.
 | 4-of-6 | 3,347 | 0.19 | 0.38 | 0.67 | 3.4 |
 | 6-of-6 | 214 | 0.64 | 0.93 | 0.18 | 0.8 |
 
-: **Region: Caraballeda core (61 km²).** The voting rules, priced. Two scales appear
+: **Lens: core region (61 km²).** The voting rules, priced. Two scales appear
 by design: the precision columns use the strict 10 m building rule, while coverage and
 visits-per-find use a 30 m line-of-sight scale (would a responder sent there *see* the
 damage), which is the scale a wasted trip is actually judged at. {#tbl-dial}
@@ -328,7 +329,7 @@ cross-product rules (Appendix). And choosing the agreement threshold buys a work
 not a hit rate: flag counts are observable on day one, the precision they deliver is
 not. What this section implies for practice is collected in the Recommendations.
 
-![**Region: Caraballeda core (61 km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
+![**Lens: core region (61 km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
 the pair sharing its entire method is the weakest of
 all.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){#fig-frontier}
 

@@ -2,6 +2,15 @@
 
 ## 0. TOP PRIORITY — two-region reframe (user directive, 2026-08-07)
 
+**STATUS 2026-08-07 late: steps 1–3 DONE.** Core ranking artefact run
+(rq3f_null_ranking_core.csv: single null 0.648 res 8; 3–3 split), figure rebuilt
+(panel B = bars vs one red line), v3 rewritten to the two lenses, and the scorecard
+core numbers re-sourced and verified from rq5b_six_member.csv (P 0.045–0.093,
+R 0.31–0.69; abstract updated 0.04–0.09 -> 0.05–0.09). Terminology: "best case" ==
+core, introduced as best case once (user rule); no lint wanted. REMAINING: step 4
+(user decides fig-peraoi's fate + the appendix's retired AOI-run table), step 5
+(deck inherits).
+
 **Rule: the paper compares in exactly two regions, ever — the core region (61 km²
 Caraballeda-coast intersection, one shared cell set) and as-delivered. The Caraballeda
 AOI is retired as a comparison frame** (the user never intended it as one; it caused
