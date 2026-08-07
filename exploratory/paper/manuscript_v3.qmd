@@ -276,13 +276,13 @@ re-scored on a different cell set for each product: every product is compared on
 own turf. The cell lattices, both tests' full tables, and a priority map are in the
 Appendix.
 
-![**Region: all five mapped areas, each product's own footprint.** The first ranking
-test: per ~5 km² sector, how well each product orders the sectors by damage (grey)
-against the geography model ordering the same cells (red). The model's value differs
-per row because each comparison runs on that product's own analysed cells. It ranks
-better for five of six; the second test, restricted to cells inside Caraballeda,
-splits three–three (tables in the
-Appendix).](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking.png){#fig-nullranking}
+![**Regions: test 1 spans all five mapped areas on each product's own footprint; test 2
+uses only cells inside Caraballeda.** Both ranking tests: how well each product orders
+cells by damage (grey) against the geography model ordering the same cells (red). In
+test 1 the model's value differs per row because each comparison runs on that product's
+own analysed cells; it ranks better for five of six there, and the advantage disappears
+inside the damage zone, where the six split
+three–three.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){#fig-nullranking}
 
 ## Agreement between independent products is the operating point {#sec-dial}
 
