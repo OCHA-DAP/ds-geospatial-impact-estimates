@@ -201,8 +201,8 @@ of six on both precision and recall at their own list sizes.
 
 | comparison | region | metric | outcome |
 |---|---|---|---|
-| Area ranking, all five AOIs | as delivered | rank correlation ρ | geography ranks better for 5 of 6 (OSU the exception) |
-| Area ranking, within Caraballeda | damage zone | rank correlation ρ | 3–3 split |
+| Area ranking (@fig-nullranking) | as delivered | rank correlation ρ | geography ranks better for 5 of 6 (OSU the exception) |
+| Area ranking (@fig-nullranking) | core | rank correlation ρ | single geography score 0.65; products split 3–3 around it |
 | Building lists at matched size | as delivered | precision and recall | 4 of 6 matched or beaten; Microsoft and OSU stay ahead |
 | Building lists at best cut | best case | F1 | null 0.128 sits inside the product range; matches or beats 3 of 6 |
 
@@ -258,35 +258,33 @@ floor.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-grad
 the picture improves a lot: at the ~5 km² sector scale the best products correctly
 identify 80–85% of the twenty worst-hit cells, with rank correlations around 0.54–0.59.
 This is the scale at which the products are genuinely usable. It is not, however, a
-scale at which they demonstrate information beyond geography, and we tested that two
-ways. The first test spans all five mapped areas: there the hindsight geography model
-out-ranks five of the six products (@fig-nullranking). Read it carefully, because 96%
-of the reference sits in Caraballeda, so this pooled task is largely "find
-Caraballeda", which coast-plus-density solves almost by definition. The second test
-removes that advantage by re-running the comparison only on cells inside Caraballeda:
-there the six split three–three against the model. So the products do carry real
-information about where within a damage zone to go first; what they do not add is
-knowledge of which zone, the part geography already encodes.
+scale at which they demonstrate information beyond geography, and we tested that under
+both of the paper's lenses (@fig-nullranking). As delivered, across everything each
+product shipped, the hindsight geography model out-ranks five of the six. Read that
+carefully, because 96% of the reference sits in one damage zone, so the as-delivered
+task is largely "find the damage zone", which coast-plus-density solves almost by
+definition. In the core region, where every product and the model score the identical
+cells and the model therefore has a single score (0.65), the six split three–three:
+LIST (0.74), IMPACT (0.72) and OSU (0.70) rank above it, Microsoft (0.61), UNEP (0.58)
+and UH (0.48) below. So the products do carry real information about where within a
+damage zone to go first; what they do not add is knowledge of which zone, the part
+geography already encodes.
 
 **How it was measured.** Flags and reference points are aggregated to hexagonal grid
 cells and each product's ordering of cells is compared with the expert ordering by rank
 correlation, with the geography model's expected damage count ranked the same way. In
-both tests, each comparison runs on the cells of that product's own analysed footprint
-(test 2 restricts those cells to Caraballeda), so the model is re-scored on a different
-cell set for each product: every product is compared on its own turf, and the model's
-value varies with whose turf it is graded on. The cell lattices, both tests' full tables, and a priority map are in the
-Appendix.
+the as-delivered test each comparison runs on the cells of that product's own footprint,
+so the model is re-scored per row; in the core-region test all six products and the
+model are scored on the identical shared cells, so the model has one value. The cell
+lattices, full tables, and a priority map are in the Appendix.
 
-![**Regions: test 1 spans all five mapped areas; test 2 uses only cells inside the
-Caraballeda AOI (not the smaller core region). In both, each row is that product's own
-footprint cells.** Both ranking
-tests: how well each product orders cells by damage (grey) against the geography model
-ordering the identical cells (red). The model itself never changes; its value differs
-per row, in both panels, because every comparison is graded on a different set of cells
-(the product's own footprint, restricted in test 2 to Caraballeda: 112 cells for
-Microsoft, 134 for OSU, and so on). The model ranks better for five of six pooled; the
-advantage disappears inside the damage zone, where the six split
-three–three.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){#fig-nullranking}
+![**Lenses: test 1 as delivered (each product's own footprint cells, so the model is
+re-scored per row); test 2 the core region (one shared cell set, so the model has a
+single score).** Both ranking tests: how well each product orders cells by damage
+(grey) against the geography model on the same cells (red). As delivered the model
+ranks better for five of six; in the core region the six split three–three around its
+single score of
+0.65.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){#fig-nullranking}
 
 ## Agreement between independent products is the operating point {#sec-dial}
 
@@ -584,14 +582,13 @@ numbers are comparable only within one:
 
 | reporting region | what it is | used for |
 |---|---|---|
-| **Caraballeda AOI** | the damage-dense CEMS-mapped area holding 96% of the reference | the scorecard's "best case" numbers; ranking test 2 (per-product cells within the AOI) |
 | **Core region** | the ~61 km² intersection of the CEMS extents with all five extent-publishing products (@fig-extents): one shared cell set | voting, the pairwise rules, fusion, and the best-F1 geography comparison |
 | **As delivered** | each product's full delivered footprint, wherever CEMS mapped: a different region per product | the as-delivered scorecard and geography benchmark; ranking test 1 |
 
-: The three reporting regions. Sections and captions state which they use. Only the
-core region gives every predictor an identical cell set; the other two are
-per-product by design, which is why the geography model's score varies by row wherever
-they are used. {#tbl-regions}
+: The two reporting lenses. Sections and captions state which they use. The core
+region gives every predictor an identical cell set (one geography score); as-delivered
+is per-product by design, so the geography model is re-scored on each product's own
+footprint there. {#tbl-regions}
 
 One point about what the radius *is*: it is not a tolerance applied to the products,
 but the definition of the target every predictor is scored against:

@@ -39,8 +39,8 @@ LABEL_R = 10  # paper's primary frame
 # question that matters is whether the products can out-rank geography WITHIN the damage zone.
 # Caraballeda holds too few ~5 km2 cells for a meaningful correlation, so this mode uses
 # finer resolutions.
-SCOPE = os.environ.get("GIE_SCOPE", "all")
-RESOS = (9, 8) if SCOPE == "caraballeda" else (8, 7)
+SCOPE = os.environ.get("GIE_SCOPE", "all")  # all | caraballeda | core
+RESOS = (9, 8) if SCOPE in ("caraballeda", "core") else (8, 7)
 SUF = "" if SCOPE == "all" else f"_{SCOPE}"
 # All six evaluated members. RQ3 originally covered only MS/IMPACT/OSU (the members whose
 # extents were available then); UH, LIST and UNEP are added here using the same AOI
@@ -114,6 +114,18 @@ def main():
             "UNEP": None}  # UNEP: all CEMS AOIs (coverage assumption, as in rq8b)
     CONTEXT = ["density9", "dist_coast", "mmi"]
 
+    if SCOPE == "core":
+        # The paper's core region: CEMS latest extents intersected with ALL five
+        # extent-publishing products' AOIs (UNEP has none: coverage assumption). One
+        # shared region for every product, so the null has a single score per res.
+        core = ext_latest
+        for a in [v for v in aois.values() if v is not None]:
+            core = core.intersection(a)
+        if core.is_empty:
+            raise RuntimeError("core-region intersection came out empty")
+        ext_latest = core
+        aois = {name: None for name in aois}
+
     rows = []
     for name, col in FLAGS.items():
         region = ext_latest if aois[name] is None else ext_latest.intersection(aois[name])
@@ -143,7 +155,10 @@ def main():
                                   for p in cll]).value_counts().rename("cems")
             agg = sub.groupby(ccol).agg(pdmg=("pdmg", "sum"), null=("null_p", "sum"))
             t = pd.concat([cems_cnt, agg], axis=1).fillna(0)
-            both = t[(t.cems > 0) | (t.pdmg > 0)]
+            # core scope: one FIXED cell set (every building-bearing cell of the shared
+            # region), identical for all products, so the null has a single score.
+            # Other scopes keep the original activity filter.
+            both = t if SCOPE == "core" else t[(t.cems > 0) | (t.pdmg > 0)]
             rho_p, _ = spearmanr(both.cems, both.pdmg)
             rho_n, _ = spearmanr(both.cems, both.null)
 
