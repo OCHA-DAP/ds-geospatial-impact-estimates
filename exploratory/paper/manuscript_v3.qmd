@@ -599,7 +599,7 @@ but the definition of the target every predictor is scored against:
 Widening it changes the truth being chased, not the leniency of the scoring: at 20 m
 the identical CEMS points label 2,733 core-region buildings damaged; at 10 m, 1,350.
 The product-versus-geography comparison is mildly radius-dependent as a result, so the
-whole analysis is re-run at 20 m in the Appendix ("The 20 m label radius"): every
+whole analysis is re-run at 20 m in the Appendix ("Sensitivity to the label radius"): every
 precision rises 1.6–2.2×, and no conclusion changes.
 
 Two implementation details complete the picture. The fusion analysis, which needs a label
@@ -1063,13 +1063,15 @@ expert reference analysed it and found almost no damage, and much of it is agric
 There the two coherence products flagged 1.2% and 0.9% of buildings, while the optical
 UH product flagged 27.5% (@sec-floor).
 
-### The 20 m label radius {.unnumbered}
+### Sensitivity to the label radius {.unnumbered}
 
-All CEMS-based results in this paper use a 10 m matching radius, and every
-model is fitted and evaluated at that radius. The fusion analysis was originally built at
-20 m out of concern for fit stability (20 m labels 2,733 buildings damaged in the core region
-against 1,350 at 10 m), and that frame is retained here as the sensitivity check.
-Re-run end-to-end at 20 m, every number rises: the best single product's F1 moves from
+All CEMS-based results in this paper use a 10 m matching radius, and every model is
+fitted and evaluated at that radius. Because the radius defines the target itself, it
+deserves a sensitivity check, and 20 m is the natural alternative: it is the widest
+radius still compatible with the urban fabric, and it doubles the positive class (2,733
+buildings labelled damaged in the core region against 1,350 at 10 m), which tests
+whether the tighter label starves the models. Re-run end-to-end at 20 m, every number
+rises: the best single product's F1 moves from
 0.148 to 0.212, the geography null from 0.128 to 0.206 (now 97% of the best product,
 matching or beating four of six instead of three), flat voting from 0.290 to 0.342, and
 the weighted fusion from 0.343 to 0.386, so the fusion's advantage over the best single
