@@ -68,6 +68,12 @@ Decided 2026-08-07 to keep content review separate from the language pass. Queue
   product: … collapses to a formula … the derivation of why is in the Appendix") and its
   Results III sibling ("which should not be used to make this comparison at all…").
   Rewrite as brief positive statements of practice with an Appendix pointer.
+- **Causal framing of the Microsoft west-strip failure** (user flag, 2026-08-07): the
+  solid claim is "traced to a single scene"; whether the cause was the image itself or
+  the model's handling of it is open at scene level (the UH cross-check is vendor-level
+  only). Sweep Results IV, the Discussion-adjacent recommendations, and the deck for
+  phrasing that asserts per-scene *processing/calibration* as established cause;
+  metadata sentence already cut from the abstract.
 - General content review (user, with fresh eyes once the language pass is done).
 
 ## Editorial / publishing

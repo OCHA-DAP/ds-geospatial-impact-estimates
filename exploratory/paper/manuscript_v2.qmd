@@ -52,39 +52,31 @@ only method we tested that is both effective and computable during a response; a
 statistically fitted combination scores 18% higher, but fitting it requires the damage map
 responders are still waiting for.
 
-One product alone published per-building acquisition metadata, and it was the only one whose
-principal failure could be diagnosed: flags that crowd reviewers judged 71% undamaged traced to
-an area covered by a single satellite scene, processed with no cross-scene check. These
-findings come from one event and should be read as a case study and a reusable evaluation
-method, not as general laws.
+These findings come from one event and should be read as a case study and a reusable
+evaluation method, not as general laws.
 
 ## Introduction
 
 In the first days after a major earthquake, responders need to know where the damage is
 and how bad it is, before ground access is possible. Satellite-derived damage products
 fill this window, and their supply has grown quickly. The 2026 Venezuela earthquake drew
-products from a government rapid-mapping service (Copernicus EMS), academic radar groups
-(Oregon State University; IMPACT Initiatives), optical AI pipelines (Microsoft AI for
-Good; University of Houston; a WFP/LIST/CERN collaboration), debris modelling (UNEP/OCHA
-Joint Environment Unit), and volunteer AI platforms (HOT fAIr, DISHA). These products
-disagree with each other, sometimes dramatically. A coordinator receiving several of them
+products from a variety of organisations: the EU's rapid-mapping service (Copernicus
+EMS), a technology company (Microsoft AI for Good), universities (Oregon State
+University, working with NASA; the University of Houston), an NGO (IMPACT Initiatives),
+UN bodies (the UNEP/OCHA Joint Environment Unit; the World Food Programme, working with
+the LIST and CERN research institutes), and volunteer AI platforms (HOT fAIr, DISHA).
+These products disagree with each other, sometimes dramatically. A coordinator receiving several of them
 in the same week has no established way to decide which to trust, for what purpose, and
 at what spatial scale.
 
-Evaluations of such products usually score them against an expert-interpreted reference
-and treat that reference as complete truth. The assumption deserves scrutiny. The
-reference is produced under the same time pressure, from the same kinds of imagery, and
-with the same physical limits as the products it judges. If the reference systematically
-misses lighter damage, then every published precision figure is understated, and it is
-understated most in exactly the damage class where products are weakest.
-
-Our approach is to use three references instead of one, chosen so that their failure
-modes do not overlap. An expert reference (CEMS) covers both error types but only inside
-its mapped extents. A crowd reference (MapSwipe) saw only locations that AI products had
-flagged, so it can refute false alarms but cannot see misses. A field reference (ChatMap)
-contains only confirmed damage, so it can reveal misses but says nothing about false
-alarms. Each reference is used only for the question it can answer, and the three can be
-used to check each other.
+We evaluated the six products that published an analysed extent, scoring them against
+three references rather than one: expert damage points (Copernicus EMS), a crowd review
+of AI-flagged locations (MapSwipe), and reports from field teams on the ground (ChatMap).
+Their blind spots differ (the crowd saw only flagged places, so it can refute false
+alarms but never reveal a miss; the field reports are the reverse), so each reference is
+used only for the question it can answer, and the three check each other. That checking
+mattered: the expert reference turned out to miss half of the lesser damage the field
+teams reported, so precision measured against it alone is a floor, not an estimate.
 
 The paper makes three contributions:
 
@@ -94,9 +86,10 @@ The paper makes three contributions:
 2. An operational result: the number of products that agree on a building acts as a
    reliable operating point, and we price each setting in field visits per damaged
    building found, so that responders can choose a setting rather than being handed one.
-3. A diagnostic result: with published per-building metadata and a crowd campaign, a
-   product's main failure could be traced to its cause during the response itself. Five
-   of the six products publish no such metadata, and their failures remain undiagnosable.
+3. A diagnostic result: one product's main failure could be traced to a single
+   satellite scene, using its published per-building metadata together with the crowd
+   campaign. The other five products publish no such metadata, so the same tracing is
+   not possible for them.
 
 Everything here comes from one event in one coastal, dense-urban geography. The method
 transfers; the specific numbers and rule orderings should be treated as hypotheses until
@@ -133,22 +126,28 @@ footprint-base differences. OSU figures refer to its v0 delivery, the version av
 during the response; a revised v1 arrived after the study window and is compared in
 @sec-casestudy. {#tbl-products}
 
-Radar and optical products fail in different ways, which matters later in the paper.
-Optical products (Microsoft, UH) classify what damage looks like from above. Radar
-coherence products (IMPACT, OSU) measure something else: whether the fine-scale
-arrangement of radar reflectors inside each pixel stayed stable between satellite passes.
-An intact building is a stable reflector and keeps high coherence; a collapse rearranges
-the reflectors and coherence drops. Vegetation never holds coherence in the first place,
-so coherence methods are largely immune to the farmland and vegetation changes that
-produce false alarms in optical and amplitude-based methods. LIST also runs on radar,
-but not on coherence: per the provider it is a deep-learning change-detection model (a
-ResNet) applied to before-and-after radar images (no methodology document accompanied
-the delivery), so we do not assume it shares that protection. UNEP's debris mass is
-likewise radar-derived. The contrast is measurable in this event. Santa Cruz serves as a
-control case: the expert reference analysed it and found almost no damage, and much of
-it is agricultural. There the two coherence products flagged 1.2% and 0.9% of buildings;
-our own radar rebuild, which uses brightness change instead of coherence, flagged 8.0%
-(@sec-dial); and the optical UH product flagged 27.5% (@sec-crossexam).
+Delivery timing is part of the picture, though this paper does not yet analyse it.
+@fig-timeline shows each product's availability as we can currently reconstruct it, and
+the reconstruction is preliminary: the dates are the timestamps at which each product
+entered our own pipeline, an upper bound on when it was actually available, and
+provider-release dates are still being confirmed. Two features are worth knowing when
+reading the table above. The whole set arrived within about eight days of the mainshock,
+and several products were sequences rather than single artefacts (Microsoft delivered
+scene by scene before merging; IMPACT and OSU each shipped revised versions), so the
+version a responder acted on depended on when they looked. Relating timing to accuracy
+is deferred until release dates are confirmed.
+
+![Product availability, measured from the M7.5 mainshock: preliminary, pending provider
+confirmation. Circles mark a release or version; a filled star marks the final product
+actually evaluated (Microsoft's merged union; IMPACT v2). Positions are our-integration
+dates (an upper bound on availability), so true release is earlier. Red markers are dates
+still to confirm.](timeline/timeline_products.png){#fig-timeline}
+
+The sensing bases in @tbl-products fail in different ways, and that difference matters
+when the products are combined later in the paper: radar coherence methods are
+structurally resistant to the vegetation-change false alarms that can fool optical and
+radar-brightness methods. A short primer on why, with the agricultural control comparison
+from this event, is in the Appendix (@sec-sensing).
 
 ![Who analysed where. Each product's analysed extent, the five expert-mapped CEMS AOIs
 (dashed black), and, in red with the zoom frame below, the core region: the intersection of
@@ -858,7 +857,8 @@ independence lives: their failure zones sit at opposite ends of the study area
 (Microsoft's on the western coast, UH's in inland agriculture). A product with
 serious failure zones is still a valuable voter wherever its errors are independent of
 its partner's. The pair that shares its entire method (the two Sentinel-1 coherence
-products) is by contrast the weakest of all fifteen pairings. We present this as a
+products; @sec-sensing explains what that method measures) is by contrast the weakest of
+all fifteen pairings. We present this as a
 mechanism, not a recipe: which pairing wins is probably event-dependent. The durable
 claims are that error independence is the active ingredient, that sharing a sensing
 method is the one reliable way to forfeit it, and that the usual day-one proxy,
@@ -1108,32 +1108,6 @@ noise-dominated, and version-to-version stability deserves a place beside accura
 how such products are judged. The area-level signal, by contrast, is robust to exactly
 this kind of churn.
 
-## Results V: when the products arrived {#sec-timeline}
-
-The operational question a scorecard cannot answer alone is *when*: a modestly accurate map
-on day two can matter more than a better one on day eight. We reconstruct each product's
-availability from the earthquake using the earliest date we can defend (the timestamp at
-which each product was integrated into our own pipeline), which is a conservative *upper
-bound* on when it was actually available (true provider-release dates are earlier and are
-still being confirmed).
-
-![Product availability, measured from the M7.5 mainshock. Circles mark a release or version;
-a filled star marks the final product actually evaluated (Microsoft's merged union; IMPACT
-v2). Positions are our-integration dates (an upper bound on availability), so true release
-is earlier. Red markers are dates still to confirm.](timeline/timeline_products.png){#fig-timeline}
-
-Three points stand (@fig-timeline). First, the entire ecosystem arrived inside about eight
-days: the field went from nothing to a dozen independent products in a single week.
-Second, several products were not single artefacts but sequences: Microsoft delivered
-scene-by-scene across five areas before merging them into the union we evaluate, and both
-IMPACT (raster v1 → vector v2) and OSU (v0 → a later v1) shipped successive versions, so
-"the product" has a delivery history, and the version a responder acted on depended on when
-they looked. Third, and honestly, we stop at *availability*: the decision-relevant analysis
-(accuracy interacted with arrival date, so that a fast-but-rough product can be scored
-against a slow-but-better one) requires confirmed provider-release dates we do not yet
-hold, and is deferred. What the timeline already shows is that timeliness varied by days
-across products, enough to matter operationally.
-
 ## Discussion
 
 Two of this evaluation's results are negative, and we record them deliberately, because
@@ -1269,9 +1243,10 @@ third of the model's weight and the null uses genuinely day-zero-available event
 information.
 
 **Pending work.** Bootstrap confidence intervals and population-weighted prioritisation
-are in progress and absent from this draft. The timeliness axis is partly built:
-@sec-timeline reconstructs *availability* (an upper bound), but the decision-relevant
-interaction of accuracy with arrival date awaits confirmed provider-release dates.
+are in progress and absent from this draft. The timeliness axis is preliminary:
+@fig-timeline reconstructs *availability* only (an upper bound from our own ingest
+dates), and the decision-relevant interaction of accuracy with arrival date awaits
+confirmed provider-release dates.
 
 ## Conclusion
 
@@ -1305,6 +1280,26 @@ all of them: as of this event, everything, products and references alike, sees d
 damage.
 
 ## Appendix {.unnumbered}
+
+### Radar and optical: why they fail differently {.unnumbered #sec-sensing}
+
+Optical products (Microsoft, UH) classify what damage looks like from above. Radar
+coherence products (IMPACT, OSU) measure something else: whether the fine-scale
+arrangement of radar reflectors inside each pixel stayed stable between satellite passes.
+An intact building is a stable reflector and keeps high coherence; a collapse rearranges
+the reflectors and coherence drops. Vegetation never holds coherence in the first place,
+so coherence methods are largely immune to the farmland and vegetation changes that
+produce false alarms in optical and amplitude-based methods. LIST also runs on radar,
+but not on coherence: per the provider it is a deep-learning change-detection model (a
+ResNet) applied to before-and-after radar images (no methodology document accompanied
+the delivery), so we do not assume it shares that protection. UNEP's debris mass is
+likewise radar-derived.
+
+The contrast is measurable in this event. Santa Cruz serves as a control case: the
+expert reference analysed it and found almost no damage, and much of it is agricultural.
+There the two coherence products flagged 1.2% and 0.9% of buildings; our own radar
+rebuild, which uses brightness change instead of coherence, flagged 8.0% (@sec-dial);
+and the optical UH product flagged 27.5% (@sec-crossexam).
 
 ### The 20 m label radius {.unnumbered}
 
