@@ -594,8 +594,8 @@ but the definition of the target every predictor is scored against:
 Widening it changes the truth being chased, not the leniency of the scoring: at 20 m
 the identical CEMS points label 2,733 core-region buildings damaged; at 10 m, 1,350.
 The product-versus-geography comparison is mildly radius-dependent as a result, so the
-whole analysis is re-run at 20 m in the Appendix (@tbl-radius, with the reasoning):
-every precision rises 1.6–2.2×, and no conclusion changes.
+whole analysis is re-run at 20 m in the Appendix ("The 20 m label radius"): every
+precision rises 1.6–2.2×, and no conclusion changes.
 
 Two implementation details complete the picture. The fusion analysis, which needs a label
 for every building rather than only the flagged ones, matches buildings to CEMS points by
@@ -1063,22 +1063,12 @@ UH product flagged 27.5% (@sec-floor).
 All CEMS-based results in this paper use a 10 m matching radius, and every
 model is fitted and evaluated at that radius. The fusion analysis was originally built at
 20 m out of concern for fit stability (20 m labels 2,733 buildings damaged in the core region
-against 1,350 at 10 m), and that frame is retained here as the sensitivity check. The same
-analysis run end-to-end at 20 m gives:
-
-| | evaluated at 10 m (reported) | evaluated at 20 m |
-|---|---|---|
-| best single product | 0.148 (UH) | 0.212 (MS, IMPACT) |
-| geography null | 0.128 | 0.206 |
-| null as a share of the best product | 86% | 97% |
-| products the null matches or beats (best-F1) | 3 of 6 | 4 of 6 |
-| flat k-of-6 voting | 0.290 | 0.342 |
-| weighted fusion | 0.343 | 0.386 |
-| fusion as a multiple of the best product | **2.3×** | 1.8× |
-
-: F1 at each predictor's operating point under both label radii. {#tbl-radius}
-
-Every conclusion in the paper holds under both. The wider radius raises all absolute values,
+against 1,350 at 10 m), and that frame is retained here as the sensitivity check.
+Re-run end-to-end at 20 m, every number rises: the best single product's F1 moves from
+0.148 to 0.212, the geography null from 0.128 to 0.206 (now 97% of the best product,
+matching or beating four of six instead of three), flat voting from 0.290 to 0.342, and
+the weighted fusion from 0.343 to 0.386, so the fusion's advantage over the best single
+product narrows from 2.3× to 1.8×. Every conclusion in the paper holds under both. The wider radius raises all absolute values,
 because a flag one building away from a recorded damage point starts to count as a hit. It
 also flatters the geography null specifically, for a reason worth understanding: a wide radius
 smears each reference point into a blob of neighbouring buildings, making the target
