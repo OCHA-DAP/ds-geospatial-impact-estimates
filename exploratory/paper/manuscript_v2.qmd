@@ -1220,51 +1220,56 @@ fusion can.
 
 ## Limitations
 
-This is one event in one coastal, dense-urban geography, and the core comparison region
-is only ~61 km². More restrictive still, 96% of the CEMS reference sits in a single AOI
-(Caraballeda), so every pooled number is effectively that AOI's number; in the four
-low-damage AOIs, measured precision (0.00–0.02) cannot distinguish product
-over-flagging from reference incompleteness (@fig-peraoi). The specific rule orderings
-and magnitudes are hypotheses elsewhere. The
+**One event, one geography, and mostly one neighbourhood.** This is a single earthquake
+in a coastal, dense-urban setting, and the core comparison region is only ~61 km². More
+restrictive still, 96% of the CEMS reference sits in a single AOI (Caraballeda), so every
+pooled number is effectively that AOI's number. In the four low-damage AOIs, measured
+precision (0.00–0.02) cannot distinguish product over-flagging from reference
+incompleteness (@fig-peraoi). The specific rule orderings and magnitudes are hypotheses
+elsewhere.
+
+**The crowd and field references have limits of their own.** The crowd campaign was
+seeded from two AI products' flags, so it scrutinises products unevenly (100% of one
+product's contested zone had crowd votes, versus 59% for another) and can never see any
+product's misses; its volunteers are not damage-assessment experts. Their imagery,
+identified from the campaign's tile configurations, was fresh post-event Vantor
+WorldView-3 acquired one to six days after the quake; the contested western strip's
+scene is confirmed as 27 June from embedded metadata — two days *after* the AI's problem
+scene, so damage persistence makes the crowd's rejections there conservative — while
+dates for some other areas rest on upload bounds rather than image tags. The field
+reports are undated, positives-only, skewed toward destruction (79% complete), and come
+with no defined collection area, so the inland-gap estimate is a lower bound.
+
+**What we know about the products themselves is uneven.** The
 independence-versus-shared-method contrast rests on a single same-method pair (the two
-coherence products); UH's exclusively-Vantor optical basis is author-confirmed, while
-LIST's SAR basis remains provider-stated rather than documented. The crowd
-reference was seeded from two AI products' flags, so it scrutinizes products unevenly
-(100% of one product's contested zone had crowd votes, versus 59% for another) and cannot
-see any product's misses. Crowd volunteers are not damage-assessment experts. Their
-imagery, identified from the campaign's tile configurations, was fresh post-event VHR
-(Vantor WorldView-3 via OpenAerialMap, acquired one to six days after the quake). The
-contested western strip's scene is confirmed as 27 June from embedded metadata, two days
-after the AI's problem scene, so damage persistence makes the crowd's rejections there
-conservative; acquisition dates for some other areas rest on upload bounds rather than
-image tags. Field reports are undated, positives-only, and skewed toward destruction
-(79% complete), and their collection area is undefined, so the inland-gap estimate is a
-lower bound. The voting analysis inherits the shared footprint base, where co-flagging
-can fail for alignment reasons as well as genuine disagreement, so unanimous-rule recall
-is understated. The learned fusion weights are calibrated within this event, and the same
-applies to the geography null model, in a way that matters for how its result is read: the
-baseline is fitted to this event's reference labels, so although it is scored strictly
-out-of-fold on the same buildings as the products, it enjoys an event-specific calibration
-the products never had and no responder possessed on the actual day zero. It is an upper
-bound on geography-only skill, and the claim it supports is about information content — the
-products add little beyond three context variables — rather than about what was operationally
-in hand. A prior model fitted on *previous* earthquakes, which is what a responder would
-really have, would score somewhere below this bound and remains untested here; building and
-transferring one is the single clearest way to convert this null into an operational claim.
-How much the null knows about the event itself also varies by layer, and the core-region
-result is the weaker of the two: there ShakeMap intensity is effectively constant and
-contributes nothing (importance 0.000), so the null reduces to static geography whose
-discrimination comes entirely from hindsight fitting, whereas across the full delivered
-footprints shaking carries 0.25–0.31 of the importance and the null is using genuinely
-day-zero-available event information. OSU's
-revised v1, delivered after the study window, is used by the operational dashboard but
-enters this paper only in the dedicated comparison (@sec-casestudy); all other OSU
-numbers are v0. Bootstrap
-confidence intervals and population-weighted prioritisation are in progress and absent from
-this draft. The timeliness axis is partly built: @sec-timeline reconstructs *availability*
-(as an upper bound), but the decision-relevant interaction of accuracy with arrival date
-awaits confirmed provider-release dates. Input imagery details and release dates for two
-products (UH, LIST) await provider confirmation.
+coherence products). UH's exclusively-Vantor optical basis is author-confirmed; LIST's
+radar basis remains provider-stated rather than documented, and input-imagery details
+and release dates for both await provider confirmation. OSU's revised v1, delivered
+after the study window, is used by the operational dashboard but enters this paper only
+in the dedicated comparison (@sec-casestudy); all other OSU numbers are v0.
+
+**Voting inherits the shared footprint base.** Two products can fail to co-flag a
+building for alignment reasons rather than genuine disagreement, so the recall of the
+strict-agreement rules is understated.
+
+**The geography null enjoys hindsight the products never had.** It is fitted to this
+event's reference labels; although it is scored strictly on held-out buildings, it
+carries an event-specific calibration no responder possessed on the actual day zero. It
+is an upper bound on geography-only skill, and the claim it supports is about information
+content — the products add little beyond three context variables — not about what was
+operationally in hand. A model fitted on *previous* earthquakes, which is what a
+responder would really have, would score somewhere below this bound and remains untested;
+building and transferring one is the clearest way to convert this null into an
+operational claim. The core-region layer is the weaker of the paper's two: shaking is
+effectively constant there, so the null reduces to static geography fitted with
+hindsight, whereas across the full delivered footprints shaking carries a quarter to a
+third of the model's weight and the null uses genuinely day-zero-available event
+information.
+
+**Pending work.** Bootstrap confidence intervals and population-weighted prioritisation
+are in progress and absent from this draft. The timeliness axis is partly built:
+@sec-timeline reconstructs *availability* (an upper bound), but the decision-relevant
+interaction of accuracy with arrival date awaits confirmed provider-release dates.
 
 ## Conclusion
 
