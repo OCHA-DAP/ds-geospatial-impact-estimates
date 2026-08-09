@@ -289,9 +289,8 @@ single score of
 **Result.** The products fail in different places, so the number of them agreeing on a
 building is informative, and it behaves as a dial with a known price at every setting
 (@tbl-dial): from "any product" (97% of known damage at the 30 m line-of-sight scale,
-at a price of 26.5 field visits per damage point reached: 37,644 flags over 0.97 × 1,467
-reference points) to "all six" (crowd-adjusted precision 0.93, 18% of the damage);
-4-of-6 costs 3.4 visits per find, unanimity 0.8. Counting agreement
+at a price of 26.4 field visits per damage point reached) to "all six" (crowd-adjusted
+precision 0.93, 18% of the damage); 4-of-6 costs 3.4 visits per find, unanimity 0.8. Counting agreement
 roughly doubles the accuracy of the best single product (F1 0.290 against 0.148) and
 requires no weights, no training data and no reference, so it is computable the hour
 the second product lands. A statistically fitted fusion of the same inputs scores 18%
@@ -301,7 +300,7 @@ one.
 
 ```{python}
 #| label: tbl-dial
-#| tbl-cap: "Every product and voting rule under one machinery (the scorecard's dual-anchor matching, core region) at matching radii of 10, 20, and 30 m. At 10 m, product cells pair the core value with the as-delivered value in parentheses; voting rules are built on the shared footprint base and exist only in the core. Crowd-adjusted precision re-judges the expert-unmatched flags by crowd verdict (10 m basis). Shading ranks core values within each column, darker = higher. The geography null and weighted fusion are compared in the F1 figure and the Appendix, not here: they live in a different (building-label) machinery, and gluing the two into one table would mix measurements."
+#| tbl-cap: "Every product and voting rule under one machinery (the scorecard's dual-anchor matching, core region) at matching radii of 10, 20, and 30 m. At 10 m, product cells pair the core value with the as-delivered value in parentheses; voting rules are built on the shared footprint base and exist only in the core. Crowd-adjusted precision re-judges the expert-unmatched flags by crowd verdict (10 m basis). 'Visits/find' is field visits per damage point reached at the 30 m line-of-sight scale: flags ÷ (R₃₀ × 1,467 reference points). Shading ranks core values within each column, darker = higher. The geography null and weighted fusion are compared in the F1 figure and the Appendix, not here: they live in a different (building-label) machinery, and gluing the two into one table would mix measurements."
 import pandas as pd
 from great_tables import GT, style, loc
 from matplotlib import colormaps
@@ -315,10 +314,14 @@ asd = asd[asd.aoi == "ALL (as delivered)"].drop_duplicates("product").set_index(
 products = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 rules = [f"{k}-of-6" for k in range(1, 7)]
 labels = {"MS": "Microsoft", "IMPACT": "IMPACT v2"}
+N_CEMS = 1467
 
 disp, nums = [], []
 for key in products + rules:
-    d = {"rule": labels.get(key, key)}; n = {}
+    d = {"rule": labels.get(key, key),
+         "group": "Products" if key in products else "Voting rules (k of 6 agree)"}
+    n = {}
+    d["flags"] = f"{int(five[10].loc[key]['flagged']):,}"
     for r in (10, 20, 30):
         row = five[r].loc[key]
         for m, ml in (("P_cems", "P"), ("R_cems", "R"), ("F1_cems", "F1")):
@@ -330,24 +333,37 @@ for key in products + rules:
                 d[col] = f"{row[m]:.3f}"
     n["Padj"] = float(five[10].loc[key]["P_crowd_adj"])
     d["Padj"] = f"{n['Padj']:.3f}"
+    visits = five[10].loc[key]["flagged"] / (five[30].loc[key]["R_cems"] * N_CEMS)
+    n["visits"] = -visits  # negative so darker = better (fewer visits) stays consistent
+    d["visits"] = f"{visits:.1f}"
     disp.append(d); nums.append(n)
-df = pd.DataFrame(disp)[["rule", "P10", "R10", "F110", "Padj",
-                         "P20", "R20", "F120", "P30", "R30", "F130"]]
-nm = pd.DataFrame(nums)[list(df.columns[1:])]
+
+cols = ["rule", "flags", "P10", "R10", "F110", "Padj",
+        "P20", "R20", "F120", "P30", "R30", "F130", "visits"]
+df = pd.DataFrame(disp)[["group"] + cols]
+nm = pd.DataFrame(nums)[[c for c in cols if c not in ("rule", "flags")]]
 
 cmap = colormaps["Blues"]
-gt = (GT(df)
+gt = (GT(df, rowname_col="rule", groupname_col="group")
       .tab_spanner("10 m", ["P10", "R10", "F110", "Padj"])
       .tab_spanner("20 m", ["P20", "R20", "F120"])
-      .tab_spanner("30 m", ["P30", "R30", "F130"])
-      .cols_label(P10="P", R10="R", F110="F1", Padj="P (crowd-adj)",
-                  P20="P", R20="R", F120="F1", P30="P", R30="R", F130="F1"))
+      .tab_spanner("30 m", ["P30", "R30", "F130", "visits"])
+      .cols_label(flags="flags", P10="P", R10="R", F110="F1", Padj="P (crowd-adj)",
+                  P20="P", R20="R", F120="F1", P30="P", R30="R", F130="F1",
+                  visits="visits/find")
+      .tab_options(column_labels_font_weight="bold",
+                   row_group_font_weight="bold",
+                   table_font_size="13px",
+                   data_row_padding="4px"))
 for col in nm.columns:
     lo, hi = nm[col].min(), nm[col].max()
     for i2 in range(len(nm)):
         f = 0.0 if hi == lo else (nm[col][i2] - lo) / (hi - lo)
         gt = gt.tab_style(style.fill(color=to_hex(cmap(0.08 + 0.34 * f))),
                           loc.body(columns=col, rows=[i2]))
+for edge in ("P10", "P20", "P30"):
+    gt = gt.tab_style(style.borders(sides="left", color="#8a8a8a", weight="2px"),
+                      loc.body(columns=edge))
 gt
 ```
 
