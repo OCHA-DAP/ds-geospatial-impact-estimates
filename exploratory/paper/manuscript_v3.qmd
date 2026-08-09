@@ -146,8 +146,8 @@ computed against it, under one matching rule (a building counts as damaged if a 
 point lies within 10 m; the Appendix gives the reasoning and sensitivity). Three other
 distances appear in this paper, each doing exactly one job: 20 m absorbs phone-GPS
 error when matching against field reports; a separate 20 m re-run of the label itself
-is the Appendix's sensitivity check; and 30 m prices field visits in the voting table,
-the line-of-sight scale a wasted trip is judged at. MapSwipe is a
+is the Appendix's sensitivity check; and 30 m is the line-of-sight scale a wasted trip
+is judged at, shown alongside 10 and 20 m in @tbl-dial. MapSwipe is a
 crowd campaign in which more than 400 volunteers reviewed ~50 m cells at locations AI
 products had flagged: it can refute false alarms but can never reveal a miss, so it is
 used to adjudicate disputed flags, never as ground truth. ChatMap is 415 building-level
@@ -288,8 +288,10 @@ single score of
 
 **Result.** The products fail in different places, so the number of them agreeing on a
 building is informative, and it behaves as a dial with a known price at every setting
-(@tbl-dial): from "any product" (97% of known damage, 26 visits per verified find) to
-"all six" (crowd-adjusted precision 0.93, 18% of the damage). Counting agreement
+(@tbl-dial): from "any product" (97% of known damage at the 30 m line-of-sight scale,
+at a price of 26.5 field visits per damage point reached: 37,644 flags over 0.97 × 1,467
+reference points) to "all six" (crowd-adjusted precision 0.93, 18% of the damage);
+4-of-6 costs 3.4 visits per find, unanimity 0.8. Counting agreement
 roughly doubles the accuracy of the best single product (F1 0.290 against 0.148) and
 requires no weights, no training data and no reference, so it is computable the hour
 the second product lands. A statistically fitted fusion of the same inputs scores 18%
@@ -297,17 +299,57 @@ higher (0.343), but its weights come from the damage map a responder is still wa
 for: like the geography null, it explains the event afterwards and cannot run during
 one.
 
-| rule | flags | CEMS precision floor | crowd-adjusted precision | damage coverage (CEMS, 30 m) | visits per verified find (30 m) |
-|---|---|---|---|---|---|
-| 1-of-6 (union) | 37,644 | 0.03 | 0.21 | 0.97 | 26.5 |
-| 3-of-6 | 9,409 | 0.10 | 0.28 | 0.86 | 7.5 |
-| 4-of-6 | 3,347 | 0.19 | 0.38 | 0.67 | 3.4 |
-| 6-of-6 | 214 | 0.64 | 0.93 | 0.18 | 0.8 |
+```{python}
+#| label: tbl-dial
+#| tbl-cap: "Every product and voting rule under one machinery (the scorecard's dual-anchor matching, core region) at matching radii of 10, 20, and 30 m. At 10 m, product cells pair the core value with the as-delivered value in parentheses; voting rules are built on the shared footprint base and exist only in the core. Crowd-adjusted precision re-judges the expert-unmatched flags by crowd verdict (10 m basis). Shading ranks core values within each column, darker = higher. The geography null and weighted fusion are compared in the F1 figure and the Appendix, not here: they live in a different (building-label) machinery, and gluing the two into one table would mix measurements."
+import pandas as pd
+from great_tables import GT, style, loc
+from matplotlib import colormaps
+from matplotlib.colors import to_hex
 
-: **Lens: core region (61 km²).** The voting rules, priced. Two scales appear
-by design: the precision columns use the strict 10 m building rule, while coverage and
-visits-per-find use a 30 m line-of-sight scale (would a responder sent there *see* the
-damage), which is the scale a wasted trip is actually judged at. {#tbl-dial}
+five = {r: pd.read_csv(f"artefacts/RQ5-ensemble/rq5b_six_member{'' if r == 10 else f'_r{r}'}.csv").set_index("rule")
+        for r in (10, 20, 30)}
+asd = pd.read_csv("artefacts/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv")
+asd = asd[asd.aoi == "ALL (as delivered)"].drop_duplicates("product").set_index("product")
+
+products = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
+rules = [f"{k}-of-6" for k in range(1, 7)]
+labels = {"MS": "Microsoft", "IMPACT": "IMPACT v2"}
+
+disp, nums = [], []
+for key in products + rules:
+    d = {"rule": labels.get(key, key)}; n = {}
+    for r in (10, 20, 30):
+        row = five[r].loc[key]
+        for m, ml in (("P_cems", "P"), ("R_cems", "R"), ("F1_cems", "F1")):
+            col = f"{ml}{r}"
+            n[col] = float(row[m])
+            if r == 10 and key in products and m in ("P_cems", "R_cems"):
+                d[col] = f"{row[m]:.3f} ({float(asd.loc[key][m]):.3f})"
+            else:
+                d[col] = f"{row[m]:.3f}"
+    n["Padj"] = float(five[10].loc[key]["P_crowd_adj"])
+    d["Padj"] = f"{n['Padj']:.3f}"
+    disp.append(d); nums.append(n)
+df = pd.DataFrame(disp)[["rule", "P10", "R10", "F110", "Padj",
+                         "P20", "R20", "F120", "P30", "R30", "F130"]]
+nm = pd.DataFrame(nums)[list(df.columns[1:])]
+
+cmap = colormaps["Blues"]
+gt = (GT(df)
+      .tab_spanner("10 m", ["P10", "R10", "F110", "Padj"])
+      .tab_spanner("20 m", ["P20", "R20", "F120"])
+      .tab_spanner("30 m", ["P30", "R30", "F130"])
+      .cols_label(P10="P", R10="R", F110="F1", Padj="P (crowd-adj)",
+                  P20="P", R20="R", F120="F1", P30="P", R30="R", F130="F1"))
+for col in nm.columns:
+    lo, hi = nm[col].min(), nm[col].max()
+    for i2 in range(len(nm)):
+        f = 0.0 if hi == lo else (nm[col][i2] - lo) / (hi - lo)
+        gt = gt.tab_style(style.fill(color=to_hex(cmap(0.08 + 0.34 * f))),
+                          loc.body(columns=col, rows=[i2]))
+gt
+```
 
 The active ingredient is **independence of method, not diversity of sensors**. The
 strongest two-product rule in the study pairs Microsoft with UH, the weakest product we
@@ -596,8 +638,9 @@ but the definition of the target every predictor is scored against:
 Widening it changes the truth being chased, not the leniency of the scoring: at 20 m
 the identical CEMS points label 2,733 core-region buildings damaged; at 10 m, 1,350.
 The product-versus-geography comparison is mildly radius-dependent as a result, so the
-whole analysis is re-run at 20 m and 30 m in the Appendix ("Performance versus
-matching radius", @tbl-radii): every number rises with the radius, and no conclusion changes.
+every product and voting rule is re-scored at 20 m and 30 m (@tbl-dial), the models are
+refit at both in the Appendix ("Performance versus matching radius"), and no conclusion
+changes.
 
 Two implementation details complete the picture. The fusion analysis, which needs a label
 for every building rather than only the flagged ones, matches buildings to CEMS points by
@@ -1065,73 +1108,21 @@ UH product flagged 27.5% (@sec-floor).
 All CEMS-based results in this paper use a 10 m matching radius, and every model is
 fitted and evaluated at that radius. Because the radius defines the target itself, the
 whole analysis is re-run at 20 m (doubling the positive class: 2,733 labelled buildings
-against 1,350) and at 30 m (the line-of-sight scale), and @tbl-radii shows every
-predictor at every radius, measured by one machinery throughout.
+against 1,350) and at 30 m (the line-of-sight scale).
 
-```{python}
-#| label: tbl-radii
-#| tbl-cap: "Precision, recall, and F1 for every product and model at matching radii of 10, 20, and 30 m. Each cell shows the core-region value with the as-delivered value in parentheses (products only: the as-delivered geography benchmark is refit per product footprint, so the models have no single as-delivered number). Cell shading ranks the CORE values within each column, darker = higher. Products are scored at their shipped operating point, models at their best single cut."
-import pandas as pd
-from great_tables import GT, style, loc
-from matplotlib import colormaps
-from matplotlib.colors import to_hex
-
-core = {r: pd.read_csv(f"artefacts/RQ8-learned-fusion/rq8_best_f1_r{r}.csv").set_index("predictor")
-        for r in (10, 20, 30)}
-asd = {r: pd.read_csv(f"artefacts/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{r}.csv").set_index("product")
-       for r in (10, 20, 30)}
-for r in asd:
-    a = asd[r]
-    a["f1"] = 2 * a.P_product * a.R_product / (a.P_product + a.R_product)
-
-rows = [("MS", "MS", "Microsoft"), ("IMPACT", "IMPACT", "IMPACT v2"), ("OSU", "OSU", "OSU"),
-        ("UH", "UH", "UH"), ("LIST", "LIST", "LIST"), ("UNEP", "UNEP", "UNEP"),
-        ("geography null (logistic)", None, "geography null (logistic)"),
-        ("geography null (rand. forest)", None, "geography null (random forest)"),
-        ("flat k-of-6 voting", None, "flat k-of-6 voting"),
-        ("weighted fusion", None, "weighted fusion")]
-metrics = [("precision", "P_product", "P"), ("recall", "R_product", "R"), ("f1", "f1", "F1")]
-
-disp, nums = [], []
-for key, akey, label in rows:
-    d = {"predictor": label}; n = {}
-    for r in (10, 20, 30):
-        c = core[r].loc[key]
-        for m, am, ml in metrics:
-            col = f"{ml}{r}"
-            n[col] = float(c[m])
-            if akey is not None:
-                d[col] = f"{c[m]:.3f} ({float(asd[r].loc[akey][am]):.3f})"
-            else:
-                d[col] = f"{c[m]:.3f}"
-    disp.append(d); nums.append(n)
-df = pd.DataFrame(disp)
-nm = pd.DataFrame(nums)
-
-cmap = colormaps["Blues"]
-gt = (GT(df)
-      .tab_spanner("10 m", [c for c in df.columns if c.endswith("10")])
-      .tab_spanner("20 m", [c for c in df.columns if c.endswith("20")])
-      .tab_spanner("30 m", [c for c in df.columns if c.endswith("30")])
-      .cols_label(**{f"{ml}{r}": ml for r in (10, 20, 30) for _, _, ml in metrics}))
-for col in nm.columns:
-    lo, hi = nm[col].min(), nm[col].max()
-    for i2 in range(len(nm)):
-        f = 0.0 if hi == lo else (nm[col][i2] - lo) / (hi - lo)
-        gt = gt.tab_style(style.fill(color=to_hex(cmap(0.08 + 0.34 * f))),
-                          loc.body(columns=col, rows=[i2]))
-gt
-```
+@tbl-dial in the main text carries every product and voting rule at all
+three radii in the paper's primary machinery; the models' radius behaviour is
+summarised below.
 
 Three patterns to read from it. Every number rises with the radius, because a flag one
 or two buildings away from recorded damage starts to count as a hit. The geography null
 gains fastest: a wider radius smears each expert point into a blob of neighbouring
 buildings, making the target area-shaped, which is exactly the shape a smooth spatial
-predictor captures well, and by 30 m the null's F1 matches or beats five of the six
-products. And combination stays ahead at every radius (voting 0.290/0.342/0.364, fusion
-0.343/0.386/0.427), so the paper's conclusions do not depend on the radius choice; the
-tight 10 m label is simply the most demanding reading, and the one where a building-level
-claim means a building. The wider radius raises all absolute values,
+predictor captures well; refit at 30 m the null's F1 climbs 0.128/0.206/0.282 and
+matches or beats five of the six products. And combination stays ahead at every radius
+(voting at its best cut 0.290/0.342/0.364, fusion 0.343/0.386/0.427), so the paper's
+conclusions do not depend on the radius choice; the tight 10 m label is simply the most
+demanding reading, and the one where a building-level claim means a building. The wider radius raises all absolute values,
 because a flag one building away from a recorded damage point starts to count as a hit. It
 also flatters the geography null specifically, for a reason worth understanding: a wide radius
 smears each reference point into a blob of neighbouring buildings, making the target

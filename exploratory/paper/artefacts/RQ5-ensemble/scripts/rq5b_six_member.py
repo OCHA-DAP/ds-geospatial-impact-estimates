@@ -27,7 +27,9 @@ import gie_paper as gp  # noqa: E402
 
 HERE = os.path.dirname(__file__)
 POS = (2, 3)
-R_CEMS, R_FIELD = 10, 20
+R_CEMS = int(os.environ.get("GIE_LABEL_R", "10"))  # CEMS matching radius; outputs suffixed _r<N> when not 10
+R_FIELD = 20
+SUF = "" if R_CEMS == 10 else f"_r{R_CEMS}"
 MIN_VOTES = 4
 MEMBERS = {"MS": "ms_dmg", "IMPACT": "sar_dmg", "OSU": "osu_dmg",
            "UH": "uh_dmg", "LIST": "list_dmg", "UNEP": "debris_dmg"}
@@ -131,7 +133,7 @@ def main():
         print(rows[-1], flush=True)
 
     out = pd.DataFrame(rows)
-    out.to_csv(os.path.join(HERE, "..", "rq5b_six_member.csv"), index=False)
+    out.to_csv(os.path.join(HERE, "..", f"rq5b_six_member{SUF}.csv"), index=False)
     print("wrote rq5b_six_member.csv")
 
 
