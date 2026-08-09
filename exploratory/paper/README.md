@@ -34,7 +34,7 @@ stack, which the project venv does not:
 ```bash
 cd exploratory/paper
 uv run --group etl --with nbformat --with nbclient --with ipykernel \
-       --with matplotlib --with numpy --with shapely bash -c \
+       --with matplotlib --with numpy --with shapely --with great-tables bash -c \
   'QUARTO_PYTHON="$(python -c "import sys; print(sys.executable)")" \
    quarto render manuscript_v2.qmd --to html'
 ```

@@ -1089,6 +1089,10 @@ run).](artefacts/RQ8-learned-fusion/figs/rq8_learned_fusion_r20.png)
   radius; the null gains fastest (F1 0.128/0.206/0.282, matching or beating 3/4/5 of 6
   products) — the smeared-target mechanism confirmed at a third point; voting
   (0.290/0.342/0.364) and fusion (0.343/0.386/0.427) stay ahead at every radius.
+  Companion run 2026-08-09: rq8b as-delivered baseline at r30
+  (rq8b_asdelivered_baseline_r30.csv) so v3's radius table can pair every product cell
+  as core (as-delivered) at all three radii; models keep core-only (the as-delivered
+  benchmark is per-footprint by construction).
 - ⚠️ **QUALIFIED 2026-07-29:** the "+40% AP" headline below overstates the practical gap.
   Voting is a **7-level ordinal** score (0–6) → only 6 cut points, so its AP integral is
   penalised for grid coarseness, not just for worse ranking. At the **best-F1 operating point**

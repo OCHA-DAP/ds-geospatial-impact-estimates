@@ -14,14 +14,9 @@ execute:
 jupyter: python3
 ---
 
-::: {.callout-note appearance="minimal"}
-*Internal draft for review. Numbers are frozen to the 2026-07-15 data snapshot. This
-version supersedes `manuscript_v2` and is deliberately short: each result carries its
-takeaway, the one figure or table that shows it, and a few sentences of how; the
-Appendix holds the full methods detail. Two analyses remain pending and are flagged
-where they belong: the timeliness axis (waiting on provider date confirmations) and
-bootstrap confidence intervals on headline numbers.*
-:::
+<!-- Editors' note (not rendered): numbers frozen to the 2026-07-15 snapshot; this
+version supersedes manuscript_v2; deliberately short (takeaway / figure / how /
+appendix-pointer per result). Pending: timeliness (provider dates), bootstrap CIs. -->
 
 ## Abstract {.unnumbered}
 
@@ -1071,22 +1066,60 @@ whole analysis is re-run at 20 m (doubling the positive class: 2,733 labelled bu
 against 1,350) and at 30 m (the line-of-sight scale), and @tbl-radii shows every
 predictor at every radius, measured by one machinery throughout.
 
-| predictor | P₁₀ | R₁₀ | F1₁₀ | P₂₀ | R₂₀ | F1₂₀ | P₃₀ | R₃₀ | F1₃₀ |
-|---|---|---|---|---|---|---|---|---|---|
-| Microsoft (as shipped) | 0.081 | 0.552 | 0.142 | 0.138 | 0.461 | 0.212 | 0.184 | 0.383 | 0.249 |
-| IMPACT v2 (as shipped) | 0.069 | 0.552 | 0.123 | 0.133 | 0.523 | 0.212 | 0.205 | 0.503 | 0.291 |
-| OSU (as shipped) | 0.045 | 0.858 | 0.085 | 0.087 | 0.826 | 0.158 | 0.137 | 0.810 | 0.235 |
-| UH (as shipped) | 0.093 | 0.369 | 0.148 | 0.148 | 0.291 | 0.196 | 0.197 | 0.241 | 0.217 |
-| LIST (as shipped) | 0.057 | 0.667 | 0.104 | 0.111 | 0.646 | 0.190 | 0.172 | 0.622 | 0.269 |
-| UNEP (as shipped) | 0.086 | 0.359 | 0.139 | 0.143 | 0.293 | 0.193 | 0.188 | 0.240 | 0.211 |
-| geography null (logistic) | 0.073 | 0.502 | 0.128 | 0.125 | 0.575 | 0.206 | 0.186 | 0.578 | 0.282 |
-| geography null (random forest) | 0.055 | 0.494 | 0.099 | 0.096 | 0.458 | 0.158 | 0.141 | 0.537 | 0.223 |
-| flat k-of-6 voting (best cut) | 0.339 | 0.253 | 0.290 | 0.311 | 0.380 | 0.342 | 0.267 | 0.572 | 0.364 |
-| weighted fusion (best cut) | 0.297 | 0.407 | 0.343 | 0.396 | 0.377 | 0.386 | 0.379 | 0.489 | 0.427 |
+```{python}
+#| label: tbl-radii
+#| tbl-cap: "Precision, recall, and F1 for every product and model at matching radii of 10, 20, and 30 m. Each cell shows the core-region value with the as-delivered value in parentheses (products only: the as-delivered geography benchmark is refit per product footprint, so the models have no single as-delivered number). Cell shading ranks the CORE values within each column, darker = higher. Products are scored at their shipped operating point, models at their best single cut."
+import pandas as pd
+from great_tables import GT, style, loc
+from matplotlib import colormaps
+from matplotlib.colors import to_hex
 
-: Precision, recall, and F1 for every product and model at matching radii of 10, 20,
-and 30 m (core region; products at their shipped operating point, models at their best
-single cut). {#tbl-radii}
+core = {r: pd.read_csv(f"artefacts/RQ8-learned-fusion/rq8_best_f1_r{r}.csv").set_index("predictor")
+        for r in (10, 20, 30)}
+asd = {r: pd.read_csv(f"artefacts/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{r}.csv").set_index("product")
+       for r in (10, 20, 30)}
+for r in asd:
+    a = asd[r]
+    a["f1"] = 2 * a.P_product * a.R_product / (a.P_product + a.R_product)
+
+rows = [("MS", "MS", "Microsoft"), ("IMPACT", "IMPACT", "IMPACT v2"), ("OSU", "OSU", "OSU"),
+        ("UH", "UH", "UH"), ("LIST", "LIST", "LIST"), ("UNEP", "UNEP", "UNEP"),
+        ("geography null (logistic)", None, "geography null (logistic)"),
+        ("geography null (rand. forest)", None, "geography null (random forest)"),
+        ("flat k-of-6 voting", None, "flat k-of-6 voting"),
+        ("weighted fusion", None, "weighted fusion")]
+metrics = [("precision", "P_product", "P"), ("recall", "R_product", "R"), ("f1", "f1", "F1")]
+
+disp, nums = [], []
+for key, akey, label in rows:
+    d = {"predictor": label}; n = {}
+    for r in (10, 20, 30):
+        c = core[r].loc[key]
+        for m, am, ml in metrics:
+            col = f"{ml}{r}"
+            n[col] = float(c[m])
+            if akey is not None:
+                d[col] = f"{c[m]:.3f} ({float(asd[r].loc[akey][am]):.3f})"
+            else:
+                d[col] = f"{c[m]:.3f}"
+    disp.append(d); nums.append(n)
+df = pd.DataFrame(disp)
+nm = pd.DataFrame(nums)
+
+cmap = colormaps["Blues"]
+gt = (GT(df)
+      .tab_spanner("10 m", [c for c in df.columns if c.endswith("10")])
+      .tab_spanner("20 m", [c for c in df.columns if c.endswith("20")])
+      .tab_spanner("30 m", [c for c in df.columns if c.endswith("30")])
+      .cols_label(**{f"{ml}{r}": ml for r in (10, 20, 30) for _, _, ml in metrics}))
+for col in nm.columns:
+    lo, hi = nm[col].min(), nm[col].max()
+    for i2 in range(len(nm)):
+        f = 0.0 if hi == lo else (nm[col][i2] - lo) / (hi - lo)
+        gt = gt.tab_style(style.fill(color=to_hex(cmap(0.08 + 0.34 * f))),
+                          loc.body(columns=col, rows=[i2]))
+gt
+```
 
 Three patterns to read from it. Every number rises with the radius, because a flag one
 or two buildings away from recorded damage starts to count as a hit. The geography null

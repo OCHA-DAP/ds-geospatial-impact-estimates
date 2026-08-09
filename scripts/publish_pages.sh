@@ -101,7 +101,7 @@ render() {
   step "Rendering $qmd --to $fmt"
   ( cd "$PAPER_DIR" && uv run --group etl \
       --with nbformat --with nbclient --with ipykernel \
-      --with matplotlib --with numpy --with shapely bash -c \
+      --with matplotlib --with numpy --with shapely --with great-tables bash -c \
       "QUARTO_PYTHON=\"\$(python -c 'import sys; print(sys.executable)')\" \
        quarto render $qmd --to $fmt" ) \
     || die "render failed for $qmd — the site is unchanged"
