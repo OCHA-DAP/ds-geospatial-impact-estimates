@@ -111,8 +111,8 @@ the availability inventory only.
 : Products evaluated. *Flag counts are as mapped onto the shared building-footprint base
 used throughout this paper; totals differ from providers' native counts because of
 footprint-base differences. OSU figures refer to its v0 delivery, the version available
-during the response; a revised v1 arrived after the study window and scores
-indistinguishably where the two overlap (Appendix).
+during the response; a revised v1 arrived after the study window with minimal score
+differences where the two overlap (Appendix).
 {#tbl-products}
 
 The sensing bases fail in different ways, which matters when the products are combined:
@@ -518,9 +518,9 @@ exclusively-Vantor optical basis is author-confirmed; LIST's radar basis remains
 provider-stated rather than documented, and input-imagery details and release dates for
 both await provider confirmation. OSU's revised v1, delivered after the study window, is
 used by the operational dashboard but enters this paper only in the version comparison
-(Appendix): scored on the common extent the two versions are indistinguishable
-(precision 0.036 against 0.034, recall 0.68 against 0.64) even though more than half the
-flag list turned over, so the response-time v0 is scored throughout.
+(Appendix): scored on the common extent the differences are minimal (precision 0.036
+against 0.034, recall 0.68 against 0.64) even though more than half the flag list turned
+over, so the response-time v0 is scored throughout.
 
 **Voting inherits the shared footprint base.** Two products can fail to co-flag a
 building for alignment reasons rather than genuine disagreement, so the recall of the
@@ -1093,7 +1093,7 @@ operational dashboard has moved to v1. Since both versions key to the same build
 base, they can be scored identically on the common extent against the same 1,488 CEMS
 points (this comparison spans OSU's full extent, so its precision runs lower than the
 core-region scorecard figure). The result: precision 0.036 (v0) versus 0.034 (v1),
-recall 0.68 versus 0.64, no measurable accuracy change, while **more than half the flag list turned over** (v1
+recall 0.68 versus 0.64, minimal accuracy change, while **more than half the flag list turned over** (v1
 dropped 30,565 of v0's 57,066 flags and added 42,723 new ones). A revision that
 relabels half the buildings without moving precision or recall is itself evidence for
 this paper's central reading: at the individual-building level these products are
