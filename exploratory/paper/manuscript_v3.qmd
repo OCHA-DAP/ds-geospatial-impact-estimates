@@ -37,8 +37,10 @@ itself from a deliberately simple benchmark that uses no satellite imagery at al
 built on coastline distance, building density and shaking intensity, fitted with hindsight to
 this event's own damage map. That benchmark matched or beat three of the six there, and four
 of the six across their full delivered footprints. At neighbourhood scale the products are usable:
-they ranked sectors by damage burden reliably. But the same benchmark ranked those
-sectors about as well, so this is where the products work rather than where they add.
+they ranked sectors by damage burden reliably. The same hindsight benchmark ranked those
+sectors about as well, so the products' contribution at this scale was availability:
+they delivered during the response a ranking that geography could reproduce only after
+the fact.
 
 The rest of their value lies in their disagreement. How many products must agree before a
 building is flagged works as a dial a responder can set, from flagging every building any
