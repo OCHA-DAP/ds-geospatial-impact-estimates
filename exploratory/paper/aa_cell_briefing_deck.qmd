@@ -25,11 +25,6 @@ format:
 3. **What is the sensible way to use them** in the next event?
 :::
 
-::: {.takeaway}
-Short answers: **no**; **yes, though geography would have told you much the same**; and
-**stop shopping for the best product — start counting how many of them agree**.
-:::
-
 ::: {.tiny}
 M7.5, coastal Venezuela, 24 June 2026. At least 8 organisations released damage products; we
 evaluated the 6 that published an analysed extent. Numbers frozen to the 2026-07-15 snapshot.
@@ -75,6 +70,21 @@ statistically indistinguishable from zero.
 ## Precision & recall: single products vs combinations
 
 ![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
+
+## Three questions, three answers
+
+::: {.smaller}
+1. **Can a responder act on a single flagged building?** **No.** Precision runs
+   0.05–0.09 even in the damage-dense core region: most flags have nothing wrong
+   underneath them.
+2. **Do they rank neighbourhoods well enough to triage?** **Yes** — in the core region
+   every product ranks the worst-hit cells far better than chance (ρ 0.48–0.74);
+   as delivered the signal is much weaker.
+3. **What is the sensible way to use them in the next event?** **Stop shopping for the
+   best product — count how many independent products agree.** Agreement roughly doubles
+   the accuracy of the best single product, needs no reference data, and is computable
+   the hour the second product lands.
+:::
 
 # Appendix {.smaller}
 
