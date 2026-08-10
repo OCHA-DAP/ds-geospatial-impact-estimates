@@ -87,7 +87,7 @@ GAPS = {  # source: (approx_days, label, hard?)
 OSU_V1_DAYS = days("2026-07-22 00:00Z")  # post-freeze revision (RQ2h)
 CEMS = cems_releases()          # real per-AOI + monitoring schedule
 
-fig, ax = plt.subplots(figsize=(10.5, 8) if SLIDES else (13, 7.4))
+fig, ax = plt.subplots(figsize=(12, 8) if SLIDES else (13, 7.4))
 # The mainshock is an EVENT, so give it a marker on the t=0 line as well as the line itself —
 # a bare label beside a rule reads as an axis annotation rather than something that happened.
 # The label sits in headroom ABOVE every lane; anchored just above the topmost lane it made
