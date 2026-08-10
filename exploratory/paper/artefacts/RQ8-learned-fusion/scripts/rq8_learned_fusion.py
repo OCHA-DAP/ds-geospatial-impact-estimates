@@ -201,6 +201,20 @@ def main():
                 s[te] = m.predict_proba((X[te][:, idx] - mu) / sd)[:, 1]
             store[abl_name] = s
 
+    if os.environ.get("GIE_DUMP_OOF"):
+        # per-building frozen OOF scores for the block-bootstrap CI script (RQ9):
+        # it must resample these, never refit (OPEN-ITEMS item 2).
+        dump = d[["lon", "lat", "y"]].copy()
+        dump["w"] = w
+        for nm_, col_ in FLAGS.items():
+            dump[f"flag_{nm_}"] = d[col_].to_numpy(dtype="float64", na_value=0.0)
+        dump["fusion_logit"] = oof["logit"]
+        dump["fusion_rf"] = oof["rf"]
+        dump["null_logit"] = abl_scores_logit["context-only"]
+        dump["null_rf"] = abl_scores["context-only"]
+        dump.to_parquet(os.path.join(HERE, "..", f"rq8_oof_scores{SUF}.parquet"))
+        print(f"wrote rq8_oof_scores{SUF}.parquet")
+
     # the learner x feature-set grid, so the choice is visible rather than implicit
     print("\n--- AP by learner x feature set (spatial-block CV) ---")
     print(f"{'feature set':22} {'random forest':>14} {'logistic':>10}")
