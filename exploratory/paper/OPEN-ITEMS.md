@@ -61,9 +61,12 @@ either way.
 **2. Bootstrap confidence intervals — EXECUTABLE SPEC.**
 WHY: every headline number is a point estimate; claims now leaning on CIs: "null 0.128
 inside the product range (0.085–0.148)", the 3–3 ranking splits, OSU v0/v1 "minimal"
-(P .036 vs .034, R .68 vs .64), dial-rule orderings. HOW: block bootstrap — resample
-H3 res-7 cells of the core region WITH replacement (never buildings; neighbours are
-correlated), ~2,000 reps; recompute P/R/F1 for each product (shipped lists), each
+(P .036 vs .034, R .68 vs .64), dial-rule orderings. HOW: block bootstrap — resample cells WITH
+replacement (never buildings; neighbours are correlated), ~2,000 reps. BLOCK SIZE
+MATTERS: the core region holds only ~13 res-7 cells (too few to bootstrap), so use
+res-8 blocks for core-region intervals (133 blocks) and res-7 for as-delivered.
+Resample the SAME cells jointly for all predictors so paired DIFFERENCE intervals are
+valid (e.g. UH − null), which is the decision-relevant interval; recompute P/R/F1 for each product (shipped lists), each
 k-of-6 rule, and the null/fusion (using frozen out-of-fold scores — do NOT refit per
 rep), percentile 95% intervals. Build on whatever CV design survives item 1. OUTPUT: a
 CSV per frame + intervals into tbl-dial (± or sub-script) + delete the Limitations
