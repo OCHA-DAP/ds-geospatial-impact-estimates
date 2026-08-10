@@ -5,6 +5,7 @@
 #   ./scripts/publish_pages.sh            # both: render, encrypt, commit
 #   ./scripts/publish_pages.sh deck       # just the results deck
 #   ./scripts/publish_pages.sh paper      # just the manuscript
+#   ./scripts/publish_pages.sh briefing   # just the A&A Cell 5-slide briefing
 #   ./scripts/publish_pages.sh --ship     # ...and push + open a PR against v1
 #   ./scripts/publish_pages.sh deck --no-commit
 #
@@ -36,11 +37,11 @@ COMMIT=yes
 SHIP=no
 for arg in "$@"; do
   case "$arg" in
-    deck|paper|all) TARGET="$arg" ;;
+    deck|paper|briefing|all) TARGET="$arg" ;;
     --no-commit)    COMMIT=no ;;
     --ship)         SHIP=yes ;;
     -h|--help)      sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *)              die "unknown argument '$arg' (expected: deck | paper | all | --ship | --no-commit)" ;;
+    *)              die "unknown argument '$arg' (expected: deck | paper | briefing | all | --ship | --no-commit)" ;;
   esac
 done
 [[ $SHIP == yes && $COMMIT == no ]] && die "--ship and --no-commit contradict each other"
@@ -126,6 +127,11 @@ if [[ $TARGET == all || $TARGET == deck ]]; then
   encrypt satellite_damage_evaluation_deck_v2.html "$PAGES_DIR/slides/damage-evaluation/content.enc"
 fi
 
+if [[ $TARGET == all || $TARGET == briefing ]]; then
+  render aa_cell_briefing_deck.qmd revealjs
+  encrypt aa_cell_briefing_deck.html "$PAGES_DIR/slides/aa-cell-briefing/content.enc"
+fi
+
 if [[ $TARGET == all || $TARGET == paper ]]; then
   render manuscript_v3.qmd html
   encrypt manuscript_v3.html "$PAGES_DIR/manuscript/content.enc"
@@ -155,7 +161,7 @@ fi
 
 step "Committing"
 git -C "$PAGES_REPO" add -- "$PAGES_DIR"
-git -C "$PAGES_REPO" commit -q -m "pages: republish $( [[ $TARGET == all ]] && echo 'deck and manuscript' || echo "$TARGET" )
+git -C "$PAGES_REPO" commit -q -m "pages: republish $( [[ $TARGET == all ]] && echo 'deck, briefing and manuscript' || echo "$TARGET" )
 
 Re-rendered from exploratory/paper and re-encrypted. Content only; no code change."
 git -C "$PAGES_REPO" --no-pager log --oneline -1
@@ -183,7 +189,7 @@ fi
 step "Pushing and opening a PR"
 git -C "$PAGES_REPO" push -q origin "$BRANCH" || die "push failed — nothing is public"
 PR_URL="$(cd "$PAGES_REPO" && gh pr create --base v1 --head "$BRANCH" \
-  --title "pages: republish $( [[ $TARGET == all ]] && echo 'deck and manuscript' || echo "$TARGET" )" \
+  --title "pages: republish $( [[ $TARGET == all ]] && echo 'deck, briefing and manuscript' || echo "$TARGET" )" \
   --body "Re-rendered from \`exploratory/paper\` and re-encrypted. Content only; no code change.
 
 Opened by \`scripts/publish_pages.sh --ship\`.")" \

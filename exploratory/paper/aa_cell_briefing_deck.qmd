@@ -1,6 +1,6 @@
 ---
 title: "Six satellite damage products, one earthquake"
-subtitle: "A post-event comparison against three reference datasets, and how to read it · M7.5 Venezuela, 24 June 2026 · CHD Data Science"
+subtitle: "A&A Cell - 11 August 2026"
 date: last-modified
 format:
   revealjs:
@@ -12,11 +12,9 @@ format:
     include-after-body: hdx-bg.html
 ---
 
-<!-- Distilled results deck (v2). Supersedes satellite_damage_evaluation_v1.qmd: every number here is the corrected,
-     radius-unified (10 m) set, and it includes the two null-model findings that were not in
-     the earlier deck (building level AND area level). Styling + animated particle background
-     borrowed from ds-aa-lac-dry-corridor/analysis/2026_cadc_drought_v3.
-     All figures are pre-built PNGs; embed-resources inlines them so the .html is standalone. -->
+<!-- 5-slide briefing cut of satellite_damage_evaluation_deck_v2.qmd for the A&A Cell,
+     11 Aug 2026. Slides are reused VERBATIM from the v2 deck (assembled by script), so the
+     two cannot drift apart: edit the v2 deck, then rebuild/re-render this one. -->
 
 ## Three questions
 
@@ -34,6 +32,59 @@ Short answers: **no**; **yes, though geography would have told you much the same
 ::: {.tiny}
 M7.5, coastal Venezuela, 24 June 2026. At least 8 organisations released damage products; we
 evaluated the 6 that published an analysed extent. Numbers frozen to the 2026-07-15 snapshot.
+:::
+
+## What arrived, and where each product looked
+
+::: {.cols}
+::: {.col style="flex:1.2;display:flex;flex-direction:column;justify-content:center"}
+![](timeline/timeline_products.png)
+:::
+::: {.col}
+![](artefacts/RQ0-matching-basis/figs/fig_extents_map.png)
+:::
+:::
+
+::: {.takeaway}
+Eight organisations released damage products and almost everything landed within eight days —
+the ecosystem was fast. But the analysed extents span **three orders of magnitude**, and the
+like-for-like comparisons live in the **red core region (61 km²)** where all five published
+extents and the expert reference coincide.
+:::
+
+::: {.tiny}
+Timeline x-axis is our ingest date, an upper bound on availability; UH and LIST provider release
+dates still to confirm.
+:::
+
+## No single product clearly beats a simple geography yardstick
+
+![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){.r-stretch}
+
+::: {.takeaway-hot}
+The yardstick: a model given only distance to the coast, building density, and shaking intensity — no satellite data — fitted after the fact. It scores **0.128**. The six products land between **0.085 and 0.148** — three of
+them below it. Only when you combine products (0.290 by voting, 0.343 by weighting) does
+anything pull clear.
+:::
+
+## *Independent failure modes* are the active ingredient
+
+![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
+
+::: {.takeaway}
+Pair Microsoft with **UH**, the weakest product we measured, and you get the best two-product
+rule in the study. Both are optical — UH even ran on imagery from the same vendor as
+Microsoft's failing scene — yet they fail at opposite ends of the map, so each covers for the
+other. **The independence that matters is in the models, not the inputs.** Pair the two
+products that share a whole method — Sentinel-1 coherence — and you get the worst of all
+fifteen combinations.
+:::
+
+# Appendix {.smaller}
+
+::: {.tiny}
+Backup slides from the full results deck, in their original order. The complete deck and the
+technical write-up carry the detail.
 :::
 
 ## What arrived, and when
@@ -172,16 +223,6 @@ does require the damage map itself, so read the red caveat — this is a **yards
 hold up afterwards**, not a tool anyone had on the day.
 :::
 
-## No single product clearly beats it
-
-![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){.r-stretch}
-
-::: {.takeaway-hot}
-The yardstick scores **0.128**. The six products land between **0.085 and 0.148** — three of
-them below it. Only when you combine products (0.290 by voting, 0.343 by weighting) does
-anything pull clear.
-:::
-
 ## Zoom out, though, and they do a decent job
 
 ![](artefacts/RQ3-prioritization-error-structure/figs/rq3_priority_map.png){.r-stretch}
@@ -222,19 +263,6 @@ tell you which zone, which is the part geography already knew.
 The products fail in **different** places, so the number of them agreeing on a building tells
 you how much to believe it. That gives you a dial with a known price at every setting: choose
 by how many teams you have and how much a wasted trip costs you.
-:::
-
-## *Independent failure modes* are the active ingredient
-
-![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
-
-::: {.takeaway}
-Pair Microsoft with **UH**, the weakest product we measured, and you get the best two-product
-rule in the study. Both are optical — UH even ran on imagery from the same vendor as
-Microsoft's failing scene — yet they fail at opposite ends of the map, so each covers for the
-other. **The independence that matters is in the models, not the inputs.** Pair the two
-products that share a whole method — Sentinel-1 coherence — and you get the worst of all
-fifteen combinations.
 :::
 
 ## The one finding to take into the next event
