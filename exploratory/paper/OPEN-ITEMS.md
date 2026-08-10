@@ -99,7 +99,7 @@ register flag #14) and UH's acquisition dates/scenes (vendor-level Vantor is
 author-confirmed; per-scene attribution is not, which bounds how hard the RQ2o
 "same vendor" comparison can be pushed).
 
-## Regression checks owed (cheap, run before item 1)
+## ~~Regression checks owed~~ — DONE 2026-08-10: all three default re-runs byte-identical
 
 Scripts modified 2026-08-07/09 without the repo's byte-identity re-run: `rq5b_six_member.py`
 (R_CEMS -> GIE_LABEL_R env, default 10) and `rq3f_null_ranking.py` (core scope + cell-set
