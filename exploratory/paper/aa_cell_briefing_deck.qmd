@@ -79,7 +79,7 @@ statistically indistinguishable from zero.
    underneath them.
 2. **Do they rank neighbourhoods well enough to triage?** **Yes** — in the core region
    every product ranks the worst-hit cells far better than chance (ρ 0.48–0.74);
-   as delivered the signal is much weaker.
+   as delivered the signal is much weaker (ρ −0.09 to 0.58).
 3. **What is the sensible way to use them in the next event?** **Stop shopping for the
    best product — count how many independent products agree.** Agreement roughly doubles
    the accuracy of the best single product, needs no reference data, and is computable
