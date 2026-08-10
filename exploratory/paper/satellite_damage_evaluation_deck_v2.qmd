@@ -144,10 +144,10 @@ precision **as delivered**, across everything the expert reference mapped
 :::
 
 ::: {.bignum}
-0.04 – 0.09
+0.05 – 0.09
 :::
 ::: {.bignum-sub}
-precision in the **one damage-dense area (the Caraballeda AOI)** where all six score best — and
+precision in the **shared core region (61 km²)** where all five extents overlap — and
 where 96% of the reference sits
 :::
 :::
@@ -195,13 +195,14 @@ products are genuinely useful.
 
 ## Except geography ranks them just as well
 
-![](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking.png){.r-stretch}
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){.r-stretch}
 
 ::: {.takeaway-hot}
-Run the same test on the geography yardstick and it out-ranks **five of the six**. But read that
-carefully: across all five mapped areas, 96% of the damage is in Caraballeda, so this task is
-largely *"find Caraballeda"* — which coast-plus-density does trivially. **Zoom inside
-Caraballeda and it splits 3–3** (LIST, OSU and IMPACT ahead; Microsoft, UNEP and UH behind). So
+Run the same test on the geography yardstick and, as delivered, it out-ranks **five of the
+six** (left panel). But read that carefully: across the full footprints, 96% of the damage is
+in one coastal strip, so this task is largely *"find the strip"* — which coast-plus-density
+does trivially. **Restrict to the shared core region (right panel) and it splits 3–3**
+(LIST, IMPACT and OSU ahead; Microsoft, UNEP and UH behind). So
 the products do carry information about where *within* a damage zone to go — they just don't
 tell you which zone, which is the part geography already knew.
 :::
@@ -211,7 +212,7 @@ tell you which zone, which is the part geography already knew.
 ::: {.smaller}
 | rule | flags | precision floor | crowd-adjusted | damage coverage | visits per find |
 |---|---|---|---|---|---|
-| any of 6 | 37,644 | 0.03 | 0.21 | 0.97 | 26.5 |
+| any of 6 | 37,644 | 0.03 | 0.21 | 0.97 | 26.4 |
 | 3 of 6 | 9,409 | 0.10 | 0.28 | 0.86 | 7.5 |
 | **4 of 6** | **3,347** | **0.19** | **0.38** | **0.67** | **3.4** |
 | all 6 | 214 | 0.64 | 0.93 | 0.18 | 0.8 |
@@ -229,7 +230,7 @@ by how many teams you have and how much a wasted trip costs you.
 
 ::: {.takeaway}
 Pair Microsoft with **UH**, the weakest product we measured, and you get the best two-product
-rule in the study. Both are optical — UH even ran on the same commercial imagery source as
+rule in the study. Both are optical — UH even ran on imagery from the same vendor as
 Microsoft's failing scene — yet they fail at opposite ends of the map, so each covers for the
 other. **The independence that matters is in the models, not the inputs.** Pair the two
 products that share a whole method — Sentinel-1 coherence — and you get the worst of all
@@ -318,8 +319,8 @@ extents, and nobody knew nobody was looking.
 ## Where this is weakest
 
 ::: {.smaller}
-- **One event, one coastal urban geography.** 96% of the reference sits in a single AOI, so
-  pooled numbers are effectively that AOI's numbers.
+- **One event, one coastal urban geography.** 96% of the reference sits in one coastal strip
+  (Caraballeda), so pooled numbers are effectively that strip's numbers.
 - **The geography yardstick is fitted on this event's labels** — an information-content claim,
   not an operational one. A model trained on *previous* earthquakes is the honest next step and
   is untested.
