@@ -77,16 +77,17 @@ statistically indistinguishable from zero.
 1. **Can a responder act on a single flagged building?** **No.** Precision runs
    0.05–0.09 even in the damage-dense core region: most flags have nothing wrong
    underneath them.
-2. **Do they rank neighbourhoods well enough to triage?** **Yes** — in the core region
-   every product ranks the worst-hit cells far better than chance (ρ 0.48–0.74);
-   as delivered the signal is much weaker (ρ −0.09 to 0.58).
-3. **What is the sensible way to use them in the next event?** **Stop shopping for the
-   best product — count how many independent products agree.** Agreement roughly doubles
-   the accuracy of the best single product, needs no reference data, and is computable
-   the hour the second product lands. The agreement threshold is a dial set by field
-   capacity: more agreement buys fewer, surer visits (4-of-6 ≈ one find per 3.4 visits;
-   unanimity, better than one per visit). Use the flags to rank neighbourhoods rather
-   than to judge single buildings — and nothing tested sees light damage reliably.
+2. **Do they rank neighbourhoods well enough to triage?** **Yes, with a condition.**
+   Where the damage zone is known and confined (our core region), most products show
+   real prioritisation value (ρ 0.48–0.74); as delivered the signal is much weaker
+   (ρ −0.09 to 0.58).
+3. **What is the sensible way to use them in the next event?** **Still open — but the
+   promising lines are clear.** Combining products helped here: counting agreement
+   between independent products roughly doubled the accuracy of the best single one,
+   and the agreement threshold can be tuned to the stage of the response — broad
+   coverage early, high precision later, when a wasted field visit costs most. And the
+   models themselves have room to improve; one event's evidence is a direction, not a
+   verdict.
 :::
 
 # Appendix {.smaller}
