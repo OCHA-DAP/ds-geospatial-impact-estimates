@@ -83,7 +83,10 @@ statistically indistinguishable from zero.
 3. **What is the sensible way to use them in the next event?** **Stop shopping for the
    best product — count how many independent products agree.** Agreement roughly doubles
    the accuracy of the best single product, needs no reference data, and is computable
-   the hour the second product lands.
+   the hour the second product lands. The agreement threshold is a dial set by field
+   capacity: more agreement buys fewer, surer visits (4-of-6 ≈ one find per 3.4 visits;
+   unanimity, better than one per visit). Use the flags to rank neighbourhoods rather
+   than to judge single buildings — and nothing tested sees light damage reliably.
 :::
 
 # Appendix {.smaller}
