@@ -42,7 +42,7 @@ evaluated the 6 that published an analysed extent. Numbers frozen to the 2026-07
 ![](artefacts/RQ0-matching-basis/figs/fig_extents_map.png){style="max-height:600px"}
 :::
 ::: {.col style="display:flex;flex-direction:column;justify-content:center"}
-![](timeline/timeline_products.png)
+![](timeline/timeline_products_slides.png)
 
 ::: {.takeaway style="font-size:0.66em"}
 Everything landed within ~8 days — fast. But analysed extents span **three orders of
@@ -57,25 +57,19 @@ release dates still to confirm.
 :::
 :::
 
-## No single product clearly beats a simple geography yardstick
+## Performance metrics by model
 
 ![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10_slides.png){.r-stretch}
 
-::: {.takeaway-hot}
-The yardstick: a model given only distance to the coast, building density, and shaking intensity — no satellite data — fitted after the fact. It scores **0.128**. The six products land between **0.085 and 0.148** — three of
-them below it. Only when you combine products (0.290 by voting, 0.343 by weighting) does
-anything pull clear.
-:::
-
-## Can they rank the worst-hit neighbourhoods? Yes — but so can geography
+## Can they rank the worst-hit neighbourhoods?
 
 ![](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){.r-stretch}
 
 ::: {.takeaway style="font-size:0.66em"}
-As delivered (left), geography out-ranks five of six — but 96% of the damage sits in one
-coastal strip, and coast-plus-density finds the strip trivially. In the shared core region
-(right) it splits 3–3: products do help rank *within* a damage zone; which zone to go to was
-the part geography already knew.
+Yes — products can support neighbourhood-level prioritisation. In the core region every
+product ranks the worst-hit cells far better than chance (ρ 0.48–0.74, n = 133 cells,
+all p < 10⁻⁸). As delivered the correlations are much lower (−0.09 to 0.58), and UH is
+statistically indistinguishable from zero.
 :::
 
 ## *Independent failure modes* are the active ingredient
@@ -91,7 +85,7 @@ technical write-up carry the detail.
 
 ## What arrived, and when
 
-![](timeline/timeline_products.png){.r-stretch}
+![](timeline/timeline_products_slides.png){.r-stretch}
 
 ::: {.takeaway}
 Eight organisations put out damage products, and almost everything landed within eight days.

@@ -13,7 +13,7 @@ Run: uv run --with pandas --with matplotlib python \
        exploratory/paper/timeline/plot_timeline.py
 """
 from __future__ import annotations
-import csv, os
+import csv, os, sys
 from datetime import datetime, timezone, timedelta
 import matplotlib
 matplotlib.use("Agg")
@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 HERE = os.path.dirname(__file__)
+SLIDES = "--slides" in sys.argv  # deck variant: squarer, larger type, one-line title
 MAINSHOCK = datetime(2026, 6, 24, 22, 5, 11, tzinfo=timezone.utc)
 
 
@@ -86,7 +87,7 @@ GAPS = {  # source: (approx_days, label, hard?)
 OSU_V1_DAYS = days("2026-07-22 00:00Z")  # post-freeze revision (RQ2h)
 CEMS = cems_releases()          # real per-AOI + monitoring schedule
 
-fig, ax = plt.subplots(figsize=(13, 7.4))
+fig, ax = plt.subplots(figsize=(10.5, 8) if SLIDES else (13, 7.4))
 # The mainshock is an EVENT, so give it a marker on the t=0 line as well as the line itself —
 # a bare label beside a rule reads as an axis annotation rather than something that happened.
 # The label sits in headroom ABOVE every lane; anchored just above the topmost lane it made
@@ -153,7 +154,9 @@ for src, (_, note) in GAPS.items():
 ax.set_xlim(-3.2, 30)
 ax.set_ylim(-0.7, len(LANES) + 0.95)
 ax.set_yticks([])
-ax.set_xlabel("days since the earthquake  (x = our-ingest date; an UPPER BOUND on availability — "
+ax.set_xlabel("days since the earthquake  (x = our-ingest date; an UPPER BOUND on availability)"
+              if SLIDES else
+              "days since the earthquake  (x = our-ingest date; an UPPER BOUND on availability — "
               "provider release is earlier and unconfirmed)", fontsize=11)
 # day + date ticks (dates computed directly from clock-zero)
 ticks = [0, 2, 4, 6, 8, 14, 21, 28]
@@ -167,11 +170,15 @@ leg = [Line2D([], [], marker="o", ls="", color="#2e8b57", label="a release / ver
        Line2D([], [], marker="D", ls="", mfc="none", mec="#c62828", label="version not evaluated"),
        Line2D([], [], marker="$?$", ls="", color="#c62828", label="date TO CONFIRM (gap)")]
 ax.legend(handles=leg, loc="lower right", fontsize=9.5, frameon=True)
-ax.set_title("When each damage product became available — VE earthquake\n"
+ax.set_title("When each damage product became available" if SLIDES else
+             "When each damage product became available — VE earthquake\n"
              "the ecosystem arrived inside ~8 days; Microsoft delivered scene-by-scene → a "
              "merged union; IMPACT & OSU each had two versions", fontsize=12)
+if SLIDES:
+    for t in fig.findobj(matplotlib.text.Text):
+        t.set_fontsize(t.get_fontsize() * 1.35)
 fig.tight_layout()
-out = os.path.join(HERE, "timeline_products.png")
+out = os.path.join(HERE, f"timeline_products{'_slides' if SLIDES else ''}.png")
 fig.savefig(out, dpi=150)
 print(f"wrote {out}")
 print("\nGAPS to fill (flagged on the plot):")
