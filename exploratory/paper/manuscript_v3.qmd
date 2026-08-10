@@ -219,7 +219,11 @@ fitted coefficients were not. A product that beats it has demonstrated informati
 beyond coarse spatial structure; a product that loses to it has placed flags no better
 than a retrospective geography prior. The construction, the fairness safeguards, and
 why average precision is quoted only for continuous scores are in the Appendix
-([construction](#app-null); [fairness](#app-fair)).
+([construction](#app-null); [fairness](#app-fair)). Block-bootstrap intervals put
+numbers on the takeaway: none of the six products separates *above* the null (every
+product-minus-null F1 interval reaches below zero, and OSU's sits entirely below),
+while flat voting (+0.158, interval 0.081 to 0.227) and weighted fusion (+0.214,
+interval 0.162 to 0.256) clear it decisively ([intervals](#app-ci)).
 
 ![**Lens: core region (61 km²).** Every predictor at one operating point, F1 side by side. Grey bars are the six
 products exactly as shipped; coloured bars are our constructions at their best single
@@ -307,7 +311,7 @@ one.
 
 ```{python}
 #| label: tbl-dial
-#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m). Visits/find is field visits per damage point reached at the 30 m line-of-sight scale (flags ÷ R₃₀ × 1,467 reference points); as a ratio of counts it falls below 1 where damage is dense enough that one stop puts several recorded points within sight. Shading ranks values within each column (darker = higher; for visits/find, fewer). The geography and fusion models are compared at their operating points in @fig-bestf1 and the <a href='#app-radius'>Appendix</a>."
+#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m). Visits/find is field visits per damage point reached at the 30 m line-of-sight scale (flags ÷ R₃₀ × 1,467 reference points); as a ratio of counts it falls below 1 where damage is dense enough that one stop puts several recorded points within sight. Shading ranks values within each column (darker = higher; for visits/find, fewer). The geography and fusion models are compared at their operating points in @fig-bestf1 and the <a href='#app-radius'>Appendix</a>. 95% block-bootstrap confidence intervals for these values are tabulated in the <a href='#app-ci'>Appendix</a>."
 import pandas as pd
 from great_tables import GT, style, loc
 from matplotlib import colormaps
@@ -542,8 +546,8 @@ what was operationally in hand. A model fitted on previous earthquakes, which is
 responder would really have, would score somewhere below this bound and remains
 untested.
 
-**Pending work.** Bootstrap confidence intervals and population-weighted prioritisation
-are in progress and absent from this draft. The timeliness axis is preliminary:
+**Pending work.** Population-weighted prioritisation is in progress and absent from
+this draft. The timeliness axis is preliminary:
 @fig-timeline reconstructs availability only, and the decision-relevant interaction of
 accuracy with arrival date awaits confirmed provider-release dates.
 
@@ -1272,6 +1276,77 @@ governed almost entirely by *where* a product chose to flag, not by any resistan
 alarms. Microsoft is spared only because it flagged nowhere else. This is the arithmetic
 behind the first mechanism in
 @sec-floor.](artefacts/RQ2-cems-footprint-points/figs/rq2m_deadzone_dilution.png){#fig-deadzone}
+
+### Confidence intervals for the headline numbers {#app-ci .unnumbered}
+
+Every interval below is a 95% spatial block bootstrap: H3 cells (res-8 in the core
+region, 133 blocks; res-7 as-delivered) are resampled with replacement 2,000 times and
+each statistic is recomputed from the frozen match indicators as a ratio of
+cell-weighted sums. The same cell draw is shared by every predictor, so differences
+between predictors are paired. The models are scored from their frozen out-of-fold
+scores at their frozen operating cuts; nothing is refitted inside the loop, so the
+intervals measure sampling noise around the reported numbers, not a re-run of the
+threshold search. Because whole neighbourhoods are resampled, the intervals are wide:
+one damage cluster entering or leaving the sample moves a product's precision by more
+than its decimals suggest, which is worth remembering when reading any two products as
+"different".
+
+```{python}
+#| label: tbl-ci-core
+#| tbl-cap: "Core region, 95% block-bootstrap intervals. P/R/F1 at 10 m, crowd-adjusted precision (10 m), F1 at 30 m, and visits per find (30 m). The 20 m radius and the as-delivered lens are in the frozen artefact (RQ9)."
+import pandas as pd
+from great_tables import GT
+
+ci = pd.read_csv("artefacts/RQ9-uncertainty/rq9_ci_core.csv")
+def cell(rule, radius, metric, dp=3):
+    r = ci[(ci["rule"] == rule) & (ci.radius == radius) & (ci.metric == metric)].iloc[0]
+    f = f"{{:.{dp}f}}"
+    return f"{f.format(r['point'])} ({f.format(r['lo'])}–{f.format(r['hi'])})"
+
+order = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"] + [f"{k}-of-6" for k in range(1, 7)]
+labels = {"MS": "Microsoft", "IMPACT": "IMPACT v2"}
+rows = [{"rule": labels.get(k, k),
+         "P10": cell(k, 10, "P"), "R10": cell(k, 10, "R"), "F110": cell(k, 10, "F1"),
+         "Padj": cell(k, 10, "P_crowd_adj"), "F130": cell(k, 30, "F1"),
+         "visits": cell(k, 30, "visits_per_find", dp=1)} for k in order]
+(GT(pd.DataFrame(rows), rowname_col="rule")
+ .tab_spanner("10 m", ["P10", "R10", "F110", "Padj"])
+ .tab_spanner("30 m", ["F130", "visits"])
+ .cols_label(P10="P", R10="R", F110="F1", Padj="P (crowd-adj)", F130="F1",
+             visits="visits/find")
+ .tab_options(column_labels_font_weight="bold", table_font_size="12.5px",
+              data_row_padding="3px"))
+```
+
+```{python}
+#| label: tbl-ci-models
+#| tbl-cap: "Model frame (building labels, core region), 95% block-bootstrap intervals: F1 at each predictor's frozen operating point and its paired difference from the logistic geography null. A difference interval that excludes zero separates from the null; only the combination rules do so upward."
+mi = pd.read_csv("artefacts/RQ9-uncertainty/rq9_ci_models_r10.csv")
+def mcell(pred, metric):
+    r = mi[(mi.predictor == pred) & (mi.metric == metric)].iloc[0]
+    return f"{r['point']:+.3f} ({r['lo']:+.3f}–{r['hi']:+.3f})" if metric == "F1_diff"         else f"{r['point']:.3f} ({r['lo']:.3f}–{r['hi']:.3f})"
+
+prods = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
+rows = [{"predictor": labels.get(k, k), "F1": mcell(f"{k} (as shipped)", "F1"),
+         "diff": mcell(f"{k} (as shipped) − null (logit)", "F1_diff")} for k in prods]
+rows.append({"predictor": "geography null (logistic)",
+             "F1": mcell("geography null (logistic)", "F1"), "diff": "—"})
+for k in ("flat k-of-6 voting", "weighted fusion"):
+    rows.append({"predictor": k, "F1": mcell(k, "F1"),
+                 "diff": mcell(f"{k} − null (logit)", "F1_diff")})
+(GT(pd.DataFrame(rows), rowname_col="predictor")
+ .cols_label(F1="F1 at operating point", diff="F1 − null")
+ .tab_options(column_labels_font_weight="bold", table_font_size="12.5px",
+              data_row_padding="3px"))
+```
+
+In the as-delivered lens the product intervals widen further (UH's precision 0.009
+runs 0.003 to 0.018); the full set is in the RQ9 artefact. Two claims elsewhere in
+the paper lean on these intervals. The 6-of-6 rule's sub-1 visits per find survives:
+its interval tops out at 0.96. And the null-versus-product story sharpens to: no
+product demonstrably adds information beyond geography at its shipped operating
+point, one (OSU) demonstrably falls short of it, and both combination rules
+demonstrably clear it.
 
 ### How the crowd adjustment works, and what happened when the crowd voted again {#app-crowd .unnumbered}
 

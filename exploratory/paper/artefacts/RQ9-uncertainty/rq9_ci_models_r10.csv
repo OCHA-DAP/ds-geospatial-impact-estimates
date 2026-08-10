@@ -1,0 +1,40 @@
+predictor,metric,point,lo,hi
+MS (as shipped),P,0.081,0.051,0.121
+MS (as shipped),R,0.552,0.451,0.654
+MS (as shipped),F1,0.142,0.092,0.201
+IMPACT (as shipped),P,0.069,0.045,0.095
+IMPACT (as shipped),R,0.552,0.466,0.616
+IMPACT (as shipped),F1,0.123,0.082,0.163
+OSU (as shipped),P,0.045,0.03,0.062
+OSU (as shipped),R,0.858,0.818,0.886
+OSU (as shipped),F1,0.085,0.058,0.116
+UH (as shipped),P,0.093,0.054,0.154
+UH (as shipped),R,0.369,0.275,0.463
+UH (as shipped),F1,0.148,0.094,0.219
+LIST (as shipped),P,0.057,0.039,0.076
+LIST (as shipped),R,0.667,0.611,0.712
+LIST (as shipped),F1,0.104,0.073,0.137
+UNEP (as shipped),P,0.086,0.048,0.138
+UNEP (as shipped),R,0.359,0.264,0.46
+UNEP (as shipped),F1,0.139,0.083,0.207
+geography null (logistic),P,0.073,0.051,0.099
+geography null (logistic),R,0.502,0.39,0.634
+geography null (logistic),F1,0.128,0.091,0.168
+geography null (rand. forest),P,0.055,0.039,0.074
+geography null (rand. forest),R,0.494,0.426,0.579
+geography null (rand. forest),F1,0.099,0.073,0.129
+weighted fusion,P,0.297,0.221,0.366
+weighted fusion,R,0.407,0.315,0.488
+weighted fusion,F1,0.343,0.268,0.398
+flat k-of-6 voting,P,0.339,0.232,0.442
+flat k-of-6 voting,R,0.253,0.159,0.337
+flat k-of-6 voting,F1,0.29,0.199,0.36
+MS (as shipped) − null (logit),F1_diff,0.014,-0.028,0.061
+IMPACT (as shipped) − null (logit),F1_diff,-0.006,-0.042,0.032
+OSU (as shipped) − null (logit),F1_diff,-0.043,-0.076,-0.012
+UH (as shipped) − null (logit),F1_diff,0.021,-0.032,0.081
+LIST (as shipped) − null (logit),F1_diff,-0.024,-0.057,0.008
+UNEP (as shipped) − null (logit),F1_diff,0.01,-0.037,0.066
+geography null (rand. forest) − null (logit),F1_diff,-0.029,-0.053,-0.006
+weighted fusion − null (logit),F1_diff,0.214,0.162,0.256
+flat k-of-6 voting − null (logit),F1_diff,0.158,0.081,0.227

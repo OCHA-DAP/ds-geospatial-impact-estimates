@@ -1,0 +1,13 @@
+lens,rule,radius,metric,point,lo,hi
+as-delivered,MS,10,P,0.081,0.039,0.153
+as-delivered,MS,10,R,0.474,0.415,0.553
+as-delivered,IMPACT,10,P,0.032,0.013,0.053
+as-delivered,IMPACT,10,R,0.457,0.36,0.545
+as-delivered,OSU,10,P,0.036,0.018,0.054
+as-delivered,OSU,10,R,0.681,0.63,0.727
+as-delivered,UH,10,P,0.009,0.003,0.018
+as-delivered,UH,10,R,0.336,0.243,0.443
+as-delivered,LIST,10,P,0.026,0.012,0.041
+as-delivered,LIST,10,R,0.548,0.471,0.621
+as-delivered,UNEP,10,P,0.027,0.01,0.049
+as-delivered,UNEP,10,R,0.305,0.237,0.342

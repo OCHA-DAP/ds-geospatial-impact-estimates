@@ -1093,6 +1093,30 @@ run).](artefacts/RQ8-learned-fusion/figs/rq8_learned_fusion_r20.png)
   (rq8b_asdelivered_baseline_r30.csv) so v3's radius table can pair every product cell
   as core (as-delivered) at all three radii; models keep core-only (the as-delivered
   benchmark is per-footprint by construction).
+- **2026-08-10 — block-bootstrap CIs land (OPEN-ITEMS item 2).** New artefact
+  RQ9-uncertainty: spatial block bootstrap, 2,000 reps, res-8 cells core / res-7
+  as-delivered, one shared cell draw per lens (paired differences valid), match
+  indicators computed once and asserted against frozen rq5b/rq2i/rq8 values; models
+  scored from rq8's frozen OOF scores at frozen cuts (rq8_oof_scores_r10.parquet,
+  GIE_DUMP_OOF=1). Headline: no product-minus-null F1 interval excludes zero upward
+  (OSU's sits entirely BELOW, −0.076 to −0.012); flat voting +0.158 (0.081–0.227) and
+  fusion +0.214 (0.162–0.256) separate decisively; 6-of-6 visits/find interval 0.56–0.96
+  (sub-1 survives); as-delivered UH precision 0.009 (0.003–0.018). CSVs rq9_ci_core /
+  rq9_ci_asdelivered_r10 / rq9_ci_models_r10; v3 gains #app-ci + pointers; "pending"
+  sentence deleted. NOT covered: OSU v0-vs-v1 recall difference (rq2h frame) — noted in
+  OPEN-ITEMS as an optional extension.
+- **2026-08-10 — block-bootstrap CIs land (OPEN-ITEMS item 2).** New artefact
+  RQ9-uncertainty: spatial block bootstrap, 2,000 reps, res-8 cells core / res-7
+  as-delivered, one shared cell draw per lens (paired differences valid), match
+  indicators computed once and asserted against frozen rq5b/rq2i/rq8 values; models
+  scored from rq8's frozen OOF scores at frozen cuts (rq8_oof_scores_r10.parquet,
+  GIE_DUMP_OOF=1). Headline: no product-minus-null F1 interval excludes zero upward
+  (OSU's sits entirely BELOW, −0.076 to −0.012); flat voting +0.158 (0.081–0.227) and
+  fusion +0.214 (0.162–0.256) separate decisively; 6-of-6 visits/find interval 0.56–0.96
+  (sub-1 survives); as-delivered UH precision 0.009 (0.003–0.018). CSVs rq9_ci_core /
+  rq9_ci_asdelivered_r10 / rq9_ci_models_r10; v3 gains #app-ci + pointers; "pending"
+  sentence deleted. NOT covered: OSU v0-vs-v1 recall difference (rq2h frame) — noted in
+  OPEN-ITEMS as an optional extension.
 - **2026-08-10 — buffered-CV check: the leakage attack is dead.** rq8 gained
   GIE_CV_BUFFER_M (per fold, training buildings within the buffer of any test building
   are dropped; ablation refits too). At 300/500 m: null logistic F1 0.128→0.126/0.126,

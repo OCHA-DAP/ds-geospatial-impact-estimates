@@ -59,7 +59,8 @@ GroupKFold machinery, own fit) and rq8b's per-footprint nulls inherit the questi
 re-run core ranking with buffer if the primary result moves. Register entry required
 either way.
 
-**2. Bootstrap confidence intervals — EXECUTABLE SPEC.**
+**2. ~~Bootstrap confidence intervals~~ — DONE 2026-08-10 (RQ9-uncertainty; register + v3 #app-ci). Optional extension NOT done: OSU v0-vs-v1 recall difference CI (rq2h frame). Spec retained below.**
+**(spec) Bootstrap confidence intervals — EXECUTABLE SPEC.**
 WHY: every headline number is a point estimate; claims now leaning on CIs: "null 0.128
 inside the product range (0.085–0.148)", the 3–3 ranking splits, OSU v0/v1 "minimal"
 (P .036 vs .034, R .68 vs .64), dial-rule orderings. HOW: block bootstrap — resample cells WITH
