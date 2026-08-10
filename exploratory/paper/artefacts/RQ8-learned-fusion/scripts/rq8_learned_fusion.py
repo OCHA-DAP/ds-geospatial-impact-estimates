@@ -35,7 +35,11 @@ POS = (2, 3)
 # tighter frame is the demanding one). Outputs ALWAYS carry an explicit _r<N> suffix so a run
 # in one frame can never silently overwrite the other frame's CSVs.
 LABEL_R = int(os.environ.get("GIE_LABEL_R", 10))
-SUF = f"_r{LABEL_R}"
+# CV buffer (metres). When >0, each fold drops TRAINING buildings within this distance
+# of any TEST building, so smooth spatial structure cannot leak across block edges
+# (OPEN-ITEMS item 1). 0 = the paper's original unbuffered validation.
+CV_BUFFER_M = int(os.environ.get("GIE_CV_BUFFER_M", 0))
+SUF = f"_r{LABEL_R}" + (f"_buf{CV_BUFFER_M}" if CV_BUFFER_M else "")
 FLAGS = {"MS": "ms_dmg", "IMPACT": "sar_dmg", "OSU": "osu_dmg",
          "UH": "uh_dmg", "LIST": "list_dmg", "UNEP": "debris_dmg"}
 CLASSES = ["uh_class", "sar_class", "osu_class", "list_class"]
@@ -151,8 +155,20 @@ def main():
                                      random_state=884),
     }
     gkf = GroupKFold(n_splits=5)
+    _coords = np.c_[d.geometry.x, d.geometry.y]
+
+    def _buffered(tr, te):
+        if CV_BUFFER_M == 0:
+            return tr
+        dmin, _ = cKDTree(_coords[te]).query(_coords[tr], k=1)
+        kept = tr[dmin > CV_BUFFER_M]
+        if len(kept) < 0.2 * len(tr):
+            raise RuntimeError(f"CV buffer {CV_BUFFER_M} m removed >80% of a training fold")
+        return kept
+
     oof = {m: np.zeros(len(d)) for m in models}
     for tr, te in gkf.split(X, y, groups):
+        tr = _buffered(tr, te)
         for name, mdl in models.items():
             # z-score continuous features on train only (logit needs it; harmless for RF)
             mu, sd = X[tr].mean(0), X[tr].std(0) + 1e-9
@@ -178,6 +194,7 @@ def main():
         for kind, store in (("rf", abl_scores), ("logit", abl_scores_logit)):
             s = np.zeros(len(d))
             for tr, te in gkf.split(X, y, groups):
+                tr = _buffered(tr, te)
                 mu, sd = X[tr][:, idx].mean(0), X[tr][:, idx].std(0) + 1e-9
                 m = _new(kind)
                 m.fit((X[tr][:, idx] - mu) / sd, y[tr], sample_weight=w[tr])
