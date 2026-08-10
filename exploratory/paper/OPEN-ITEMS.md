@@ -39,26 +39,36 @@ much they protect the paper's claims, not by effort. Dated 2026-08-07; strike it
 
 ## Analysis gaps
 
-**1. Buffered spatial cross-validation (top defensibility item).**
-The geography null and the fusion are validated on ~5 km² spatial blocks with **no buffer
-between adjacent blocks**. Damage risk varies smoothly, so a building near a test-block
-edge has near-clones in the training blocks; that leaks in the same direction every fold
-and specifically flatters the smooth models (the null and the fusion) relative to the
-products. It is the strongest remaining attack on the "no product clearly beats the
-null" headline. Work: re-run `rq8_learned_fusion.py` with a buffer (drop training
-buildings within ~300–500 m of any test block); if the null's F1 0.128 barely moves, say
-so; if it drops materially, soften the headline. Either way add a Limitations paragraph
-**together with the result** (the audit flagged its absence). Related, minor: the
-`density9` feature is computed over all buildings including test rows — covariate-only
-transduction, defensible because footprints are pre-event data, but worth one Methods
-clause.
+**1. Buffered spatial cross-validation (top defensibility item) — EXECUTABLE SPEC.**
+WHY: the null and fusion are validated by GroupKFold over H3 res-7 blocks (`cell7`) in
+`rq8_learned_fusion.py` with no buffer; adjacent blocks share edges, damage risk is
+smooth, so the leak flatters the smooth models (null, fusion) against the products in
+the same direction every fold. Stakes RAISED 2026-08-09: the radius table shows the
+null gaining fastest with radius (F1 .128/.206/.282) — a pattern a reviewer could blame
+on the same leak. HOW: add `GIE_CV_BUFFER_M` (default 0) to rq8_learned_fusion.py; per
+fold, build a KDTree on TEST-fold building coords and drop TRAINING buildings within
+the buffer (run 300 and 500 m variants); outputs suffixed `_bufN`. Also fit density9 on
+train-only as a variant OR add the one Methods clause (covariate-only transduction,
+pre-event data). NUMBERS TO WATCH: core null logistic F1 0.128 / AP 0.060; fusion F1
+0.343 / AP 0.284 (products don't move — they are not CV'd). DECISION RULE: drop < ~0.01
+F1 → add a "checked with buffered CV" sentence to Limitations + register entry; bigger
+drop → soften, in order: abstract ("None separated itself…"), sec-null takeaway,
+tbl-nulltally caption, appendix radius reading, Summary. SECONDARY: rq3f's null (same
+GroupKFold machinery, own fit) and rq8b's per-footprint nulls inherit the question —
+re-run core ranking with buffer if the primary result moves. Register entry required
+either way.
 
-**2. Bootstrap confidence intervals.**
-Promised as "in progress" in Limitations. Every headline number is a point estimate;
-close calls (products 0.085–0.148 vs null 0.128) may not survive intervals. Must be a
-**block bootstrap** (resample spatial blocks, not buildings — same reasoning as item 1),
-and should be built on whatever CV design survives item 1. Population-weighted
-prioritisation is promised in the same Limitations sentence and is also unstarted.
+**2. Bootstrap confidence intervals — EXECUTABLE SPEC.**
+WHY: every headline number is a point estimate; claims now leaning on CIs: "null 0.128
+inside the product range (0.085–0.148)", the 3–3 ranking splits, OSU v0/v1 "minimal"
+(P .036 vs .034, R .68 vs .64), dial-rule orderings. HOW: block bootstrap — resample
+H3 res-7 cells of the core region WITH replacement (never buildings; neighbours are
+correlated), ~2,000 reps; recompute P/R/F1 for each product (shipped lists), each
+k-of-6 rule, and the null/fusion (using frozen out-of-fold scores — do NOT refit per
+rep), percentile 95% intervals. Build on whatever CV design survives item 1. OUTPUT: a
+CSV per frame + intervals into tbl-dial (± or sub-script) + delete the Limitations
+"pending" sentence + register entry. ALSO promised in the same Limitations sentence and
+unstarted: population-weighted prioritisation.
 
 **3. ~~Coherence-claim symmetry~~ — CLOSED 2026-08-07.**
 The coherence-side numbers already existed in the frozen artefacts (rq2_density_null.csv:
@@ -75,14 +85,8 @@ also leaves validation provenance unstated (no in/out-of-sample statement, no sa
 method, no annotator-independence note) — relevant if anyone cites their per-scene
 precision/recall against ours.
 
-**3c. Optional: common-cells core-region ranking run (2026-08-07).**
-Both rq3f ranking tests use per-product footprint cells (fair per row; geography value
-varies by row). A third variant on the core region's single shared cell set would give
-one geography value per panel — the design the user's intuition kept expecting. New
-artefact run (rq3f with a core-region scope); do it if the varying-null presentation
-keeps confusing readers, or before submission. Related fix already applied: v3's
-@tbl-regions now defines THREE regions (Caraballeda AOI / core / as-delivered) — the
-earlier two-region box conflated the AOI with the core.
+**3c. ~~Common-cells core-region ranking run~~ — DONE 2026-08-07 (see item 0):
+rq3f_null_ranking_core.csv, single null value, in the paper as ranking test 2.**
 
 **4. Timeliness × accuracy.**
 Blocked on confirmed provider release dates for UH and LIST (register flag #7; our
@@ -91,6 +95,15 @@ methodology document (its radar/ResNet basis is provider-stated, not documented 
 register flag #14) and UH's acquisition dates/scenes (vendor-level Vantor is
 author-confirmed; per-scene attribution is not, which bounds how hard the RQ2o
 "same vendor" comparison can be pushed).
+
+## Regression checks owed (cheap, run before item 1)
+
+Scripts modified 2026-08-07/09 without the repo's byte-identity re-run: `rq5b_six_member.py`
+(R_CEMS -> GIE_LABEL_R env, default 10) and `rq3f_null_ranking.py` (core scope + cell-set
+filter guarded by SCOPE). Re-run each at defaults and `git diff` the frozen CSVs
+(rq5b_six_member.csv; rq3f_null_ranking.csv; GIE_SCOPE=caraballeda variant). Expect
+byte-identical; any diff means the guard leaked into the default path — fix before
+trusting the new _r20/_r30/_core artefacts.
 
 ## Code-audit session (batch these together)
 
