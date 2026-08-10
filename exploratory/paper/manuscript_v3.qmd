@@ -533,7 +533,9 @@ building for alignment reasons rather than genuine disagreement, so the recall o
 strict-agreement rules is understated.
 
 **The geography null enjoys hindsight the products never had.** It is fitted to this
-event's reference labels; although it is scored strictly on held-out buildings, it
+event's reference labels; although it is scored strictly on held-out buildings
+(including under buffered validation: excluding training buildings within 300 or 500 m
+of any test building moves its F1 by at most 0.002, [Appendix](#app-fair)), it
 carries an event-specific calibration no responder possessed. It is an upper bound on
 geography-only skill, and the claim it supports is about information content, not about
 what was operationally in hand. A model fitted on previous earthquakes, which is what a
@@ -1224,6 +1226,15 @@ delivered footprints, shaking varies for real and carries 0.25–0.31 of the mod
 weight, so the null genuinely uses event information there. Microsoft is the exception
 that proves the mechanism: it shipped only the coastal strip, and over that
 near-identical ground the shaking term again drops to zero.
+
+**Buffered validation.** Spatial blocking leaves block edges: a training building just
+across a block boundary resembles its test-side neighbours, which could flatter a
+smooth model. Checked directly by re-running the validation with training buildings
+excluded within 300 m and then 500 m of any test building: the null's F1 moves 0.128 to
+0.126 at both buffers (AP 0.060 to 0.059/0.058) and the fusion's F1 0.343 to 0.345/0.340,
+so no conclusion rests on the unbuffered design. The building-density feature is
+computed over all buildings including test rows; it uses only pre-event footprint
+locations, never labels, so it carries no label information across folds.
 
 **Coefficients and thresholds are protected separately.** The model's coefficients are
 estimated strictly out-of-fold: each building's score comes from a model that never saw

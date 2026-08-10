@@ -1,0 +1,11 @@
+predictor,kind,precision,recall,f1,n_flags,threshold
+MS,product (as shipped),0.081,0.552,0.142,9138,
+IMPACT,product (as shipped),0.069,0.552,0.123,10788,
+OSU,product (as shipped),0.045,0.858,0.085,25882,
+UH,product (as shipped),0.093,0.369,0.148,5362,
+LIST,product (as shipped),0.057,0.667,0.104,15904,
+UNEP,product (as shipped),0.086,0.359,0.139,5605,
+geography null (logistic),our score @ its best single cut,0.071,0.558,0.126,10621,0.6626
+geography null (rand. forest),our score @ its best single cut,0.047,0.434,0.084,12528,0.2936
+flat k-of-6 voting,our score @ its best single cut,0.339,0.253,0.29,1005,5.0
+weighted fusion,our score @ its best single cut,0.31,0.376,0.34,1635,0.9196

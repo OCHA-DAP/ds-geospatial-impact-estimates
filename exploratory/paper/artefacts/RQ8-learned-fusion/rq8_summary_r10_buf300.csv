@@ -1,0 +1,12 @@
+model,avg_precision
+logit,0.279
+rf,0.271
+rf context-only (NO products),0.041
+rf products-only (NO context),0.237
+votes(k-of-6),0.194
+single: MS,0.055
+single: IMPACT,0.049
+single: OSU,0.042
+single: UH,0.049
+single: LIST,0.046
+single: UNEP,0.046

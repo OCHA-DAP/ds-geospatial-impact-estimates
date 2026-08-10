@@ -1093,6 +1093,12 @@ run).](artefacts/RQ8-learned-fusion/figs/rq8_learned_fusion_r20.png)
   (rq8b_asdelivered_baseline_r30.csv) so v3's radius table can pair every product cell
   as core (as-delivered) at all three radii; models keep core-only (the as-delivered
   benchmark is per-footprint by construction).
+- **2026-08-10 — buffered-CV check: the leakage attack is dead.** rq8 gained
+  GIE_CV_BUFFER_M (per fold, training buildings within the buffer of any test building
+  are dropped; ablation refits too). At 300/500 m: null logistic F1 0.128→0.126/0.126,
+  AP 0.060→0.059/0.058; fusion F1 0.343→0.345/0.340, AP 0.284→0.279/0.277. All
+  movement <0.005 — the unbuffered design flattered nothing material. CSVs `_buf300`
+  / `_buf500`; Limitations + appendix fairness section updated in manuscript v3.
 - ⚠️ **QUALIFIED 2026-07-29:** the "+40% AP" headline below overstates the practical gap.
   Voting is a **7-level ordinal** score (0–6) → only 6 cut points, so its AP integral is
   penalised for grid coarseness, not just for worse ranking. At the **best-F1 operating point**

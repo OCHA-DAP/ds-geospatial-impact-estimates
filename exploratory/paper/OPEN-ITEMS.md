@@ -39,7 +39,8 @@ much they protect the paper's claims, not by effort. Dated 2026-08-07; strike it
 
 ## Analysis gaps
 
-**1. Buffered spatial cross-validation (top defensibility item) — EXECUTABLE SPEC.**
+**1. ~~Buffered spatial cross-validation~~ — DONE 2026-08-10, attack dead (movement <0.005 at 300/500 m buffers; see register + v3 appendix). Spec retained below for method reuse.**
+**(spec) Buffered spatial cross-validation (top defensibility item) — EXECUTABLE SPEC.**
 WHY: the null and fusion are validated by GroupKFold over H3 res-7 blocks (`cell7`) in
 `rq8_learned_fusion.py` with no buffer; adjacent blocks share edges, damage risk is
 smooth, so the leak flatters the smooth models (null, fusion) against the products in
