@@ -17,7 +17,10 @@ import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "figs")
-R = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+args = sys.argv[1:]
+SLIDES = "--slides" in args  # deck variant: no reading-notes footnote (spoken instead)
+nums = [a for a in args if a.isdigit()]
+R = int(nums[0]) if nums else 10
 SUF = f"_r{R}"  # CSVs always carry an explicit radius suffix (renamed 2026-08-06)
 
 df = pd.read_csv(os.path.join(HERE, "..", f"rq8_best_f1{SUF}.csv"))
@@ -43,12 +46,15 @@ ax.set_ylim(-0.8, max(yp) + 0.8)
 ax.set_xlabel(f"F1 at the operating point (CEMS {{2,3}} within {R} m)", fontsize=12)
 ax.set_title("Like-for-like: each product at the ONE point it shipped,\n"
              "against our scores at their best single cut", fontsize=13)
-# footnote below the axes, so it cannot collide with the bar annotations
-fig.text(0.99, 0.015,
-         "grey = provider's own threshold  ·  coloured = best single cut of our score      "
-         "primary null = logistic; the paler forest null is the weaker learner, kept for robustness",
-         ha="right", fontsize=9, style="italic", color="#5a6570")
-fig.tight_layout(rect=(0, 0.045, 1, 1))
-out = os.path.join(FIGS, f"rq8_best_f1{SUF}.png")
+if SLIDES:
+    fig.tight_layout()
+else:
+    # footnote below the axes, so it cannot collide with the bar annotations
+    fig.text(0.99, 0.015,
+             "grey = provider's own threshold  ·  coloured = best single cut of our score      "
+             "primary null = logistic; the paler forest null is the weaker learner, kept for robustness",
+             ha="right", fontsize=9, style="italic", color="#5a6570")
+    fig.tight_layout(rect=(0, 0.045, 1, 1))
+out = os.path.join(FIGS, f"rq8_best_f1{SUF}{'_slides' if SLIDES else ''}.png")
 fig.savefig(out, dpi=150)
 print(f"wrote {os.path.relpath(out, HERE)}")

@@ -7,6 +7,7 @@ format:
     theme: [default, gie_slides.scss]
     slide-number: true
     center: true
+    margin: 0.03
     embed-resources: true
     fig-align: center
     include-after-body: hdx-bg.html
@@ -37,29 +38,28 @@ evaluated the 6 that published an analysed extent. Numbers frozen to the 2026-07
 ## What arrived, and where each product looked
 
 ::: {.cols}
-::: {.col style="flex:1.2;display:flex;flex-direction:column;justify-content:center"}
+::: {.col style="flex:1.35"}
+![](artefacts/RQ0-matching-basis/figs/fig_extents_map.png){style="max-height:600px"}
+:::
+::: {.col style="display:flex;flex-direction:column;justify-content:center"}
 ![](timeline/timeline_products.png)
-:::
-::: {.col}
-![](artefacts/RQ0-matching-basis/figs/fig_extents_map.png)
-:::
+
+::: {.takeaway style="font-size:0.66em"}
+Everything landed within ~8 days — fast. But analysed extents span **three orders of
+magnitude**, so the like-for-like arena is the **red core region (61 km²)** where all
+five extents and the expert reference coincide.
 :::
 
-::: {.takeaway}
-Eight organisations released damage products and almost everything landed within eight days —
-the ecosystem was fast. But the analysed extents span **three orders of magnitude**, and the
-like-for-like comparisons live in the **red core region (61 km²)** where all five published
-extents and the expert reference coincide.
+::: {.tiny style="font-size:0.5em"}
+Timeline x-axis is our ingest date, an upper bound on availability; UH and LIST provider
+release dates still to confirm.
 :::
-
-::: {.tiny}
-Timeline x-axis is our ingest date, an upper bound on availability; UH and LIST provider release
-dates still to confirm.
+:::
 :::
 
 ## No single product clearly beats a simple geography yardstick
 
-![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){.r-stretch}
+![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10_slides.png){.r-stretch}
 
 ::: {.takeaway-hot}
 The yardstick: a model given only distance to the coast, building density, and shaking intensity — no satellite data — fitted after the fact. It scores **0.128**. The six products land between **0.085 and 0.148** — three of
@@ -70,15 +70,6 @@ anything pull clear.
 ## *Independent failure modes* are the active ingredient
 
 ![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
-
-::: {.takeaway}
-Pair Microsoft with **UH**, the weakest product we measured, and you get the best two-product
-rule in the study. Both are optical — UH even ran on imagery from the same vendor as
-Microsoft's failing scene — yet they fail at opposite ends of the map, so each covers for the
-other. **The independence that matters is in the models, not the inputs.** Pair the two
-products that share a whole method — Sentinel-1 coherence — and you get the worst of all
-fifteen combinations.
-:::
 
 # Appendix {.smaller}
 

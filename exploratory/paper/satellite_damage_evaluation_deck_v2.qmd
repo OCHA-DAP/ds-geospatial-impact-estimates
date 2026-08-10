@@ -174,7 +174,7 @@ hold up afterwards**, not a tool anyone had on the day.
 
 ## No single product clearly beats it
 
-![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){.r-stretch}
+![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10_slides.png){.r-stretch}
 
 ::: {.takeaway-hot}
 The yardstick scores **0.128**. The six products land between **0.085 and 0.148** — three of
