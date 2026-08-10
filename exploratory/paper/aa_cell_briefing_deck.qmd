@@ -67,6 +67,17 @@ them below it. Only when you combine products (0.290 by voting, 0.343 by weighti
 anything pull clear.
 :::
 
+## Can they rank the worst-hit neighbourhoods? Yes — but so can geography
+
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){.r-stretch}
+
+::: {.takeaway style="font-size:0.66em"}
+As delivered (left), geography out-ranks five of six — but 96% of the damage sits in one
+coastal strip, and coast-plus-density finds the strip trivially. In the shared core region
+(right) it splits 3–3: products do help rank *within* a damage zone; which zone to go to was
+the part geography already knew.
+:::
+
 ## *Independent failure modes* are the active ingredient
 
 ![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
@@ -223,20 +234,6 @@ Stop asking about individual buildings and ask which *neighbourhoods* to go to f
 picture improves a lot. Microsoft and OSU each pick 6 of the 10 worst-hit sectors, and rank
 correlation with the expert damage count runs about 0.54–0.59. This is the scale at which the
 products are genuinely useful.
-:::
-
-## Except geography ranks them just as well
-
-![](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){.r-stretch}
-
-::: {.takeaway-hot}
-Run the same test on the geography yardstick and, as delivered, it out-ranks **five of the
-six** (left panel). But read that carefully: across the full footprints, 96% of the damage is
-in one coastal strip, so this task is largely *"find the strip"* — which coast-plus-density
-does trivially. **Restrict to the shared core region (right panel) and it splits 3–3**
-(LIST, IMPACT and OSU ahead; Microsoft, UNEP and UH behind). So
-the products do carry information about where *within* a damage zone to go — they just don't
-tell you which zone, which is the part geography already knew.
 :::
 
 ## What actually works: their disagreement
