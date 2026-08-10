@@ -72,7 +72,7 @@ all p < 10⁻⁸). As delivered the correlations are much lower (−0.09 to 0.58
 statistically indistinguishable from zero.
 :::
 
-## *Independent failure modes* are the active ingredient
+## Precision & recall: single products vs combinations
 
 ![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
 
