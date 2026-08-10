@@ -127,8 +127,8 @@ if [[ $TARGET == all || $TARGET == deck ]]; then
 fi
 
 if [[ $TARGET == all || $TARGET == paper ]]; then
-  render manuscript_v2.qmd html
-  encrypt manuscript_v2.html "$PAGES_DIR/manuscript/content.enc"
+  render manuscript_v3.qmd html
+  encrypt manuscript_v3.html "$PAGES_DIR/manuscript/content.enc"
 fi
 
 step "Result"

@@ -9,7 +9,8 @@ read that first if you are reusing any of this on another event.
 
 | file | what it is |
 |---|---|
-| `manuscript_v2.qmd` | the technical write-up — **the keeper** |
+| `manuscript_v3.qmd` | the manuscript — **the keeper** (deck-spined short form; appendix carries the machinery) |
+| `manuscript_v2.qmd` | long-form draft, **superseded by v3** (source of v3's appendix) — do not edit |
 | `findings.qmd` | running register of every analysis, including negative and superseded results |
 | `satellite_damage_evaluation_deck_v2.qmd` | current 20-slide results deck |
 | `satellite_damage_evaluation_v1.qmd` | earlier deck, **numbers predate the corrections** — do not present |

@@ -20,6 +20,12 @@ analyses are still pending and are flagged where they belong: the timeliness axi
 on provider date confirmations) and bootstrap confidence intervals on headline numbers.*
 :::
 
+::: {.callout-warning}
+**Superseded (2026-08-10).** This long-form draft is retained as the source of
+`manuscript_v3`'s appendix and for history; `manuscript_v3.qmd` is the current
+manuscript and the published version. Do not edit or cite this file.
+:::
+
 ## Abstract {.unnumbered}
 
 After the M7.5 earthquake that struck coastal Venezuela on 24 June 2026, at least eight
