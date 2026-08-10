@@ -63,7 +63,7 @@ release dates still to confirm.
 
 ## Can they rank the worst-hit neighbourhoods?
 
-![](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){.r-stretch}
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both_slides.png){.r-stretch}
 
 ::: {.takeaway style="font-size:0.66em"}
 Yes — products can support neighbourhood-level prioritisation. In the core region every

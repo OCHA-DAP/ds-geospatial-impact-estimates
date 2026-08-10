@@ -11,6 +11,7 @@ Run: uv run --with pandas --with matplotlib --with numpy python \
 from __future__ import annotations
 
 import os
+import sys
 
 import matplotlib
 import numpy as np
@@ -20,6 +21,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(__file__)
+SLIDES = "--slides" in sys.argv  # deck variant: core panel LEFT, no Test-N prefixes
 FIGS = os.path.join(HERE, "..", "figs")
 os.makedirs(FIGS, exist_ok=True)
 
@@ -29,10 +31,11 @@ pooled = pd.read_csv(os.path.join(HERE, "..", "rq3f_null_ranking.csv"))
 core = pd.read_csv(os.path.join(HERE, "..", "rq3f_null_ranking_core.csv"))
 
 fig, axes = plt.subplots(1, 2, figsize=(14.5, 6.2), sharex=True)
+axA, axB = (axes[1], axes[0]) if SLIDES else (axes[0], axes[1])
 
 # Panel A — as-delivered lens: each product's own footprint, null re-scored per row.
 sA = pooled[pooled.res == 7].sort_values("rho_product", ascending=False).reset_index(drop=True)
-ax = axes[0]
+ax = axA
 yA = np.arange(len(sA)); h = 0.37
 ax.barh(yA - h / 2, sA.rho_product, height=h, color=PROD, zorder=3)
 ax.barh(yA + h / 2, sA.rho_null, height=h, color=NULL, zorder=3)
@@ -47,7 +50,7 @@ for i, r in sA.iterrows():
             color=PROD if r.rho_product > r.rho_null else NULL, zorder=5)
 n_null = int((sA.rho_null > sA.rho_product).sum())
 ax.set_yticks(yA, sA["product"], fontsize=11.5)
-ax.set_title("Test 1 · as delivered: each product's own footprint, ~5 km² sectors\n"
+ax.set_title(("As delivered" if SLIDES else "Test 1 · as delivered") + ": each product's own footprint, ~5 km² sectors\n"
              "(geography re-scored on each product's cells; ahead for "
              f"{n_null} of {len(sA)})", fontsize=11.5, loc="left", color="#1f2324")
 
@@ -56,7 +59,7 @@ sB = core[core.res == 8].sort_values("rho_product", ascending=False).reset_index
 nulls = sB.rho_null.unique()
 assert len(nulls) == 1, f"core null should be single-valued, got {nulls}"
 null_v = float(nulls[0])
-ax = axes[1]
+ax = axB
 yB = np.arange(len(sB))
 ax.barh(yB, sB.rho_product, height=0.55, color=PROD, zorder=3)
 for i, r in sB.iterrows():
@@ -67,7 +70,7 @@ ax.text(null_v + 0.015, len(sB) - 0.55, f"geography null {null_v:.2f}", color=NU
         fontsize=11, weight="bold", ha="left", va="center")
 n_above = int((sB.rho_product > null_v).sum())
 ax.set_yticks(yB, sB["product"], fontsize=11.5)
-ax.set_title("Test 2 · core region: one shared cell set, ~0.7 km² cells\n"
+ax.set_title(("Core region" if SLIDES else "Test 2 · core region") + ": one shared cell set, ~0.7 km² cells\n"
              f"(geography has a single score; products above it: {n_above} of {len(sB)})",
              fontsize=11.5, loc="left", color="#1f2324")
 
@@ -89,6 +92,6 @@ fig.legend([h1, h2], ["satellite product",
 fig.suptitle("Ranking which areas were worst hit: the two tests", fontsize=14,
              weight="bold", color="#1f2324")
 fig.tight_layout(rect=(0, 0.03, 1, 0.97))
-out = os.path.join(FIGS, "rq3f_null_ranking_both.png")
+out = os.path.join(FIGS, f"rq3f_null_ranking_both{'_slides' if SLIDES else ''}.png")
 fig.savefig(out, dpi=150, bbox_inches="tight")
 print("wrote", out)
