@@ -53,9 +53,13 @@ trust, for what purpose, or at what spatial scale. So we asked:
 - **What is the sensible way to use them** in the next event?
 :::
 
-## Performance metrics by model
+## Performance metrics by model: building-level analysis
 
 ![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10_slides.png){.r-stretch}
+
+## Precision & recall: single products vs combinations
+
+![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
 
 ## Can they rank the worst-hit neighbourhoods?
 
@@ -67,10 +71,6 @@ product ranks the worst-hit cells far better than chance (ρ 0.48–0.74, n = 13
 all p < 10⁻⁸). As delivered the correlations are much lower (−0.09 to 0.58), and UH is
 statistically indistinguishable from zero.
 :::
-
-## Precision & recall: single products vs combinations
-
-![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
 
 ## Three questions, three answers
 
