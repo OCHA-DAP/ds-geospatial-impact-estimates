@@ -49,7 +49,7 @@ trust, for what purpose, or at what spatial scale. So we asked:
 
 ::: {.smaller}
 - **Can a responder act on a single flagged building?**
-- **Do they rank neighbourhoods well enough to triage?**
+- **Do they rank neighbourhoods well enough to prioritise?**
 - **What is the sensible way to use them** in the next event?
 :::
 
@@ -78,7 +78,7 @@ statistically indistinguishable from zero.
 1. **Can a responder act on a single flagged building?** **No.** Precision runs
    0.05–0.09 even in the damage-dense core region: most flags have nothing wrong
    underneath them.
-2. **Do they rank neighbourhoods well enough to triage?** **Yes, with a condition.**
+2. **Do they rank neighbourhoods well enough to prioritise?** **Yes, with a condition.**
    Where the damage zone is known and confined (our core region), most products show
    real prioritisation value (ρ 0.48–0.74); as delivered the signal is much weaker
    (ρ −0.09 to 0.58).
