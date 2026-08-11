@@ -47,6 +47,10 @@ exploratory/paper/*.html
 exploratory/paper/*_files/
 exploratory/paper/ms_call_*
 exploratory/paper/_freeze_batch.log
+# Scraped third-party source material: re-derive with steer/extract_steer_media_repo.py from
+# the StEER PDF. Unlike the frozen artefact CSVs above, this is bulk text lifted from someone
+# else's publication, so it stays out of a public repo.
+exploratory/paper/steer/*.csv
 # ...but the deck build inputs ARE source and must be tracked, or nobody can rebuild:
 !exploratory/paper/password.html
 !exploratory/paper/hdx-bg.html
