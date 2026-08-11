@@ -1,6 +1,6 @@
 ---
-title: "Six satellite damage products, one earthquake"
-subtitle: "Eleven datasets: 3 references, 8 satellite damage products (6 evaluated) · A&A Cell - 11 August 2026"
+title: "11 damage analysis products, one earthquake"
+subtitle: "3 references, 8 satellite damage products (6 evaluated) · A&A Cell - 11 August 2026"
 date: last-modified
 format:
   revealjs:
