@@ -213,8 +213,10 @@ tell you which zone, which is the part geography already knew.
 | rule | flags | precision floor | crowd-adjusted | damage coverage | visits per find |
 |---|---|---|---|---|---|
 | any of 6 | 37,644 | 0.03 | 0.21 | 0.97 | 26.4 |
+| 2 of 6 | 21,060 | 0.06 | 0.24 | 0.94 | 15.2 |
 | 3 of 6 | 9,409 | 0.10 | 0.28 | 0.86 | 7.5 |
 | **4 of 6** | **3,347** | **0.19** | **0.38** | **0.67** | **3.4** |
+| 5 of 6 | 1,005 | 0.34 | 0.56 | 0.41 | 1.7 |
 | all 6 | 214 | 0.64 | 0.93 | 0.18 | 0.8 |
 :::
 
