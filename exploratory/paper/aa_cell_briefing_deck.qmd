@@ -17,19 +17,6 @@ format:
      11 Aug 2026. Slides are reused VERBATIM from the v2 deck (assembled by script), so the
      two cannot drift apart: edit the v2 deck, then rebuild/re-render this one. -->
 
-## Three questions
-
-::: {.smaller}
-1. **Can a responder act on a single flagged building?**
-2. **Do they at least rank neighbourhoods well enough to triage?**
-3. **What is the sensible way to use them** in the next event?
-:::
-
-::: {.tiny}
-M7.5, coastal Venezuela, 24 June 2026. At least 8 organisations released damage products; we
-evaluated the 6 that published an analysed extent. Numbers frozen to the 2026-07-15 snapshot.
-:::
-
 ## What arrived, and where each product looked
 
 ::: {.cols}
@@ -46,10 +33,24 @@ five extents and the expert reference coincide.
 :::
 
 ::: {.tiny style="font-size:0.5em"}
-Timeline x-axis is our ingest date, an upper bound on availability; UH and LIST provider
+M7.5, coastal Venezuela, 24 June 2026; we evaluated the 6 of 8 products that published an
+analysed extent; numbers frozen to the 2026-07-15 snapshot. Timeline x-axis is our ingest
+date, an upper bound on availability; UH and LIST provider
 release dates still to confirm.
 :::
 :::
+:::
+
+## Three questions
+
+Eight products arrived for the same earthquake within days of each other. A coordinator
+receiving several of them in the same week has no established way to decide which to
+trust, for what purpose, or at what spatial scale. So we asked:
+
+::: {.smaller}
+- **Can a responder act on a single flagged building?**
+- **Do they at least rank neighbourhoods well enough to triage?**
+- **What is the sensible way to use them** in the next event?
 :::
 
 ## Performance metrics by model
