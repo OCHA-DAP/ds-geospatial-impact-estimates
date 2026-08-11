@@ -67,7 +67,7 @@ def cems_releases():
 
 # lane order (bottom→top), label, colour, and role
 LANES = [
-    ("disha",              "DISHA (UNOPS)",          "#b0b0b0", "excluded (no extent, licence)"),
+    ("disha",              "DISHA",                  "#b0b0b0", "excluded (no extent, licence)"),
     ("hot_osm",            "HOT fAIr",               "#b0b0b0", "excluded (no extent)"),
     ("list",               "LIST / WFP / CERN",      "#2e8b57", "evaluated"),
     ("uh",                 "UH QuakeDamage",         "#2e8b57", "evaluated"),
@@ -170,7 +170,7 @@ leg = [Line2D([], [], marker="o", ls="", color="#2e8b57", label="a release / ver
        Line2D([], [], marker="D", ls="", mfc="none", mec="#c62828", label="version not evaluated"),
        Line2D([], [], marker="$?$", ls="", color="#c62828", label="date TO CONFIRM (gap)")]
 ax.legend(handles=leg, loc="lower right", fontsize=9.5, frameon=True)
-ax.set_title("When each damage product became available" if SLIDES else
+ax.set_title("When each damage product became available (preliminary view)" if SLIDES else
              "When each damage product became available — VE earthquake\n"
              "the ecosystem arrived inside ~8 days; Microsoft delivered scene-by-scene → a "
              "merged union; IMPACT & OSU each had two versions", fontsize=12)
