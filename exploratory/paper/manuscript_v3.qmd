@@ -48,7 +48,7 @@ The rest of their value lies in their disagreement. How many products must agree
 building is flagged works as a dial a responder can set, from flagging every building any
 product marked (97% of known damage, but 26 visits per damaged building found) to flagging
 only unanimous buildings (93% of flags correct, 18% of the damage). Counting agreement
-between methodologically independent products roughly doubles the accuracy of any single
+between methodologically independent products roughly doubles the F1 score of any single
 product and requires no weights, no training data and no reference, which makes it the
 only method we tested that is both effective and computable during a response; a
 statistically fitted combination scores 18% higher, but fitting it requires the damage map
@@ -265,25 +265,29 @@ which is where the products' real value shows
 
 ## The expert reference misses lesser damage, so precision is reported as an interval {#sec-floor}
 
-**Result:** Checked against the field reports, Copernicus EMS captured 94% of destroyed
-buildings but only 49% of those significantly damaged (@fig-gradeslope): the expert map
-is thorough about destruction and patchy about everything short of it, and the products
-inherit the same slope. Crediting the flags that crowd reviewers confirmed as damaged
-lifts Microsoft's precision from 0.08 to roughly 0.24, a factor of three that reflects
-the reference, not the product. Some damage escaped everything: about 11% of
-field-reported damage points, mostly in inland hill communities, had no flag from any
-product within 20 m despite lying inside analysed extents. Taken together, though, the
-products' combined recall is genuinely high: at least one of the six flagged within
-20 m of 96% of field points in the core region.
+**Result:** Checked against the field reports (ChatMap), Copernicus EMS captured 94% of
+destroyed buildings but only 49% of those significantly damaged (@fig-gradeslope): the
+expert map is thorough about complete destruction but patchier about lesser damage, and
+the individual products share this same relationship. Crediting the flags that crowd
+reviewers confirmed as damaged lifts Microsoft's precision from 0.08 to roughly 0.24, a
+factor of three that reflects the reference, not the product. Some damage escaped
+everything: about 11% of field-reported damage points, mostly in inland hill
+communities, had no flag from any product within 20 m (the field-report GPS tolerance)
+despite lying inside analysed extents. Recall was never the products' weakness: four of
+the six individually reached 0.66–0.85 against the field reports, and at least one of
+the six flagged within 20 m of 96% of field points in the core region. Precision is
+where they fail.
 
-**How it was measured:** The three references were checked against one another: field points
-grade the expert reference's completeness by damage class; crowd verdicts re-judge the
-flags the expert reference calls false; and every precision is then reported as an
-interval from the expert-measured floor to the crowd-adjusted value. An independent
+**How it was measured:** The field reports (ChatMap) were used to evaluate the expert
+reference itself, grading its recall by damage class. Unioning them into the reference
+was also tested and barely moved any score (they add only a few hundred points), which
+is why CEMS stays the default reference. The MapSwipe crowd then re-judges the flags
+the expert reference calls false; the crowd is generous to products (it credits a flag
+if damage sits anywhere in its ~50 m cell), so the crowd-adjusted precision is read as
+the high end of the interval and the expert-measured value as the floor. An independent
 re-vote of the crowd campaign at three times the depth confirmed the adjustment's
-stability (13.2% versus 11.5% of flags confirmed). The adjudication mechanics, their
-granularity caveats, and the re-vote are in the Appendix ([adjudication
-mechanics](#app-adjudication); [the crowd re-vote](#app-crowd)).
+stability (13.2% versus 11.5% of flags confirmed). Mechanics and caveats are in the
+Appendix ([adjudication mechanics](#app-adjudication); [the crowd re-vote](#app-crowd)).
 
 ![**Region: within the CEMS-analysed extents; reference: field reports (20 m GPS tolerance).** Recall by damage grade. Each line is one dataset's recall against
 field-reported damage, at "complete" destruction versus "significant" damage. Every
@@ -296,18 +300,18 @@ floor.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-grad
 **Result:** Ask which *neighbourhoods* to go to first, rather than which buildings, and
 the picture improves a lot: at the ~5 km² sector scale the best products correctly
 identify 80–85% of the twenty worst-hit cells, with rank correlations around 0.54–0.59.
-This is the scale at which the products are genuinely usable. It is not, however, a
-scale at which they demonstrate information beyond geography, and we tested that under
-both reporting regions (@fig-nullranking). As delivered, across everything each
-product shipped, the hindsight geography model out-ranks five of the six. Read that
-carefully, because 96% of the reference sits in one damage zone, so the as-delivered
-task is largely "find the damage zone", which coast-plus-density solves almost by
-definition. In the core region, where every product and the model score the identical
-cells and the model therefore has a single score (0.65), the six split three–three:
-LIST (0.74), IMPACT (0.72) and OSU (0.70) rank above it, Microsoft (0.61), UNEP (0.58)
-and UH (0.48) below. So the products do carry real information about where within a
-damage zone to go first; what they do not add is knowledge of which zone, the part
-geography already encodes.
+This is the scale at which the products are genuinely usable, and the setting that
+matters is the core region: zoomed to the area already known to be damaged, every
+product and the geography model score the identical cells, the model has a single
+score (0.65), and the six split three–three around it: LIST (0.74), IMPACT (0.72) and
+OSU (0.70) above, Microsoft (0.61), UNEP (0.58) and UH (0.48) below
+(@fig-nullranking). The products do carry real information about where *within* a
+damage zone to go first. The as-delivered view is weaker: across everything each
+product shipped, the hindsight geography model out-ranks five of the six, largely
+because 96% of the reference sits in one damage zone, so the as-delivered task reduces
+to "find the damage zone", which coast-plus-density solves almost by definition. What
+the products do not add is knowledge of which zone, the part geography already
+encodes.
 
 **How it was measured:** Flags and reference points are aggregated to hexagonal grid
 cells and each product's ordering of cells is compared with the expert ordering by rank
@@ -326,19 +330,19 @@ ranks better for five of six; in the core region the six split three–three aro
 single score of
 0.65.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both.png){#fig-nullranking}
 
-## Agreement between independent products is the operating point {#sec-dial}
+## How to use the products: count agreement between independent methods {#sec-dial}
 
 **Result:** The products fail in different places, so the number of them agreeing on a
-building is informative, and it behaves as a dial with a known price at every setting
-(@tbl-dial): from "any product" (97% of known damage at the 30 m line-of-sight scale,
-at a price of 26.4 field visits per damage point reached) to "all six" (crowd-adjusted
-precision 0.93, 18% of the damage); 4-of-6 costs 3.4 visits per find, unanimity 0.8. Counting agreement
-roughly doubles the accuracy of the best single product (F1 0.290 against 0.148) and
-requires no weights, no training data and no reference, so it is computable the hour
-the second product lands. A statistically fitted fusion of the same inputs scores 18%
-higher (0.343), but its weights come from the damage map a responder is still waiting
-for: like the geography null, it explains the event afterwards and cannot run during
-one.
+building is informative, and it behaves as a dial with a known operational cost at
+every setting (@tbl-dial): from "any product" (97% of known damage at the 30 m
+line-of-sight scale, at a cost of 26.4 field visits per found damaged building) to
+"all six" (crowd-adjusted precision 0.93, 18% of the damage); 4-of-6 costs 3.4 visits
+per found damaged building, unanimity (6-of-6) 0.8. Counting agreement roughly doubles
+the F1 of the best single product (0.290 against 0.148) and requires no weights, no
+training data and no reference, so it is computable the hour the second product lands.
+A statistically fitted fusion of the same inputs scores 18% higher (0.343), but its
+weights come from the damage map a responder is still waiting for; like the geography
+null, it explains the event afterwards and cannot run during one.
 
 ```{python}
 #| label: tbl-dial
@@ -409,22 +413,23 @@ for edge in ("P10", "P20", "P30"):
 gt
 ```
 
-The active ingredient is **independence of method, not diversity of sensors**. The
-strongest two-product rule in the study pairs Microsoft with UH, the weakest product we
-measured: both are optical, and they even share an imagery vendor, but they share no
-model, and their failure zones sit at opposite ends of the study area, so each covers
-for the other (@fig-frontier). The pair that shares its entire method, the two
+What drives the gain is **independence of method**, and method means more than sensor.
+The strongest two-product rule in the study pairs Microsoft with UH (the weakest single
+product): both are optical, and they even share an imagery vendor (Vantor), but they
+share no model, and their failure zones sit at opposite ends of the study area, so each
+covers for the other (@fig-frontier). The pair that shares its entire method, the two
 Sentinel-1 coherence products, is the weakest of all fifteen pairings. What products
-share (sensor, platform, model) is knowable without labels on day one, so the
-transferable rule is: count agreement between *independent methods*.
+share (sensor, platform, model) is knowable without labels on day one, which makes
+this usable in the next event: give a building more credit when the products agreeing
+on it share nothing in the way they work, and less when the agreeing products are
+methodological cousins that fail together.
 
-Three qualifications keep this honest. Flat voting means trusting every product
-equally, and that UH's full vote *helped* could only be established with a reference in
-hand. Single products cannot be tuned out of their ceiling: same-sensor agreement,
-confidence-score sweeps, and within-product corroboration all plateau well below the
-cross-product rules ([Appendix](#app-ceiling)). And choosing the agreement threshold buys a workload,
-not a hit rate: flag counts are observable on day one, the precision they deliver is
-not. What this section implies for practice is collected in the Recommendations.
+Two caveats keep this honest: flat voting trusts every product equally, which paid off
+here but could only be verified afterwards, with a reference in hand; and choosing the
+agreement threshold buys a known workload, not a guaranteed hit rate, because flag
+counts are observable on day one and the precision they deliver is not. No amount of
+tuning gets a single product to these numbers ([Appendix](#app-ceiling)). What this
+section implies for practice is collected in the Recommendations.
 
 ![**Region: core (61 km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
 the pair sharing its entire method is the weakest of
@@ -437,21 +442,23 @@ all.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){#fig-frontier}
 by a single satellite scene, processed alone (@fig-weststrip); east of the boundary,
 where two scenes overlap, the same product's precision is four times higher (0.205
 against 0.052). A second product points the same way: UH, which its authors confirm ran
-only on imagery from the same vendor, flags just 3% of that strip where Microsoft flags
-32%. Microsoft's own public report completes the picture. It names this area (the Catia
-La Mar overlap) as its largest source of disagreement between scenes: its 25 June
-Vantor scene flagged ~2,600 buildings as damaged that its 26 June Planet scene calls
-intact. Where both scenes existed, Microsoft kept the later Planet read; the failing
+only on imagery from the same vendor (Vantor), flags just 3% of that strip where Microsoft flags
+32%. Microsoft's own public report names this area (the Catia La Mar overlap) as its
+largest source of disagreement between scenes: its 25 June Vantor scene flagged ~2,600
+buildings as damaged that its 26 June Planet scene calls intact. Where both scenes existed, Microsoft kept the later Planet read; the failing
 strip is where there was no second scene to overrule the first. The failure therefore
 travels with the scene, though whether the fault was the image itself or the model's
 handling of it cannot be separated with current data. Microsoft was the only product
-publishing metadata at this granularity, which is why its failure is the only one that
+publishing per-building scene provenance, which is why its failure is the only one that
 could be examined this way.
 
-**How it was measured:** The crowd campaign's verdicts were aggregated over the strip
-and compared with the product's per-building scene counts and dates; an independent
-second crowd campaign over the same cells later reproduced the confirmation side of the
-verdict. Details, including what the re-vote could and could not re-test, are in the Appendix
+**How it was measured:** The crowd is the arbiter here because the expert reference
+cannot be: this strip is where the expert map records far less than the products flag,
+and a thin reference cannot separate over-flagging from its own incompleteness, whereas
+the crowd reviewed exactly the flagged cells. Its verdicts were aggregated over the
+strip and compared with the product's per-building scene counts and dates; an
+independent second crowd campaign over the same cells later reproduced the confirmation
+side of the verdict. Details, including what the re-vote could and could not re-test, are in the Appendix
 ([the case study in full](#app-weststrip); [the crowd re-vote](#app-crowd)).
 
 ![**Region: the western half of Microsoft's delivered strip (Catia La Mar).** The western strip. Top left: where Microsoft flags far more than the expert map
@@ -462,32 +469,30 @@ scene.](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png
 
 ## Summary and discussion {#sec-discussion}
 
-The three questions from the Introduction now have answers. *Can a responder act on a
-single flagged building?* No: precision is 0.04–0.09 even in the best-mapped area, every
-number measured against an incomplete reference is a floor, and no single product can
-be tuned out of that ceiling. *Do the products rank neighbourhoods well enough to
-triage?* Yes, and this is their genuinely usable scale; but a hindsight geography model
-ranks about as well, so treat the ranking as useful rather than as evidence the product
-saw something the map did not. *What is the sensible way to use them?* Count agreement
-between independent methods. It is the only method we tested that is both effective
-(roughly double any single product) and available during a response, and its price at
-every setting is knowable in advance as a workload.
+The three questions from the Introduction now have answers.
 
-Two further results rule out tempting shortcuts. First, a product's reliability cannot
-be judged from its own map. For each product in each expert-mapped area (fifteen
-combinations), we correlated the signals a coordinator could observe without a
-reference (the product's flag rate, how tightly its flags cluster, how much the other
-products agree with it) against the reliability later measured there; every correlation
-was statistically indistinguishable from zero ([method](#app-ranking-method)). False
-alarms cluster the way real damage clusters, so the map alone cannot tell a devastated
-neighbourhood from a fooled model; judging reliability where no reference exists
-requires field reports, a crowd, or a model trained on previous events. Second, and
-more encouraging: where a reference does exist, failures can be *mapped*, not just
-measured. Classifying every grid cell of each product's territory by whether its errors
-cluster ([results](#app-ranking-tables)), 78–86% of it shows errors scattered at
-random, the harmless kind of wrong; the failures concentrate in a few identifiable
-pockets, Microsoft's western strip being the largest (@sec-casestudy), which suggests
-discounting each product's vote inside its known bad pockets as a next step for fusion.
+*Can a responder act on a single flagged building?* No: precision is 0.04–0.09 even in
+the best-mapped area, every number measured against an incomplete reference is a floor,
+and no single product can be tuned out of that ceiling.
+
+*Do the products rank neighbourhoods well enough to triage?* Yes, once zoomed to an
+area already known to be damaged: there the ranking is genuinely usable. Across
+everything they delivered the case is weaker, and a hindsight geography model ranks
+about as well, so treat the ranking as useful rather than as evidence the product saw
+something the map did not.
+
+*What is the sensible way to use them?* Count agreement between independent methods.
+It is the only method we tested that is both effective (roughly double any single
+product's F1) and available during a response, and its cost at every setting is
+knowable in advance as a workload.
+
+Two side results are worth a sentence each. A product's reliability cannot be judged
+from its own map: false alarms cluster the way real damage clusters, and nothing
+observable without a reference predicted measured reliability across fifteen
+product-and-area combinations ([method](#app-ranking-method)). And where a reference
+does exist, most errors scatter harmlessly while the real trouble concentrates in a
+few identifiable pockets ([results](#app-ranking-tables)), so discounting each
+product's vote inside its known bad pockets is a natural next step for fusion.
 
 The strongest way to harden every claim here is replication, and a specific candidate
 exists: the 2025 Myanmar earthquake has a comparable multi-product, crowd-validated
@@ -503,7 +508,7 @@ The results imply changes in practice for three audiences. We collect them here,
 **Do not spend time choosing a product; spend it counting agreement between products.** On
 this event no single product was meaningfully better than a model of coastline distance and
 building density, but the number of products agreeing on a building roughly doubled the
-accuracy of any of them alone. Unlike a fitted model, counting requires no weights, no
+performance (F1) of any of them alone. Unlike a fitted model, counting requires no weights, no
 training data and no reference, so it can be done the hour the second product arrives. Weight
 the count toward *independent methods*: products that share a sensing method fail together
 and their agreement carried the least information in our tests, while products with nothing
