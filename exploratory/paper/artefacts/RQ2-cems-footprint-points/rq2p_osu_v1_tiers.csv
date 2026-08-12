@@ -1,0 +1,13 @@
+region,cut,flags,cems_pts,P,R,F1
+v1 own extent ∩ CEMS,v0 all flags (paper basis),32644,1514,0.036,0.669,0.067
+v1 own extent ∩ CEMS,v1 high_confidence only,15600,1514,0.045,0.422,0.082
+v1 own extent ∩ CEMS,v1 probable only,19745,1514,0.019,0.24,0.036
+v1 own extent ∩ CEMS,v1 published headline (prob+high),35345,1514,0.031,0.635,0.059
+common extent (v0∩v1∩CEMS),v0 all flags (paper basis),32643,1488,0.036,0.681,0.068
+common extent (v0∩v1∩CEMS),v1 high_confidence only,14199,1488,0.049,0.425,0.089
+common extent (v0∩v1∩CEMS),v1 probable only,17986,1488,0.021,0.243,0.039
+common extent (v0∩v1∩CEMS),v1 published headline (prob+high),32185,1488,0.034,0.64,0.064
+core region,v0 all flags (paper basis),25882,1467,0.045,0.688,0.084
+core region,v1 high_confidence only,11903,1467,0.059,0.429,0.103
+core region,v1 probable only,11637,1467,0.032,0.246,0.057
+core region,v1 published headline (prob+high),23540,1467,0.046,0.647,0.085

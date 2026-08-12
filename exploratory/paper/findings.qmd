@@ -850,6 +850,31 @@ tbl("RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv")
   (coverage), not what the modality ceiling prevents (per-building precision).
 - **Confidence: high** (exact id-keyed comparison, identical scoring frame both sides).
 
+# RQ2p — OSU v1's confidence tiers: ordered, real, still under the ceiling (2026-08-12, user question)
+
+User question: OSU's classes were never evaluated per tier — v0's continuous
+`damage_probability` is too saturated to sweep (51% of flags at exactly 1.0, 62% ≥ 0.99),
+but v1's ordinal tiers (probable / high_confidence) can be scored. Script
+`RQ2-cems-footprint-points/scripts/rq2p_osu_v1_tiers.py`, three frames: v1's own extent
+∩ CEMS, the RQ2h common extent, and the RQ5b core region (the core-region v0 row is the
+reproduction anchor — it matches the frozen rq5b OSU row, P 0.045 / R 0.688):
+
+```{python}
+tbl("RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv")
+```
+
+- **The tiers are real and ordered**: core-region precision 0.059 (high_confidence) vs
+  0.032 (probable), ~1.8×; the high-confidence cut is v1's best operating point (F1 0.103
+  vs the published headline's 0.085 — half the flags, two-thirds of the recall).
+- **Still under the ceiling**: the best tier sits below Microsoft's core precision (0.093)
+  and nowhere near the voting rules (flat-voting best F1 0.290). RQ2d's "no hidden
+  headroom, but a real quality signal" now generalizes beyond Microsoft — second product,
+  same shape.
+- v1 is post-freeze, so this enters the manuscript only via the version postscript
+  (#app-osu-v1) plus a one-line cross-ref in #app-ceiling item 2; the paper basis stays v0.
+- **Confidence: high** (id-keyed, frozen matching method, reproduction anchors pass);
+  precision floors as always (incomplete reference).
+
 # RQ5d — is the agreement gain just filtering? NO — it's selection (2026-07-27, user experiment)
 
 User's skeptic test: agreement rules flag fewer buildings; maybe any thinning raises
