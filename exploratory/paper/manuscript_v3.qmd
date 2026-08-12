@@ -170,10 +170,12 @@ products had flagged: it can refute false alarms but can never reveal a miss, so
 used to adjudicate disputed flags, never as ground truth. ChatMap is 415 building-level
 damage reports from field teams, positives-only with no survey frame: it can reveal
 misses but says nothing about false alarms (@fig-refarch). Because their blind spots do
-not overlap, the three can be turned on each other, which is how the expert reference's
-own bias was measured (@sec-floor). One rule governs every number in this paper:
-**against an incomplete reference, measured precision is a floor and measured recall is
-a ceiling.**
+not overlap, the three can be used to check one another, which is how the expert
+reference's own bias was measured (@sec-floor). One rule governs every number in this
+paper: **against an incomplete reference, measured precision is a floor and measured
+recall is a ceiling.** A flag counted false may be real damage the reference missed, so
+true precision can only be higher; damage the reference never recorded is missing from
+the denominator, so the true share of all damage found can only be lower.
 
 ![The three reference datasets at a glance. Two are HOT-run and easily confused:
 MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
@@ -182,22 +184,22 @@ misses.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refa
 
 ## Building-level precision does not support acting on single flags {#sec-flags}
 
-**Result.** Scored per building, every product performed poorly. Across everything the
-expert reference mapped, as the products were actually delivered, precision ran from
-0.009 (UH) to 0.081 (Microsoft). Even in the core region, where all six products and
+**Result:** Every product performed poorly when scored per building. As delivered,
+precision across everything the expert reference mapped ran from 0.009 (UH) to 0.081
+(Microsoft). Even in the core region, where all six products and
 the reference overlap and every product scores best, precision reached only 0.045–0.093
 against recall of 0.31–0.69: ten to twenty misses for every hit, in the products' best
 case (@fig-peraoi). The
 products do find damage; what they also produce is an enormous number of flags with
 nothing recorded underneath them.
 
-**How it was measured.** A flag counts as a hit if an expert damage point lies within
-10 m of the building, a radius chosen from the urban fabric (median neighbour spacing is
-9.7 m). Results are quoted in the core region unless labelled as-delivered, because outside
-the damage zone the reference is too thin to interpret failure cleanly; the
-as-delivered numbers are the operationally honest ones. Matching details, the radius
-sensitivity, and the two reporting regions are in the Appendix ([matching
-details](#app-matching); [radius sensitivity](#app-radius); @tbl-regions).
+**How it was measured:** A flag counts as a hit if an expert damage point lies within
+10 m of the building, a radius chosen from an analysis of building spacing (median
+neighbour distance is 9.7 m). Results are quoted in the core region (each product's
+most favourable frame) unless labelled as-delivered (the more operationally honest
+level). The matching and point-classification system, the radius sensitivity, and the
+two reporting regions are in the Appendix ([matching](#app-matching); [radius
+sensitivity](#app-radius); @tbl-regions).
 
 ![**Region: each CEMS AOI separately, plus the pooled as-delivered total.** Per-AOI scorecard. Left: precision floor per product per CEMS AOI; right: recall where
 the reference is thick enough to support it. 96% of all CEMS damage points are in the
@@ -206,38 +208,52 @@ up to 27.5%: a floor against a nearly-empty reference, in which product over-fla
 and reference incompleteness cannot be
 separated.](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 
-## A hindsight geography model matches the products {#sec-null}
+## A hindsight geography model approximates the products {#sec-null}
 
-**Result.** A model given only three context variables (distance to the coast, local
+**Result:** A model given only three context variables (distance to the coast, local
 building density, and USGS ShakeMap shaking intensity) and no satellite data at all sits
 inside the product range in every comparison we ran (@tbl-nulltally, @fig-bestf1). At
-the single best operating point in the core region it reaches F1 0.128 against 0.148
-for the strongest product; on their full delivered footprints it matches or beats four
-of six on both precision and recall at their own list sizes.
+its optimized operating point in the core region it reaches F1 0.128 against 0.148 for
+the strongest product; on their full delivered footprints it matches or beats four of
+six on both precision and recall, with the model limited to flagging the same number
+of buildings as each product.
 
-| comparison | region | metric | outcome |
-|---|---|---|---|
-| Area ranking (@fig-nullranking) | as delivered | rank correlation ρ | geography ranks better for 5 of 6 (OSU the exception) |
-| Area ranking (@fig-nullranking) | core | rank correlation ρ | single geography score 0.65; products split 3–3 around it |
-| Building lists at matched size | as delivered | precision and recall | 4 of 6 matched or beaten; Microsoft and OSU stay ahead |
-| Building lists at best cut | core | F1 | null 0.128 sits inside the product range; matches or beats 3 of 6 |
+```{python}
+#| label: tbl-nulltally
+#| tbl-cap: "Every single-product-versus-geography comparison in this paper, in one place, shaded by reporting region (blue = core, grey = as delivered). No individual product separates itself in either region; combining products is what pulls clear (@sec-dial). The two area-ranking rows are drawn in @fig-nullranking."
+import pandas as pd
+from great_tables import GT, style, loc
 
-: Every single-product-versus-geography comparison in this paper, in one place. No
-individual product separates itself in any frame; combining products is what pulls
-clear (@sec-dial). {#tbl-nulltally}
+nt = pd.DataFrame(
+    [("Area ranking", "as delivered", "rank correlation ρ",
+      "geography ranks better for 5 of 6 (OSU the exception)"),
+     ("Area ranking", "core", "rank correlation ρ",
+      "single geography score 0.65; products split 3–3 around it"),
+     ("Building lists at matched size", "as delivered", "precision and recall",
+      "4 of 6 matched or beaten; Microsoft and OSU stay ahead"),
+     ("Building lists at optimal configuration", "core", "F1",
+      "null 0.128 sits inside the product range; matches or beats 3 of 6")],
+    columns=["comparison", "region", "metric", "outcome"])
 
-**How it was measured, and how to read it.** The model is fitted with hindsight to this
+gtn = GT(nt).tab_options(column_labels_font_weight="bold", table_font_size="13px",
+                         data_row_padding="4px")
+for i, region in enumerate(nt.region):
+    gtn = gtn.tab_style(style.fill(color="#e7f0f7" if region == "core" else "#f3f3f3"),
+                        loc.body(rows=[i]))
+gtn
+```
+
+**How it was measured, and how to read it:** The model is fitted with hindsight to this
 event's own damage labels and validated on spatial blocks it never trained on, so it is
 a *null*, not an operational alternative: its inputs were available on day zero, its
 fitted coefficients were not. A product that beats it has demonstrated information
 beyond coarse spatial structure; a product that loses to it has placed flags no better
-than a retrospective geography prior. The construction, the fairness safeguards, and
-why average precision is quoted only for continuous scores are in the Appendix
-([construction](#app-null); [fairness](#app-fair)). Block-bootstrap intervals put
-numbers on the takeaway: none of the six products separates *above* the null (every
-product-minus-null F1 interval reaches below zero, and OSU's sits entirely below),
-while flat voting (+0.158, interval 0.081 to 0.227) and weighted fusion (+0.214,
-interval 0.162 to 0.256) clear it decisively ([intervals](#app-ci)).
+than geography alone could, given hindsight. The construction and its fairness
+safeguards are in the Appendix ([construction](#app-null); [fairness](#app-fair)). Block-bootstrap intervals make
+this precise: no product's edge over the model is statistically distinguishable from
+zero (OSU's is reliably negative), while flat voting (+0.158, interval 0.081 to 0.227)
+and weighted fusion (+0.214, interval 0.162 to 0.256) clear it decisively
+([intervals](#app-ci)).
 
 ![**Region: core (61 km²).** Every predictor at one operating point, F1 side by side. Grey bars are the six
 products exactly as shipped; coloured bars are our constructions at their best single
@@ -246,9 +262,9 @@ cut. The geography null (0.128) lands inside the product range, while flat votin
 which is where the products' real value shows
 (@sec-dial).](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){#fig-bestf1}
 
-## The expert reference is a floor, so every precision is an interval {#sec-floor}
+## The expert reference misses lesser damage, so precision is reported as an interval {#sec-floor}
 
-**Result.** Checked against the field reports, Copernicus EMS captured 94% of destroyed
+**Result:** Checked against the field reports, Copernicus EMS captured 94% of destroyed
 buildings but only 49% of those significantly damaged (@fig-gradeslope): the expert map
 is thorough about destruction and patchy about everything short of it, and the products
 inherit the same slope. Crediting the flags that crowd reviewers confirmed as damaged
@@ -259,7 +275,7 @@ product within 20 m despite lying inside analysed extents. Taken together, thoug
 products' combined recall is genuinely high: at least one of the six flagged within
 20 m of 96% of field points in the core region.
 
-**How it was measured.** The three references were turned on each other: field points
+**How it was measured:** The three references were checked against one another: field points
 grade the expert reference's completeness by damage class; crowd verdicts re-judge the
 flags the expert reference calls false; and every precision is then reported as an
 interval from the expert-measured floor to the crowd-adjusted value. An independent
@@ -276,7 +292,7 @@ floor.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-grad
 
 ## Area ranking works, and geography ranks about as well {#sec-ranking}
 
-**Result.** Ask which *neighbourhoods* to go to first, rather than which buildings, and
+**Result:** Ask which *neighbourhoods* to go to first, rather than which buildings, and
 the picture improves a lot: at the ~5 km² sector scale the best products correctly
 identify 80–85% of the twenty worst-hit cells, with rank correlations around 0.54–0.59.
 This is the scale at which the products are genuinely usable. It is not, however, a
@@ -292,7 +308,7 @@ and UH (0.48) below. So the products do carry real information about where withi
 damage zone to go first; what they do not add is knowledge of which zone, the part
 geography already encodes.
 
-**How it was measured.** Flags and reference points are aggregated to hexagonal grid
+**How it was measured:** Flags and reference points are aggregated to hexagonal grid
 cells and each product's ordering of cells is compared with the expert ordering by rank
 correlation, with the geography model's expected damage count ranked the same way. In
 the as-delivered test each comparison runs on the cells of that product's own footprint,
@@ -311,7 +327,7 @@ single score of
 
 ## Agreement between independent products is the operating point {#sec-dial}
 
-**Result.** The products fail in different places, so the number of them agreeing on a
+**Result:** The products fail in different places, so the number of them agreeing on a
 building is informative, and it behaves as a dial with a known price at every setting
 (@tbl-dial): from "any product" (97% of known damage at the 30 m line-of-sight scale,
 at a price of 26.4 field visits per damage point reached) to "all six" (crowd-adjusted
@@ -415,7 +431,7 @@ all.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){#fig-frontier}
 
 ## One failure could be traced; five could not be examined {#sec-casestudy}
 
-**Result.** Microsoft's largest failure is a western strip where crowd reviewers judged
+**Result:** Microsoft's largest failure is a western strip where crowd reviewers judged
 71% of its flags undamaged. Its own per-building metadata shows that strip was covered
 by a single satellite scene, processed alone (@fig-weststrip); east of the boundary,
 where two scenes overlap, the same product's precision is four times higher (0.205
@@ -431,7 +447,7 @@ handling of it cannot be separated with current data. Microsoft was the only pro
 publishing metadata at this granularity, which is why its failure is the only one that
 could be examined this way.
 
-**How it was measured.** The crowd campaign's verdicts were aggregated over the strip
+**How it was measured:** The crowd campaign's verdicts were aggregated over the strip
 and compared with the product's per-building scene counts and dates; an independent
 second crowd campaign over the same cells later reproduced the confirmation side of the
 verdict. Details, including what the re-vote could and could not re-test, are in the Appendix
@@ -651,7 +667,7 @@ product that publishes per-building visibility found the effect negligible in th
 event (details in the Appendix), so all products are scored without visibility
 corrections; the check is impossible for the five that publish no such field.
 
-The matching radius comes from the urban fabric rather than from convenience. The median
+The matching radius comes from an analysis of building spacing rather than from convenience. The median
 distance between neighbouring building centroids in the core region is 9.7 m, and 93% of
 buildings have a neighbour within 20 m. We therefore use r = 10 m as the largest radius
 at which "did the product flag this building" is still a meaningful question. Larger
