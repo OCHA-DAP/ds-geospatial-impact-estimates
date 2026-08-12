@@ -147,9 +147,11 @@ regions, and numbers are comparable only within one. *As delivered* scores each 
 across everything it shipped, wherever the expert reference mapped: a different region
 per product, and the operationally honest view, because it judges what responders
 actually received. The *core region* is the ~61 km² where all six products and the
-reference overlap: one shared area that puts every predictor on identical footing, at
-the price of being every product's favourable case, because it sits on the damage
-epicentre where the reference is densest. Sections and captions state which region they
+reference overlap: one shared area that puts every predictor on identical footing. It
+is not a neutral slice of the map: the products' mutual overlap reaches only one of the
+five expert-mapped areas, Caraballeda, which is also where the experts found nearly all
+the damage, so the core region holds 96% of every CEMS-recorded damage point and is
+each product's favourable case. Sections and captions state which region they
 use; the construction, and why the core region is so small, are in the
 [Appendix](#app-matching) (@tbl-regions).
 
