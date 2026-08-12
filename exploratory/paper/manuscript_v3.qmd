@@ -246,14 +246,15 @@ gtn
 **How it was measured, and how to read it:** The model is fitted with hindsight to this
 event's own damage labels and validated on spatial blocks it never trained on, so it is
 a *null*, not an operational alternative: its inputs were available on day zero, its
-fitted coefficients were not. A product that beats it has demonstrated information
-beyond coarse spatial structure; a product that loses to it has placed flags no better
-than geography alone could, given hindsight. The construction and its fairness
-safeguards are in the Appendix ([construction](#app-null); [fairness](#app-fair)). Block-bootstrap intervals make
-this precise: no product's edge over the model is statistically distinguishable from
-zero (OSU's is reliably negative), while flat voting (+0.158, interval 0.081 to 0.227)
-and weighted fusion (+0.214, interval 0.162 to 0.256) clear it decisively
-([intervals](#app-ci)).
+fitted coefficients were not. Beating it is the test that a product adds information
+beyond coarse spatial structure. In @fig-bestf1, the geography nulls (red) land inside
+the band of single products (grey): each product's small win or loss against the
+primary null is within block-bootstrap noise, with one exception (OSU sits
+significantly below it). The composites (blue) are different: flat voting (+0.158,
+interval 0.081 to 0.227) and weighted fusion (+0.214, interval 0.162 to 0.256) clear
+the null, and every single product, by margins the bootstrap cannot explain away. The
+model's construction, its fairness safeguards, and the intervals are in the Appendix
+([construction](#app-null); [fairness](#app-fair); [intervals](#app-ci)).
 
 ![**Region: core (61 km²).** Every predictor at one operating point, F1 side by side. Grey bars are the six
 products exactly as shipped; coloured bars are our constructions at their best single
