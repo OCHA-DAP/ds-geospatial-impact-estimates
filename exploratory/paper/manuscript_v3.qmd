@@ -162,9 +162,10 @@ point lies within 10 m; the Appendix gives the [reasoning](#app-matching) and
 [sensitivity](#app-radius)). Alongside it,
 @tbl-dial reports 20 and 30 m as well: a sensitivity sweep showing how performance
 changes with a looser buffer, whose settings also carry operational readings where
-useful (30 m as line of sight). The separate 20 m used against field reports is a GPS
-tolerance, not part of that sweep; the [Appendix](#app-matching) keeps the full
-accounting. MapSwipe is a
+useful (30 m as line of sight). The separate 20 m used against field reports is not
+part of that sweep: the matching radius follows the location precision of the
+reference, and unlike expert points, field reports carry positional error of their own;
+the [Appendix](#app-matching) keeps the full accounting. MapSwipe is a
 crowd campaign in which more than 400 volunteers reviewed ~50 m cells at locations AI
 products had flagged: it can refute false alarms but can never reveal a miss, so it is
 used to adjudicate disputed flags, never as ground truth. ChatMap is 415 building-level
@@ -689,9 +690,16 @@ this paper uses the 10 m radius, so all of them are directly comparable. Two lab
 exceptions appear later, each because it answers a different question: the coverage and
 visits-per-find columns of the voting table use 30 m, the line-of-sight scale ("would a
 responder sent here *see* the damage"), and recall against the ChatMap ground reports
-uses 20 m, absorbing phone-GPS error in field-collected points. Both are restated where
-they are used. (That field-matching 20 m is unrelated to the 20 m *label radius* of the
-Appendix sensitivity re-run, which is an alternative definition of the target itself.)
+uses 20 m. The field exception is not a second convention but the same principle
+applied to a different reference: the matching radius follows the location precision of
+the reference being matched. Expert points are digitized onto buildings, so they add no
+positional error and the 10 m identity radius applies unchanged; field reports are
+phone points collected from the street (GPS error, and reporters stand near, not on,
+buildings), so their radius widens to 20 m to absorb the reference's own scatter.
+Matching those points at 10 m would book the reference's geolocation error as product
+failure. Both exceptions are restated where they are used. (That field-matching 20 m is
+unrelated to the 20 m *label radius* of the Appendix sensitivity re-run, which is an
+alternative definition of the target itself.)
 
 Separately from the matching radius, results are reported in one of two *regions*, and
 numbers are comparable only within one:
