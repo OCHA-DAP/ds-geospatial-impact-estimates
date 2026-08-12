@@ -159,10 +159,12 @@ use; the construction, and why the core region is so small, are in the
 damage points and is the primary reference: every headline precision and recall is
 computed against it, under one matching rule (a building counts as damaged if a CEMS
 point lies within 10 m; the Appendix gives the [reasoning](#app-matching) and
-[sensitivity](#app-radius)). Larger radii
-(20 and 30 m) appear in a few specific roles (GPS tolerance for field reports,
-line-of-sight visit costs, a sensitivity re-run of the label); each is restated where
-used, and the [Appendix](#app-matching) keeps the full accounting. MapSwipe is a
+[sensitivity](#app-radius)). Alongside it,
+@tbl-dial reports 20 and 30 m as well: a sensitivity sweep showing how performance
+changes with a looser buffer, whose settings also carry operational readings where
+useful (30 m as line of sight). The separate 20 m used against field reports is a GPS
+tolerance, not part of that sweep; the [Appendix](#app-matching) keeps the full
+accounting. MapSwipe is a
 crowd campaign in which more than 400 volunteers reviewed ~50 m cells at locations AI
 products had flagged: it can refute false alarms but can never reveal a miss, so it is
 used to adjudicate disputed flags, never as ground truth. ChatMap is 415 building-level
@@ -323,7 +325,7 @@ one.
 
 ```{python}
 #| label: tbl-dial
-#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m). Visits/find is field visits per damage point reached at the 30 m line-of-sight scale (flags ÷ R₃₀ × 1,467 reference points); as a ratio of counts it falls below 1 where damage is dense enough that one stop puts several recorded points within sight. Shading ranks values within each column (darker = higher; for visits/find, fewer). The geography and fusion models are compared at their operating points in @fig-bestf1 and the <a href='#app-radius'>Appendix</a>. 95% block-bootstrap confidence intervals for these values are tabulated in the <a href='#app-ci'>Appendix</a>."
+#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m). Visits/find is field visits per damage point reached at 30 m, read as line of sight (one stop puts the damage within view); computed as flags ÷ R₃₀ × 1,467 reference points; as a ratio of counts it falls below 1 where damage is dense enough that one stop puts several recorded points within sight. Shading ranks values within each column (darker = higher; for visits/find, fewer). The geography and fusion models are compared at their operating points in @fig-bestf1 and the <a href='#app-radius'>Appendix</a>. 95% block-bootstrap confidence intervals for these values are tabulated in the <a href='#app-ci'>Appendix</a>."
 import pandas as pd
 from great_tables import GT, style, loc
 from matplotlib import colormaps
@@ -653,9 +655,12 @@ The matching radius comes from the urban fabric rather than from convenience. Th
 distance between neighbouring building centroids in the core region is 9.7 m, and 93% of
 buildings have a neighbour within 20 m. We therefore use r = 10 m as the largest radius
 at which "did the product flag this building" is still a meaningful question. Larger
-radii answer a different and equally legitimate question, namely whether the flag put a
-responder within sight of real damage. We use named scales for those: 30 m (line of
-sight), 60 m (same block), 100 m (right area).
+radii do two jobs at once. Mechanically they are a sensitivity sweep: @tbl-dial reports
+10, 20 and 30 m side by side, so the reader can watch every number change with the
+buffer. Interpretively, each setting also admits an operational reading, whether the
+flag put a responder within sight of real damage: 30 m (line of sight), 60 m (same
+block), 100 m (right area). The line-of-sight reading is what turns the 30 m column
+into the visits-per-find workload metric; the sweep stands on its own without it.
 
 **One matching rule, two labelled exceptions.** Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled
