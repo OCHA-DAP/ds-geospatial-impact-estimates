@@ -121,9 +121,7 @@ that can fool optical and radar-brightness methods (the Appendix's [sensing
 primer](#sec-sensing) explains why, with an agricultural control comparison from this
 event). Analysed extents
 span three orders of magnitude, from Microsoft's single coastal strip (210 km²) to
-LIST's two full Sentinel scenes (~224,000 km²); the like-for-like comparisons live in
-the ~61 km² core region where all published extents and the reference overlap
-(@fig-extents). Delivery timing is part of the picture, though this paper does not yet
+LIST's two full Sentinel scenes (~224,000 km²); @fig-extents maps who analysed where. Delivery timing is part of the picture, though this paper does not yet
 analyse it: @fig-timeline reconstructs availability from our own ingest dates (an upper
 bound; provider release dates are still being confirmed). The whole set arrived within
 about eight days of the mainshock, and several products were sequences rather than
@@ -141,6 +139,17 @@ confirmation. Circles mark a release or version; a filled star marks the final p
 actually evaluated. Positions are our-integration dates (an upper bound on
 availability), so true release is earlier. Red markers are dates still to
 confirm.](timeline/timeline_products.png){#fig-timeline}
+
+**Two reporting regions, used throughout.** Every result is reported in one of two
+regions, and numbers are comparable only within one. *As delivered* scores each product
+across everything it shipped, wherever the expert reference mapped: a different region
+per product, and the operationally honest view, because it judges what responders
+actually received. The *core region* is the ~61 km² where all six products and the
+reference overlap: one shared area that puts every predictor on identical footing, at
+the price of being every product's favourable case, because it sits on the damage
+epicentre where the reference is densest. Sections and captions state which region they
+use; the construction, and why the core region is so small, are in the
+[Appendix](#app-matching) (@tbl-regions).
 
 **The three references, and what each can see.** Copernicus EMS provides trained-analyst
 damage points and is the primary reference: every headline precision and recall is
@@ -225,7 +234,7 @@ product-minus-null F1 interval reaches below zero, and OSU's sits entirely below
 while flat voting (+0.158, interval 0.081 to 0.227) and weighted fusion (+0.214,
 interval 0.162 to 0.256) clear it decisively ([intervals](#app-ci)).
 
-![**Lens: core region (61 km²).** Every predictor at one operating point, F1 side by side. Grey bars are the six
+![**Region: core (61 km²).** Every predictor at one operating point, F1 side by side. Grey bars are the six
 products exactly as shipped; coloured bars are our constructions at their best single
 cut. The geography null (0.128) lands inside the product range, while flat voting
 (0.290) and weighted fusion (0.343) reach more than twice the best single product,
@@ -267,7 +276,7 @@ the picture improves a lot: at the ~5 km² sector scale the best products correc
 identify 80–85% of the twenty worst-hit cells, with rank correlations around 0.54–0.59.
 This is the scale at which the products are genuinely usable. It is not, however, a
 scale at which they demonstrate information beyond geography, and we tested that under
-both of the paper's lenses (@fig-nullranking). As delivered, across everything each
+both reporting regions (@fig-nullranking). As delivered, across everything each
 product shipped, the hindsight geography model out-ranks five of the six. Read that
 carefully, because 96% of the reference sits in one damage zone, so the as-delivered
 task is largely "find the damage zone", which coast-plus-density solves almost by
@@ -287,8 +296,8 @@ model are scored on the identical shared cells, so the model has one value. The 
 lattices, full tables, and a priority map are in the Appendix
 ([method](#app-ranking-method); [tables](#app-ranking-tables)).
 
-![**Lenses: test 1 as delivered (each product's own footprint cells, so the model is
-re-scored per row); test 2 the core region (one shared cell set, so the model has a
+![**Test 1: as delivered (each product's own footprint cells, so the model is
+re-scored per row). Test 2: core region (one shared cell set, so the model has a
 single score).** Both ranking tests: how well each product orders cells by damage
 (grey) against the geography model on the same cells (red). As delivered the model
 ranks better for five of six; in the core region the six split three–three around its
@@ -395,28 +404,27 @@ cross-product rules ([Appendix](#app-ceiling)). And choosing the agreement thres
 not a hit rate: flag counts are observable on day one, the precision they deliver is
 not. What this section implies for practice is collected in the Recommendations.
 
-![**Lens: core region (61 km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
+![**Region: core (61 km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
 the pair sharing its entire method is the weakest of
 all.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){#fig-frontier}
 
 ## One failure could be traced; five could not be examined {#sec-casestudy}
 
 **Result.** Microsoft's largest failure is a western strip where crowd reviewers judged
-71% of its flags undamaged. Its published per-building metadata places that strip under
-a single satellite scene, processed alone (@fig-weststrip); east of the boundary, where
-scenes overlap, the same product's precision is four times higher (0.205 against
-0.052). A vendor-level cross-check runs in the same direction: UH, whose authors
-confirm it ran exclusively on imagery from the same vendor, flags only 3% of that strip
-where Microsoft flags 32%. The failure is established to travel with the scene; whether
-the cause was the image itself or the model's handling of it cannot be separated with
-current data. Microsoft's own public report corroborates the mechanism from the
-producer's side: it names the Catia La Mar overlap as its single largest source of
-inter-scene disagreement, with the Vantor 25 June scene flagging ~2,600 buildings as
-damaged that the Planet 26 June scene calls intact, resolved in overlap zones by
-preferring the later Planet read. The strip in question is where no second scene was
-available to overrule the first. Microsoft was the only product publishing metadata at
-this granularity, which is why its failure is the only one that could be examined this
-way.
+71% of its flags undamaged. Its own per-building metadata shows that strip was covered
+by a single satellite scene, processed alone (@fig-weststrip); east of the boundary,
+where two scenes overlap, the same product's precision is four times higher (0.205
+against 0.052). A second product points the same way: UH, which its authors confirm ran
+only on imagery from the same vendor, flags just 3% of that strip where Microsoft flags
+32%. Microsoft's own public report completes the picture. It names this area (the Catia
+La Mar overlap) as its largest source of disagreement between scenes: its 25 June
+Vantor scene flagged ~2,600 buildings as damaged that its 26 June Planet scene calls
+intact. Where both scenes existed, Microsoft kept the later Planet read; the failing
+strip is where there was no second scene to overrule the first. The failure therefore
+travels with the scene, though whether the fault was the image itself or the model's
+handling of it cannot be separated with current data. Microsoft was the only product
+publishing metadata at this granularity, which is why its failure is the only one that
+could be examined this way.
 
 **How it was measured.** The crowd campaign's verdicts were aggregated over the strip
 and compared with the product's per-building scene counts and dates; an independent
@@ -443,17 +451,21 @@ between independent methods. It is the only method we tested that is both effect
 (roughly double any single product) and available during a response, and its price at
 every setting is knowable in advance as a workload.
 
-Two further results close tempting shortcuts. First, a product's reliability cannot be
-judged from its own flags: across fifteen product-and-area combinations, nothing in the
-flags' rate, clustering, or cross-product agreement predicted measured reliability
-(every correlation statistically indistinguishable from zero). False alarms cluster the
-way real damage clusters, so the map alone cannot tell a devastated neighbourhood from
-a fooled model; judging reliability where no reference exists requires field reports, a
-crowd, or a model trained on previous events. Second, and more encouraging: where a
-reference does exist, failures can be *mapped*, not just measured. Across 78–86% of
-each product's territory the errors scatter randomly, the harmless kind of wrong, and
-the trouble concentrates in a few identifiable pockets, which suggests discounting each
-product's vote inside its known bad pockets as a next step for fusion.
+Two further results rule out tempting shortcuts. First, a product's reliability cannot
+be judged from its own map. For each product in each expert-mapped area (fifteen
+combinations), we correlated the signals a coordinator could observe without a
+reference (the product's flag rate, how tightly its flags cluster, how much the other
+products agree with it) against the reliability later measured there; every correlation
+was statistically indistinguishable from zero ([method](#app-ranking-method)). False
+alarms cluster the way real damage clusters, so the map alone cannot tell a devastated
+neighbourhood from a fooled model; judging reliability where no reference exists
+requires field reports, a crowd, or a model trained on previous events. Second, and
+more encouraging: where a reference does exist, failures can be *mapped*, not just
+measured. Classifying every grid cell of each product's territory by whether its errors
+cluster ([results](#app-ranking-tables)), 78–86% of it shows errors scattered at
+random, the harmless kind of wrong; the failures concentrate in a few identifiable
+pockets, Microsoft's western strip being the largest (@sec-casestudy), which suggests
+discounting each product's vote inside its known bad pockets as a next step for fusion.
 
 The strongest way to harden every claim here is replication, and a specific candidate
 exists: the 2025 Myanmar earthquake has a comparable multi-product, crowd-validated
@@ -484,8 +496,11 @@ ecosystem sees lighter damage reliably, so plan shelter assessments accordingly.
 ::: {.callout-tip title="For providers"}
 Publish an analysed extent; without one, a product cannot be evaluated or safely used.
 Publish per-building acquisition metadata (scene count and dates); those fields are what
-allowed this paper to trace a failure to a single satellite scene. Surface corroboration
-to users as a confidence tier rather than leaving it in an archive column. Validate where
+allowed this paper to trace a failure to a single satellite scene. Where a second scene
+confirms a flag, present that as an explicit confidence level: for Microsoft, the one
+product whose metadata allowed the check, two-scene flags were 2.5 times more precise
+than single-scene flags ([Appendix](#app-ceiling)), a distinction a user currently has
+to reconstruct from the per-building metadata. Validate where
 the product is deployed, not where validation data happens to exist; the failing scene
 here was the unvalidated one. Check new products against a geography-only baseline, which
 every single product in this event merely tied. And accept feedback during the
@@ -656,10 +671,20 @@ numbers are comparable only within one:
 | **Core region** | the ~61 km² intersection of the CEMS extents with all five extent-publishing products (@fig-extents): one shared cell set | voting, the pairwise rules, fusion, and the best-F1 geography comparison |
 | **As delivered** | each product's full delivered footprint, wherever CEMS mapped: a different region per product | the as-delivered scorecard and geography benchmark; ranking test 1 |
 
-: The two reporting lenses. Sections and captions state which they use. The core
+: The two reporting regions. Sections and captions state which they use. The core
 region gives every predictor an identical cell set (one geography score); as-delivered
 is per-product by design, so the geography model is re-scored on each product's own
 footprint there. {#tbl-regions}
+
+Why the core region is so small, and what its numbers mean: the five extent-publishing
+products mutually overlap over only ~100 km², with Microsoft's 210 km² strip the
+binding constraint (UNEP publishes no extent and is treated as covering the region, the
+same stated assumption as everywhere else). Intersecting with the expert reference then
+trims the shared, scoreable area to ~61 km². What the trim buys is identical footing
+for every predictor; what it costs is representativeness: the core region sits on the
+damage epicentre, where the reference is densest and every product scores best, so
+core-region numbers are each product's favourable case, which is why the as-delivered
+numbers are called the operationally honest ones (@sec-flags).
 
 One point about what the radius *is*: it is not a tolerance applied to the products,
 but the definition of the target every predictor is scored against:
@@ -1035,7 +1060,8 @@ higher than measured; the ceiling means single-product performance stops improvi
    damage-fraction score (within its own analysed region, where its baseline numbers run
    higher than in the core region) trades recall 0.66→0.10 for precision 0.10→0.19. The
    shipped binary flag already sits near the best F1 on that curve. There is no hidden headroom
-   in the confidence field.
+   in the confidence field. OSU's post-freeze v1 certainty tiers repeat the pattern
+   ([version postscript](#app-osu-v1)).
 3. **Agreement within one product plateaus too.** Microsoft flags corroborated by a
    second satellite scene are 2.5 times more precise than single-scene flags (0.245
    versus 0.097). That is a real gain and worth publishing. But it remains well below the
@@ -1113,6 +1139,18 @@ noise-dominated, and version-to-version stability deserves a place beside accura
 how such products are judged. The area-level signal, by contrast, is robust to exactly
 this kind of churn.
 
+The revision's other addition, the certainty tiers, answers a question v0 could not:
+does a product's *most confident* class escape the per-building ceiling? (v0's
+continuous score was too saturated to ask this: 51% of its flags sat at probability
+exactly 1.0.) Scored in the core region, the frame of @tbl-dial, the tiers order
+correctly and the high-confidence cut is v1's best operating point: precision 0.059,
+against 0.032 for the probable tier and 0.046 for the published headline, with F1
+0.103 versus the headline's 0.085 (half the flags, two-thirds of the recall). So the
+tiering is a real quality signal, and it still does not change the story: OSU's best
+tier remains below Microsoft's core-region precision (0.093) and far below the
+agreement rules, which puts the [ceiling appendix's](#app-ceiling) confidence finding,
+signal but no hidden headroom, on two products rather than one.
+
 
 
 ### Radar and optical: why they fail differently {#sec-sensing .unnumbered}
@@ -1129,7 +1167,7 @@ ResNet) applied to before-and-after radar images (no methodology document accomp
 the delivery), so we do not assume it shares that protection. UNEP's debris mass is
 likewise radar-derived.
 
-The contrast is measurable in this event. Santa Cruz serves as a control case: the
+The contrast is measurable in this event. Santa Cruz is a control case: the
 expert reference analysed it and found almost no damage, and much of it is agricultural.
 There the two coherence products flagged 1.2% and 0.9% of buildings, while the optical
 UH product flagged 27.5% (@sec-floor).
@@ -1293,7 +1331,7 @@ than its decimals suggest, which is worth remembering when reading any two produ
 
 ```{python}
 #| label: tbl-ci-core
-#| tbl-cap: "Core region, 95% block-bootstrap intervals. P/R/F1 at 10 m, crowd-adjusted precision (10 m), F1 at 30 m, and visits per find (30 m). The 20 m radius and the as-delivered lens are in the frozen artefact (RQ9)."
+#| tbl-cap: "Core region, 95% block-bootstrap intervals. P/R/F1 at 10 m, crowd-adjusted precision (10 m), F1 at 30 m, and visits per find (30 m). The 20 m radius and the as-delivered region are in the frozen artefact (RQ9)."
 import pandas as pd
 from great_tables import GT
 
@@ -1340,7 +1378,7 @@ for k in ("flat k-of-6 voting", "weighted fusion"):
               data_row_padding="3px"))
 ```
 
-In the as-delivered lens the product intervals widen further (UH's precision 0.009
+In the as-delivered region the product intervals widen further (UH's precision 0.009
 runs 0.003 to 0.018); the full set is in the RQ9 artefact. Two claims elsewhere in
 the paper lean on these intervals. The 6-of-6 rule's sub-1 visits per find survives:
 its interval tops out at 0.96. And the null-versus-product story sharpens to: no
