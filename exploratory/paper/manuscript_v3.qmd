@@ -8,6 +8,8 @@ format:
     toc-depth: 2
     embed-resources: true
     number-sections: true
+    comments:
+      hypothesis: true
 execute:
   echo: false
   warning: false
