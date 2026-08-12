@@ -159,11 +159,10 @@ use; the construction, and why the core region is so small, are in the
 damage points and is the primary reference: every headline precision and recall is
 computed against it, under one matching rule (a building counts as damaged if a CEMS
 point lies within 10 m; the Appendix gives the [reasoning](#app-matching) and
-[sensitivity](#app-radius)). Three other
-distances appear in this paper, each doing exactly one job: 20 m absorbs phone-GPS
-error when matching against field reports; a separate 20 m re-run of the label itself
-is the Appendix's [sensitivity check](#app-radius); and 30 m is the line-of-sight scale
-a wasted trip is judged at, shown alongside 10 and 20 m in @tbl-dial. MapSwipe is a
+[sensitivity](#app-radius)). Larger radii
+(20 and 30 m) appear in a few specific roles (GPS tolerance for field reports,
+line-of-sight visit costs, a sensitivity re-run of the label); each is restated where
+used, and the [Appendix](#app-matching) keeps the full accounting. MapSwipe is a
 crowd campaign in which more than 400 volunteers reviewed ~50 m cells at locations AI
 products had flagged: it can refute false alarms but can never reveal a miss, so it is
 used to adjudicate disputed flags, never as ground truth. ChatMap is 415 building-level
