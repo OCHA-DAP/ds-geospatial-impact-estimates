@@ -614,6 +614,19 @@ absent from this draft. The timeliness axis is preliminary:
 accuracy with arrival date awaits confirmed provider-release dates.
 
 
+```{=html}
+<div class="paper-end">End of the paper<br>
+<span>Everything below is the appendix: methods in full, sensitivity checks, and supporting tables.</span></div>
+<style>
+.paper-end { text-align: center; margin: 4rem 0 3rem; padding: 1.4rem 0;
+  border-top: 3px double #999; border-bottom: 3px double #999;
+  font-variant: small-caps; letter-spacing: .18em; font-size: 1.15em; color: #444; }
+.paper-end span { font-variant: normal; letter-spacing: 0; font-size: .8em; color: #777; }
+section#appendix h3 { color: #555; }
+section#appendix h3::before { content: "Appendix · "; color: #999; font-weight: 400; }
+</style>
+```
+
 ## Appendix {.unnumbered}
 
 The main text states each result with a summary of how it was measured; this
