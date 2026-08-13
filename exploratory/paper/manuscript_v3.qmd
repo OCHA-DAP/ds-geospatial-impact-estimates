@@ -189,9 +189,10 @@ case (@fig-peraoi). The
 products do find damage; what they also produce is an enormous number of flags with
 nothing recorded underneath them (false positives).
 
-**How it was measured:** A flag counts as a hit if an expert damage point lies within
-10 m of the building, and otherwise as a false positive; the radius comes from an
-analysis of building spacing (median neighbour distance is 9.7 m). Results are quoted in the core region (each product's
+**How it was measured:** A flag counts as a hit if an expert-mapped damage point lies
+within 10 m of the flagged building, and otherwise as a false positive; the radius
+comes from an analysis of building spacing (median neighbour distance is 9.7 m; radius
+sensitivity in the [Appendix](#app-radius)). Results are quoted in the core region (each product's
 most favourable frame) unless labelled as-delivered (the more operationally honest
 level). The matching and point-classification system, the radius sensitivity, and the
 two reporting regions are in the Appendix ([matching](#app-matching); [radius
@@ -261,7 +262,9 @@ which is where the products' real value shows
 
 ## The expert reference misses lesser damage, so precision is reported as an interval {#sec-floor}
 
-**Result:** Checked against the field reports (ChatMap), Copernicus EMS captured 94% of
+**Result:** ChatMap is the one reference collected on the ground independently of any
+imagery, so, although it is small and nowhere near comprehensive, it is the set that
+can audit the expert map. Checked against it, Copernicus EMS captured 94% of
 destroyed buildings but only 49% of those significantly damaged (@fig-gradeslope): the
 expert map is thorough about complete destruction but patchier about lesser damage, and
 the individual products share this same relationship. Crediting the flags that crowd
@@ -271,8 +274,8 @@ everything: about 11% of field-reported damage points, mostly in inland hill
 communities, had no flag from any product within 20 m (the field-report GPS tolerance)
 despite lying inside analysed extents. Recall was never the products' weakness: four of
 the six individually reached 0.66–0.85 against the field reports, and at least one of
-the six flagged within 20 m of 96% of field points in the core region. Precision is
-where they fail.
+the six (the union of all six) flagged 96% of the field-reported ChatMap points within
+20 m in the core region. Precision is where they fail.
 
 **How it was measured:** The field reports (ChatMap) were used to evaluate the expert
 reference itself, grading its recall by damage class. Unioning them into the reference
@@ -501,19 +504,27 @@ event cannot establish.
 The results imply changes in practice for three audiences. We collect them here, once.
 
 ::: {.callout-tip title="For responders"}
-**Do not spend time choosing a product; spend it counting agreement between products.** On
-this event no single product was meaningfully better than a model of coastline distance and
-building density, but the number of products agreeing on a building roughly doubled the
-performance (F1) of any of them alone. Unlike a fitted model, counting requires no weights, no
-training data and no reference, so it can be done the hour the second product arrives. Weight
-the count toward *independent methods*: products that share a sensing method fail together
-and their agreement carried the least information in our tests, while products with nothing
-in common but the event cover for each other's failure zones. Then set the threshold from
-your own capacity (@tbl-dial gives the flag counts and visit costs at each level),
-remembering that you are choosing a workload, not a guaranteed hit rate. Used at sector
-scale, any major product ranks where to go first: trust that ranking, not the building
-counts, while noting that coarse geography ranks about as well. Nothing in the current
-ecosystem sees lighter damage reliably, so plan shelter assessments accordingly.
+These recommendations feed an ongoing dialogue with responders about what is
+operationally most useful, and the clearest signal so far concerns the first 72 hours:
+the pressing need is to narrow down the worst-hit areas, and at that job the
+neighbourhood ranking can be trusted. Used at sector scale, any major product ranks
+where to go first: trust that ranking, not the building counts (coarse geography ranks
+about as well, but it is available either way). What building-level performance a
+response actually requires, and by when (how much recall is worth trading for
+precision), is still under discussion; what is settled is that no single product
+supports acting on individual flags. **So do not spend time choosing a product; spend
+it counting agreement between products.** On this event no single product was
+meaningfully better than a model of coastline distance and building density, but the
+number of products agreeing on a building roughly doubled the performance (F1) of any
+of them alone. Unlike a fitted model, counting requires no weights, no training data
+and no reference, so it can be done the hour the second product arrives. Weight the
+count toward *independent methods*: products that share a sensing method fail together
+and their agreement carried the least information in our tests, while products with
+nothing in common but the event cover for each other's failure zones. Then set the
+threshold from your own capacity (@tbl-dial gives the flag counts and visit costs at
+each level), remembering that you are choosing a workload, not a guaranteed hit rate.
+Nothing in the current ecosystem sees lighter damage reliably, so plan shelter
+assessments accordingly.
 :::
 
 ::: {.callout-tip title="For providers"}
@@ -536,11 +547,19 @@ A single expert reference understates precision most where damage is lighter. Pu
 measured precision as a lower bound, or better, adjudicate the disputed flags against a
 second reference and publish the interval. Note that unanimous product agreement without
 expert corroboration turned out to be mostly real damage, so consensus doubles as a
-detector of reference gaps and a field-validation queue. Finally, coverage is an
-ecosystem property: the inland communities missed by every product were inside analysed
-extents, and nobody knew that nobody was seeing them. A shared, live picture of who is
+detector of reference gaps and a field-validation queue. Finally, coverage is a
+problem no provider can see alone: the inland communities missed by every product were
+inside analysed extents, and nobody knew that nobody was seeing them. A shared, live picture of who is
 looking where costs providers nothing and closes the one gap here that no amount of
-fusion can.
+fusion can. In practice this points to four coordination functions, with the open
+question being who runs each: a **web viewer** showing who detected what, where (the
+shared live picture; the dashboard built alongside this study is one instance); an
+**interpretation layer** that turns the combined products into the neighbourhood
+ranking and building-level composites responders can act on; a **consolidation space**
+that raw deliveries flow into, open, with the onus on providers to contribute and the
+coordinator supplying the template (analysed extent, metadata, a common basemap and
+footprint set); and **raw-imagery access** for field teams with the capacity to run
+their own analysis or manual mapping.
 :::
 
 ## Limitations
@@ -584,8 +603,9 @@ what was operationally in hand. A model fitted on previous earthquakes, which is
 responder would really have, would score somewhere below this bound and remains
 untested.
 
-**Pending work.** Population-weighted prioritisation is in progress and absent from
-this draft. The timeliness axis is preliminary:
+**Pending work.** A population-weighted version of the area ranking (ordering sectors
+by people affected rather than buildings damaged) is planned but not yet started, and
+absent from this draft. The timeliness axis is preliminary:
 @fig-timeline reconstructs availability only, and the decision-relevant interaction of
 accuracy with arrival date awaits confirmed provider-release dates.
 
