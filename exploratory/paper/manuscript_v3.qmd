@@ -1062,13 +1062,13 @@ almost exactly. Second, outside Caraballeda every product keeps flagging at scal
 in Santa Cruz) while measured precision collapses to 0.00–0.02 everywhere. We state
 plainly what those zeros can and cannot mean. They are floors against a reference that
 recorded almost nothing in those AOIs, so two explanations are confounded: the products
-hallucinating where damage is sparse (the same low-damage-zone mechanism as the UH
-agricultural case and the Microsoft west strip), and CEMS under-recording damage in
-AOIs it mapped thinly. The crowd cannot arbitrate here: the MapSwipe campaign
+false-alarming at scale where damage is sparse (the same low-damage-zone mechanism as
+the UH agricultural case and the Microsoft west strip), and CEMS under-recording damage
+in AOIs it mapped thinly. The crowd cannot arbitrate here: the MapSwipe campaign
 concentrated on the coastal strip, and at most 12% of these out-of-Caraballeda flags
-fall on voted cells. Recall is measurable only in Morón (26 points), where the best
-product finds 19% of it. What survives the ambiguity is the conditional: every
-performance claim in this paper describes dense-damage coastal terrain, and in the four
+fall on MapSwipe-voted cells. Recall is measurable only in Morón (26 points), where the
+best product finds 19% of it. What survives the ambiguity is a statement of scope:
+every performance claim in this paper describes dense-damage coastal terrain, and in the four
 low-damage AOIs the products' flags are almost entirely uncorroborated by any reference
 we have.
 
