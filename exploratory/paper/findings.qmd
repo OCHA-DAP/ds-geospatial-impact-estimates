@@ -771,8 +771,9 @@ the destruction bias shows up on precision AND recall, symmetrically.)
   2026-08-06: this line called LIST "optical" — an unsourced label contradicting ADR-0020
   and flag #14. The split reads better as appearance/debris vs structural-change than as
   optical-vs-radar; UNEP is SAR-derived yet sits with the appearance-biased group.)
-- **Confidence: high** (683–784 points per grade). Manuscript: one sentence in Results II
-  pending; register canonical.
+- **Confidence: high** (683–784 points per grade). Manuscript: covered (2026-08-13) — one
+  sentence in the floor section's Result plus the grade-mapping/exclusion rule in
+  #app-matching; register canonical.
 
 # RQ2k — CEMS vs CEMS∪ChatMap: the strengthened reference (justifies CEMS-only default)
 

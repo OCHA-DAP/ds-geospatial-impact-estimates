@@ -267,7 +267,11 @@ imagery, so, although it is small and nowhere near comprehensive, it is the set 
 can audit the expert map. Checked against it, Copernicus EMS captured 94% of
 destroyed buildings but only 49% of those significantly damaged (@fig-gradeslope): the
 expert map is thorough about complete destruction but patchier about lesser damage, and
-the individual products share this same relationship. Crediting the flags that crowd
+the individual products share this same relationship. The same slope shows up inside
+the expert reference's own grades: every product finds CEMS-graded *destroyed*
+buildings more reliably than *damaged* ones, with the appearance- and debris-based
+products (Microsoft, UH, UNEP) destruction-biased on both precision and recall while
+the structural-change products (OSU, IMPACT, LIST) are grade-neutral. Crediting the flags that crowd
 reviewers confirmed as damaged lifts Microsoft's precision from 0.08 to roughly 0.24, a
 factor of three that reflects the reference, not the product. Some damage escaped
 everything: about 11% of field-reported damage points, mostly in inland hill
@@ -699,6 +703,13 @@ buffer. Interpretively, each setting also admits an operational reading, whether
 flag put a responder within sight of real damage: 30 m (line of sight), 60 m (same
 block), 100 m (right area). The line-of-sight reading is what turns the 30 m column
 into the visits-per-find workload metric; the sweep stands on its own without it.
+
+**Which CEMS grades count as damage.** The delivery's text grades collapse to an
+xBD-style scale (destroyed, completely destroyed and highly damaged → *Destroyed*;
+moderately damaged and damaged → *Damaged*), and the reference set for every score in
+this paper is the points graded Damaged or Destroyed (784 and 683 respectively in the
+core region). Points graded *possibly damaged* are excluded entirely: they appear in
+neither the numerator nor the denominator of any score.
 
 **One matching rule, two labelled exceptions.** Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled
