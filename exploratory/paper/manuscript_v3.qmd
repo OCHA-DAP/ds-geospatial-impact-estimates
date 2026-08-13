@@ -777,12 +777,16 @@ every product and voting rule is re-scored at 20 m and 30 m (@tbl-dial), the mod
 refit at both in the Appendix ("Performance versus matching radius"), and no conclusion
 changes.
 
-Two implementation details complete the picture. The fusion analysis, which needs a label
-for every building rather than only the flagged ones, matches buildings to CEMS points by
-centroid, while the headline scorecard matches on each product's native geometry; at the
-same radius the two implementations agree to within 0.005 in precision for every product
-(@tbl-frames, Appendix), so that choice is immaterial. The radius is the one choice that
-moves numbers. Microsoft's precision is 0.080 at 10 m and 0.138 at 20 m: the same
+One implementation detail completes the picture. There are two ways to measure "is a
+CEMS point within r of this building", and the paper uses both, in different places.
+The headline scorecard measures distance to each product's flags exactly as delivered
+(the product's own footprint polygons or points). The fusion analysis cannot do that:
+it needs a damaged-or-not label for *every* building on the shared base, not only the
+flagged ones, so it measures distance from each building's centre point instead. The
+two could in principle differ (a footprint edge can sit within 10 m of a CEMS point
+while the building's centre does not), but in practice they agree to within 0.005 in
+precision for every product (@tbl-frames, Appendix), so the choice is immaterial. The
+radius is the one choice that moves numbers. Microsoft's precision is 0.080 at 10 m and 0.138 at 20 m: the same
 product, the same flags, the same reference, two definitions of what counts as a hit.
 
 
