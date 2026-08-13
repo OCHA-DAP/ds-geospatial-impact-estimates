@@ -158,25 +158,20 @@ use; the construction, and why the core region is so small, are in the
 **The three references, and what each can see.** Copernicus EMS provides trained-analyst
 damage points and is the primary reference: every headline precision and recall is
 computed against it, under one matching rule (a building counts as damaged if a CEMS
-point lies within 10 m; the Appendix gives the [reasoning](#app-matching) and
-[sensitivity](#app-radius)). Alongside it,
-@tbl-dial reports 20 and 30 m as well: a sensitivity sweep showing how performance
-changes with a looser buffer, whose settings also carry operational readings where
-useful (30 m as line of sight). The separate 20 m used against field reports is not
-part of that sweep: the matching radius follows the location precision of the
-reference, and unlike expert points, field reports carry positional error of their own;
-the [Appendix](#app-matching) keeps the full accounting. MapSwipe is a
-crowd campaign in which more than 400 volunteers reviewed ~50 m cells at locations AI
-products had flagged: it can refute false alarms but can never reveal a miss, so it is
-used to adjudicate disputed flags, never as ground truth. ChatMap is 415 building-level
-damage reports from field teams, positives-only with no survey frame: it can reveal
-misses but says nothing about false alarms (@fig-refarch). Because their blind spots do
-not overlap, the three can be used to check one another, which is how the expert
-reference's own bias was measured (@sec-floor). One rule governs every number in this
-paper: **against an incomplete reference, measured precision is a floor and measured
-recall is a ceiling.** A flag counted false may be real damage the reference missed, so
-true precision can only be higher; damage the reference never recorded is missing from
-the denominator, so the true share of all damage found can only be lower.
+point lies within 10 m). MapSwipe is a crowd campaign in which more than 400 volunteers
+reviewed ~50 m cells at locations AI products had flagged: it can refute false alarms
+but can never reveal a miss, so it is used to adjudicate disputed flags, never as
+ground truth. ChatMap is 415 building-level damage reports from field teams,
+positives-only with no survey frame: it can reveal misses but says nothing about false
+alarms (@fig-refarch). Every matching radius in the paper (the 10 m rule, the 20 and
+30 m sensitivity columns of @tbl-dial, and the separate 20 m applied to ChatMap
+points) is defined and justified in the [Appendix](#app-matching). Because their blind
+spots do not overlap, the three can be used to check one another, which is how the
+expert reference's own bias was measured (@sec-floor). One rule governs every number
+in this paper: **against an incomplete reference, measured precision is a floor and
+measured recall is a ceiling.** Both follow from one fact: the reference itself misses
+damage, so some flags counted false are actually right (true precision is higher) and
+some real damage never entered the count (true recall is lower).
 
 ![The three reference datasets at a glance. Two are HOT-run and easily confused:
 MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
@@ -192,11 +187,11 @@ the reference overlap and every product scores best, precision reached only 0.04
 against recall of 0.31–0.69: ten to twenty misses for every hit, in the products' best
 case (@fig-peraoi). The
 products do find damage; what they also produce is an enormous number of flags with
-nothing recorded underneath them.
+nothing recorded underneath them (false positives).
 
 **How it was measured:** A flag counts as a hit if an expert damage point lies within
-10 m of the building, a radius chosen from an analysis of building spacing (median
-neighbour distance is 9.7 m). Results are quoted in the core region (each product's
+10 m of the building, and otherwise as a false positive; the radius comes from an
+analysis of building spacing (median neighbour distance is 9.7 m). Results are quoted in the core region (each product's
 most favourable frame) unless labelled as-delivered (the more operationally honest
 level). The matching and point-classification system, the radius sensitivity, and the
 two reporting regions are in the Appendix ([matching](#app-matching); [radius
@@ -209,7 +204,7 @@ up to 27.5%: a floor against a nearly-empty reference, in which product over-fla
 and reference incompleteness cannot be
 separated.](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 
-## A hindsight geography model approximates the products {#sec-null}
+## A hindsight geography model approximates the products' performance {#sec-null}
 
 **Result:** A model given only three context variables (distance to the coast, local
 building density, and USGS ShakeMap shaking intensity) and no satellite data at all sits
@@ -251,9 +246,9 @@ fitted coefficients were not. Beating it is the test that a product adds informa
 beyond coarse spatial structure. In @fig-bestf1, the geography nulls (red) land inside
 the band of single products (grey): each product's small win or loss against the
 primary null is within block-bootstrap noise, with one exception (OSU sits
-significantly below it). The composites (blue) are different: flat voting (+0.158,
-interval 0.081 to 0.227) and weighted fusion (+0.214, interval 0.162 to 0.256) clear
-the null, and every single product, by margins the bootstrap cannot explain away. The
+significantly below it). The composites (blue) are different: flat voting (+0.158) and
+weighted fusion (+0.214) clear the null, and every single product, by margins the
+bootstrap cannot explain away. The
 model's construction, its fairness safeguards, and the intervals are in the Appendix
 ([construction](#app-null); [fairness](#app-fair); [intervals](#app-ci)).
 
