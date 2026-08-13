@@ -153,7 +153,7 @@ five expert-mapped areas, Caraballeda, which is also where the experts found nea
 the damage, so the core region holds 96% of every CEMS-recorded damage point and is
 each product's favourable case. Sections and captions state which region they
 use; the construction, and why the core region is so small, are in the
-[Appendix](#app-matching) (@tbl-regions).
+[Appendix](#app-regions) (@tbl-regions).
 
 **The three references, and what each can see.** Copernicus EMS provides trained-analyst
 damage points and is the primary reference: every headline precision and recall is
@@ -338,7 +338,7 @@ single score of
 **Result:** The products fail in different places, so the number of them agreeing on a
 building is informative, and it behaves as a dial with a known operational cost at
 every setting (@tbl-dial): from "any product" (97% of known damage at the 30 m
-line-of-sight scale, at a cost of 26.4 field visits per found damaged building) to
+finding distance, at a cost of 26.4 field visits per found damaged building) to
 "all six" (crowd-adjusted precision 0.93, 18% of the damage); 4-of-6 costs 3.4 visits
 per found damaged building, unanimity (6-of-6) 0.8. Counting agreement roughly doubles
 the F1 of the best single product (0.290 against 0.148) and requires no weights, no
@@ -349,7 +349,7 @@ null, it explains the event afterwards and cannot run during one.
 
 ```{python}
 #| label: tbl-dial
-#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m). Visits/find is field visits per damage point reached at 30 m, read as line of sight (one stop puts the damage within view); computed as flags ÷ R₃₀ × 1,467 reference points; as a ratio of counts it falls below 1 where damage is dense enough that one stop puts several recorded points within sight. Shading ranks values within each column (darker = higher; for visits/find, fewer). The geography and fusion models are compared at their operating points in @fig-bestf1 and the <a href='#app-radius'>Appendix</a>. 95% block-bootstrap confidence intervals for these values are tabulated in the <a href='#app-ci'>Appendix</a>."
+#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m). Visits/find is field visits per damage point reached at 30 m, the finding distance (close enough for one stop to plausibly find the damage); computed as flags ÷ R₃₀ × 1,467 reference points; as a ratio of counts it falls below 1 where damage is dense enough that one stop reaches several recorded points. Shading ranks values within each column (darker = higher; for visits/find, fewer). The geography and fusion models are compared at their operating points in @fig-bestf1 and the <a href='#app-radius'>Appendix</a>. 95% block-bootstrap confidence intervals for these values are tabulated in the <a href='#app-ci'>Appendix</a>."
 import pandas as pd
 from great_tables import GT, style, loc
 from matplotlib import colormaps
@@ -630,20 +630,45 @@ section#appendix h3::before { content: "Appendix · "; color: #999; font-weight:
 ## Appendix {.unnumbered}
 
 The main text states each result with a summary of how it was measured; this
-appendix carries the full machinery, inherited from the long-form draft
+appendix carries the more in-depth detail, inherited from the long-form draft
 (`manuscript_v2`), which it supersedes.
+
+### The two reporting regions {#app-regions .unnumbered}
+
+Results are reported in one of two *regions*, and numbers are comparable only within
+one:
+
+| reporting region | what it is | used for |
+|---|---|---|
+| **Core region** | the ~61 km² intersection of the CEMS extents with all five extent-publishing products (@fig-extents): one shared cell set | voting, the pairwise rules, fusion, and the best-F1 geography comparison |
+| **As delivered** | each product's full delivered footprint, wherever CEMS mapped: a different region per product | the as-delivered scorecard and geography benchmark; ranking test 1 |
+
+: The two reporting regions. Sections and captions state which they use. The core
+region gives every predictor an identical cell set (one geography score); as-delivered
+is per-product by design, so the geography model is re-scored on each product's own
+footprint there. {#tbl-regions}
+
+Why the core region is so small, and what its numbers mean: the five extent-publishing
+products mutually overlap over only ~100 km², with Microsoft's 210 km² strip the
+binding constraint (UNEP publishes no extent and is treated as covering the region, the
+same stated assumption as everywhere else). Intersecting with the expert reference then
+trims the shared, scoreable area to ~61 km². What the trim buys is identical footing
+for every predictor; what it costs is representativeness: the core region sits on the
+damage epicentre, where the reference is densest and every product scores best, so
+core-region numbers are each product's favourable case, which is why the as-delivered
+numbers are called the operationally honest ones (@sec-flags).
 
 ### Matching products to references, in full {#app-matching .unnumbered}
 
 The product and reference use different geometries (CEMS drops points on damaged
 buildings, while each product flags its own footprints on its own building base), so there
 is no shared list of instances on which to build a single confusion matrix. We therefore
-score by *proximity*, the standard approach for detection-style evaluation: precision
+score by *proximity*, a standard approach for detection-style evaluation: precision
 anchors on the product (of its flagged buildings, how many have a CEMS damage point within
 radius r?), and recall anchors on the reference (of the CEMS damage points, how many have a
 product flag within r?). Each metric carries its own denominator. Because the two metrics
 are precision and recall, neither uses the undamaged background (true negatives), which we
-could not enumerate anyway, since CEMS never labels the undamaged stock.
+could not enumerate anyway, since CEMS never labels the undamaged buildings.
 
 ```{python}
 #| fig-cap: "Dual-anchored matching. Left: a product is scored only where it AND the reference both looked. Middle: recall anchors on the reference; each CEMS damage point asks whether a product flag lies within radius r. Right: precision anchors on the product; each flagged building asks whether a CEMS point lies within r. Each metric brings its own denominator."
@@ -703,19 +728,19 @@ stand-alone evaluation in fully enclosed administrative units.
 An analysed extent says where a product looked, not whether it could see: cloud can hide
 individual buildings inside a declared extent. A robustness check against the one
 product that publishes per-building visibility found the effect negligible in this
-event (details in the Appendix), so all products are scored without visibility
+event ([the cloud check](#app-radius)), so all products are scored without visibility
 corrections; the check is impossible for the five that publish no such field.
 
 The matching radius comes from an analysis of building spacing rather than from convenience. The median
 distance between neighbouring building centroids in the core region is 9.7 m, and 93% of
-buildings have a neighbour within 20 m. We therefore use r = 10 m as the largest radius
-at which "did the product flag this building" is still a meaningful question. Larger
-radii do two jobs at once. Mechanically they are a sensitivity sweep: @tbl-dial reports
-10, 20 and 30 m side by side, so the reader can watch every number change with the
-buffer. Interpretively, each setting also admits an operational reading, whether the
-flag put a responder within sight of real damage: 30 m (line of sight), 60 m (same
-block), 100 m (right area). The line-of-sight reading is what turns the 30 m column
-into the visits-per-find workload metric; the sweep stands on its own without it.
+buildings have a neighbour within 20 m. We therefore use r = 10 m throughout: with
+buildings this tightly packed, a larger radius would routinely match a flag to a
+neighbouring building. The 20 and 30 m columns of @tbl-dial do two jobs at once.
+Mechanically they are a sensitivity sweep, so the reader can watch every number change
+with the buffer. Interpretively, 30 m also works as a *finding distance*: not literal
+sight of the damage, but close enough that a responder standing at the flag could
+plausibly find the damaged building. That reading is what turns the 30 m column into
+the visits-per-find workload metric; the sweep stands on its own without it.
 
 **Which CEMS grades count as damage.** The delivery's text grades collapse to an
 xBD-style scale (destroyed, completely destroyed and highly damaged → *Destroyed*;
@@ -727,41 +752,18 @@ neither the numerator nor the denominator of any score.
 **One matching rule, two labelled exceptions.** Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled
 exceptions appear later, each because it answers a different question: the coverage and
-visits-per-find columns of the voting table use 30 m, the line-of-sight scale ("would a
-responder sent here *see* the damage"), and recall against the ChatMap ground reports
+visits-per-find columns of the voting table use 30 m, the finding distance ("could a
+responder sent here *find* the damage"), and recall against the ChatMap ground reports
 uses 20 m. The field exception is not a second convention but the same principle
 applied to a different reference: the matching radius follows the location precision of
 the reference being matched. Expert points are digitized onto buildings, so they add no
 positional error and the 10 m identity radius applies unchanged; field reports are
 phone points collected from the street (GPS error, and reporters stand near, not on,
 buildings), so their radius widens to 20 m to absorb the reference's own scatter.
-Matching those points at 10 m would book the reference's geolocation error as product
+Matching those points at 10 m would count the reference's geolocation error as product
 failure. Both exceptions are restated where they are used. (That field-matching 20 m is
 unrelated to the 20 m *label radius* of the Appendix sensitivity re-run, which is an
 alternative definition of the target itself.)
-
-Separately from the matching radius, results are reported in one of two *regions*, and
-numbers are comparable only within one:
-
-| reporting region | what it is | used for |
-|---|---|---|
-| **Core region** | the ~61 km² intersection of the CEMS extents with all five extent-publishing products (@fig-extents): one shared cell set | voting, the pairwise rules, fusion, and the best-F1 geography comparison |
-| **As delivered** | each product's full delivered footprint, wherever CEMS mapped: a different region per product | the as-delivered scorecard and geography benchmark; ranking test 1 |
-
-: The two reporting regions. Sections and captions state which they use. The core
-region gives every predictor an identical cell set (one geography score); as-delivered
-is per-product by design, so the geography model is re-scored on each product's own
-footprint there. {#tbl-regions}
-
-Why the core region is so small, and what its numbers mean: the five extent-publishing
-products mutually overlap over only ~100 km², with Microsoft's 210 km² strip the
-binding constraint (UNEP publishes no extent and is treated as covering the region, the
-same stated assumption as everywhere else). Intersecting with the expert reference then
-trims the shared, scoreable area to ~61 km². What the trim buys is identical footing
-for every predictor; what it costs is representativeness: the core region sits on the
-damage epicentre, where the reference is densest and every product scores best, so
-core-region numbers are each product's favourable case, which is why the as-delivered
-numbers are called the operationally honest ones (@sec-flags).
 
 One point about what the radius *is*: it is not a tolerance applied to the products,
 but the definition of the target every predictor is scored against:
@@ -1254,7 +1256,7 @@ UH product flagged 27.5% (@sec-floor).
 All CEMS-based results in this paper use a 10 m matching radius, and every model is
 fitted and evaluated at that radius. Because the radius defines the target itself, the
 whole analysis is re-run at 20 m (doubling the positive class: 2,733 labelled buildings
-against 1,350) and at 30 m (the line-of-sight scale).
+against 1,350) and at 30 m (the finding distance).
 
 @tbl-dial in the main text carries every product and voting rule at all
 three radii in the paper's primary machinery; the models' radius behaviour is
