@@ -15,3 +15,14 @@ events:
     status: active
     external_ids:
       cems_activation: EMSR884
+  - event_id: 20260810-co-earthquake
+    name: Colombia earthquake
+    hazard: earthquake
+    onset: 2026-08-10
+    countries: [CO]
+    bbox: [-77.7, 3.3, -74.7, 6.3]
+    status: active
+    external_ids:
+      usgs: us6000tjl2
+      gdacs: "1557236"
+      # cems_activation / glide: add as issued
