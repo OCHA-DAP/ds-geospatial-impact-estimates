@@ -34,12 +34,13 @@ from __future__ import annotations
 import os
 import sys
 
-from gie import blobio, ledger
+from gie import blobio, events, ledger
 from gie.config import load_settings
 
 SOURCE = "impact_initiatives"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DEFAULT_DIR = os.path.expanduser("~/Documents/global_gis")
 
 # (filename, ledger dataset label, ledger detail). Names kept verbatim for
@@ -64,6 +65,7 @@ FILES = [
 
 
 def main() -> None:
+    events.require_event(EVENT)
     src_dir = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_DIR
     if not os.path.isdir(src_dir):
         raise SystemExit(f"delivery dir not found: {src_dir}")
@@ -75,7 +77,7 @@ def main() -> None:
         src_path = os.path.join(src_dir, name)
         if not os.path.isfile(src_path):
             raise SystemExit(f"missing delivery file: {src_path}")
-        blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name)
+        blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name, event=EVENT)
         with open(src_path, "rb") as f:
             data = f.read()
         print(f"uploading {name} ({len(data) / 1e6:.1f} MB) -> {blob}", flush=True)

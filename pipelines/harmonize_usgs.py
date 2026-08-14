@@ -23,18 +23,25 @@ import json
 
 import ocha_stratus as stratus
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE = "usgs"
 ADM0 = "VE"
 STAGE = "dev"
-EVENT = "us6000t7zp"  # M7.5 mainshock (the M7.2 foreshock us6000t7zc is bronze-only)
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
+# USGS ComCat id for the mainshock (the M7.2 foreshock us6000t7zc is bronze-only).
+# Distinct from EVENT above (this repo's multi-event registry id) — same real-world
+# earthquake, two different id namespaces (USGS's own vs. ours).
+MAINSHOCK_ID = "us6000t7zp"
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
-    b = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", f"event={EVENT}")
+    b = settings.blob_path(
+        "bronze", f"source={SOURCE}", f"adm0={ADM0}", f"event={MAINSHOCK_ID}", event=EVENT
+    )
 
     def _read(name: str) -> dict:
         return json.loads(
@@ -55,7 +62,7 @@ def main() -> None:
             "kind": "epicenter", "mag": p.get("mag"),
             "depth_km": coords[2] if len(coords) > 2 else None,
             "place": p.get("place"), "time": p.get("time"),
-            "event": EVENT, "shakemap_version": smv,
+            "event": MAINSHOCK_ID, "shakemap_version": smv,
         },
     })
     # MMI intensity contours (colors baked in by USGS)
@@ -78,8 +85,10 @@ def main() -> None:
         k = f["properties"]["kind"]
         kinds[k] = kinds.get(k, 0) + 1
 
-    silver = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "shakemap.geojson")
-    platinum = settings.blob_path("platinum", "usgs", "shakemap.geojson")
+    silver = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "shakemap.geojson", event=EVENT
+    )
+    platinum = settings.blob_path("platinum", "usgs", "shakemap.geojson", event=EVENT)
     for dest in (silver, platinum):
         stratus.upload_blob_data(fc, dest, stage=STAGE, container_name=settings.container,
                                  content_type="application/geo+json")
@@ -87,7 +96,7 @@ def main() -> None:
 
     ledger.record(
         SOURCE, "silver",
-        f"USGS M{p.get('mag')} ShakeMap viz — epicenter + MMI contours + rupture ({EVENT})",
+        f"USGS M{p.get('mag')} ShakeMap viz — epicenter + MMI contours + rupture ({MAINSHOCK_ID})",
         silver, f"{len(feats)} features {kinds}; EPSG:4326; ShakeMap v{smv}; served at platinum/usgs/ (not analytic)",
     )
 

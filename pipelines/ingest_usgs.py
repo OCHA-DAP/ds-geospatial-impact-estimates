@@ -20,16 +20,17 @@ from __future__ import annotations
 import json
 import urllib.request
 
-from gie import blobio, ledger
+from gie import blobio, events, ledger
 from gie.config import load_settings
 
 API = "https://earthquake.usgs.gov/fdsnws/event/1/query"
-EVENTS = ["us6000t7zp", "us6000t7zc"]  # M7.5 mainshock, M7.2 foreshock
+EVENTS = ["us6000t7zp", "us6000t7zc"]  # M7.5 mainshock, M7.2 foreshock (USGS event ids)
 # ShakeMap contents to grab for the viz: MMI contours + fault rupture geometry.
 SM_PRODUCTS = ["download/cont_mi.json", "download/rupture.json"]
 SOURCE = "usgs"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def _get(url: str) -> bytes:
@@ -39,6 +40,7 @@ def _get(url: str) -> bytes:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     fs = blobio.uploader(settings)
 
@@ -48,7 +50,9 @@ def main() -> None:
         props = ev.get("properties", {})
         mag = props.get("mag")
         coords = (ev.get("geometry") or {}).get("coordinates")
-        base = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", f"event={eid}")
+        base = settings.blob_path(
+            "bronze", f"source={SOURCE}", f"adm0={ADM0}", f"event={eid}", event=EVENT
+        )
 
         blobio.upload(fs, raw, f"{base}/event.geojson")
         landed = ["event.geojson"]

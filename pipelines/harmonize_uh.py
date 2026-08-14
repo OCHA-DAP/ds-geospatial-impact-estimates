@@ -25,17 +25,18 @@ import tempfile
 import geopandas as gpd
 import ocha_stratus as stratus
 
-from gie import blob, ledger
+from gie import blob, events, ledger
 from gie.config import load_settings
 
 SOURCE = "uh"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DELIVERY_NAME = "final_maxsev_512.geojson"
 
 
 def _read_bronze(settings) -> gpd.GeoDataFrame:
-    bp = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", DELIVERY_NAME)
+    bp = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", DELIVERY_NAME, event=EVENT)
     data = stratus.load_blob_data(bp, stage=STAGE, container_name=settings.container)
     with tempfile.NamedTemporaryFile(suffix=".geojson") as tf:
         tf.write(data)
@@ -44,6 +45,7 @@ def _read_bronze(settings) -> gpd.GeoDataFrame:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     gdf = _read_bronze(settings)
     print(f"  read {len(gdf):,} footprints from bronze", flush=True)
@@ -66,7 +68,9 @@ def main() -> None:
     print(f"  deduped {n0:,} -> {len(foot):,} footprints (exact-geometry, worst grade wins)", flush=True)
     foot["adm0"] = ADM0
     foot["source"] = SOURCE
-    fblob = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet")
+    fblob = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet", event=EVENT
+    )
     blob.upload_parquet_staged(foot, fblob, settings)
     n_dmg = int((foot["grade"] != "intact").sum())
     print(f"  silver <- {fblob} ({len(foot):,} footprints, {n_dmg:,} damaged/destroyed)", flush=True)

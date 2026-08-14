@@ -34,12 +34,13 @@ import sys
 
 from azure.storage.blob import ContainerClient
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE = "uh"  # PROVISIONAL — pending the provider's attribution answer
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DEFAULT_FILE = os.path.expanduser("~/Downloads/final_maxsev_512.geojson")
 # Kept verbatim for provenance (the tippecanoe generator command in the delivered
 # PMTiles names this exact file); it is the analytical GeoJSON behind the tiles.
@@ -47,6 +48,7 @@ DELIVERY_NAME = "final_maxsev_512.geojson"
 
 
 def main() -> None:
+    events.require_event(EVENT)
     src_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_FILE
     if not os.path.isfile(src_path):
         raise SystemExit(f"delivery file not found: {src_path}")
@@ -56,7 +58,7 @@ def main() -> None:
         settings.connection_string(write=True), container_name=settings.container
     )
 
-    blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", DELIVERY_NAME)
+    blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", DELIVERY_NAME, event=EVENT)
     size = os.path.getsize(src_path)
     print(f"uploading {DELIVERY_NAME} ({size / 1e6:.1f} MB) -> {blob}", flush=True)
     with open(src_path, "rb") as f:

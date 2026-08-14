@@ -24,19 +24,21 @@ import tempfile
 import geopandas as gpd
 import ocha_stratus as stratus
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE = "unep_debris"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 RESOURCE = "debris_buildings.gpkg"
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
 
-    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", RESOURCE)
+    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", RESOURCE, event=EVENT)
     raw = stratus.load_blob_data(bronze, stage=STAGE, container_name=settings.container)
     with tempfile.NamedTemporaryFile(suffix=".gpkg") as tf:
         tf.write(raw)
@@ -50,7 +52,7 @@ def main() -> None:
     out = out.reset_index(drop=True)
     out.insert(0, "fid", out.index)
 
-    silver = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "debris.parquet")
+    silver = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "debris.parquet", event=EVENT)
     stratus.upload_parquet_to_blob(
         out, silver, stage=STAGE, container_name=settings.container, compression="zstd"
     )

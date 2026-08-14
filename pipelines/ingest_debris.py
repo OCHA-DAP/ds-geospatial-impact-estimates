@@ -29,7 +29,7 @@ from __future__ import annotations
 
 import requests
 
-from gie import blobio, ledger
+from gie import blobio, events, ledger
 from gie.config import load_settings
 
 HDX = "https://data.humdata.org/api/3/action/package_show?id={}"
@@ -37,6 +37,7 @@ HDX_SLUG = "building-debris-assessment-venezuela-earthquake-june-2026"
 SOURCE = "unep_debris"  # PROVISIONAL — pending the provider's credit answer
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def _upload(fs, data: bytes, dest: str) -> bool:
@@ -51,6 +52,7 @@ def _upload(fs, data: bytes, dest: str) -> bool:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     resources = requests.get(HDX.format(HDX_SLUG), timeout=60).json()["result"]["resources"]
     fs = blobio.uploader(settings)
@@ -59,9 +61,11 @@ def main() -> None:
     for r in resources:
         fmt, name, url = r.get("format"), r.get("name"), r.get("url")
         if fmt == "Geopackage":
-            dest = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name)
+            dest = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name, event=EVENT)
         elif fmt == "PDF":  # context maps only — archive, not analysed
-            dest = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", "context", name)
+            dest = settings.blob_path(
+                "bronze", f"source={SOURCE}", f"adm0={ADM0}", "context", name, event=EVENT
+            )
         else:
             continue
         raw = requests.get(url, timeout=180).content
@@ -75,7 +79,7 @@ def main() -> None:
         SOURCE,
         "bronze",
         "UNEP/OCHA JEU building-debris assessment — VEN earthquake (HDX)",
-        settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}"),
+        settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", event=EVENT),
         f"{len(gpkgs)} geopackages (debris tonnes: building + 350m + 3km grids, EPSG:32619) "
         f"+ {len(pdfs)} context PDFs; provisional source id; silver/gold deferred pending "
         f"credit / fusion / AOI clarifications",

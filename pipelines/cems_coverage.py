@@ -26,7 +26,7 @@ import geopandas as gpd
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import ledger
+from gie import events, ledger
 from gie.cems_products import active_products, read_layer
 from gie.config import load_settings
 
@@ -34,6 +34,7 @@ ACTIVATION = "EMSR884"
 SOURCE = "copernicus_ems"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def _meta(p) -> dict:
@@ -61,11 +62,12 @@ def _meta(p) -> dict:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
-    products = active_products(settings, ACTIVATION, STAGE)
+    products = active_products(settings, ACTIVATION, event=EVENT, stage=STAGE)
     products = products[products["product_type"] == "GRA"]
 
-    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"code={ACTIVATION}")
+    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"code={ACTIVATION}", event=EVENT)
     zip_by_name = {
         b.split("/")[-1]: b
         for b in stratus.list_container_blobs(
@@ -111,7 +113,7 @@ def main() -> None:
 
     analysed_gdf = gpd.GeoDataFrame(pd.concat(analysed_parts, ignore_index=True), crs="EPSG:4326")
     out = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     stratus.upload_parquet_to_blob(
         analysed_gdf, out, stage=STAGE, container_name=settings.container, compression="zstd"
@@ -120,7 +122,7 @@ def main() -> None:
 
     detail_gdf = gpd.GeoDataFrame(pd.concat(detail_parts, ignore_index=True), crs="EPSG:4326")
     dout = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "coverage_detail.parquet"
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "coverage_detail.parquet", event=EVENT
     )
     stratus.upload_parquet_to_blob(
         detail_gdf, dout, stage=STAGE, container_name=settings.container, compression="zstd"

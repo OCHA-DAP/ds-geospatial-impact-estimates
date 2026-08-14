@@ -37,11 +37,12 @@ import geopandas as gpd
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import blobio, db, ledger
+from gie import blobio, db, events, ledger
 from gie.config import OSU_PUBLISHED_VERSION, load_settings
 
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 # collection (= platinum/ subdir) -> (layer, blob path, optional (lon, lat) cols).
 # If (lon, lat) is given, the parquet is non-geo (e.g. building_flags) and point
@@ -101,7 +102,7 @@ def _tile_buildings(gdf, settings) -> None:
             print(r.stderr.decode(errors="replace")[-1200:])
             raise RuntimeError(f"tippecanoe buildings tile failed ({r.returncode})")
         data = Path(pmt).read_bytes()
-    dest = settings.blob_path("platinum", "buildings", "building_flags.pmtiles")
+    dest = settings.blob_path("platinum", "buildings", "building_flags.pmtiles", event=EVENT)
     blobio.upload(blobio.uploader(settings), data, dest)
     print(f"  buildings <- {dest}  (z14 no-drop, {len(data) / 1e6:.0f} MB)", flush=True)
 
@@ -115,12 +116,12 @@ def export_values(settings) -> None:
     values get their own slim file when H3 is converted.)
     """
     con = db.connect()
-    src = settings.az_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet")
+    src = settings.az_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet", event=EVENT)
     df = con.execute(
         f"SELECT source, unit_type, unit_id, unit_name, metric, value "
         f"FROM read_parquet('{src}') WHERE unit_type IN ('adm1', 'adm2', 'adm3')"
     ).df()
-    dest = f"{settings.project_prefix}/platinum/values/facts-admin.parquet"
+    dest = settings.blob_path("platinum", "values", "facts-admin.parquet", event=EVENT)
     stratus.upload_parquet_to_blob(
         df, dest, stage=STAGE, container_name=settings.container, compression="snappy"
     )
@@ -147,19 +148,21 @@ def export_meta(settings) -> None:
         load_source_extent,
     )
 
-    sources = list_sources(ADM0)
-    meta_dir = settings.blob_path("platinum", "meta")
+    sources = list_sources(ADM0, event=EVENT)
+    meta_dir = settings.blob_path("platinum", "meta", event=EVENT)
     up = lambda name, obj: stratus.upload_blob_data(  # noqa: E731
         json.dumps(obj).encode(), f"{meta_dir}/{name}", stage=STAGE,
         container_name=settings.container, content_type="application/json",
     )
     up("sources.json", {"sources": sources, "adm0": ADM0, "metrics": METRICS})
-    up("extents.json", {s: json.loads(load_source_extent(s, ADM0).to_json()) for s in sources})
-    up("coverage_detail.json", json.loads(load_coverage_detail(ADM0).to_json()))
+    up("extents.json", {
+        s: json.loads(load_source_extent(s, ADM0, event=EVENT).to_json()) for s in sources
+    })
+    up("coverage_detail.json", json.loads(load_coverage_detail(ADM0, event=EVENT).to_json()))
     # Category counts for the agreement-view legend: the geometry comes from the
     # buildings PMTiles (flags are tile properties), but a client can't count
     # unrendered tiles — so the totals are precomputed here.
-    counts = load_agreement(ADM0)["agreement"].value_counts().to_dict()
+    counts = load_agreement(ADM0, event=EVENT)["agreement"].value_counts().to_dict()
     up("agreement_counts.json", {k: int(v) for k, v in counts.items()})
     # Excel-export inputs (client-side exceljs, ADR-0011): the three per-level tidy
     # tables (needs the codab name-hierarchy join, so computed here, not in the
@@ -169,8 +172,8 @@ def export_meta(settings) -> None:
 
     for level in (1, 2, 3):
         stratus.upload_parquet_to_blob(
-            load_export(level, ADM0),
-            settings.blob_path("platinum", "values", f"export-adm{level}.parquet"),
+            load_export(level, ADM0, event=EVENT),
+            settings.blob_path("platinum", "values", f"export-adm{level}.parquet", event=EVENT),
             stage=STAGE, container_name=settings.container, compression="snappy",
         )
     src_desc = "Damage source (one row per source per unit): " + "; ".join(
@@ -196,14 +199,14 @@ def export_h3(settings) -> None:
     from gie.serving import list_sources, load_common_h3
 
     con = db.connect()
-    src = settings.az_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet")
+    src = settings.az_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet", event=EVENT)
     # WIDE per-source values (one row per cell, metrics as columns) — the long form
     # repeated the h3-id string per metric and weighed ~6.5 MB/source; wide is ~4x
     # smaller and is already the exact row shape the client consumes.
     n_sources = 0
-    for s in list_sources(ADM0):
-        g = load_common_h3(s, ADM0)
-        dest = settings.blob_path("platinum", "values", f"facts-h3-{s}.parquet")
+    for s in list_sources(ADM0, event=EVENT):
+        g = load_common_h3(s, ADM0, event=EVENT)
+        dest = settings.blob_path("platinum", "values", f"facts-h3-{s}.parquet", event=EVENT)
         stratus.upload_parquet_to_blob(
             g, dest, stage=STAGE, container_name=settings.container, compression="snappy"
         )
@@ -227,15 +230,16 @@ def export_h3(settings) -> None:
             print(r.stderr.decode(errors="replace")[-1200:])
             raise RuntimeError(f"tippecanoe h3 tile failed ({r.returncode})")
         data = Path(pmt).read_bytes()
-    dest = settings.blob_path("platinum", "h3", "h3_cells.pmtiles")
+    dest = settings.blob_path("platinum", "h3", "h3_cells.pmtiles", event=EVENT)
     blobio.upload(blobio.uploader(settings), data, dest)
     print(f"  h3 <- {dest}  ({len(gdf):,} cells, {len(data) / 1e6:.1f} MB; "
           f"values x{n_sources} sources)", flush=True)
 
 
 def main(only: list[str] | None = None) -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
-    dest = f"az://{settings.container}/{settings.project_prefix}/platinum"
+    dest = settings.az_path("platinum", event=EVENT)
     # Persistent catalog: Portolan only re-tiles changed sources and pushes changed
     # collections. The dir retains every collection across runs, so a partial run
     # (only=...) re-tiles just those while push still includes the rest. Run a full
@@ -255,8 +259,12 @@ def main(only: list[str] | None = None) -> None:
     if not sel:
         raise SystemExit(f"No collection matches {only}; choose from {list(LAYERS)} or 'meta'")
     for coll, (layer, rel, xy) in sel.items():
+        # admin-* collections are CODAB (shared reference data, spec §3); everything
+        # else is VE-event-scoped.
+        coll_event = None if coll.startswith("admin-") else EVENT
         raw = stratus.load_blob_data(
-            settings.blob_path(layer, rel), stage=STAGE, container_name=settings.container
+            settings.blob_path(layer, rel, event=coll_event),
+            stage=STAGE, container_name=settings.container,
         )
         d = cat / coll
         d.mkdir(parents=True, exist_ok=True)

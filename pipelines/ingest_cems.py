@@ -25,12 +25,13 @@ import ocha_lens as lens
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import blobio, ledger
+from gie import blobio, events, ledger
 from gie.config import load_settings
 
 ACTIVATION = "EMSR884"
 SOURCE = "copernicus_ems"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def _product_blob(settings, row, fname: str) -> str:
@@ -43,10 +44,12 @@ def _product_blob(settings, row, fname: str) -> str:
         f"product_type={row['product_type']}",
         f"v{int(row['version_number'])}_m{int(row['monitoring_number'])}",
         fname,
+        event=EVENT,
     )
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     container = stratus.get_container_client(stage=STAGE, container_name=settings.container)
     fs = blobio.uploader(settings)  # reliable chunked+concurrent upload for the product zips
@@ -60,7 +63,7 @@ def main() -> None:
         pd.to_datetime(latest).strftime("%Y%m%dT%H%M%S") if pd.notna(latest) else "pending"
     )
     manifest = settings.blob_path(
-        "bronze", f"source={SOURCE}", f"code={ACTIVATION}", f"products_{snap}.parquet"
+        "bronze", f"source={SOURCE}", f"code={ACTIVATION}", f"products_{snap}.parquet", event=EVENT
     )
     stratus.upload_parquet_to_blob(
         prods, manifest, stage=STAGE, container_name=settings.container, compression="zstd"
@@ -85,7 +88,7 @@ def main() -> None:
         source=SOURCE,
         layer="bronze",
         dataset=f"Copernicus EMS {ACTIVATION} — Venezuela earthquake damage products",
-        path=settings.blob_path("bronze", f"source={SOURCE}", f"code={ACTIVATION}"),
+        path=settings.blob_path("bronze", f"source={SOURCE}", f"code={ACTIVATION}", event=EVENT),
         detail=f"{len(delivered)} delivered, {pending} pending; GRA/GRM; idempotent poll",
         status="ingesting" if pending else "complete",
     )

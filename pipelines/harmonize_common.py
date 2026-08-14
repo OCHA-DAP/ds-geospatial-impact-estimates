@@ -38,13 +38,14 @@ import time
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import ledger
+from gie import events, ledger
 from gie.blob import upload_parquet_staged
 from gie.config import DEFAULT_H3_RESOLUTION, OSU_PUBLISHED_VERSION, load_settings
 
 METHOD = "common_overture_v1"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 # CEMS per-building damage points (builtUpP) are snapped to the nearest Overture
 # footprint within this radius; 20 m matched 99.5% of points in EMSR884.
@@ -149,7 +150,7 @@ def _local_base(settings, stage: str = STAGE) -> str:
     Integrity: writes are atomic (see _fetch) and the local set is verified against
     blob before returning, so a partial cache fails loud rather than silently
     serving a subset (an out-of-sync cache once produced badly wrong snap counts)."""
-    prefix = settings.blob_path("silver", "source=overture", f"adm0={ADM0}")
+    prefix = settings.blob_path("silver", "source=overture", f"adm0={ADM0}", event=EVENT)
     blobs = [
         b
         for b in stratus.list_container_blobs(
@@ -178,12 +179,12 @@ def _local_base(settings, stage: str = STAGE) -> str:
     return os.path.join(root, "region=*", "*.parquet")
 
 
-def _local(settings, layer, *parts, stage: str = STAGE) -> str:
+def _local(settings, layer, *parts, event: str | None, stage: str = STAGE) -> str:
     """Download a single input blob to local and return its path (DuckDB then
     reads locally). ALWAYS re-fetched, never cached: these silver / codab inputs
     are small and change between runs, so caching them would serve stale data
     (only the large, stable Overture base is cached — see _local_base)."""
-    bp = settings.blob_path(layer, *parts)
+    bp = settings.blob_path(layer, *parts, event=event)
     dst = os.path.join("/tmp/gie_local", bp)
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     _fetch(bp, dst, settings, stage)
@@ -203,60 +204,64 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     con.execute("INSTALL h3 FROM community; LOAD h3;")
     con.execute("SET enable_progress_bar = false;")
     base = _local_base(settings)  # local disk — the blob read of the base stalls
-    ms = _local(settings,"silver", "source=microsoft", f"adm0={ADM0}", "footprints.parquet")
+    ms = _local(settings, "silver", "source=microsoft", f"adm0={ADM0}", "footprints.parquet", event=EVENT)
     cems = _local(settings,
-        "silver", "source=copernicus_ems", f"adm0={ADM0}", "builtup_damage.parquet"
+        "silver", "source=copernicus_ems", f"adm0={ADM0}", "builtup_damage.parquet", event=EVENT
     )
     analysed = _local(settings,
-        "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     ms_analysed = _local(settings,
-        "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     # IMPACT SAR: per-building damaged set (damaged-only, ADR-0008) + footprint extent.
     sar = _local(settings,
-        "silver", "source=impact_initiatives", f"adm0={ADM0}", "building_damage.parquet"
+        "silver", "source=impact_initiatives", f"adm0={ADM0}", "building_damage.parquet", event=EVENT
     )
     sar_ext = _local(settings,
-        "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     # HOT fAIr damage points (detected-only): snapped to the base like CEMS points.
     hot = _local(settings,
-        "silver", "source=hot_osm", f"adm0={ADM0}", "damage_points.parquet"
+        "silver", "source=hot_osm", f"adm0={ADM0}", "damage_points.parquet", event=EVENT
     )
     # OSU S1 coherence: per-building damaged set (id-keyed to Overture) + extent (ADR-0009).
     # Reads the PUBLISHED version partition; both versions are materialised in silver
     # for analysis, but the common model consumes exactly one (gie.config).
     osu = _local(settings,
-        "silver", "source=osu", f"adm0={ADM0}", f"version={OSU_PUBLISHED_VERSION}", "building_damage.parquet"
+        "silver", "source=osu", f"adm0={ADM0}", f"version={OSU_PUBLISHED_VERSION}", "building_damage.parquet",
+        event=EVENT,
     )
     osu_ext = _local(settings,
-        "silver", "source=osu", f"adm0={ADM0}", f"version={OSU_PUBLISHED_VERSION}", "analysed_extent.parquet"
+        "silver", "source=osu", f"adm0={ADM0}", f"version={OSU_PUBLISHED_VERSION}", "analysed_extent.parquet",
+        event=EVENT,
     )
     # DISHA (UN Global Pulse) damage points + AOI extent — snapped like HOT (LICENCE-gated).
     disha = _local(settings,
-        "silver", "source=disha", f"adm0={ADM0}", "damage_points.parquet"
+        "silver", "source=disha", f"adm0={ADM0}", "damage_points.parquet", event=EVENT
     )
     disha_ext = _local(settings,
-        "silver", "source=disha", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=disha", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     # UNEP debris damaged BUILDINGS (detected-only, mass metric): snapped by centroid
     # to the base like the HOT/CEMS points; no AOI, so detected-only (ADR-0017).
     debris = _local(settings,
-        "silver", "source=unep_debris", f"adm0={ADM0}", "debris.parquet"
+        "silver", "source=unep_debris", f"adm0={ADM0}", "debris.parquet", event=EVENT
     )
     # UH graded predictions: footprints projected by containment (detected-only, ADR-0018).
     uh = _local(settings,
-        "silver", "source=uh", f"adm0={ADM0}", "footprints.parquet"
+        "silver", "source=uh", f"adm0={ADM0}", "footprints.parquet", event=EVENT
     )
     # LIST ResNet change detection: per-building damaged set (id-keyed, class 2 only) + footprint extent.
     list_dmg = _local(settings,
-        "silver", "source=list", f"adm0={ADM0}", "building_damage.parquet"
+        "silver", "source=list", f"adm0={ADM0}", "building_damage.parquet", event=EVENT
     )
     list_ext = _local(settings,
-        "silver", "source=list", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=list", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
-    adm3 = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
+    # event=None: CODAB is shared, country-keyed REFERENCE data outside the
+    # event tree — reusable across events (spec §3).
+    adm3 = _local(settings, "bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet", event=None)
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
     con.execute(
@@ -501,7 +506,9 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
         "OR disha_dmg OR debris_dmg OR uh_dmg OR list_dmg"
     ).df()
     print(f"  building_flags computed ({len(flags):,} rows), uploading", flush=True)
-    fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
+    fpath = settings.blob_path(
+        "gold", "model=common", f"adm0={ADM0}", "building_flags.parquet", event=EVENT
+    )
     _upload(flags, fpath, settings)
     print(f"building_flags <- {fpath} ({len(flags):,} buildings)")
 
@@ -523,25 +530,25 @@ def _area_facts(con, settings) -> pd.DataFrame:
     sources = {
         "microsoft": (
             _local(settings,
-                "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet"
+                "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
             ),
             "WHERE NOT superseded",  # exclude AOIs enclosed by a newer assessment
         ),
         "copernicus_ems": (
             _local(settings,
-                "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+                "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
             ),
             "",  # CEMS supersession is handled upstream (active_products)
         ),
         "impact_initiatives": (
             _local(settings,
-                "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet"
+                "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
             ),
             "",  # SAR footprint = raster bounds (ADR-0008)
         ),
         "osu": (
             _local(settings,
-                "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
+                "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
             ),
             "",  # OSU footprint = analyzed-area polygon (ADR-0009)
         ),
@@ -555,7 +562,9 @@ def _area_facts(con, settings) -> pd.DataFrame:
         for unit_type, idcol, namecol in GRAINS:
             if namecol is None:  # skip h3
                 continue
-            adm = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", f"{unit_type}.parquet")
+            # event=None: CODAB is shared, country-keyed REFERENCE data outside
+            # the event tree — reusable across events (spec §3).
+            adm = _local(settings, "bronze", "source=codab", f"adm0={ADM0}", f"{unit_type}.parquet", event=None)
             parts.append(
                 con.execute(
                     f"""
@@ -615,6 +624,7 @@ def _cems_breakdown(con) -> pd.DataFrame:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     df = build_facts()
 
@@ -631,7 +641,7 @@ def main() -> None:
         ].round(2).head(6).to_string()
     )
 
-    gold = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet")
+    gold = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet", event=EVENT)
     _upload(df, gold, settings)
     print(f"gold <- {gold} ({len(df):,} fact rows)")
     ledger.record(

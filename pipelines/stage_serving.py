@@ -21,10 +21,11 @@ from __future__ import annotations
 
 import ocha_stratus as stratus
 
-from gie import blobio, ledger
+from gie import blobio, events, ledger
 from gie.config import load_settings
 
 ADM0, STAGE = "VE", "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 # Sources whose analysed_extent outline is server-rendered (hot_osm has none).
 EXTENT_SOURCES = ["impact_initiatives", "osu", "microsoft", "copernicus_ems", "disha", "list"]
 
@@ -36,16 +37,19 @@ def _copy(fs, settings, src_blob: str, dest_blob: str) -> int:
 
 
 def _gold(settings, *parts: str) -> str:
-    return settings.blob_path("gold", "model=common", f"adm0={ADM0}", "serving", *parts)
+    return settings.blob_path("gold", "model=common", f"adm0={ADM0}", "serving", *parts, event=EVENT)
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     fs = blobio.uploader(settings)
     n = 0
 
     for src in EXTENT_SOURCES:
-        s = settings.blob_path("silver", f"source={src}", f"adm0={ADM0}", "analysed_extent.parquet")
+        s = settings.blob_path(
+            "silver", f"source={src}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
+        )
         d = _gold(settings, "extent", f"source={src}.parquet")
         try:
             kb = _copy(fs, settings, s, d) / 1e3
@@ -54,7 +58,9 @@ def main() -> None:
         except Exception as e:  # noqa: BLE001 — a source may not have an extent yet
             print(f"  skip {src} (no analysed_extent?): {str(e)[:60]}", flush=True)
 
-    s = settings.blob_path("silver", "source=copernicus_ems", f"adm0={ADM0}", "coverage_detail.parquet")
+    s = settings.blob_path(
+        "silver", "source=copernicus_ems", f"adm0={ADM0}", "coverage_detail.parquet", event=EVENT
+    )
     d = _gold(settings, "coverage_detail.parquet")
     kb = _copy(fs, settings, s, d) / 1e3
     print(f"  serving <- {d}  ({kb:.0f} KB)", flush=True)
@@ -64,7 +70,7 @@ def main() -> None:
         "common",
         "gold",
         "server-rendered serving geometries staged to tiered gold (ADR-0016)",
-        settings.blob_path("gold", "model=common", f"adm0={ADM0}", "serving"),
+        settings.blob_path("gold", "model=common", f"adm0={ADM0}", "serving", event=EVENT),
         f"{n} files: per-source analysed_extent + CEMS coverage_detail; closes the "
         "silver serving leak so these layers are promote-gated",
     )

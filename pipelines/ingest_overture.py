@@ -22,7 +22,7 @@ import time
 import geopandas as gpd
 import ocha_stratus as stratus
 
-from gie import db, ledger
+from gie import db, events, ledger
 from gie.config import load_settings
 
 OVERTURE = (
@@ -31,6 +31,7 @@ OVERTURE = (
 )
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def _affected_adm1_bboxes(con, settings) -> list[tuple[str, float, float, float, float]]:
@@ -50,10 +51,14 @@ def _affected_adm1_bboxes(con, settings) -> list[tuple[str, float, float, float,
     extent_sources = ["copernicus_ems", "microsoft", "impact_initiatives", "osu"]
     cc = stratus.get_container_client(stage=STAGE, container_name=settings.container)
     exts = [
-        settings.az_path("silver", f"source={src}", f"adm0={ADM0}", "analysed_extent.parquet")
+        settings.az_path(
+            "silver", f"source={src}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
+        )
         for src in extent_sources
         if cc.get_blob_client(
-            settings.blob_path("silver", f"source={src}", f"adm0={ADM0}", "analysed_extent.parquet")
+            settings.blob_path(
+                "silver", f"source={src}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
+            )
         ).exists()
     ]
     if not exts:
@@ -61,7 +66,9 @@ def _affected_adm1_bboxes(con, settings) -> list[tuple[str, float, float, float,
     cov = " UNION ALL ".join(
         f"SELECT ST_MakeValid(geometry) AS g FROM read_parquet('{p}')" for p in exts
     )
-    adm1 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm1.parquet")
+    # event=None: CODAB is shared, country-keyed REFERENCE data outside the
+    # event tree — reusable across events (spec §3).
+    adm1 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm1.parquet", event=None)
     # Return each affected state's bbox (for parquet pushdown) AND its polygon (WKB,
     # to clip the pull) — so we fetch the whole state's buildings (complete admin
     # denominators, ADR-0006) but not the ocean/neighbour spillover the bbox
@@ -94,6 +101,7 @@ def _upload(gdf, blob, settings, tries: int = 4) -> bool:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     con = db.connect()
     con.execute("INSTALL httpfs; LOAD httpfs; SET s3_region='us-west-2';")
@@ -106,7 +114,8 @@ def main() -> None:
 
         def part_path(i: int, region: str = region) -> str:
             return settings.blob_path(
-                "silver", "source=overture", f"adm0={ADM0}", f"region={region}", f"part-{i}.parquet"
+                "silver", "source=overture", f"adm0={ADM0}", f"region={region}", f"part-{i}.parquet",
+                event=EVENT,
             )
 
         if container.get_blob_client(part_path(0)).exists():
@@ -141,7 +150,7 @@ def main() -> None:
         "overture",
         "silver",
         "Overture buildings exposure base (event extents)",
-        settings.blob_path("silver", "source=overture", f"adm0={ADM0}"),
+        settings.blob_path("silver", "source=overture", f"adm0={ADM0}", event=EVENT),
         f"~{total:,} buildings this run; release 2026-06-17.0; partitioned by region",
     )
 

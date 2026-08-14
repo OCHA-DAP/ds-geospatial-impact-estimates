@@ -40,7 +40,7 @@ import ocha_stratus as stratus
 import pandas as pd
 from shapely.ops import unary_union
 
-from gie import db, ledger
+from gie import db, events, ledger
 from gie.config import load_settings
 from gie.raster import (
     open_local_or_blob,
@@ -52,6 +52,7 @@ from gie.raster import (
 SOURCE = "list"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DAMAGE_VALUE = 2  # only class 2 is real damage (validated); 0/1 = analysed, not flagged
 SCENES = [
     "predicted_resnet_prepost_Venezuela_2026_filter_1_upated.tif",         # eastern
@@ -61,10 +62,12 @@ SCENES = [
 
 def _sample_scene(con, settings, name):
     """Return (damaged-building-id DataFrame, footprint polygon in EPSG:4326)."""
-    bpath = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name)
+    bpath = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name, event=EVENT)
     with open_local_or_blob(settings, bpath) as path:
         west, south, east, north = raster_lonlat_bounds(path)
-        base = settings.az_path("silver", "source=overture", f"adm0={ADM0}", "region=*", "*.parquet")
+        base = settings.az_path(
+            "silver", "source=overture", f"adm0={ADM0}", "region=*", "*.parquet", event=EVENT
+        )
         df = con.execute(
             f"""
             SELECT id, ST_X(c) AS lon, ST_Y(c) AS lat FROM (
@@ -81,6 +84,7 @@ def _sample_scene(con, settings, name):
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     con = db.connect()
 
@@ -96,7 +100,9 @@ def main() -> None:
     out["damage_class"] = 2
     out["ems_grade"] = "Damaged"
 
-    sp = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "building_damage.parquet")
+    sp = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "building_damage.parquet", event=EVENT
+    )
     stratus.upload_parquet_to_blob(
         out[["id", "damage_class", "ems_grade"]],
         sp, stage=STAGE, container_name=settings.container, compression="zstd",
@@ -106,7 +112,9 @@ def main() -> None:
     # analysed extent = union of the two scene footprints.
     extent = unary_union(footprints)
     fp = gpd.GeoDataFrame({"source": [SOURCE]}, geometry=[extent], crs="EPSG:4326")
-    fpath = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet")
+    fpath = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
+    )
     stratus.upload_parquet_to_blob(
         fp, fpath, stage=STAGE, container_name=settings.container, compression="zstd"
     )

@@ -18,20 +18,23 @@ from __future__ import annotations
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import db, ledger
+from gie import db, events, ledger
 from gie.config import DEFAULT_H3_RESOLUTION, load_settings
 
 SOURCE = "microsoft"
 METHOD = "binary_damage_v1"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     settings = load_settings(STAGE)
     con = db.connect()
-    fp = settings.az_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet")
-    adm3 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
+    fp = settings.az_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet", event=EVENT)
+    # event=None: CODAB is shared, country-keyed REFERENCE data outside the
+    # event tree — reusable across events (spec §3).
+    adm3 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet", event=None)
 
     metrics = (
         "count(*)::DOUBLE AS buildings_total, "
@@ -85,6 +88,7 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     df = build_facts()
 
@@ -103,7 +107,9 @@ def main() -> None:
     for _, r in adm3.iterrows():
         print(f"  {r.unit_name} ({r.unit_id}): {int(r.value):,}")
 
-    gold = settings.blob_path("gold", f"source={SOURCE}", f"adm0={ADM0}", "damage_facts.parquet")
+    gold = settings.blob_path(
+        "gold", f"source={SOURCE}", f"adm0={ADM0}", "damage_facts.parquet", event=EVENT
+    )
     stratus.upload_parquet_to_blob(
         df, gold, stage=STAGE, container_name=settings.container, compression="zstd"
     )

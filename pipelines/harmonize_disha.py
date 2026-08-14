@@ -33,21 +33,23 @@ import geopandas as gpd
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE, ADM0, STAGE = "disha", "VE", "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DMG_CSV = "NWCaracas_Final_inference_result.csv"
 AOI_GEOJSON = "NWCaracas_aoi.geojson"
 THRESHOLD = "damaged"  # or damaged_high_precision / damaged_high_recall
 
 
 def _bronze(settings, name: str) -> bytes:
-    bp = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name)
+    bp = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name, event=EVENT)
     return stratus.load_blob_data(bp, stage=STAGE, container_name=settings.container)
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
 
     # damaged buildings -> damage_points (snapped to the base in harmonize_common)
@@ -63,7 +65,9 @@ def main() -> None:
         geometry=gpd.points_from_xy(dmg["longitude"], dmg["latitude"]),
         crs="EPSG:4326",
     )
-    silver = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "damage_points.parquet")
+    silver = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "damage_points.parquet", event=EVENT
+    )
     stratus.upload_parquet_to_blob(
         pts, silver, stage=STAGE, container_name=settings.container, compression="zstd"
     )
@@ -77,7 +81,9 @@ def main() -> None:
     os.unlink(tmp)
     aoi["source"] = SOURCE
     aoi["superseded"] = False
-    ext = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet")
+    ext = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
+    )
     stratus.upload_parquet_to_blob(
         aoi, ext, stage=STAGE, container_name=settings.container, compression="zstd"
     )
