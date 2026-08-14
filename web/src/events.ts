@@ -22,7 +22,11 @@ export async function fetchEvents(tok: any): Promise<EventInfo[]> {
 }
 
 export function currentEventId(): string | null {
-  const m = location.hash.match(/^#\/e\/([A-Za-z0-9-]+)$/);
+  // No trailing $ anchor: a hash like "#/e/foo/bar" (or "#/e/foo?whatever") still
+  // captures "foo" here rather than falling through to null (-> the landing page,
+  // silently). The registry is the only authority on whether "foo" is real — an
+  // id that isn't in it renders the explicit unknown-event error card instead.
+  const m = location.hash.match(/^#\/e\/([^/]+)/);
   return m ? m[1] : null;
 }
 

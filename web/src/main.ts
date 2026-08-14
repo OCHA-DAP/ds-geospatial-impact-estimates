@@ -3,9 +3,9 @@ import "./style.css";
 import maplibregl from "maplibre-gl";
 import { Protocol } from "pmtiles";
 import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";
-import { TOKEN_URL } from "./config";
+import { LEGACY_SERVER_EVENT, TOKEN_URL } from "./config";
 import { currentEventId, eventDir, fetchEvents, type EventInfo } from "./events";
-import { renderEventError, renderLanding } from "./landing";
+import { esc, renderBootError, renderEmptyRegistry, renderEventError, renderLanding } from "./landing";
 
 // One token fetch per session, shared by all callers. Four init paths need the
 // blob SAS; without memoization each did its own round-trip — same-origin+cached
@@ -51,7 +51,10 @@ const sourceRank = (s: string) => {
 // Everything below is event-scoped: the map instance, all layer/source setup,
 // panel wiring, and data fetches. It runs ONLY once boot() has confirmed the
 // hash names a real registry event — never for the landing or error routes.
-function initViewer(ev: EventInfo, tok: any, events: EventInfo[]) {
+// tok is deliberately NOT a parameter here: every fetch below calls the module-
+// level memoized getToken() itself (it's a no-op await once resolved), and
+// nothing in this function ever read the caller's copy directly.
+function initViewer(ev: EventInfo, events: EventInfo[]) {
   // Static meta artifacts (platinum/event=<id>/meta/*, written by build_platinum
   // export_meta). These replace the /api/sources, /api/extent and /api/coverage_detail
   // server routes: constant between data refreshes, so they are read straight from
@@ -686,12 +689,14 @@ function initViewer(ev: EventInfo, tok: any, events: EventInfo[]) {
   // Excel export: built in the browser with exceljs from platinum artifacts (ADR-0011).
   // Classic (App Service) builds serve /api/export.xlsx from the same backend that serves
   // /api/token, so TOKEN_URL there stays the relative default — that backend is a real
-  // fallback on export failure. The SWA build always points TOKEN_URL at the separate
-  // token-issuer host and has no export backend of its own; a client failure there is
-  // REPORTED, never silently redirected to a same-origin route that doesn't exist.
+  // fallback on export failure, but ONLY for Venezuela: /api/export.xlsx is hardcoded to
+  // adm0="VE" (api/main.py) and was never made multi-event-aware. A client failure for any
+  // OTHER event must not silently hand the user a Venezuela spreadsheet — it gets the same
+  // loud failure the SWA build (no server fallback at all) shows.
   {
     const exp = document.getElementById("export") as HTMLAnchorElement | null;
-    const hasServerFallback = TOKEN_URL === "/api/token"; // true only for the classic build
+    const hasServerFallback =
+      TOKEN_URL === "/api/token" && ev.event_id === LEGACY_SERVER_EVENT; // classic build, AND this is the one event it can serve
     if (exp) {
       exp.addEventListener("click", async (e) => {
         e.preventDefault();
@@ -704,7 +709,7 @@ function initViewer(ev: EventInfo, tok: any, events: EventInfo[]) {
         } catch (err) {
           console.error("client export failed:", err);
           if (hasServerFallback) {
-            window.location.href = exp.href; // classic build: server fallback
+            window.location.href = exp.href; // classic build, Venezuela only: server fallback
           } else {
             exp.textContent = "⚠ Export failed — reload and retry";
             alert(`Spreadsheet export failed: ${err}. Reload the page and try again.`);
@@ -1227,30 +1232,39 @@ function initViewer(ev: EventInfo, tok: any, events: EventInfo[]) {
 
   // Event switcher: every registry event, current one selected. Picking another is
   // a full hash change + reload — no in-place teardown of this event's map sources
-  // and layers (YAGNI); window's hashchange listener covers back/forward the same way.
+  // and layers (YAGNI). Setting location.hash alone is enough: the module-level
+  // hashchange listener does the reload, so there's exactly one reload per switch,
+  // not two. ⚠️4 any future in-page #anchor would full-reload; router-only hashes
+  // for now.
   function renderEventSwitch(ev: EventInfo, events: EventInfo[]) {
     const sel = document.getElementById("eventSwitch") as HTMLSelectElement | null;
     if (!sel) return;
     sel.innerHTML = events
       .map(
         (e) =>
-          `<option value="${e.event_id}"${e.event_id === ev.event_id ? " selected" : ""}>${e.name}</option>`,
+          `<option value="${esc(e.event_id)}"${e.event_id === ev.event_id ? " selected" : ""}>${esc(e.name)}</option>`,
       )
       .join("");
     sel.addEventListener("change", () => {
       location.hash = `#/e/${sel.value}`;
-      location.reload();
     });
   }
 
+  // Populated immediately (not gated on map "load"): the dropdown and the
+  // methodology note only need ev/events, not the map.
+  renderEventSwitch(ev, events);
+  const methodsEventNote = document.getElementById("methods-event-note");
+  if (methodsEventNote)
+    methodsEventNote.textContent = `Source notes reference the ${ev.name} response where event-specific.`;
+
   async function init() {
-    // Registry lookup already happened in boot() — ev/tok/events are initViewer's
+    // Registry lookup already happened in boot() — ev/events are initViewer's
     // closure parameters here, not re-fetched. events.json is the one platinum read
     // that stays at the tier root (not event-scoped) — every other read below goes
-    // through eventDir(tok, EVENT_ID!).
+    // through eventDir(tok, EVENT_ID!) (tok is re-fetched from the module-level
+    // memoized getToken() wherever it's needed).
     map.fitBounds([[ev.bbox[0], ev.bbox[1]], [ev.bbox[2], ev.bbox[3]]], { padding: 40, duration: 0 });
     renderEventTitle(ev);
-    renderEventSwitch(ev, events);
     // PMTiles/hyparquet setup is additive — a failure must never blank the app.
     for (const [name, fn] of [
       ["pmtiles", setupPmtiles],
@@ -1373,10 +1387,25 @@ function hideViewer() {
   (document.getElementById("methods-open") as HTMLElement).hidden = true;
 }
 
+// The hash is known synchronously, before any async token/registry fetch — hide
+// the viewer chrome immediately for the empty-hash (landing) case so there's no
+// flash of the map/panel shell while boot() is still in flight. (An unknown-but-
+// non-empty id, e.g. #/e/garbage, can't be resolved this early — the registry is
+// the only authority on that, so that one flash is unavoidable without it.)
+if (!currentEventId()) hideViewer();
+
 async function boot() {
   const tok = await getToken();
   const events = await fetchEvents(tok);
   const landing = document.getElementById("landing")!;
+  // Zero events is a real, valid state of the registry — not a failure — and
+  // must read as information, not an error (never render identically to the
+  // registry-unreachable/malformed case caught below).
+  if (events.length === 0) {
+    hideViewer();
+    renderEmptyRegistry(landing);
+    return;
+  }
   if (EVENT_ID === null) {
     hideViewer();
     renderLanding(events, landing);
@@ -1388,9 +1417,16 @@ async function boot() {
     renderEventError(EVENT_ID, events, landing);
     return;
   }
-  initViewer(ev, tok, events);
+  initViewer(ev, events);
 }
-boot();
+boot().catch((err) => {
+  // Token fetch failed, events.json is unreachable, or it didn't validate
+  // (fetchEvents's own "malformed registry" Error) — a real failure, distinct
+  // from the empty-registry case above. Never leave a silent blank/white shell.
+  console.error("boot failed:", err);
+  hideViewer();
+  renderBootError(err instanceof Error ? err.message : String(err), document.getElementById("landing")!);
+});
 
 // --- methodology slide-over: glass panel of how the map is built + per-source cards ---
 // TODO(product-history): surface each source's product version + availability dates

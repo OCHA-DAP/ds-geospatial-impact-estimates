@@ -7,11 +7,12 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 #map { position: absolute; inset: 0; }
-/* A handful of elements below (e.g. .methods-fab) set their own "display", which
-   would otherwise silently outrank the browser's default [hidden] rule on a
-   specificity tie. This makes the hidden attribute an unconditional kill switch
-   everywhere it's used to gate the landing/error routes vs. the event viewer. */
-[hidden] { display: none !important; }
+/* hideViewer() (main.ts) toggles the hidden attribute on exactly these three ids
+   to gate the landing/error routes vs. the event viewer. #methods-open (the FAB)
+   sets its own "display: inline-flex", which would otherwise silently outrank
+   the browser's default [hidden] rule on a specificity tie — scoped here to just
+   the gated ids, not a blanket override of [hidden] everywhere in the app. */
+#map[hidden], #panel[hidden], #methods-open[hidden] { display: none !important; }
 
 /* Floating panels over the map. */
 .floating {
@@ -234,6 +235,7 @@ table.tt td { font-size: 12px; padding: 2px 14px 2px 0; white-space: nowrap; ver
   margin: 34px 0 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.16em;
   text-transform: uppercase; color: #8ea4c4;
 }
+.methods-event-note { margin: -8px 0 18px; font-size: 12.5px; font-style: italic; color: #8ea4c4; }
 .methods-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(244px, 1fr)); gap: 18px; }
 .source-card {
   position: relative; overflow: hidden; border-radius: 22px; padding: 22px 22px 24px;
@@ -313,7 +315,11 @@ table.tt td { font-size: 12px; padding: 2px 14px 2px 0; white-space: nowrap; ver
 .event-card:hover, .event-card:focus-visible {
   transform: translateY(-2px);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
-  outline: none;
+}
+.event-card:hover { outline: none; }
+.event-card:focus-visible {
+  outline: 2px solid #2563cd;
+  outline-offset: 2px;
 }
 .event-card h2 { font-size: 18px; margin: 9px 0 4px; }
 .event-card p { font-size: 12.5px; color: #5d6b7a; margin: 0; }
