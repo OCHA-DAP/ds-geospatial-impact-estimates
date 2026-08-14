@@ -42,12 +42,18 @@ coupling.
 
 ## 2. Event identity & registry
 
-- **Event ID**: `<yyyymmdd>-<adm0>-<hazard>` from event onset (UTC) and the
-  primary affected country, e.g. `20260624-ve-earthquake`. Date-first keeps
-  blob listings chronological; full date makes real collisions practically
-  impossible (a same-day second quake in one country is operationally one
-  response; aftershock products fold into the main event). The registry
-  enforces uniqueness; a true collision gets a `-b` suffix.
+- **Event ID**: `<yyyymmdd>-<countries>-<hazard>` from event onset (UTC),
+  e.g. `20260624-ve-earthquake`. Date-first keeps blob listings
+  chronological; full date makes real collisions practically impossible (a
+  same-day second quake in one country is operationally one response;
+  aftershock products fold into the main event). The registry enforces
+  uniqueness; a true collision gets a `-b` suffix.
+- **The country and hazard segments are mnemonics, never parsed.** No code
+  derives anything from the slug; the registry is the sole authority
+  (`countries` list, `hazard` field). A multi-country event may combine
+  codes (`20260812-co-ve-earthquake`) or use the primary country alone —
+  editor's choice at registration. Any hazard slug works
+  (earthquake/flood/cyclone/…).
 - **External IDs are metadata, not identity**: GLIDE number (may lag onset by
   hours–days, hence not usable as our ID), GDACS ID, USGS ID, CEMS activation
   code(s) — all recorded per event for cross-linking.
