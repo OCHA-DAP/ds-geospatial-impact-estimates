@@ -75,6 +75,7 @@ def main() -> None:
             if n[len(base):].startswith(f"event={EVENT}/")
         }
         copied = skipped = 0
+        copy_bytes = 0
         made_dirs: set[str] = set()
         for name, size in sorted(src.items()):
             dst = f"{base}event={EVENT}/{name[len(base):]}"
@@ -83,6 +84,7 @@ def main() -> None:
                 continue
             if dry:
                 copied += 1
+                copy_bytes += size
                 continue
             dpath = dst.rsplit("/", 1)[0]  # HNS: the copy target dir must exist
             if dpath not in made_dirs:
@@ -106,17 +108,29 @@ def main() -> None:
                 raise RuntimeError(f"copy failed ({status}): {dst}")
             copied += 1
 
+        if dry:
+            # Dry-run never writes, so there is nothing to recount at the destination.
+            # Print the would-copy total computed purely from source sizes — do not
+            # reuse the src->copy recount line below, which counts what's ACTUALLY at
+            # the destination (0 on a first dry run) and previously got mixed with the
+            # dry-run "would copy" counter, producing a self-contradictory line.
+            print(
+                f"{tier}/: [dry-run] would copy {copied} files / {copy_bytes:,} B "
+                f"(skip {skipped})"
+            )
+            continue
+
         # verification: recount the copy and compare counts + total bytes
         post = {
             n: sz for n, sz in _files(dst_fs, s.project_prefix, tier).items()
             if n[len(base):].startswith(f"event={EVENT}/")
         }
-        ok = dry or (len(post) == len(src) and sum(post.values()) == sum(src.values()))
+        ok = len(post) == len(src) and sum(post.values()) == sum(src.values())
         failures += 0 if ok else 1
         print(
             f"{tier}/: src {len(src)} files / {sum(src.values()):,} B -> "
             f"copy {len(post)} files / {sum(post.values()):,} B  "
-            f"(copied {copied}, skipped {skipped}) {'[dry-run] ' if dry else ''}{'OK' if ok else 'MISMATCH'}"
+            f"(copied {copied}, skipped {skipped}) {'OK' if ok else 'MISMATCH'}"
         )
     if failures:
         sys.exit(f"{failures} tier(s) MISMATCHED — do not proceed to cutover.")
