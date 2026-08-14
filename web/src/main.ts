@@ -62,7 +62,9 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
   // load path (ADR-0021).
   const fetchMeta = async (name: string) => {
     const tok = await getToken();
-    return fetch(`${eventDir(tok, EVENT_ID!)}/meta/${name}?${tok.sas}`).then((r) => r.json());
+    const r = await fetch(`${eventDir(tok, EVENT_ID!)}/meta/${name}?${tok.sas}`);
+    if (!r.ok) throw new Error(`meta/${name}: HTTP ${r.status}`);
+    return r.json();
   };
   // extents.json bundles every source's analysed extent -> one request instead of one per source.
   let _extentsAll: Promise<Record<string, any>> | null = null;
@@ -1279,8 +1281,22 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
         console.error(`v2 ${name} setup failed:`, e);
       }
     }
-    const meta = await fetchMeta("sources.json");
-    const sources: string[] = meta.sources;
+    // sources.json is written by build_platinum once an event has a published
+    // platinum tree — an event can be registered (events.json) before that ever
+    // runs (e.g. Colombia today). A 404 here is a real, reportable state ("no
+    // products yet"), not a failure — distinct from an actual load error, which
+    // gets its own message. Either way this is explicit in #status, never a
+    // silent basemap-only shell with the error stuck in the console.
+    let sources: string[];
+    try {
+      const meta = await fetchMeta("sources.json");
+      sources = meta.sources;
+    } catch (err) {
+      el("status").textContent = /HTTP 404/.test(String(err))
+        ? "No data products have been published for this event yet."
+        : `Failed to load event data: ${err}`;
+      return;
+    }
     METRICS = [
       { key: "damage_rate_detected", label: "Damage fraction" },
       { key: "coverage_fraction", label: "Coverage" },
