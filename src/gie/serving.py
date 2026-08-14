@@ -4,8 +4,16 @@ All reads go through DuckDB over blob (cloud-optimized). The FastAPI layer
 (api/) turns these into GeoJSON/JSON for the deck.gl + MapLibre front end.
 """
 
-# event=None throughout: the App Service serving layer is PINNED to the legacy
-# un-evented layout until its retirement (spec §4). Do not event-scope these.
+# event scoping here is per-caller, not per-module: the functions build_platinum.py
+# consumes (list_sources, load_common_h3, load_export, load_source_extent,
+# load_coverage_detail, load_agreement) take a required `event` parameter so that
+# VE-event-scoped caller can pass event=EVENT. The App Service legacy pin (spec §4)
+# now lives at api/main.py's call sites, which pass event=None explicitly (one
+# comment at the first site there) — NOT hardcoded in this module. The remaining
+# functions here (load_h3_damage, load_admin_damage, load_footprints,
+# load_common_admin, load_buildings, load_native, export_workbook, and the _gold
+# helper) are used only by the pinned API (or are unused entirely) and keep a
+# hardcoded event=None — adding the parameter there would be dead generality.
 
 from __future__ import annotations
 
@@ -129,22 +137,24 @@ _COMMON_PIVOT = """
 """
 
 
-def list_sources(adm0: str = "VE", stage: str = "dev") -> list[str]:
+def list_sources(adm0: str = "VE", *, event: str | None, stage: str = "dev") -> list[str]:
     """Distinct damage sources present in the common-model gold."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=None)
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=event)
     rows = con.execute(
         f"SELECT DISTINCT source FROM read_parquet('{gold}') ORDER BY source"
     ).fetchall()
     return [r[0] for r in rows]
 
 
-def load_common_h3(source: str, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+def load_common_h3(
+    source: str, adm0: str = "VE", *, event: str | None, stage: str = "dev"
+) -> pd.DataFrame:
     """Per-H3-cell common-model metrics for one source."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=None)
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=event)
     return con.execute(
         f"SELECT unit_id AS h3, {_COMMON_PIVOT} FROM read_parquet('{gold}') "
         f"WHERE unit_type='h3' AND source='{source}' GROUP BY unit_id"
@@ -176,7 +186,9 @@ def load_common_admin(
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
-def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+def load_export(
+    level: int, adm0: str = "VE", *, event: str | None, stage: str = "dev"
+) -> pd.DataFrame:
     """Tidy per-admin-unit, per-source damage table for spreadsheet export.
 
     One row per (admin unit x source): building counts, damage fraction (damaged
@@ -185,7 +197,9 @@ def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFram
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=None)
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=event)
+    # event=None: CODAB is shared, country-keyed REFERENCE data outside the
+    # event tree — reusable across events (spec §3).
     adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet", event=None)
     names = ", ".join(f"a.adm{i}_name" for i in range(1, level + 1))
     return con.execute(
@@ -327,7 +341,8 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
     rm.sheet_view.showGridLines = False
     rm["A1"] = "Venezuela Earthquake — Building Damage Exposure by Admin Unit"
     rm["A1"].font = Font(bold=True, size=22, color="3E8F6B")
-    present = list_sources(adm0, stage)  # sources actually in THIS export (tier-aware)
+    # event=None: export_workbook is API-only, pinned to the legacy layout (spec §4).
+    present = list_sources(adm0, event=None, stage=stage)  # sources in THIS export (tier-aware)
     rm["A2"] = (
         "Multi-source — " + ", ".join(_SOURCE_SHORT.get(s, s) for s in present)
         + " — buildings & damage by OCHA COD admin 1 / 2 / 3"
@@ -368,7 +383,7 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
 
     pct = {"pct_buildings_covered", "damage_fraction", "area_coverage_fraction"}
     for level in (1, 2, 3):
-        df = load_export(level, adm0, stage)
+        df = load_export(level, adm0, event=None, stage=stage)
         ws = wb.create_sheet(f"adm{level}")
         ws.append(list(df.columns))
         for _, row in df.iterrows():
@@ -434,7 +449,9 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     ).df()
 
 
-def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
+def load_source_extent(
+    source: str, adm0: str = "VE", *, event: str | None, stage: str = "dev"
+) -> gpd.GeoDataFrame:
     """Each source's real analysis extent as labelling outlines, one per AOI /
     product (kept separate, not dissolved), carrying metadata for hover.
 
@@ -458,7 +475,7 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
         # gold copy (stage_serving) so it's promote-gated, not shared silver (ADR-0016).
         ext = settings.az_path(
             "gold", "model=common", f"adm0={adm0}", "serving", "extent", f"source={source}.parquet",
-            event=None,
+            event=event,
         )
         label, product = {
             "impact_initiatives": ("SAR analysed extent", "Sentinel-1 damage proxy"),
@@ -477,7 +494,7 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     if source == "microsoft":
         ext = settings.az_path(
             "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=microsoft.parquet",
-            event=None,
+            event=event,
         )
         sql = (
             f"SELECT aoi AS aoi_name, 'Microsoft analysis' AS product, NULL AS acquired, "
@@ -495,7 +512,7 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     # gold copy (promote-gated), not shared silver (ADR-0016).
     ext = settings.az_path(
         "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=copernicus_ems.parquet",
-        event=None,
+        event=event,
     )
     sql = (
         f"SELECT any_value(aoi_name) AS aoi_name, any_value(product) AS product, "
@@ -554,7 +571,9 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
-def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
+def load_coverage_detail(
+    adm0: str = "VE", *, event: str | None, stage: str = "dev"
+) -> gpd.GeoDataFrame:
     """CEMS Area-of-Interest + Not-Analysed (cloud) shapes, for the native view.
 
     Shows what the assessment looked at (AOI) and the holes within it that
@@ -564,7 +583,7 @@ def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFra
     con = db.connect()
     # tiered gold copy (promote-gated), not shared silver (ADR-0016)
     path = settings.az_path(
-        "gold", "model=common", f"adm0={adm0}", "serving", "coverage_detail.parquet", event=None
+        "gold", "model=common", f"adm0={adm0}", "serving", "coverage_detail.parquet", event=event
     )
     df = con.execute(
         f"SELECT kind, aoi_name, product, acquired, ST_AsWKB(geometry) AS wkb "
@@ -574,7 +593,7 @@ def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFra
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
-def load_agreement(adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+def load_agreement(adm0: str = "VE", *, event: str | None, stage: str = "dev") -> pd.DataFrame:
     """Per-building source-agreement category (MS vs CEMS) for the agreement map.
 
     Where BOTH sources assessed a building (the overlap): both / ms_only /
@@ -584,7 +603,7 @@ def load_agreement(adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet", event=None)
+    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet", event=event)
     return con.execute(
         f"""
         SELECT lon, lat,

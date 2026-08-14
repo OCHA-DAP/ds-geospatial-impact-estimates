@@ -61,12 +61,14 @@ def _json(content: str) -> Response:
 
 @lru_cache(maxsize=1)
 def _sources(adm0: str) -> list[str]:
-    return list_sources(adm0)
+    # event=None: the App Service serving layer is PINNED to the legacy un-evented
+    # layout until its retirement (spec §4).
+    return list_sources(adm0, event=None)
 
 
 @lru_cache(maxsize=16)
 def _common_h3_json(source: str, adm0: str) -> str:
-    return load_common_h3(source, adm0).to_json(orient="records")
+    return load_common_h3(source, adm0, event=None).to_json(orient="records")
 
 
 @lru_cache(maxsize=32)
@@ -86,12 +88,12 @@ def _native_json(source: str, adm0: str) -> str:
 
 @lru_cache(maxsize=8)
 def _extent_json(source: str, adm0: str) -> str:
-    return load_source_extent(source, adm0).to_json()
+    return load_source_extent(source, adm0, event=None).to_json()
 
 
 @lru_cache(maxsize=2)
 def _agreement_json(adm0: str) -> str:
-    return load_agreement(adm0).to_json(orient="records")
+    return load_agreement(adm0, event=None).to_json(orient="records")
 
 
 # Metrics definition lives in gie.serving (shared with the platinum meta export).
@@ -257,7 +259,7 @@ def agreement(adm0: str = "VE") -> Response:
 
 @lru_cache(maxsize=2)
 def _coverage_detail_json(adm0: str) -> str:
-    return load_coverage_detail(adm0).to_json()
+    return load_coverage_detail(adm0, event=None).to_json()
 
 
 @app.get("/api/coverage_detail")
