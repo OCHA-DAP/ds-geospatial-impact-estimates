@@ -125,6 +125,12 @@ decision; it receives no multi-event changes.
 
 ## 5. Legacy-tree deprecation (after cutover verified in prod)
 
+**Gate: the legacy tree cannot be deleted while the App Service is live** —
+its server-side DuckDB reads legacy gold/silver paths (§4 pins it there). The
+freeze clock therefore starts at the App Service retirement decision, not at
+SWA cutover. Severing the SWA's last App Service dependency (§1) is what
+makes that retirement decidable.
+
 Entry in `data_ledger.md`: legacy un-evented tree *frozen* on date X, *delete
 after* X + 4 weeks — then actually delete it on that date. Bronze under the
 old paths is the only copy of some as-received products, so step 4.2's
