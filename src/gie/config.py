@@ -107,9 +107,19 @@ class Settings:
         )
 
     def blob_path(
-        self, layer: Literal["bronze", "silver", "gold", "platinum"], *parts: str
+        self,
+        layer: Literal["bronze", "silver", "gold", "platinum"],
+        *parts: str,
+        event: str | None,
     ) -> str:
         """Path within the container (no ``az://``/container) — for stratus writes.
+
+        ``event`` is required (keyword-only, no default — spec 2026-08-14 /
+        ADR-0027): pass the event id to write under ``<tier>/event=<id>/...``,
+        or ``event=None`` as the *explicit* opt-out for shared reference data
+        (CODAB) and the legacy layout the App Service is pinned to. There is
+        deliberately no default: a caller that doesn't name its event fails
+        loudly instead of silently writing the legacy tree.
 
         ``gold`` and ``platinum`` are tier-aware (``-prod`` suffix when
         ``tier=prod``); ``bronze``/``silver`` are the shared working copy.
@@ -120,13 +130,19 @@ class Settings:
             "gold": self._served(self.gold_prefix),
             "platinum": self.platinum_prefix,
         }[layer]
-        return "/".join([self.project_prefix, prefix, *parts])
+        segs = [self.project_prefix, prefix]
+        if event is not None:
+            segs.append(f"event={event}")
+        return "/".join([*segs, *parts])
 
     def az_path(
-        self, layer: Literal["bronze", "silver", "gold", "platinum"], *parts: str
+        self,
+        layer: Literal["bronze", "silver", "gold", "platinum"],
+        *parts: str,
+        event: str | None,
     ) -> str:
         """Build an ``az://`` path the DuckDB azure extension understands."""
-        return f"az://{self.container}/{self.blob_path(layer, *parts)}"
+        return f"az://{self.container}/{self.blob_path(layer, *parts, event=event)}"
 
 
 def load_settings(stage: Stage | None = None) -> Settings:
