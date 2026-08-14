@@ -1,0 +1,17 @@
+# Event registry — the single authority for which emergency events exist
+# (spec docs/superpowers/specs/2026-08-14-multi-event-foundation-design.md, ADR-0027).
+#
+# event_id: <yyyymmdd of onset, UTC>-<countries>-<hazard>. The slug is a MNEMONIC —
+# no code parses it; `countries`/`hazard` fields are authoritative. External IDs
+# (GLIDE, GDACS, USGS, CEMS activations) are cross-links, never identity.
+# bbox is the viewer fly-to hint [west, south, east, north] — tune freely.
+events:
+  - event_id: 20260624-ve-earthquake
+    name: Venezuela earthquake
+    hazard: earthquake
+    onset: 2026-06-24
+    countries: [VE]
+    bbox: [-68.2, 9.9, -66.0, 11.2]
+    status: active
+    external_ids:
+      cems_activation: EMSR884
