@@ -3,7 +3,7 @@ import "./style.css";
 import maplibregl from "maplibre-gl";
 import { Protocol } from "pmtiles";
 import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";
-import { API_BASE, TOKEN_URL } from "./config";
+import { TOKEN_URL } from "./config";
 
 // One token fetch per session, shared by all callers. Four init paths need the
 // blob SAS; without memoization each did its own round-trip — same-origin+cached
@@ -673,13 +673,16 @@ function syncAdmin() {
 
 maplibregl.addProtocol("pmtiles", new Protocol().tile);
 
-// Excel export: built in the browser with exceljs from platinum artifacts (ADR-0011),
-// lazy-loading the exceljs chunk on first click. The anchor's href (the legacy
-// /api/export.xlsx) is kept as the fallback if the client build fails.
+// Excel export: built in the browser with exceljs from platinum artifacts (ADR-0011).
+// Classic (App Service) builds serve /api/export.xlsx from the same backend that serves
+// /api/token, so TOKEN_URL there stays the relative default — that backend is a real
+// fallback on export failure. The SWA build always points TOKEN_URL at the separate
+// token-issuer host and has no export backend of its own; a client failure there is
+// REPORTED, never silently redirected to a same-origin route that doesn't exist.
 {
   const exp = document.getElementById("export") as HTMLAnchorElement | null;
+  const hasServerFallback = TOKEN_URL === "/api/token"; // true only for the classic build
   if (exp) {
-    if (API_BASE) exp.href = `${API_BASE}/api/export.xlsx`; // fallback URL per deploy target
     exp.addEventListener("click", async (e) => {
       e.preventDefault();
       const label = exp.textContent;
@@ -688,10 +691,16 @@ maplibregl.addProtocol("pmtiles", new Protocol().tile);
         const { downloadExport } = await import("./export");
         await downloadExport(await getToken());
       } catch (err) {
-        console.error("client export failed — falling back to server:", err);
-        window.location.href = exp.href;
+        console.error("client export failed:", err);
+        if (hasServerFallback) {
+          window.location.href = exp.href; // classic build: server fallback
+        } else {
+          exp.textContent = "⚠ Export failed — reload and retry";
+          alert(`Spreadsheet export failed: ${err}. Reload the page and try again.`);
+          return; // keep the error label
+        }
       } finally {
-        exp.textContent = label;
+        if (!exp.textContent?.startsWith("⚠")) exp.textContent = label;
       }
     });
   }
