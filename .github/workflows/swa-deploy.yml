@@ -3,7 +3,7 @@
 # (azure-deploy.yml, v1 branch), which is untouched.
 #
 # Environments:
-#   push to the production branch  -> SWA production env: prod token tier + prod legacy API
+#   push to the production branch  -> SWA production env: prod token tier; no legacy API — severed 2026-08
 #   pull_request to that branch    -> SWA PREVIEW env (own temp URL): staging tier + the
 #                                     staging App Service slot — review changes against
 #                                     staging data before they reach the public URL.
@@ -38,7 +38,6 @@ jobs:
           production_branch: v1
         env:
           VITE_TOKEN_URL: https://chd-ds-token-issuer.azurewebsites.net/api/token?app=satellite-viewer&tier=${{ github.event_name == 'pull_request' && 'staging' || 'prod' }}
-          VITE_API_BASE: ${{ github.event_name == 'pull_request' && 'https://chd-ds-geospatial-impact-viewer-staging.azurewebsites.net' || 'https://chd-ds-geospatial-impact-viewer.azurewebsites.net' }}
 
   close_preview:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
