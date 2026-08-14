@@ -4,6 +4,7 @@ import maplibregl from "maplibre-gl";
 import { Protocol } from "pmtiles";
 import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";
 import { TOKEN_URL } from "./config";
+import { currentEventId, eventDir, fetchEvents, type EventInfo } from "./events";
 
 // One token fetch per session, shared by all callers. Four init paths need the
 // blob SAS; without memoization each did its own round-trip — same-origin+cached
@@ -11,13 +12,22 @@ import { TOKEN_URL } from "./config";
 let _tokenPromise: Promise<any> | null = null;
 const getToken = () => (_tokenPromise ??= fetch(TOKEN_URL).then((r) => r.json()));
 
-// Static meta artifacts (platinum/meta/*, written by build_platinum export_meta).
-// These replace the /api/sources, /api/extent and /api/coverage_detail server routes:
-// constant between data refreshes, so they are read straight from blob like the rest
-// of the platinum tier — the API server is out of the default load path (ADR-0021).
+const EVENT_ID = currentEventId(); // null -> landing page (Task 8); non-null -> event view
+// Task 8 replaces this: no landing page exists yet, so a null hash falls back to
+// the one known event and reloads, keeping the app usable mid-branch.
+if (EVENT_ID === null) {
+  location.hash = "#/e/20260624-ve-earthquake";
+  location.reload();
+}
+
+// Static meta artifacts (platinum/event=<id>/meta/*, written by build_platinum
+// export_meta). These replace the /api/sources, /api/extent and /api/coverage_detail
+// server routes: constant between data refreshes, so they are read straight from
+// blob like the rest of the platinum tier — the API server is out of the default
+// load path (ADR-0021).
 const fetchMeta = async (name: string) => {
   const tok = await getToken();
-  return fetch(`${tok.base_url}/${tok.platinum_dir}/meta/${name}?${tok.sas}`).then((r) => r.json());
+  return fetch(`${eventDir(tok, EVENT_ID!)}/meta/${name}?${tok.sas}`).then((r) => r.json());
 };
 // extents.json bundles every source's analysed extent -> one request instead of one per source.
 let _extentsAll: Promise<Record<string, any>> | null = null;
@@ -94,8 +104,6 @@ function extentTip(s: string, p: any): string {
 const map = new maplibregl.Map({
   container: "map",
   style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-  center: [-67.03, 10.59],
-  zoom: 11,
 });
 
 // --- v2 serving: EXPLICIT per-layer registry (no silent fallback). Each native
@@ -343,10 +351,10 @@ const BUILDING_FIELDS: Record<string, { seen: string; dmg: string }> = {
 async function setupBuildings() {
   if (OVERTURE_SERVING !== "pmtiles") return;
   const tok = await getToken();
-  const pdir = tok.platinum_dir || "platinum";
+  const dir = eventDir(tok, EVENT_ID!);
   map.addSource("pmt-src-buildings", {
     type: "vector",
-    url: `pmtiles://${tok.base_url}/${pdir}/buildings/building_flags.pmtiles?${tok.sas}`,
+    url: `pmtiles://${dir}/buildings/building_flags.pmtiles?${tok.sas}`,
   });
   for (const [s, f] of Object.entries(BUILDING_FIELDS)) {
     map.addLayer({
@@ -529,12 +537,12 @@ const ADMIN_SERVING: "pmtiles" | "deckgl" = "pmtiles";
 async function setupAdmin() {
   if (ADMIN_SERVING !== "pmtiles") return;
   const tok = await getToken();
-  const pdir = tok.platinum_dir || "platinum";
+  const dir = eventDir(tok, EVENT_ID!);
   // values: read the slim admin facts parquet, pivot into adminCache (properties
   // only — geometry comes from the tiles now) so the existing logic is reused.
   const rows = (await parquetReadObjects({
     file: await asyncBufferFromUrl({
-      url: `${tok.base_url}/${pdir}/values/facts-admin.parquet?${tok.sas}`,
+      url: `${dir}/values/facts-admin.parquet?${tok.sas}`,
     }),
   })) as any[];
   const byKey = new Map<string, Map<string, any>>();
@@ -558,7 +566,7 @@ async function setupAdmin() {
     const sl = `adm${lvl}`;
     map.addSource(src, {
       type: "vector",
-      url: `pmtiles://${tok.base_url}/${pdir}/admin-adm${lvl}/adm${lvl}.pmtiles?${tok.sas}`,
+      url: `pmtiles://${dir}/admin-adm${lvl}/adm${lvl}.pmtiles?${tok.sas}`,
       promoteId: `adm${lvl}_id`,
     });
     map.addLayer({
@@ -596,11 +604,11 @@ let h3ByCell: Map<string, any> = new Map(); // last applied state, for hover tip
 
 async function setupH3() {
   const tok = await getToken();
-  const pdir = tok.platinum_dir || "platinum";
+  const dir = eventDir(tok, EVENT_ID!);
   const labelId = map.getStyle().layers?.find((l: any) => l.type === "symbol")?.id;
   map.addSource("pmt-src-h3", {
     type: "vector",
-    url: `pmtiles://${tok.base_url}/${pdir}/h3/h3_cells.pmtiles?${tok.sas}`,
+    url: `pmtiles://${dir}/h3/h3_cells.pmtiles?${tok.sas}`,
     promoteId: "h3",
   });
   map.addLayer({
@@ -689,7 +697,8 @@ maplibregl.addProtocol("pmtiles", new Protocol().tile);
       exp.textContent = "⏳ Building spreadsheet…";
       try {
         const { downloadExport } = await import("./export");
-        await downloadExport(await getToken());
+        const tok = await getToken();
+        await downloadExport(tok, eventDir(tok, EVENT_ID!));
       } catch (err) {
         console.error("client export failed:", err);
         if (hasServerFallback) {
@@ -715,10 +724,10 @@ async function setupPmtiles() {
   ][];
   if (!converted.length) return;
   const tok = await getToken();
-  const pdir = tok.platinum_dir || "platinum";
+  const dir = eventDir(tok, EVENT_ID!);
   for (const [s, v] of converted) {
     const src = `pmt-src-${s}`;
-    map.addSource(src, { type: "vector", url: `pmtiles://${tok.base_url}/${pdir}/${v.file}?${tok.sas}` });
+    map.addSource(src, { type: "vector", url: `pmtiles://${dir}/${v.file}?${tok.sas}` });
     for (const { id, spec } of v.layers) {
       map.addLayer({
         id,
@@ -754,10 +763,10 @@ const USGS_LAYERS = [
 ];
 async function setupUsgs() {
   const tok = await getToken();
-  const pdir = tok.platinum_dir || "platinum";
+  const dir = eventDir(tok, EVENT_ID!);
   map.addSource("usgs", {
     type: "geojson",
-    data: `${tok.base_url}/${pdir}/usgs/shakemap.geojson?${tok.sas}`,
+    data: `${dir}/usgs/shakemap.geojson?${tok.sas}`,
   });
   // A star icon for the epicentre (SVG → addImage, so it never depends on glyphs).
   await new Promise<void>((res) => {
@@ -1143,10 +1152,10 @@ async function ensureH3(source: string) {
   // the exact row shape the old API returned, so hMax/legend logic is reused as-is.
   if (h3Cache.has(source)) return;
   const tok = await getToken();
-  const pdir = tok.platinum_dir || "platinum";
+  const dir = eventDir(tok, EVENT_ID!);
   const rows = (await parquetReadObjects({
     file: await asyncBufferFromUrl({
-      url: `${tok.base_url}/${pdir}/values/facts-h3-${source}.parquet?${tok.sas}`,
+      url: `${dir}/values/facts-h3-${source}.parquet?${tok.sas}`,
     }),
   })) as any[];
   h3Cache.set(source, rows);
@@ -1208,7 +1217,23 @@ async function refresh() {
 // --- init + wiring -----------------------------------------------------------
 const el = (id: string) => document.getElementById(id)!;
 
+// Panel title from the event registry: name + CEMS activation id when present.
+function renderEventTitle(ev: EventInfo) {
+  const cems = ev.external_ids?.cems_activation;
+  el("event-title").textContent = cems ? `${ev.name} (${cems})` : ev.name;
+}
+
 async function init() {
+  // Registry lookup: fly-to the event's bbox and fill the panel title. events.json
+  // is the one platinum read that stays at the tier root (not event-scoped) —
+  // every other read below goes through eventDir(tok, EVENT_ID!).
+  const tok = await getToken();
+  const events = await fetchEvents(tok);
+  const ev = events.find((e) => e.event_id === EVENT_ID);
+  if (ev) {
+    map.fitBounds([[ev.bbox[0], ev.bbox[1]], [ev.bbox[2], ev.bbox[3]]], { padding: 40, duration: 0 });
+    renderEventTitle(ev);
+  }
   // PMTiles/hyparquet setup is additive — a failure must never blank the app.
   for (const [name, fn] of [
     ["pmtiles", setupPmtiles],

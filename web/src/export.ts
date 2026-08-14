@@ -23,8 +23,8 @@ const HAIR = { style: "thin" as const, color: { argb: "FFD3D3D3" } };
 const BORDER = { top: HAIR, left: HAIR, bottom: HAIR, right: HAIR };
 const fill = (argb: string) => ({ type: "pattern" as const, pattern: "solid" as const, fgColor: { argb } });
 
-export async function downloadExport(tok: any): Promise<void> {
-  const base = `${tok.base_url}/${tok.platinum_dir}`;
+export async function downloadExport(tok: any, dir: string): Promise<void> {
+  const base = dir;
   const meta = await fetch(`${base}/meta/export_meta.json?${tok.sas}`).then((r) => r.json());
 
   const wb = new ExcelJS.Workbook();
