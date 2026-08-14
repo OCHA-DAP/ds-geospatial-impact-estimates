@@ -7,6 +7,8 @@
     <link rel="icon" href="data:," />
   </head>
   <body>
+    <div id="landing" hidden></div>
+
     <div id="map"></div>
 
     <button id="methods-open" class="methods-fab" type="button" aria-label="Methodology &amp; sources">
@@ -21,6 +23,13 @@
       <img src="/ocha_logo.svg" alt="OCHA" class="panel-logo" width="117" height="28" />
       <h1 id="event-title"></h1>
       <p class="sub">Damage Exposure</p>
+
+      <div class="divider"></div>
+
+      <div class="group">
+        <div class="label">Event</div>
+        <select id="eventSwitch"></select>
+      </div>
 
       <div class="divider"></div>
 
