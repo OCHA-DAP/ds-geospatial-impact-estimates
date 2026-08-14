@@ -21,7 +21,7 @@ from __future__ import annotations
 import sys
 import time
 
-from azure.core.exceptions import ResourceExistsError
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError
 from azure.storage.blob import BlobServiceClient
 from azure.storage.filedatalake import DataLakeServiceClient
 
@@ -40,9 +40,14 @@ def _files(fs, project_prefix: str, tier: str) -> dict[str, int]:
             for p in fs.get_paths(path=f"{project_prefix}/{tier}", recursive=True)
             if not p.is_directory
         }
-    except Exception as e:  # tier truly absent is the only acceptable miss
+    except ResourceNotFoundError as e:  # tier truly absent is the only acceptable miss
         print(f"  {tier}/: listing failed ({e}); treating as absent")
         return {}
+    except Exception as e:
+        raise RuntimeError(
+            f"listing {project_prefix}/{tier}/ failed (not a not-found error — "
+            f"treating as a real failure, not an absent tier): {e}"
+        ) from e
 
 
 def main() -> None:
