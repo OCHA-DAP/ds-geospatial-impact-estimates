@@ -52,7 +52,9 @@ def _label(monitoring_number: int, version_number: int) -> str:
     return f"{base} (v{version_number})"
 
 
-def active_products(settings, activation: str, stage: str = "dev") -> pd.DataFrame:
+def active_products(
+    settings, activation: str, *, event: str | None, stage: str = "dev"
+) -> pd.DataFrame:
     """Delivered CEMS products with superseded versions dropped.
 
     One row per ``product_id`` at its max ``version_number``. Columns are the
@@ -62,7 +64,7 @@ def active_products(settings, activation: str, stage: str = "dev") -> pd.DataFra
     equals the bronze zip filename), a derived ``label``, and ``is_latest`` (the
     most recent product per AOI). Empty frame if no manifest is present yet.
     """
-    prefix = settings.blob_path("bronze", "source=copernicus_ems", f"code={activation}")
+    prefix = settings.blob_path("bronze", "source=copernicus_ems", f"code={activation}", event=event)
     mans = sorted(
         b
         for b in stratus.list_container_blobs(

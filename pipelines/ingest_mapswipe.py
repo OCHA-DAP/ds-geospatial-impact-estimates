@@ -36,7 +36,7 @@ import json
 import ocha_stratus as stratus
 import requests
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 GRAPHQL = "https://backend.mapswipe.org/graphql/"
@@ -46,6 +46,7 @@ HDX_SLUG = "venezuela-m-7-5-earthquake-building-damage-assessment"
 SOURCE = "mapswipe"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 PROJECTS_QUERY = """
 { publicProjects(filters:{name:"%s"}, pagination:{limit:60,offset:0}){ results{
@@ -70,6 +71,7 @@ def _gql(query: str) -> dict:
 
 
 def main(project_ids: list[str] | None = None) -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     base = ("bronze", f"source={SOURCE}", f"adm0={ADM0}")
 
@@ -90,7 +92,7 @@ def main(project_ids: list[str] | None = None) -> None:
                 continue
             fname = url.rsplit("/", 1)[1]
             raw = requests.get(url, timeout=120).content
-            dest = settings.blob_path(*base, f"project={p['id']}", fname)
+            dest = settings.blob_path(*base, f"project={p['id']}", fname, event=EVENT)
             stratus.upload_blob_data(raw, dest, stage=STAGE, container_name=settings.container)
             assets[label] = url
             n_files += 1
@@ -112,13 +114,13 @@ def main(project_ids: list[str] | None = None) -> None:
             if r["format"].lower() != "geojson":
                 continue
             raw = requests.get(r["url"], timeout=120).content
-            dest = settings.blob_path(*base, "hdx", r["name"])
+            dest = settings.blob_path(*base, "hdx", r["name"], event=EVENT)
             stratus.upload_blob_data(raw, dest, stage=STAGE, container_name=settings.container)
             hdx_files.append(r["name"])
             n_files += 1
         print(f"  hdx: {', '.join(hdx_files)}")
 
-    mdest = settings.blob_path(*base, "projects.json")
+    mdest = settings.blob_path(*base, "projects.json", event=EVENT)
     if project_ids:
         # merge into the existing manifest — a filtered run must not shrink it
         prior = json.loads(stratus.load_blob_data(mdest, stage=STAGE,
@@ -129,7 +131,7 @@ def main(project_ids: list[str] | None = None) -> None:
     stratus.upload_blob_data(json.dumps(manifest, indent=1).encode(), mdest,
                              stage=STAGE, container_name=settings.container)
 
-    root = settings.blob_path(*base)
+    root = settings.blob_path(*base, event=EVENT)
     print(f"bronze <- {root}  ({len(projects)} projects, {n_files} files + manifest)")
     scope = (f"filtered additive ingest of project(s) {', '.join(project_ids)}"
              if project_ids else f"{len(projects)} Validate projects + HDX synthesis")

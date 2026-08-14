@@ -31,13 +31,14 @@ import sys
 import tempfile
 import zipfile
 
-from gie import blobio, ledger
+from gie import blobio, events, ledger
 from gie.config import load_settings
 from gie.raster import to_byte_cog
 
 SOURCE = "list"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DEFAULT_SRC = os.path.expanduser("~/Downloads/LIST.zip")
 
 
@@ -54,6 +55,7 @@ def _tif_members(src: str) -> list[tuple[str, str]]:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     src = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SRC
     if not os.path.exists(src):
         raise SystemExit(f"source not found: {src}")
@@ -71,7 +73,7 @@ def main() -> None:
             print(f"converting {name} -> lossless Byte COG ...", flush=True)
             counts = to_byte_cog(gdal_path, cog)
             size = os.path.getsize(cog)
-            blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name)
+            blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name, event=EVENT)
             print(f"uploading {name} ({size / 1e6:.1f} MB) -> {blob}", flush=True)
             with open(cog, "rb") as f:
                 blobio.upload(fs, f.read(), blob)

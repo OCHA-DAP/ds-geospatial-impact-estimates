@@ -30,10 +30,11 @@ import os
 import sys
 import zipfile
 
-from gie import blobio, ledger
+from gie import blobio, events, ledger
 from gie.config import load_settings
 
 SOURCE, ADM0, STAGE = "disha", "VE", "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DEFAULT_ZIP = os.path.expanduser("~/Downloads/NWCaracas_Analyses.zip")
 
 # (zip member, bronze filename, ledger label, ledger detail). Names kept verbatim
@@ -83,6 +84,7 @@ FILES = [
 
 
 def main() -> None:
+    events.require_event(EVENT)
     zip_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_ZIP
     if not os.path.isfile(zip_path):
         raise SystemExit(f"delivery zip not found: {zip_path}")
@@ -93,7 +95,9 @@ def main() -> None:
     # 1) raw zip as received (full provenance, includes the licence PDF)
     with open(zip_path, "rb") as fh:
         raw = fh.read()
-    zblob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", "NWCaracas_Analyses.zip")
+    zblob = settings.blob_path(
+        "bronze", f"source={SOURCE}", f"adm0={ADM0}", "NWCaracas_Analyses.zip", event=EVENT
+    )
     print(f"uploading raw zip ({len(raw) / 1e6:.1f} MB) -> {zblob}", flush=True)
     blobio.upload(fs, raw, zblob)
     ledger.record(
@@ -110,7 +114,7 @@ def main() -> None:
         for member, dest, label, detail in FILES:
             if member not in present:
                 raise SystemExit(f"missing zip member: {member}")
-            blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", dest)
+            blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", dest, event=EVENT)
             blobio.upload(fs, zf.read(member), blob)
             ledger.record(SOURCE, "bronze", label, blob, detail, status="ingesting")
             print(f"  bronze <- {blob}", flush=True)

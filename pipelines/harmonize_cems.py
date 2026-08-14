@@ -23,7 +23,7 @@ import geopandas as gpd
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import db, ledger
+from gie import db, events, ledger
 from gie.cems_products import active_products, read_layer
 from gie.config import DEFAULT_H3_RESOLUTION, load_settings
 
@@ -32,6 +32,7 @@ SOURCE = "copernicus_ems"
 METHOD = "cems_grading_v1"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 # Copernicus EMS damage grade -> xBD-style class (0..3). Raw grade kept too.
 EMS_TO_CLASS = {
@@ -56,9 +57,9 @@ def build_silver(settings) -> None:
     so downstream can attribute from the latest per AOI and still break down by
     product. Superseded versions are already excluded by ``active_products``.
     """
-    products = active_products(settings, ACTIVATION, STAGE)
+    products = active_products(settings, ACTIVATION, event=EVENT, stage=STAGE)
     products = products[products["product_type"] == "GRA"]
-    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"code={ACTIVATION}")
+    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"code={ACTIVATION}", event=EVENT)
     zip_by_name = {
         b.split("/")[-1]: b
         for b in stratus.list_container_blobs(
@@ -107,7 +108,7 @@ def build_silver(settings) -> None:
     ]
 
     silver = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "builtup_damage.parquet"
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "builtup_damage.parquet", event=EVENT
     )
     stratus.upload_parquet_to_blob(
         gdf, silver, stage=STAGE, container_name=settings.container, compression="zstd"
@@ -126,8 +127,12 @@ def build_silver(settings) -> None:
 
 def build_gold(settings, res: int = DEFAULT_H3_RESOLUTION) -> None:
     con = db.connect()
-    sp = settings.az_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "builtup_damage.parquet")
-    adm3 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
+    sp = settings.az_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "builtup_damage.parquet", event=EVENT
+    )
+    # event=None: CODAB is shared, country-keyed REFERENCE data outside the
+    # event tree — reusable across events (spec §3).
+    adm3 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet", event=None)
     metrics = "count(*)::DOUBLE AS damage_features, sum(area_m2) AS damaged_area_m2"
     admin_unions = "\n        UNION ALL\n        ".join(
         f"SELECT '{lvl}', {lvl}_id, any_value({lvl}_name), "
@@ -170,7 +175,9 @@ def build_gold(settings, res: int = DEFAULT_H3_RESOLUTION) -> None:
     out = con.execute(sql).df()
     out["ingested_at"] = pd.Timestamp.now("UTC")
 
-    gold = settings.blob_path("gold", f"source={SOURCE}", f"adm0={ADM0}", "damage_facts.parquet")
+    gold = settings.blob_path(
+        "gold", f"source={SOURCE}", f"adm0={ADM0}", "damage_facts.parquet", event=EVENT
+    )
     stratus.upload_parquet_to_blob(
         out, gold, stage=STAGE, container_name=settings.container, compression="zstd"
     )
@@ -188,6 +195,7 @@ def build_gold(settings, res: int = DEFAULT_H3_RESOLUTION) -> None:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     build_silver(settings)
     build_gold(settings)

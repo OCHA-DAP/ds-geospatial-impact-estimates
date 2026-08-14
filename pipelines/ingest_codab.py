@@ -31,8 +31,10 @@ def main() -> None:
             print(f"adm{level}: no data returned, skipping")
             continue
         gdf = gdf.to_crs(4326)
+        # event=None: CODAB is shared, country-keyed REFERENCE data outside the
+        # event tree — reusable across events (spec §3).
         path = settings.blob_path(
-            "bronze", "source=codab", f"adm0={ADM0}", f"adm{level}.parquet"
+            "bronze", "source=codab", f"adm0={ADM0}", f"adm{level}.parquet", event=None
         )
         stratus.upload_parquet_to_blob(
             gdf, path, stage=STAGE, container_name=settings.container, compression="zstd"
@@ -44,7 +46,7 @@ def main() -> None:
         source="codab",
         layer="bronze",
         dataset=f"OCHA CODAB admin boundaries — {ISO3} (FieldMaps)",
-        path=settings.blob_path("bronze", "source=codab", f"adm0={ADM0}"),
+        path=settings.blob_path("bronze", "source=codab", f"adm0={ADM0}", event=None),
         detail="; ".join(f"{k}={v}" for k, v in counts.items()) + "; EPSG:4326",
     )
 

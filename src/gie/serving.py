@@ -4,6 +4,9 @@ All reads go through DuckDB over blob (cloud-optimized). The FastAPI layer
 (api/) turns these into GeoJSON/JSON for the deck.gl + MapLibre front end.
 """
 
+# event=None throughout: the App Service serving layer is PINNED to the legacy
+# un-evented layout until its retirement (spec §4). Do not event-scope these.
+
 from __future__ import annotations
 
 import geopandas as gpd
@@ -25,7 +28,7 @@ METRICS = [
 
 
 def _gold(settings, source: str, adm0: str) -> str:
-    return settings.az_path("gold", f"source={source}", f"adm0={adm0}", "damage_facts.parquet")
+    return settings.az_path("gold", f"source={source}", f"adm0={adm0}", "damage_facts.parquet", event=None)
 
 
 def load_h3_damage(
@@ -59,7 +62,7 @@ def load_admin_damage(
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
     gold = _gold(settings, source, adm0)
-    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet")
+    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet", event=None)
     idcol, namecol = f"adm{level}_id", f"adm{level}_name"
 
     if level >= 3:
@@ -97,7 +100,7 @@ def load_footprints(
     """Raw building footprints with damage attributes, for the footprint layer."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    silver = settings.az_path("silver", f"source={source}", f"adm0={adm0}", "footprints.parquet")
+    silver = settings.az_path("silver", f"source={source}", f"adm0={adm0}", "footprints.parquet", event=None)
     df = con.execute(
         f"""
         SELECT damaged, damage_pct_10m, ST_AsWKB(geometry) AS wkb
@@ -130,7 +133,7 @@ def list_sources(adm0: str = "VE", stage: str = "dev") -> list[str]:
     """Distinct damage sources present in the common-model gold."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=None)
     rows = con.execute(
         f"SELECT DISTINCT source FROM read_parquet('{gold}') ORDER BY source"
     ).fetchall()
@@ -141,7 +144,7 @@ def load_common_h3(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     """Per-H3-cell common-model metrics for one source."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=None)
     return con.execute(
         f"SELECT unit_id AS h3, {_COMMON_PIVOT} FROM read_parquet('{gold}') "
         f"WHERE unit_type='h3' AND source='{source}' GROUP BY unit_id"
@@ -154,8 +157,8 @@ def load_common_admin(
     """Admin units (with geometry) joined to one source's common-model metrics."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
-    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet")
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=None)
+    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet", event=None)
     idcol = f"adm{level}_id"
     df = con.execute(
         f"""
@@ -182,8 +185,8 @@ def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFram
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
-    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet")
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=None)
+    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet", event=None)
     names = ", ".join(f"a.adm{i}_name" for i in range(1, level + 1))
     return con.execute(
         f"""
@@ -404,7 +407,7 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
+    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet", event=None)
     if source == "microsoft":
         dmg, seen = "ms_dmg", "ms_analysed"
     elif source == "impact_initiatives":
@@ -454,7 +457,8 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
         # Single-polygon coverage extents (SAR / OSU / DISHA / LIST), from the tiered
         # gold copy (stage_serving) so it's promote-gated, not shared silver (ADR-0016).
         ext = settings.az_path(
-            "gold", "model=common", f"adm0={adm0}", "serving", "extent", f"source={source}.parquet"
+            "gold", "model=common", f"adm0={adm0}", "serving", "extent", f"source={source}.parquet",
+            event=None,
         )
         label, product = {
             "impact_initiatives": ("SAR analysed extent", "Sentinel-1 damage proxy"),
@@ -472,7 +476,8 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     # Microsoft valid-area masks: one labelled outline per AOI (carries an `aoi` column).
     if source == "microsoft":
         ext = settings.az_path(
-            "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=microsoft.parquet"
+            "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=microsoft.parquet",
+            event=None,
         )
         sql = (
             f"SELECT aoi AS aoi_name, 'Microsoft analysis' AS product, NULL AS acquired, "
@@ -489,7 +494,8 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     # CEMS: one outline per product (dissolved within a product), from the tiered
     # gold copy (promote-gated), not shared silver (ADR-0016).
     ext = settings.az_path(
-        "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=copernicus_ems.parquet"
+        "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=copernicus_ems.parquet",
+        event=None,
     )
     sql = (
         f"SELECT any_value(aoi_name) AS aoi_name, any_value(product) AS product, "
@@ -522,7 +528,7 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
         )
     if source == "hot_osm":
         # fAIr's native geometry IS its damage points (grade + confidence per point).
-        path = settings.az_path("silver", "source=hot_osm", f"adm0={adm0}", "damage_points.parquet")
+        path = settings.az_path("silver", "source=hot_osm", f"adm0={adm0}", "damage_points.parquet", event=None)
         df = con.execute(
             f"SELECT ems_grade, damage_class, confidence, ST_AsWKB(geometry) AS wkb "
             f"FROM read_parquet('{path}')"
@@ -530,11 +536,11 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
         geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
         return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
     if source == "microsoft":
-        path = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet")
+        path = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet", event=None)
         cols, where = "damaged", ""
     else:
         path = settings.az_path(
-            "silver", "source=copernicus_ems", f"adm0={adm0}", "builtup_damage.parquet"
+            "silver", "source=copernicus_ems", f"adm0={adm0}", "builtup_damage.parquet", event=None
         )
         cols = "ems_grade, damage_class, layer_type"
         # Keep BOTH the latest detailed product (per-building points) AND the coarse
@@ -558,7 +564,7 @@ def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFra
     con = db.connect()
     # tiered gold copy (promote-gated), not shared silver (ADR-0016)
     path = settings.az_path(
-        "gold", "model=common", f"adm0={adm0}", "serving", "coverage_detail.parquet"
+        "gold", "model=common", f"adm0={adm0}", "serving", "coverage_detail.parquet", event=None
     )
     df = con.execute(
         f"SELECT kind, aoi_name, product, acquired, ST_AsWKB(geometry) AS wkb "
@@ -578,7 +584,7 @@ def load_agreement(adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
+    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet", event=None)
     return con.execute(
         f"""
         SELECT lon, lat,

@@ -50,12 +50,13 @@ import tempfile
 import geopandas as gpd
 import ocha_stratus as stratus
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE = "osu"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 # Bronze gpkg filenames per delivery (bronze is not version-partitioned — the
 # filenames themselves carry the version, so v1 never overwrites v0).
@@ -68,7 +69,7 @@ AOI_GPKG_V1 = "EMSR884_analyzed_area_20260701_v1.gpkg"
 def _read_gpkg(settings, name, columns=None):
     """Pull a bronze GeoPackage to a temp file and read it (the azure driver does
     not read .gpkg straight from blob)."""
-    bpath = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name)
+    bpath = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name, event=EVENT)
     raw = stratus.load_blob_data(bpath, stage=STAGE, container_name=settings.container)
     with tempfile.NamedTemporaryFile(suffix=".gpkg", delete=False) as tf:
         tf.write(raw)
@@ -143,6 +144,7 @@ NORMALIZERS = {"v0": _normalize_v0, "v1": _normalize_v1}
 
 
 def main() -> None:
+    events.require_event(EVENT)
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--version", choices=list(NORMALIZERS), default="v1")
     version = ap.parse_args().version
@@ -152,7 +154,8 @@ def main() -> None:
 
     for name, frame in frames.items():
         path = settings.blob_path(
-            "silver", f"source={SOURCE}", f"adm0={ADM0}", f"version={version}", f"{name}.parquet"
+            "silver", f"source={SOURCE}", f"adm0={ADM0}", f"version={version}", f"{name}.parquet",
+            event=EVENT,
         )
         stratus.upload_parquet_to_blob(
             frame, path, stage=STAGE, container_name=settings.container, compression="zstd"
@@ -164,7 +167,10 @@ def main() -> None:
         SOURCE,
         "silver",
         f"OSU S1 coherence damage ({version}) joined to Overture (id-keyed) + analyzed-area extent",
-        settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", f"version={version}", "building_damage.parquet"),
+        settings.blob_path(
+            "silver", f"source={SOURCE}", f"adm0={ADM0}", f"version={version}", "building_damage.parquet",
+            event=EVENT,
+        ),
         f"{n_dmg:,} damaged buildings (damage_class 2); analysed extent = analyzed-area polygon; "
         f"confidence signal = {'damage_confidence tier' if version == 'v1' else 'damage_probability'}",
         status="ingesting",

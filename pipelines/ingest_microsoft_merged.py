@@ -37,12 +37,13 @@ import urllib.request
 import ocha_stratus as stratus
 from azure.storage.blob import BlobBlock
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE = "microsoft"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 BASE_URL = (
     "https://geospatialvisualizer.blob.core.windows.net/"
     "damage-assessments/venezuela_earthquake_2026/results"
@@ -92,6 +93,7 @@ def _upload(cc, blob: str, data: bytes, block_size: int = 4 * 1024 * 1024) -> No
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     cc = stratus.get_container_client(container_name=settings.container, stage=STAGE, write=True)
     first_blob = None
@@ -100,7 +102,9 @@ def main() -> None:
         print(f"downloading {name} ...", flush=True)
         with urllib.request.urlopen(url, timeout=180) as resp:  # noqa: S310 — trusted MS URL
             data = resp.read()
-        blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", "merged", name)
+        blob = settings.blob_path(
+            "bronze", f"source={SOURCE}", f"adm0={ADM0}", "merged", name, event=EVENT
+        )
         _upload(cc, blob, data)
         print(f"bronze <- {blob} ({len(data) / 1e6:.1f} MB)", flush=True)
         first_blob = first_blob or blob

@@ -22,18 +22,19 @@ import tempfile
 import geopandas as gpd
 import ocha_stratus as stratus
 
-from gie import blob, ledger
+from gie import blob, events, ledger
 from gie.config import load_settings
 
 SOURCE = "microsoft"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 FOOTPRINTS_SRC = "ALL_AOIS_building_predictions_deduplicated.gpkg"
 MASK_SRC = "valid_area_mask_union.geojson"
 
 
 def _read_bronze(settings, name: str) -> gpd.GeoDataFrame:
-    bp = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", "merged", name)
+    bp = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", "merged", name, event=EVENT)
     data = stratus.load_blob_data(bp, stage=STAGE, container_name=settings.container)
     with tempfile.NamedTemporaryFile(suffix=os.path.splitext(name)[1], delete=False) as tf:
         tf.write(data)
@@ -44,6 +45,7 @@ def _read_bronze(settings, name: str) -> gpd.GeoDataFrame:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
 
     # footprints: reproject to 4326, keep the common-schema columns
@@ -54,7 +56,9 @@ def main() -> None:
     foot["superseded"] = False
     foot["adm0"] = ADM0
     foot["source"] = SOURCE
-    fblob = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet")
+    fblob = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet", event=EVENT
+    )
     blob.upload_parquet_staged(foot, fblob, settings)
     n_dmg = int(foot["damaged"].sum())
     print(f"silver <- {fblob} ({len(foot):,} buildings, {n_dmg:,} damaged)", flush=True)
@@ -67,7 +71,7 @@ def main() -> None:
     ext["adm0"] = ADM0
     ext["source"] = SOURCE
     eblob = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     blob.upload_parquet_staged(ext, eblob, settings)
     print(f"silver <- {eblob} ({len(ext)} merged extent polygon)", flush=True)

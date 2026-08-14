@@ -36,12 +36,13 @@ import urllib.request
 
 from azure.storage.blob import ContainerClient
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE = "osu"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DEFAULT_DIR = os.path.expanduser("~/Downloads/S1_Damage_Prelim_EMSR884")
 
 _HDX = "https://data.humdata.org/dataset/222eef8e-c4fe-46b2-a3d5-bb4b90cf872b/resource"
@@ -107,7 +108,7 @@ FILES_V1 = [
 
 
 def _upload(cc, settings, name: str, data: bytes) -> str:
-    blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name)
+    blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name, event=EVENT)
     cc.upload_blob(name=blob, data=data, overwrite=True, length=len(data), max_concurrency=8)
     return blob
 
@@ -139,6 +140,7 @@ def _ingest_v1(cc, settings) -> None:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--version", choices=["v0", "v1"], default="v1")
     ap.add_argument("pkg_dir", nargs="?", default=DEFAULT_DIR, help="v0 only: local package dir")

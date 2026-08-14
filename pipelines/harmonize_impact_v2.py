@@ -28,16 +28,17 @@ import tempfile
 import geopandas as gpd
 import ocha_stratus as stratus
 
-from gie import blobio, ledger
+from gie import blobio, events, ledger
 from gie.config import load_settings
 
 SOURCE, ADM0, STAGE = "impact_initiatives", "VE", "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DMG_GPKG = "IMPACT_VEN_Earthquake_Sentinel1_damaged_20260625_v2.gpkg"
 AOI_GPKG = "IMPACT_VEN_Earthquake_analyzed_area_20260625_v2.gpkg"
 
 
 def _read_bronze(settings, name):
-    bp = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name)
+    bp = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name, event=EVENT)
     raw = stratus.load_blob_data(bp, stage=STAGE, container_name=settings.container)
     with tempfile.NamedTemporaryFile(suffix=".gpkg", delete=False) as tf:
         tf.write(raw)
@@ -56,6 +57,7 @@ def _upload_parquet(fs, frame, blob):
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     fs = blobio.uploader(settings)
 
@@ -80,7 +82,9 @@ def main() -> None:
         geometry="geometry",
         crs=4326,
     )
-    bd = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "building_damage.parquet")
+    bd = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "building_damage.parquet", event=EVENT
+    )
     _upload_parquet(fs, out, bd)
     print(f"silver <- {bd} ({len(out):,} damaged buildings, geometry-carrying; "
           f"{int(out['id'].notna().sum()):,} with an Overture id)", flush=True)
@@ -89,7 +93,9 @@ def main() -> None:
     aoi = _read_bronze(settings, AOI_GPKG).to_crs(4326)[["geometry"]].copy()
     aoi["source"] = SOURCE
     aoi["superseded"] = False
-    ext = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet")
+    ext = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
+    )
     _upload_parquet(fs, aoi, ext)
     print(f"silver <- {ext} (v2 AOI polygon)", flush=True)
 

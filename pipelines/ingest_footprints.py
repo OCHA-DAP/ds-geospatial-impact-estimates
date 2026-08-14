@@ -24,7 +24,7 @@ import ocha_stratus as stratus
 import pandas as pd
 import requests
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 HDX = "https://data.humdata.org/api/3/action/package_show?id={}"
@@ -46,6 +46,7 @@ SUPERSEDED = {"la_guaira_east"}
 SOURCE = "microsoft"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def _resources(slug: str) -> tuple[str, str]:
@@ -57,6 +58,7 @@ def _resources(slug: str) -> tuple[str, str]:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     foot_parts, mask_parts = [], []
 
@@ -70,7 +72,7 @@ def main() -> None:
 
             for raw, name in ((gp, "footprints.gpkg"), (mk, "valid_area_mask.geojson")):
                 bronze = settings.blob_path(
-                    "bronze", f"source={SOURCE}", f"adm0={ADM0}", f"aoi={aoi}", name
+                    "bronze", f"source={SOURCE}", f"adm0={ADM0}", f"aoi={aoi}", name, event=EVENT
                 )
                 stratus.upload_blob_data(
                     raw.read_bytes(), bronze, stage=STAGE, container_name=settings.container
@@ -94,7 +96,9 @@ def main() -> None:
         )
 
     foot = gpd.GeoDataFrame(pd.concat(foot_parts, ignore_index=True), crs="EPSG:4326")
-    silver = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet")
+    silver = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "footprints.parquet", event=EVENT
+    )
     stratus.upload_parquet_to_blob(
         foot, silver, stage=STAGE, container_name=settings.container, compression="zstd"
     )
@@ -102,7 +106,7 @@ def main() -> None:
 
     masks = gpd.GeoDataFrame(pd.concat(mask_parts, ignore_index=True), crs="EPSG:4326")
     msilver = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     stratus.upload_parquet_to_blob(
         masks, msilver, stage=STAGE, container_name=settings.container, compression="zstd"
