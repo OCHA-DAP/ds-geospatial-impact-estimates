@@ -43,9 +43,9 @@ to a column**, with **`events.yaml`, checked into the repo, as the sole
 registry**.
 
 ```
-bronze/event=20260812-co-earthquake/source=copernicus_ems/code=EMSR9xx/...
-gold/event=20260812-co-earthquake/model=common/...
-platinum/event=20260812-co-earthquake/...
+bronze/event=20260810-co-earthquake/source=copernicus_ems/code=EMSR9xx/...
+gold/event=20260810-co-earthquake/model=common/...
+platinum/event=20260810-co-earthquake/...
 ```
 
 `gie.config.blob_path()` / `az_path()` — the choke point every pipeline
@@ -58,9 +58,11 @@ pipeline gets a required `--event` CLI flag; a run that doesn't name its
 event fails loudly instead of silently landing in the legacy tree.
 
 The registry is `events.yaml` plus a loader (`gie.events`) that validates on
-load — required fields, unique IDs, valid adm0 codes — and raises
-`EventRegistryError` on anything invalid; `stage_serving`/`publish_events.py`
-refuses to publish an invalid registry. Two events are registered today:
+load — required fields present, unique `event_id`s, `status` in the allowed
+enum, `bbox` shaped as four coordinates, `onset` a valid ISO date, and
+`countries` a non-empty list (it does not check that country codes are
+real) — and raises `EventRegistryError` on anything invalid;
+`stage_serving`/`publish_events.py` refuses to publish an invalid registry. Two events are registered today:
 `20260624-ve-earthquake` and `20260810-co-earthquake`. The event slug
 (`<yyyymmdd>-<countries>-<hazard>`) is a **mnemonic only** — no code parses
 it; the registry's `countries` list and `hazard` field are the sole
