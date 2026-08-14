@@ -53,9 +53,14 @@ writes through — gain a **required, keyword-only `event` argument** with no
 default. `event=None` is not an omission; it is the explicit opt-out for the
 two cases that are not per-event: CODAB boundaries (a shared, country-keyed
 reference tree, `bronze/source=codab/adm0=XX/`, reused across events with
-nothing re-ingested) and the App Service's legacy pinned layout. Every other
-pipeline gets a required `--event` CLI flag; a run that doesn't name its
-event fails loudly instead of silently landing in the legacy tree.
+nothing re-ingested) and the App Service's legacy pinned layout. Single-event
+VE pipelines name their event with a module-level `EVENT = "20260624-ve-earthquake"`
+constant, validated against the registry by `events.require_event(EVENT)` at
+the top of `main()`; genuinely multi-country scripts like `ingest_codab.py`
+instead take real per-run CLI flags (`--iso3`/`--adm0`/`--levels`). Either
+way, the fail-loudly guarantee lives at the choke point: the required
+keyword-only `event` argument has no default, so a caller that omits it gets
+a `TypeError` instead of silently landing in the legacy tree.
 
 The registry is `events.yaml` plus a loader (`gie.events`) that validates on
 load — required fields present, unique `event_id`s, `status` in the allowed
