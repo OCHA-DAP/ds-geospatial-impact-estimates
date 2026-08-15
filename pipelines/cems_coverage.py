@@ -1,5 +1,9 @@
 """Extract the CEMS analysed extent (coverage mask) -> silver.
 
+Registry-driven, one event per run: ``--event <event_id>`` names the event and
+the activation comes from its ``external_ids.cems_activation`` (ADR-0027; same
+pattern as ingest_cems / harmonize_cems).
+
 CEMS only assesses where it has cloud-free imagery, so its damage counts are a
 lower bound biased by coverage. The *analysed* extent per AOI is the image
 footprint clipped to the area of interest, minus the not-analysed parts:
@@ -17,10 +21,12 @@ Products to use (and which is the latest per AOI) come from
 ``gie.cems_products.active_products`` — superseded versions are dropped and every
 shape is tagged with the manifest's own metadata, so coverage and damage agree.
 
-Run: uv run --group etl python pipelines/cems_coverage.py
+Run: uv run --group etl python pipelines/cems_coverage.py --event 20260810-co-earthquake
 """
 
 from __future__ import annotations
+
+import argparse
 
 import geopandas as gpd
 import ocha_stratus as stratus
@@ -28,13 +34,10 @@ import pandas as pd
 
 from gie import events, ledger
 from gie.cems_products import active_products, read_layer
-from gie.config import load_settings
+from gie.config import load_settings, source_segments
 
-ACTIVATION = "EMSR884"
 SOURCE = "copernicus_ems"
-ADM0 = "VE"
 STAGE = "dev"
-EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def _meta(p) -> dict:
@@ -62,12 +65,26 @@ def _meta(p) -> dict:
 
 
 def main() -> None:
-    events.require_event(EVENT)
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--event",
+        required=True,
+        help="event_id from events.yaml; its external_ids.cems_activation is processed",
+    )
+    args = parser.parse_args()
+    ev = events.get_event(args.event)  # fails loudly on an unregistered event
+    activation = ev.external_ids.get("cems_activation")
+    if not activation:
+        raise RuntimeError(
+            f"event {ev.event_id!r} has no external_ids.cems_activation in events.yaml."
+        )
     settings = load_settings(STAGE)
-    products = active_products(settings, ACTIVATION, event=EVENT, stage=STAGE)
+    products = active_products(settings, activation, event=ev.event_id, stage=STAGE)
     products = products[products["product_type"] == "GRA"]
 
-    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"code={ACTIVATION}", event=EVENT)
+    bronze = settings.blob_path(
+        "bronze", f"source={SOURCE}", f"code={activation}", event=ev.event_id
+    )
     zip_by_name = {
         b.split("/")[-1]: b
         for b in stratus.list_container_blobs(
@@ -111,9 +128,15 @@ def main() -> None:
         flag = " [latest]" if p.is_latest else ""
         print(f"  {p.zip_name}: {p.aoi_name} / {p.label} ({meta['acquired']}){flag}", flush=True)
 
+    if not analysed_parts:
+        raise RuntimeError(
+            f"no areaOfInterestA layer found in any live {activation} GRA product — "
+            "bronze products missing or product structure changed."
+        )
     analysed_gdf = gpd.GeoDataFrame(pd.concat(analysed_parts, ignore_index=True), crs="EPSG:4326")
     out = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
+        "silver", *source_segments(SOURCE, ev.event_id), "analysed_extent.parquet",
+        event=ev.event_id,
     )
     stratus.upload_parquet_to_blob(
         analysed_gdf, out, stage=STAGE, container_name=settings.container, compression="zstd"
@@ -122,7 +145,8 @@ def main() -> None:
 
     detail_gdf = gpd.GeoDataFrame(pd.concat(detail_parts, ignore_index=True), crs="EPSG:4326")
     dout = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "coverage_detail.parquet", event=EVENT
+        "silver", *source_segments(SOURCE, ev.event_id), "coverage_detail.parquet",
+        event=ev.event_id,
     )
     stratus.upload_parquet_to_blob(
         detail_gdf, dout, stage=STAGE, container_name=settings.container, compression="zstd"
@@ -132,7 +156,7 @@ def main() -> None:
     ledger.record(
         SOURCE,
         "silver",
-        "CEMS analysed extent (AOI - not-analysed) + coverage detail",
+        f"CEMS {activation} analysed extent (AOI - not-analysed) + coverage detail",
         out,
         f"{len(analysed_gdf)} analysed polygons; AOI/not-analysed shapes for display",
         status="ingesting",

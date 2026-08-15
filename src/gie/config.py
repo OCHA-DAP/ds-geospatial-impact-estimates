@@ -29,6 +29,24 @@ OSU_PUBLISHED_VERSION = "v1"
 
 Stage = Literal["dev", "prod"]
 
+# The VE event tree predates event-keying and was copied to event= preserving
+# its historical adm0= segment (ADR-0027, as-built). New events file directly
+# under source= (country is a column, not a path segment).
+LEGACY_ADM0_SEGMENTS = {"20260624-ve-earthquake": "adm0=VE"}
+
+
+def source_segments(source: str, event: str | None) -> list[str]:
+    """Path segments for a source's silver/gold tree under an event.
+
+    ``["source=<source>"]`` for new events; the VE event additionally keeps its
+    legacy ``adm0=VE`` segment so re-runs keep writing the as-built layout.
+    (CEMS bronze ``code=`` paths never had adm0 — this is for silver/gold.)
+    """
+    segs = [f"source={source}"]
+    if event in LEGACY_ADM0_SEGMENTS:
+        segs.append(LEGACY_ADM0_SEGMENTS[event])
+    return segs
+
 
 @dataclass(frozen=True)
 class Settings:
