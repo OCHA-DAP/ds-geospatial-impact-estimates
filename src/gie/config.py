@@ -48,6 +48,19 @@ def source_segments(source: str, event: str | None) -> list[str]:
     return segs
 
 
+def common_segments(event: str | None, adm0: str) -> list[str]:
+    """Path segments for the common-model gold tree (``model=common/...``).
+
+    New events file directly under ``model=common``; the legacy layouts — the
+    as-built VE event tree AND the un-evented tree the App Service reads
+    (``event=None``) — keep their ``adm0=`` segment.
+    """
+    segs = ["model=common"]
+    if event is None or event in LEGACY_ADM0_SEGMENTS:
+        segs.append(f"adm0={adm0}")
+    return segs
+
+
 @dataclass(frozen=True)
 class Settings:
     """Azure Blob + medallion layout settings.

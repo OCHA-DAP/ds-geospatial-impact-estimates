@@ -30,7 +30,7 @@ import geopandas as gpd
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import db, events, ledger
+from gie import codab, db, events, ledger
 from gie.cems_products import active_products, read_layer
 from gie.config import DEFAULT_H3_RESOLUTION, load_settings, source_segments
 
@@ -146,17 +146,6 @@ def build_silver(settings, ev: events.Event, activation: str) -> None:
     )
 
 
-def _codab_deepest(settings, container, adm0: str) -> int:
-    """Deepest CODAB level actually ingested for a country (VE: 3, CO: 2)."""
-    for lvl in (3, 2, 1):
-        p = settings.blob_path(
-            "bronze", "source=codab", f"adm0={adm0}", f"adm{lvl}.parquet", event=None
-        )
-        if container.get_blob_client(p).exists():
-            return lvl
-    raise RuntimeError(f"no CODAB adm1+ parquet for {adm0} — run ingest_codab first")
-
-
 def build_gold(
     settings, ev: events.Event, activation: str, res: int = DEFAULT_H3_RESOLUTION
 ) -> None:
@@ -166,8 +155,7 @@ def build_gold(
             "needs a CODAB union across countries; build it deliberately."
         )
     adm0 = ev.countries[0]
-    container = stratus.get_container_client(stage=STAGE, container_name=settings.container)
-    deepest = _codab_deepest(settings, container, adm0)
+    deepest = codab.deepest_level(settings, adm0, stage=STAGE)
     levels = [f"adm{i}" for i in range(deepest + 1)]
 
     con = db.connect()
@@ -243,14 +231,14 @@ def build_gold(
     )
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--event",
         required=True,
         help="event_id from events.yaml; its external_ids.cems_activation is harmonized",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     ev = events.get_event(args.event)  # fails loudly on an unregistered event
     activation = ev.external_ids.get("cems_activation")
     if not activation:
