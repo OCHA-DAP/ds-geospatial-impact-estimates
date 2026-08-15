@@ -6,6 +6,7 @@
 // the main bundle.
 import ExcelJS from "exceljs";
 import { asyncBufferFromUrl, parquetReadObjects } from "hyparquet";
+import type { EventInfo } from "./events";
 
 // Deterministic column order per level (mirrors gie.serving.load_export's SELECT).
 const COLS = (level: number) => [
@@ -23,22 +24,25 @@ const HAIR = { style: "thin" as const, color: { argb: "FFD3D3D3" } };
 const BORDER = { top: HAIR, left: HAIR, bottom: HAIR, right: HAIR };
 const fill = (argb: string) => ({ type: "pattern" as const, pattern: "solid" as const, fgColor: { argb } });
 
-export async function downloadExport(tok: any): Promise<void> {
-  const base = `${tok.base_url}/${tok.platinum_dir}`;
+export async function downloadExport(tok: any, dir: string, ev: EventInfo): Promise<void> {
+  const base = dir;
   const meta = await fetch(`${base}/meta/export_meta.json?${tok.sas}`).then((r) => r.json());
 
   const wb = new ExcelJS.Workbook();
 
   // --- README ------------------------------------------------------------------
   const rm = wb.addWorksheet("README", { views: [{ showGridLines: false }] });
-  rm.getCell("A1").value = "Venezuela Earthquake — Building Damage Exposure by Admin Unit";
+  rm.getCell("A1").value = `${ev.name} — Building Damage Exposure by Admin Unit`;
   rm.getCell("A1").font = { bold: true, size: 22, color: { argb: "FF3E8F6B" } };
   rm.getCell("A2").value =
     "Multi-source — " + meta.subtitle_sources.join(", ") + " — buildings & damage by OCHA COD admin 1 / 2 / 3";
   rm.getCell("A2").font = { italic: true, size: 13, color: { argb: "FF333333" } };
   const tier = tok.platinum_dir === "platinum-prod" ? "prod" : "staging";
+  // The activation id line only applies to events with a CEMS activation on record.
+  const activation = ev.external_ids?.cems_activation;
+  const activationPart = activation ? `activation ${activation}  ·  ` : "";
   rm.getCell("A3").value =
-    `OCHA Centre for Humanitarian Data  ·  activation EMSR884  ·  generated ${new Date().toISOString().slice(0, 10)}  ·  ${tier}`;
+    `OCHA Centre for Humanitarian Data  ·  ${activationPart}generated ${new Date().toISOString().slice(0, 10)}  ·  ${tier}`;
   rm.getCell("A3").font = { size: 10, color: { argb: "FF888888" } };
   rm.getCell("A5").value = "Columns — meaning & derivation";
   rm.getCell("A5").font = { bold: true, size: 12, color: { argb: "FFFFFFFF" } };
@@ -114,7 +118,7 @@ export async function downloadExport(tok: any): Promise<void> {
   );
   const a = document.createElement("a");
   a.href = url;
-  a.download = "ven_earthquake_damage_compilation_by_admin.xlsx";
+  a.download = `${ev.event_id}_damage_compilation_by_admin.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }

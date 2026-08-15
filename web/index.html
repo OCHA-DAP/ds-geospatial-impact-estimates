@@ -7,6 +7,8 @@
     <link rel="icon" href="data:," />
   </head>
   <body>
+    <div id="landing" hidden></div>
+
     <div id="map"></div>
 
     <button id="methods-open" class="methods-fab" type="button" aria-label="Methodology &amp; sources">
@@ -19,8 +21,15 @@
 
     <div id="panel" class="floating">
       <img src="/ocha_logo.svg" alt="OCHA" class="panel-logo" width="117" height="28" />
-      <h1>Venezuela earthquake (EMSR884)</h1>
+      <h1 id="event-title"></h1>
       <p class="sub">Damage Exposure</p>
+
+      <div class="divider"></div>
+
+      <div class="group">
+        <div class="label">Event</div>
+        <select id="eventSwitch"></select>
+      </div>
 
       <div class="divider"></div>
 
@@ -84,7 +93,7 @@
       <div id="legend"></div>
 
       <div class="group">
-        <a id="export" href="/api/export.xlsx" download="ven_earthquake_damage_compilation_by_admin.xlsx">⬇ Download spreadsheet (.xlsx)</a>
+        <a id="export" href="/api/export.xlsx" download="damage_compilation_by_admin.xlsx">⬇ Download spreadsheet (.xlsx)</a>
       </div>
 
       <div class="divider"></div>
@@ -119,6 +128,7 @@
             <p class="methods-rollup">Per-building flags are aggregated to <b>OCHA COD admin units (0–3)</b> and an <b>H3 grid</b>, graded on the <b>Copernicus EMS</b> scale (<i>Possibly, Damaged, Destroyed</i>). When several sources are selected, each unit takes the <b>maximum</b> value across them, and the hover lists each source separately.</p>
           </header>
           <div class="methods-sub">Contributing sources</div>
+          <p id="methods-event-note" class="methods-event-note"></p>
           <div id="methods-cards" class="methods-cards"></div>
           <p class="methods-foot">An exploratory tool from the OCHA Centre for Humanitarian Data.</p>
         </div>

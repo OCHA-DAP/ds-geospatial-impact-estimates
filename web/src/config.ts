@@ -14,3 +14,9 @@
 
 export const TOKEN_URL: string = import.meta.env.VITE_TOKEN_URL || "/api/token";
 export const API_BASE: string = import.meta.env.VITE_API_BASE || "";
+
+// The legacy App Service's /api/export.xlsx is a pre-multi-event route hardcoded
+// to Venezuela (api/main.py export_xlsx(adm0="VE")) — it cannot serve any other
+// event. The classic-build export fallback may only fire for THIS event; every
+// other event must see the same loud client-export failure the SWA build shows.
+export const LEGACY_SERVER_EVENT = "20260624-ve-earthquake"; // the one event the legacy App Service /api/export.xlsx can serve — delete with the App Service
