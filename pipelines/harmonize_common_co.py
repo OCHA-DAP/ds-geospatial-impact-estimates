@@ -83,11 +83,16 @@ def build_facts(settings, deepest: int, res: int = DEFAULT_H3_RESOLUTION) -> pd.
                  "builtup_damage.parquet", event=EVENT, stage=STAGE)
     cems_ext = local(settings, "silver", *source_segments("copernicus_ems", EVENT),
                      "analysed_extent.parquet", event=EVENT, stage=STAGE)
-    # event=None: CODAB is shared, country-keyed REFERENCE data (spec §3).
-    admin = local(settings, "bronze", "source=codab", f"adm0={ADM0}",
-                  f"adm{deepest}.parquet", event=None, stage=STAGE)
-
     levels = [f"adm{i}" for i in range(deepest + 1)]
+    # event=None: CODAB is shared, country-keyed REFERENCE data (spec §3). One
+    # fetch per level for the whole run — CO adm2 is 81 MB, so it gets a stall
+    # window a slow uplink can actually finish, and is never fetched twice.
+    adm_paths = {
+        lvl: local(settings, "bronze", "source=codab", f"adm0={ADM0}",
+                   f"{lvl}.parquet", event=None, stage=STAGE, timeout_s=600)
+        for lvl in levels
+    }
+    admin = adm_paths[f"adm{deepest}"]
     admin_cols = ", ".join(f"a.{lvl}_id, a.{lvl}_name" for lvl in levels)
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
@@ -231,8 +236,8 @@ def build_facts(settings, deepest: int, res: int = DEFAULT_H3_RESOLUTION) -> pd.
 
     # areal coverage: polygon area of each source's valid extent per admin unit
     df = pd.concat(
-        [df, _area_facts(con, settings, {"microsoft": (ms_ext, "WHERE NOT superseded"),
-                                         "copernicus_ems": (cems_ext, "")}, levels)],
+        [df, _area_facts(con, {"microsoft": (ms_ext, "WHERE NOT superseded"),
+                               "copernicus_ems": (cems_ext, "")}, adm_paths)],
         ignore_index=True,
     )
     # per-unit CEMS grade breakdown + coarse-block estimate (hover detail)
@@ -241,14 +246,12 @@ def build_facts(settings, deepest: int, res: int = DEFAULT_H3_RESOLUTION) -> pd.
     return df
 
 
-def _area_facts(con, settings, sources: dict, levels: list[str]) -> pd.DataFrame:
+def _area_facts(con, sources: dict, adm_paths: dict[str, str]) -> pd.DataFrame:
     """Area of each source's valid (analysed) extent within each admin unit
     (spheroid km^2 + share of the unit's own area). Same semantics as VE."""
     parts = []
     for src, (ext, where) in sources.items():
-        for lvl in levels:
-            adm = local(settings, "bronze", "source=codab", f"adm0={ADM0}",
-                        f"{lvl}.parquet", event=None, stage=STAGE)
+        for lvl, adm in adm_paths.items():
             parts.append(
                 con.execute(
                     f"""

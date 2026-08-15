@@ -130,14 +130,14 @@ def ingest_activation(settings, container, fs, ev: events.Event, activation: str
     )
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--event",
         required=True,
         help="event_id from events.yaml; its external_ids.cems_activation is polled",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     ev = events.get_event(args.event)  # fails loudly on an unregistered event
     activation = ev.external_ids.get("cems_activation")

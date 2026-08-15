@@ -50,16 +50,19 @@ def fetch(blob: str, dst: str, settings, stage: str, tries: int = 10, timeout_s:
 
 
 def local(
-    settings, layer, *parts, event: str | None, stage: str, root: str = "/tmp/gie_local"
+    settings, layer, *parts, event: str | None, stage: str,
+    root: str = "/tmp/gie_local", timeout_s: int = 45,
 ) -> str:
     """Download a single input blob to local and return its path (DuckDB then
     reads locally). ALWAYS re-fetched, never cached: these silver / codab inputs
-    are small and change between runs, so caching them would serve stale data
-    (only the large, stable Overture base is cached — see local_base)."""
+    change between runs, so caching them would serve stale data (only the large,
+    stable Overture base is cached — see local_base). ``timeout_s`` is the
+    per-attempt stall window — raise it for large single files (e.g. the 81 MB
+    CO adm2 CODAB) that a 45 s window can never finish on a slow uplink."""
     bp = settings.blob_path(layer, *parts, event=event)
     dst = os.path.join(root, bp)
     os.makedirs(os.path.dirname(dst), exist_ok=True)
-    fetch(bp, dst, settings, stage)
+    fetch(bp, dst, settings, stage, timeout_s=timeout_s)
     return dst
 
 
