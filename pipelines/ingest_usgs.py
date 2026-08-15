@@ -10,27 +10,27 @@ authoritative source-of-record. Per event we land, as received:
 USGS revises ShakeMap as the origin is refined; the event.geojson records the
 current version, so re-running re-pulls the latest. Deterministic, no analysis.
 
-Events: us6000t7zp (M7.5 mainshock), us6000t7zc (M7.2 foreshock).
+Registry-driven, one event per run (ADR-0027): ``--event <event_id>`` — the
+ComCat ids come from the event's ``external_ids`` (``usgs`` = mainshock,
+optional ``usgs_foreshock``).
 
-Run: uv run --group etl python pipelines/ingest_usgs.py
+Run: uv run --group etl python pipelines/ingest_usgs.py --event 20260810-co-earthquake
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import urllib.request
 
 from gie import blobio, events, ledger
-from gie.config import load_settings
+from gie.config import load_settings, source_segments
 
 API = "https://earthquake.usgs.gov/fdsnws/event/1/query"
-EVENTS = ["us6000t7zp", "us6000t7zc"]  # M7.5 mainshock, M7.2 foreshock (USGS event ids)
 # ShakeMap contents to grab for the viz: MMI contours + fault rupture geometry.
 SM_PRODUCTS = ["download/cont_mi.json", "download/rupture.json"]
 SOURCE = "usgs"
-ADM0 = "VE"
 STAGE = "dev"
-EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def _get(url: str) -> bytes:
@@ -39,19 +39,32 @@ def _get(url: str) -> bytes:
         return r.read()
 
 
-def main() -> None:
-    events.require_event(EVENT)
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--event", required=True, help="event_id from events.yaml; ComCat ids from external_ids"
+    )
+    args = parser.parse_args(argv)
+    event = events.get_event(args.event)  # fails loudly on an unregistered event
+    comcat = [event.external_ids.get("usgs"), event.external_ids.get("usgs_foreshock")]
+    comcat = [c for c in comcat if c]
+    if not comcat:
+        raise RuntimeError(
+            f"event {event.event_id!r} has no external_ids.usgs in events.yaml — "
+            "register the ComCat id before ingesting."
+        )
     settings = load_settings(STAGE)
     fs = blobio.uploader(settings)
 
-    for eid in EVENTS:
+    for eid in comcat:
         raw = _get(f"{API}?eventid={eid}&format=geojson")
         ev = json.loads(raw)
         props = ev.get("properties", {})
         mag = props.get("mag")
         coords = (ev.get("geometry") or {}).get("coordinates")
         base = settings.blob_path(
-            "bronze", f"source={SOURCE}", f"adm0={ADM0}", f"event={eid}", event=EVENT
+            "bronze", *source_segments(SOURCE, event.event_id), f"event={eid}",
+            event=event.event_id,
         )
 
         blobio.upload(fs, raw, f"{base}/event.geojson")

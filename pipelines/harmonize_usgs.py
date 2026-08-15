@@ -14,33 +14,44 @@ there is nothing to aggregate onto the Overture base. We write:
     platinum/ tree, so this rides to prod like everything else). Tiny (~50 KB),
     so it's plain GeoJSON, not PMTiles. EPSG:4326 throughout.
 
-Run: uv run --group etl python pipelines/harmonize_usgs.py
+Registry-driven, one event per run (ADR-0027): ``--event <event_id>`` — the
+mainshock ComCat id comes from the event's ``external_ids.usgs`` (same real-world
+earthquake, two id namespaces: USGS's own vs. this repo's registry).
+
+Run: uv run --group etl python pipelines/harmonize_usgs.py --event 20260810-co-earthquake
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 
 import ocha_stratus as stratus
 
 from gie import events, ledger
-from gie.config import load_settings
+from gie.config import load_settings, source_segments
 
 SOURCE = "usgs"
-ADM0 = "VE"
 STAGE = "dev"
-EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
-# USGS ComCat id for the mainshock (the M7.2 foreshock us6000t7zc is bronze-only).
-# Distinct from EVENT above (this repo's multi-event registry id) — same real-world
-# earthquake, two different id namespaces (USGS's own vs. ours).
-MAINSHOCK_ID = "us6000t7zp"
 
 
-def main() -> None:
-    events.require_event(EVENT)
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--event", required=True,
+        help="event_id from events.yaml; mainshock from external_ids.usgs",
+    )
+    args = parser.parse_args(argv)
+    ev_reg = events.get_event(args.event)  # fails loudly on an unregistered event
+    mainshock = ev_reg.external_ids.get("usgs")
+    if not mainshock:
+        raise RuntimeError(
+            f"event {ev_reg.event_id!r} has no external_ids.usgs in events.yaml."
+        )
+    EVENT = ev_reg.event_id
     settings = load_settings(STAGE)
     b = settings.blob_path(
-        "bronze", f"source={SOURCE}", f"adm0={ADM0}", f"event={MAINSHOCK_ID}", event=EVENT
+        "bronze", *source_segments(SOURCE, EVENT), f"event={mainshock}", event=EVENT
     )
 
     def _read(name: str) -> dict:
@@ -62,7 +73,7 @@ def main() -> None:
             "kind": "epicenter", "mag": p.get("mag"),
             "depth_km": coords[2] if len(coords) > 2 else None,
             "place": p.get("place"), "time": p.get("time"),
-            "event": MAINSHOCK_ID, "shakemap_version": smv,
+            "event": mainshock, "shakemap_version": smv,
         },
     })
     # MMI intensity contours (colors baked in by USGS)
@@ -86,7 +97,7 @@ def main() -> None:
         kinds[k] = kinds.get(k, 0) + 1
 
     silver = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "shakemap.geojson", event=EVENT
+        "silver", *source_segments(SOURCE, EVENT), "shakemap.geojson", event=EVENT
     )
     platinum = settings.blob_path("platinum", "usgs", "shakemap.geojson", event=EVENT)
     for dest in (silver, platinum):
@@ -96,8 +107,10 @@ def main() -> None:
 
     ledger.record(
         SOURCE, "silver",
-        f"USGS M{p.get('mag')} ShakeMap viz — epicenter + MMI contours + rupture ({MAINSHOCK_ID})",
-        silver, f"{len(feats)} features {kinds}; EPSG:4326; ShakeMap v{smv}; served at platinum/usgs/ (not analytic)",
+        f"USGS M{p.get('mag')} ShakeMap viz — epicenter + MMI contours + rupture ({mainshock})",
+        silver,
+        f"{len(feats)} features {kinds}; EPSG:4326; ShakeMap v{smv}; "
+        "served at platinum/usgs/ (not analytic)",
     )
 
 

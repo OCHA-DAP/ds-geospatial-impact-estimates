@@ -15,6 +15,8 @@ events:
     status: active
     external_ids:
       cems_activation: EMSR884
+      usgs: us6000t7zp  # M7.5 mainshock (the reference event for the viewer)
+      usgs_foreshock: us6000t7zc  # M7.2 — bronze-only context
   - event_id: 20260810-co-earthquake
     name: Colombia earthquake
     hazard: earthquake
