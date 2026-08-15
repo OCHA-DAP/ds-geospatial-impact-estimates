@@ -90,6 +90,10 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
   // CO has no real adm3). Set from meta in init() before layer setup; the [1,2,3]
   // default keeps older metas (no admin_levels key) behaving exactly as before.
   let ADMIN_LEVELS: number[] = [1, 2, 3];
+  // Sources present in this event's gold (meta/sources.json). Set in init() before
+  // layer setup so setupPmtiles never requests native tiles for a source this
+  // event doesn't have (each absent source's tile URL would 404).
+  let AVAILABLE_SOURCES: Set<string> | null = null;
 
   let METRICS: { key: string; label: string }[] = [];
   const adminCache = new Map<string, any>();
@@ -731,10 +735,9 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
   // Add each "pmtiles" source's MapLibre layers (hidden until shown by syncPmtiles)
   // and wire their hover. The read SAS + catalog base URL come from /api/token.
   async function setupPmtiles() {
-    const converted = Object.entries(LAYER_SERVING).filter(([, v]) => v.mode === "pmtiles") as [
-      string,
-      Extract<Serving, { mode: "pmtiles" }>,
-    ][];
+    const converted = Object.entries(LAYER_SERVING).filter(
+      ([s, v]) => v.mode === "pmtiles" && (AVAILABLE_SOURCES?.has(s) ?? true),
+    ) as [string, Extract<Serving, { mode: "pmtiles" }>][];
     if (!converted.length) return;
     const tok = await getToken();
     const dir = eventDir(tok, EVENT_ID!);
@@ -777,6 +780,15 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
   async function setupUsgs() {
     const tok = await getToken();
     const dir = eventDir(tok, EVENT_ID!);
+    // Probe first: an event without a staged ShakeMap (no USGS harmonize yet) is a
+    // real state, not an error — skip the layer and hide its toggle instead of
+    // letting MapLibre 404 on the source fetch.
+    const probe = await fetch(`${dir}/usgs/shakemap.geojson?${tok.sas}`, { method: "HEAD" });
+    if (!probe.ok) {
+      console.info(`usgs: no shakemap.geojson for this event (HTTP ${probe.status}) — layer hidden`);
+      document.querySelector('input[data-layer="usgs"]')?.closest("label")?.setAttribute("hidden", "");
+      return;
+    }
     map.addSource("usgs", {
       type: "geojson",
       data: `${dir}/usgs/shakemap.geojson?${tok.sas}`,
@@ -1284,6 +1296,7 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
       return;
     }
     ADMIN_LEVELS = srcMeta.admin_levels ?? [1, 2, 3];
+    AVAILABLE_SOURCES = new Set(srcMeta.sources);
     const maxLevel = Math.max(...ADMIN_LEVELS);
     const lvlSel = el("adminLevel") as HTMLSelectElement;
     for (const opt of [...lvlSel.options])
