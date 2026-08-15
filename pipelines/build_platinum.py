@@ -162,6 +162,7 @@ def export_meta(settings, eid: str, adm0: str, deepest: int) -> None:
         load_agreement,
         load_coverage_detail,
         load_source_extent,
+        methods_for,
     )
 
     levels = list(range(1, deepest + 1))
@@ -174,6 +175,10 @@ def export_meta(settings, eid: str, adm0: str, deepest: int) -> None:
     up("sources.json", {
         "sources": sources, "adm0": adm0, "metrics": METRICS, "admin_levels": levels,
     })
+    # Methodology cards for exactly the sources this event has (per-event wording
+    # via gie.serving._METHODS_OVERRIDES); the SPA renders these instead of its
+    # built-in list when present.
+    up("methods.json", {"methods": methods_for(sources, eid)})
     up("extents.json", {
         s: json.loads(load_source_extent(s, adm0, event=eid).to_json()) for s in sources
     })

@@ -1297,6 +1297,12 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
     }
     ADMIN_LEVELS = srcMeta.admin_levels ?? [1, 2, 3];
     AVAILABLE_SOURCES = new Set(srcMeta.sources);
+    try {
+      METHODS_ACTIVE = (await fetchMeta("methods.json")).methods;
+    } catch {
+      // meta predates methods.json — show the built-in cards for this event's sources
+      METHODS_ACTIVE = METHODS_SOURCES.filter((m) => srcMeta.sources.includes(m.key));
+    }
     const maxLevel = Math.max(...ADMIN_LEVELS);
     const lvlSel = el("adminLevel") as HTMLSelectElement;
     for (const opt of [...lvlSel.options])
@@ -1470,6 +1476,11 @@ boot().catch((err) => {
 // --- methodology slide-over: glass panel of how the map is built + per-source cards ---
 // TODO(product-history): surface each source's product version + availability dates
 // (e.g. OSU v0 25 Jun -> v1 1 Jul) as a small per-source timeline, not just the latest.
+// Per-event methodology cards (meta/methods.json, written by build_platinum from
+// gie.serving.methods_for). Set in init(); when an event's meta predates
+// methods.json, the built-in list below (filtered to the event's sources) is the
+// fallback, so older platinum trees keep rendering exactly as before.
+let METHODS_ACTIVE: { key: string; tag: string; blurb: string; note: string }[] | null = null;
 const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }[] = [
   {
     key: "copernicus_ems",
@@ -1539,7 +1550,7 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
 function renderMethodsCards() {
   const host = document.getElementById("methods-cards");
   if (!host) return;
-  host.innerHTML = METHODS_SOURCES.map((m, i) => {
+  host.innerHTML = (METHODS_ACTIVE ?? METHODS_SOURCES).map((m, i) => {
     const c = SOURCE_COLOR[m.key] ?? [120, 120, 120];
     return (
       `<article class="source-card" style="--accent:rgb(${c.join(",")});animation-delay:${i * 65}ms">` +
