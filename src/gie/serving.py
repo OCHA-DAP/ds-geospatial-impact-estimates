@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 
 from gie import db
-from gie.config import load_settings
+from gie.config import common_segments, load_settings
 
 # Metrics available on the common model, in display order (label shown in the UI).
 # Single definition shared by the API (/api/sources) and the platinum meta export
@@ -141,7 +141,7 @@ def list_sources(adm0: str = "VE", *, event: str | None, stage: str = "dev") -> 
     """Distinct damage sources present in the common-model gold."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=event)
+    gold = settings.az_path("gold", *common_segments(event, adm0), "facts.parquet", event=event)
     rows = con.execute(
         f"SELECT DISTINCT source FROM read_parquet('{gold}') ORDER BY source"
     ).fetchall()
@@ -154,7 +154,7 @@ def load_common_h3(
     """Per-H3-cell common-model metrics for one source."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=event)
+    gold = settings.az_path("gold", *common_segments(event, adm0), "facts.parquet", event=event)
     return con.execute(
         f"SELECT unit_id AS h3, {_COMMON_PIVOT} FROM read_parquet('{gold}') "
         f"WHERE unit_type='h3' AND source='{source}' GROUP BY unit_id"
@@ -197,7 +197,7 @@ def load_export(
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=event)
+    gold = settings.az_path("gold", *common_segments(event, adm0), "facts.parquet", event=event)
     # event=None: CODAB is shared, country-keyed REFERENCE data outside the
     # event tree — reusable across events (spec §3).
     adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet", event=None)
@@ -474,7 +474,7 @@ def load_source_extent(
         # Single-polygon coverage extents (SAR / OSU / DISHA / LIST), from the tiered
         # gold copy (stage_serving) so it's promote-gated, not shared silver (ADR-0016).
         ext = settings.az_path(
-            "gold", "model=common", f"adm0={adm0}", "serving", "extent", f"source={source}.parquet",
+            "gold", *common_segments(event, adm0), "serving", "extent", f"source={source}.parquet",
             event=event,
         )
         label, product = {
@@ -493,7 +493,7 @@ def load_source_extent(
     # Microsoft valid-area masks: one labelled outline per AOI (carries an `aoi` column).
     if source == "microsoft":
         ext = settings.az_path(
-            "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=microsoft.parquet",
+            "gold", *common_segments(event, adm0), "serving", "extent", "source=microsoft.parquet",
             event=event,
         )
         sql = (
@@ -511,7 +511,7 @@ def load_source_extent(
     # CEMS: one outline per product (dissolved within a product), from the tiered
     # gold copy (promote-gated), not shared silver (ADR-0016).
     ext = settings.az_path(
-        "gold", "model=common", f"adm0={adm0}", "serving", "extent", "source=copernicus_ems.parquet",
+        "gold", *common_segments(event, adm0), "serving", "extent", "source=copernicus_ems.parquet",
         event=event,
     )
     sql = (
@@ -583,7 +583,7 @@ def load_coverage_detail(
     con = db.connect()
     # tiered gold copy (promote-gated), not shared silver (ADR-0016)
     path = settings.az_path(
-        "gold", "model=common", f"adm0={adm0}", "serving", "coverage_detail.parquet", event=event
+        "gold", *common_segments(event, adm0), "serving", "coverage_detail.parquet", event=event
     )
     df = con.execute(
         f"SELECT kind, aoi_name, product, acquired, ST_AsWKB(geometry) AS wkb "
@@ -603,7 +603,7 @@ def load_agreement(adm0: str = "VE", *, event: str | None, stage: str = "dev") -
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet", event=event)
+    flags = settings.az_path("gold", *common_segments(event, adm0), "building_flags.parquet", event=event)
     return con.execute(
         f"""
         SELECT lon, lat,

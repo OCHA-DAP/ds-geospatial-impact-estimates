@@ -86,6 +86,10 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
     adminLevel: 3,
     show: { admin: true, buildings: false, extent: true, h3: false } as Record<string, boolean>,
   };
+  // Admin levels this event's data actually has (meta/sources.json admin_levels —
+  // CO has no real adm3). Set from meta in init() before layer setup; the [1,2,3]
+  // default keeps older metas (no admin_levels key) behaving exactly as before.
+  let ADMIN_LEVELS: number[] = [1, 2, 3];
 
   let METRICS: { key: string; label: string }[] = [];
   const adminCache = new Map<string, any>();
@@ -568,7 +572,7 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
     // Insert BELOW the basemap labels so labels stay readable — this is the
     // layering the deck.gl admin (drawn over everything) couldn't do.
     const labelId = map.getStyle().layers?.find((l: any) => l.type === "symbol")?.id;
-    for (const lvl of [1, 2, 3]) {
+    for (const lvl of ADMIN_LEVELS) {
       const src = `pmt-src-admin-${lvl}`;
       const sl = `adm${lvl}`;
       map.addSource(src, {
@@ -677,7 +681,7 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
   // Show only the active admin level's fill+line (when admin is on).
   function syncAdmin() {
     if (ADMIN_SERVING !== "pmtiles") return;
-    for (const lvl of [1, 2, 3]) {
+    for (const lvl of ADMIN_LEVELS) {
       const vis = state.show.admin && state.sources.size && lvl === state.adminLevel ? "visible" : "none";
       for (const suf of ["fill", "line"]) {
         const id = `pmt-admin-${lvl}-${suf}`;
@@ -1267,6 +1271,27 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
     // memoized getToken() wherever it's needed).
     map.fitBounds([[ev.bbox[0], ev.bbox[1]], [ev.bbox[2], ev.bbox[3]]], { padding: 40, duration: 0 });
     renderEventTitle(ev);
+    // sources.json is fetched BEFORE layer setup: it now carries admin_levels, and
+    // setupAdmin must not request admin tiles the event doesn't have (CO: no adm3).
+    // A 404 here is a real, reportable state ("no products yet"), not a failure.
+    let srcMeta: any;
+    try {
+      srcMeta = await fetchMeta("sources.json");
+    } catch (err) {
+      el("status").textContent = /HTTP 404/.test(String(err))
+        ? "No data products have been published for this event yet."
+        : `Failed to load event data: ${err}`;
+      return;
+    }
+    ADMIN_LEVELS = srcMeta.admin_levels ?? [1, 2, 3];
+    const maxLevel = Math.max(...ADMIN_LEVELS);
+    const lvlSel = el("adminLevel") as HTMLSelectElement;
+    for (const opt of [...lvlSel.options])
+      if (Number(opt.value) > maxLevel) opt.remove();
+    if (state.adminLevel > maxLevel) {
+      state.adminLevel = maxLevel;
+      lvlSel.value = String(maxLevel);
+    }
     // PMTiles/hyparquet setup is additive — a failure must never blank the app.
     for (const [name, fn] of [
       ["pmtiles", setupPmtiles],
@@ -1281,22 +1306,7 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
         console.error(`v2 ${name} setup failed:`, e);
       }
     }
-    // sources.json is written by build_platinum once an event has a published
-    // platinum tree — an event can be registered (events.json) before that ever
-    // runs (e.g. Colombia today). A 404 here is a real, reportable state ("no
-    // products yet"), not a failure — distinct from an actual load error, which
-    // gets its own message. Either way this is explicit in #status, never a
-    // silent basemap-only shell with the error stuck in the console.
-    let sources: string[];
-    try {
-      const meta = await fetchMeta("sources.json");
-      sources = meta.sources;
-    } catch (err) {
-      el("status").textContent = /HTTP 404/.test(String(err))
-        ? "No data products have been published for this event yet."
-        : `Failed to load event data: ${err}`;
-      return;
-    }
+    const sources: string[] = srcMeta.sources;
     METRICS = [
       { key: "damage_rate_detected", label: "Damage fraction" },
       { key: "coverage_fraction", label: "Coverage" },
