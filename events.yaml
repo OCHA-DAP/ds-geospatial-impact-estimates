@@ -25,4 +25,5 @@ events:
     external_ids:
       usgs: us6000tjl2
       gdacs: "1557236"
-      # cems_activation / glide: add as issued
+      cems_activation: EMSR916
+      glide: EQ-2026-000146-COL
