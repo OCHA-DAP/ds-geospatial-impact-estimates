@@ -26,15 +26,16 @@ After the M7.5 earthquake that struck coastal Venezuela on 24 June 2026, at leas
 organisations released satellite-derived building-damage products. We evaluated the six that
 published an analysed extent, scoring them not against a single expert reference but against
 three with complementary blind spots: expert damage points from Copernicus EMS, crowd review of
-AI-flagged locations, and 415 field reports. This lets the references check each other, and the
-expert reference did not pass: it captured 94% of field-reported destroyed buildings but only
+AI-flagged locations (HOT's MapSwipe), and 415 field reports (HOT's ChatMap). This lets the
+references check each other, and that checking caught the expert reference itself missing
+damage: it captured 94% of field-reported destroyed buildings but only
 49% of those reported as significantly damaged. Every precision measured against it is
 therefore a floor: Microsoft's rises from 0.08 to roughly 0.24 once crowd-confirmed damage is
 counted.
 
 At building level, every product performed poorly. As delivered, precision ranged from 0.01 to
 0.08 (recall 0.31–0.69); even in the ~61 km² core region where all six products and the
-expert reference overlap, their best case, it reached only 0.05–0.09. None separated
+expert reference overlap, their best case, precision reached only 0.05–0.09. None separated
 itself from a deliberately simple benchmark that uses no satellite imagery at all: a model
 built on coastline distance, building density and shaking intensity, fitted with hindsight to
 this event's own damage map. That benchmark matched or beat three of the six there, and four
@@ -77,7 +78,7 @@ of AI-flagged locations (MapSwipe), and reports from field teams on the ground (
 Their blind spots differ (the crowd saw only flagged places, so it can refute false
 alarms but never reveal a miss; the field reports are the reverse), so each reference is
 used only for the question it can answer, and the three check each other. That checking
-mattered: the expert reference turned out to miss half of the lesser damage the field
+mattered: the expert reference (CEMS) turned out to miss half of the lesser damage the field
 teams reported, so precision measured against it alone is a floor, not an estimate.
 
 The paper is organised around three questions a coordinator would actually ask. Can a
@@ -98,15 +99,16 @@ EMS rapid mapping was activated the same night (EMSR884).
 We evaluate the six products that published a defined or defensible analysed extent, the
 area the product actually examined (@tbl-products): without one, "no flag" cannot be
 distinguished from "never looked", so neither misses nor false alarms can be counted
-fairly. Two further AI products (HOT fAIr and DISHA) published no extent and appear in
-the availability inventory only.
+fairly. Two further AI products (HOT fAIr and DISHA) published no extent with the
+deliveries we obtained and appear in the availability inventory only (a later DISHA
+coastal release may carry one; being confirmed with the provider).
 
 | Product | Provider | Sensing basis | Analysed buildings | Damage flags* |
 |---|---|---|---|---|
-| Microsoft AI4G | Microsoft | very-high-res optical + AI classifier | 72,162 (own footprints) | 8,410 |
+| Microsoft AI4G | Microsoft | VHR optical + AI classifier | 72,162 (own footprints) | 8,410 |
 | IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar coherence change | swath (~372 km²) | 22,954 |
 | OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~471 km²) | 31,259 |
-| UH QuakeDamage | Univ. of Houston | very-high-res optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint | 447,263 incl. intact | ~91k dmg/destroyed |
+| UH QuakeDamage | Univ. of Houston | VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint | 447,263 incl. intact | ~91k dmg/destroyed |
 | LIST | WFP / LIST / CERN | AI change detection on before/after radar imagery (provider-stated) | 163,225 | 15,904 in core region |
 | UNEP debris | UNEP/OCHA JEU | Sentinel-1 radar change detection on building footprints (debris tonnage modeled from the detected damage) | no extent ([stated assumption](#app-matching)) | 96,046 |
 
@@ -262,15 +264,17 @@ which is where the products' real value shows
 ## The expert reference misses lesser damage, so precision is reported as an interval {#sec-floor}
 
 **Result:** ChatMap is the one reference collected on the ground independently of any
-imagery, so, although it is small and nowhere near comprehensive, it is the set that
-can audit the expert map. Checked against it, Copernicus EMS captured 94% of
+satellite imagery, so, although it is small and nowhere near comprehensive, it is the
+set that can audit the expert map. Checked against it, Copernicus EMS captured 94% of
 destroyed buildings but only 49% of those significantly damaged (@fig-gradeslope): the
-expert map is thorough about complete destruction but patchier about lesser damage, and
-the individual products share this same relationship. The same slope shows up inside
-the expert reference's own grades: every product finds CEMS-graded *destroyed*
-buildings more reliably than *damaged* ones, with the appearance- and debris-based
-products (Microsoft, UH, UNEP) destruction-biased on both precision and recall while
-the structural-change products (OSU, IMPACT, LIST) are grade-neutral. Crediting the flags that crowd
+expert map is thorough about complete destruction but patchier about lesser damage
+(including damage a nadir view cannot show, such as a collapsed ground floor under an
+intact roof), and the individual products share this same relationship. The same slope
+shows up inside the expert reference's own grades: every product finds CEMS-graded
+*destroyed* buildings more reliably than *damaged* ones, with the appearance- and
+debris-based products (Microsoft, UH, UNEP) destruction-biased on both precision and
+recall while the structural-change products (OSU, IMPACT, LIST, all radar-based) are
+grade-neutral. Crediting the flags that crowd
 reviewers confirmed as damaged lifts Microsoft's precision from 0.08 to roughly 0.24, a
 factor of three that reflects the reference, not the product. Some damage escaped
 everything: about 11% of field-reported damage points, mostly in inland hill
@@ -316,7 +320,8 @@ the products do not add is knowledge of which zone, the part geography already
 encodes.
 
 **How it was measured:** Flags and reference points are aggregated to hexagonal grid
-cells and each product's ordering of cells is compared with the expert ordering by rank
+cells (~0.74 and ~5.2 km²; the larger approximates a triage sector) and each product's
+ordering of cells is compared with the expert ordering by rank
 correlation, with the geography model's expected damage count ranked the same way. In
 the as-delivered test each comparison runs on the cells of that product's own footprint,
 so the model is re-scored per row; in the core-region test all six products and the
@@ -337,7 +342,8 @@ single score of
 **Result:** The products fail in different places, so the number of them agreeing on a
 building is informative, and it behaves as a dial with a known operational cost at
 every setting (@tbl-dial): from "any product" (97% of known damage at the 30 m
-finding distance, at a cost of 26.4 field visits per found damaged building) to
+finding distance, at a cost of visiting 26.4 flagged buildings, on average, for each
+damaged one found) to
 "all six" (crowd-adjusted precision 0.93, 18% of the damage); 4-of-6 costs 3.4 visits
 per found damaged building, unanimity (6-of-6) 0.8. Counting agreement roughly doubles
 the F1 of the best single product (0.290 against 0.148) and requires no weights, no
@@ -420,7 +426,9 @@ The strongest two-product rule in the study pairs Microsoft with UH (the weakest
 product): both are optical, and they even share an imagery vendor (Vantor), but they
 share no model, and their failure zones sit at opposite ends of the study area, so each
 covers for the other (@fig-frontier). The pair that shares its entire method, the two
-Sentinel-1 coherence products, is the weakest of all fifteen pairings. What products
+Sentinel-1 coherence products, is the weakest of all fifteen pairings: sharing the
+sensor and the physics means sharing the false positives, so their agreement mostly
+re-confirms shared errors instead of supplying an independent check. What products
 share (sensor, platform, model) is knowable without labels on day one, which makes
 this usable in the next event: give a building more credit when the products agreeing
 on it share nothing in the way they work, and less when the agreeing products are
@@ -463,7 +471,8 @@ independent second crowd campaign over the same cells later reproduced the confi
 side of the verdict. Details, including what the re-vote could and could not re-test, are in the Appendix
 ([the case study in full](#app-weststrip); [the crowd re-vote](#app-crowd)).
 
-![**Region: the western half of Microsoft's delivered strip (Catia La Mar).** The western strip. Top left: where Microsoft flags far more than the expert map
+![**Region: the western half of Microsoft's delivered strip (Catia La Mar).** The western strip. Left panels are plotted in geographic space (WGS 84), without a
+basemap. Top left: where Microsoft flags far more than the expert map
 records. Bottom left: where crowd volunteers said nothing is there. Right: cell by cell
 the two do not track; the agreement is at the scale of the strip, which sat under a
 single satellite
@@ -567,7 +576,7 @@ their own analysis or manual mapping.
 
 ## Limitations
 
-**One event, one geography, and mostly one neighbourhood.** This is a single earthquake
+**One event, one geography, and mostly one damage zone.** This is a single earthquake
 in a coastal, dense-urban setting, and the core comparison region is only ~61 km². More
 restrictive still, 96% of the CEMS reference sits in a single AOI (Caraballeda), so every
 pooled number is effectively that AOI's number. In the four low-damage AOIs, measured
@@ -747,6 +756,13 @@ moderately damaged and damaged → *Damaged*), and the reference set for every s
 this paper is the points graded Damaged or Destroyed (784 and 683 respectively in the
 core region). Points graded *possibly damaged* are excluded entirely: they appear in
 neither the numerator nor the denominator of any score.
+
+**What "false positive" means here.** No exhaustive ground survey of intact buildings
+exists for this event, so there are no confirmed true negatives, and a "false positive"
+in this paper means only that no reference we hold corroborates the flag. Some share of
+them is real damage the references missed; that is exactly why every measured precision
+is reported as a floor and re-judged against the crowd (@sec-floor). Readers who prefer
+"unconfirmed flag" can substitute it throughout without changing any number.
 
 **One matching rule, two labelled exceptions.** Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled
