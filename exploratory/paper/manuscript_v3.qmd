@@ -191,9 +191,11 @@ products do find damage; what they also produce is an enormous number of flags w
 nothing recorded underneath them (false positives).
 
 **How it was measured:** A flag counts as a hit if an expert-mapped damage point lies
-within 10 m of the flagged building, and otherwise as a false positive; the radius
-comes from an analysis of building spacing (median neighbour distance is 9.7 m; radius
-sensitivity in the [Appendix](#app-radius)). Results are quoted in the core region (each product's
+within 10 m of the flagged building, and otherwise as a false positive (the
+classification rule, and what it can and cannot claim without true negatives, is
+specified in the [Appendix](#app-matching)); the radius comes from an analysis of
+building spacing (median neighbour distance is 9.7 m; radius sensitivity in the
+[Appendix](#app-radius)). Results are quoted in the core region (each product's
 most favourable frame) unless labelled as-delivered (scored on everything the product
 shipped, as a responder received it). The matching and point-classification system, the radius sensitivity, and the
 two reporting regions are in the Appendix ([matching](#app-matching); [radius
@@ -677,6 +679,16 @@ product flag within r?). Each metric carries its own denominator. Because the tw
 are precision and recall, neither uses the undamaged background (true negatives), which we
 could not enumerate anyway, since CEMS never labels the undamaged buildings.
 
+**How false positives are classified.** The classification rule is fixed by the study
+design: a flag is scored a false positive when no reference we hold corroborates it at
+the matching radius. The limitation sits in the references, not in the rule: no
+exhaustive survey of intact buildings exists for this event, so there are no confirmed
+true negatives, and some share of the flags classified false is real damage the
+references missed. The design absorbs that known bias explicitly, by reporting every
+measured precision as a floor and re-judging the expert-unmatched flags against the
+crowd (@sec-floor). Within that design the classification is well-defined, and every
+number built on it carries the floor interpretation.
+
 ```{python}
 #| fig-cap: "Dual-anchored matching. Left: a product is scored only where it AND the reference both looked. Middle: recall anchors on the reference; each CEMS damage point asks whether a product flag lies within radius r. Right: precision anchors on the product; each flagged building asks whether a CEMS point lies within r. Each metric brings its own denominator."
 import matplotlib.pyplot as plt
@@ -755,16 +767,6 @@ moderately damaged and damaged → *Damaged*), and the reference set for every s
 this paper is the points graded Damaged or Destroyed (784 and 683 respectively in the
 core region). Points graded *possibly damaged* are excluded entirely: they appear in
 neither the numerator nor the denominator of any score.
-
-**How false positives are classified.** The classification rule is fixed by the study
-design: a flag is scored a false positive when no reference we hold corroborates it at
-the matching radius. The limitation sits in the references, not in the rule: no
-exhaustive survey of intact buildings exists for this event, so there are no confirmed
-true negatives, and some share of the flags classified false is real damage the
-references missed. The design absorbs that known bias explicitly, by reporting every
-measured precision as a floor and re-judging the expert-unmatched flags against the
-crowd (@sec-floor). Within that design the classification is well-defined, and every
-number built on it carries the floor interpretation.
 
 **One matching rule, two labelled exceptions.** Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled
