@@ -100,9 +100,10 @@ EMS rapid mapping was activated the same night (EMSR884).
 We evaluate the six products that published a defined or defensible analysed extent, the
 area the product actually examined (@tbl-products): without one, "no flag" cannot be
 distinguished from "never looked", so neither misses nor false alarms can be counted
-fairly. Two further AI products (HOT fAIr and DISHA) published no extent with the
-deliveries we obtained and appear in the availability inventory only (a later DISHA
-coastal release may carry one; being confirmed with the provider).
+fairly. Two further AI products appear in the availability inventory only: HOT fAIr
+published no analysed extent, and DISHA's extent covers less than half of the core
+region, so admitting it would have cut the shared comparison area from ~61 to ~29 km²
+(the arithmetic is in the [Appendix](#app-regions)).
 
 | Product | Provider | Sensing basis | Analysed buildings | Damage flags* |
 |---|---|---|---|---|
@@ -671,6 +672,14 @@ for every predictor; what it costs is representativeness: the core region sits o
 damage epicentre, where the reference is densest and every product scores best, so
 core-region numbers are each product's favourable case, while the as-delivered numbers
 describe what a responder actually had (@sec-flags).
+
+The same arithmetic is why DISHA is not a member. Its delivery included an analysed
+extent (133.6 km², north-west Caracas and the La Guaira–Catia strip), but that extent
+covers only 48% of the core region (29.3 of 60.8 km²) and holds 886 of the 1,467
+expert damage points there. Admitting it would have halved the area on which all
+products are compared and dropped 40% of the reference from every shared analysis, a
+price paid by the six other products; it therefore appears in the availability
+inventory only.
 
 ### Matching products to references, in full {#app-matching .unnumbered}
 
