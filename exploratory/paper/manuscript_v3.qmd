@@ -514,10 +514,11 @@ knowable in advance as a workload.
 
 A product's reliability cannot be judged
 from its own map: false alarms cluster the way real damage clusters. We tried to
-predict how precise each product would prove in each expert-mapped area using only
-what is visible without a reference (its flag rate, how tightly its flags cluster, how
-much the other products agree with it), and across all fifteen product-and-area pairs
-none of it predicted anything ([method](#app-ranking-method)). And where a reference
+predict how precise each product would prove in each expert-mapped area from the
+characteristics of its own output: its flag rate, how tightly its flags cluster, how
+much the other products agree with it. Across all fifteen product-and-area pairs, none
+of these characteristics carried any information about the product's actual
+reliability ([method](#app-ranking-method)). And where a reference
 does exist, most errors scatter harmlessly while the real trouble concentrates in a
 few identifiable pockets ([results](#app-ranking-tables)), so discounting each
 product's vote inside its known bad pockets is a natural next step for fusion.
