@@ -145,8 +145,7 @@ confirm.](timeline/timeline_products.png){#fig-timeline}
 **Two reporting regions, used throughout.** Every result is reported in one of two
 regions, and numbers are comparable only within one. *As delivered* scores each product
 across everything it shipped, wherever the expert reference mapped: a different region
-per product, and the operationally honest view, because it judges what responders
-actually received. The *core region* is the ~61 km² where all six products and the
+per product, and the view that matches what responders actually received. The *core region* is the ~61 km² where all six products and the
 reference overlap: one shared area that puts every predictor on identical footing. It
 is not a neutral slice of the map: the products' mutual overlap reaches only one of the
 five expert-mapped areas, Caraballeda, which is also where the experts found nearly all
@@ -193,8 +192,8 @@ nothing recorded underneath them (false positives).
 within 10 m of the flagged building, and otherwise as a false positive; the radius
 comes from an analysis of building spacing (median neighbour distance is 9.7 m; radius
 sensitivity in the [Appendix](#app-radius)). Results are quoted in the core region (each product's
-most favourable frame) unless labelled as-delivered (the more operationally honest
-level). The matching and point-classification system, the radius sensitivity, and the
+most favourable frame) unless labelled as-delivered (scored on everything the product
+shipped, as a responder received it). The matching and point-classification system, the radius sensitivity, and the
 two reporting regions are in the Appendix ([matching](#app-matching); [radius
 sensitivity](#app-radius); @tbl-regions).
 
@@ -303,7 +302,7 @@ floor.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-grad
 **Result:** Ask which *neighbourhoods* to go to first, rather than which buildings, and
 the picture improves a lot: at the ~5 km² sector scale the best products correctly
 identify 80–85% of the twenty worst-hit cells, with rank correlations around 0.54–0.59.
-This is the scale at which the products are genuinely usable, and the setting that
+This is the scale at which the products are usable in practice, and the setting that
 matters is the core region: zoomed to the area already known to be damaged, every
 product and the geography model score the identical cells, the model has a single
 score (0.65), and the six split three–three around it: LIST (0.74), IMPACT (0.72) and
@@ -427,7 +426,7 @@ this usable in the next event: give a building more credit when the products agr
 on it share nothing in the way they work, and less when the agreeing products are
 methodological cousins that fail together.
 
-Two caveats keep this honest: flat voting trusts every product equally, which paid off
+Two caveats apply: flat voting trusts every product equally, which paid off
 here but could only be verified afterwards, with a reference in hand; and choosing the
 agreement threshold buys a known workload, not a guaranteed hit rate, because flag
 counts are observable on day one and the precision they deliver is not. No amount of
@@ -479,7 +478,7 @@ the best-mapped area, every number measured against an incomplete reference is a
 and no single product can be tuned out of that ceiling.
 
 *Do the products rank neighbourhoods well enough to triage?* Yes, once zoomed to an
-area already known to be damaged: there the ranking is genuinely usable. Across
+area already known to be damaged: there the ranking is usable in practice. Across
 everything they delivered the case is weaker, and a hindsight geography model ranks
 about as well, so treat the ranking as useful rather than as evidence the product saw
 something the map did not.
@@ -489,7 +488,7 @@ It is the only method we tested that is both effective (roughly double any singl
 product's F1) and available during a response, and its cost at every setting is
 knowable in advance as a workload.
 
-Two side results are worth a sentence each. A product's reliability cannot be judged
+A product's reliability cannot be judged
 from its own map: false alarms cluster the way real damage clusters, and nothing
 observable without a reference predicted measured reliability across fifteen
 product-and-area combinations ([method](#app-ranking-method)). And where a reference
@@ -655,8 +654,8 @@ same stated assumption as everywhere else). Intersecting with the expert referen
 trims the shared, scoreable area to ~61 km². What the trim buys is identical footing
 for every predictor; what it costs is representativeness: the core region sits on the
 damage epicentre, where the reference is densest and every product scores best, so
-core-region numbers are each product's favourable case, which is why the as-delivered
-numbers are called the operationally honest ones (@sec-flags).
+core-region numbers are each product's favourable case, while the as-delivered numbers
+describe what a responder actually had (@sec-flags).
 
 ### Matching products to references, in full {#app-matching .unnumbered}
 
@@ -869,17 +868,17 @@ zones and the model is always scored on zones it was not trained on, because nei
 buildings resemble each other in both their features and their damage, and an ordinary
 random split would leak that resemblance into an inflated score (@fig-dayzero-build).
 
-A null is only meaningful if it is the *strongest* honest account of "just geography"; a
-weak one would flatter the products by construction. We therefore fit it two ways: a
+A null is only meaningful if it is the *strongest* defensible version of "just
+geography"; a weak one would flatter the products by construction. We therefore fit it two ways: a
 logistic regression (a standard statistical model that weighs the three variables) and a
 random forest (a more flexible model built from many decision trees, able to capture
 interactions between the variables). Whichever scores higher in a given analysis is the
-one reported, and both are disclosed. Which of the two wins genuinely differs across the paper's
+one reported, and both are disclosed. Which of the two wins differs across the paper's
 analysis layers; the full comparison and the reasons are in the Appendix (@tbl-learners).
 Nothing about the fusion results depends on that choice.
 
 We call it a *null model* rather than a baseline, and deliberately avoid naming it after
-day zero, because the distinction is easy to blur and consequential. Its three inputs are genuinely
+day zero, because the distinction is easy to blur and consequential. Its three inputs are
 available on day zero; its fitted coefficients are not. Estimating them requires the very
 damage labels a responder is waiting for, so the model cannot be run on the day it names. It
 is not an alternative anyone could have deployed. What it provides instead is a reference
@@ -1015,7 +1014,7 @@ members is open work), so the errors are not random noise. But once building sto
 follows the earthquake itself: residuals rise toward the coast and with modelled shaking,
 and show no association with building density. The specific worry that flags merely
 reproduce the building map finds no support once building stock is controlled. In short,
-the products over-call most where damage is genuinely worst. That error structure
+the products over-call most where damage is worst. That error structure
 preserves area rankings. The dangerous alternative, errors that track urban form, is what
 the test rules out.
 
@@ -1348,7 +1347,7 @@ core region the ShakeMap estimate barely varies and its measured importance is e
 0.000: there the null runs on coastline distance and building density alone, and its
 skill is a hindsight description of where damage happened to fall. Across the full
 delivered footprints, shaking varies for real and carries 0.25–0.31 of the model's
-weight, so the null genuinely uses event information there. Microsoft is the exception
+weight, so the null does use event information there. Microsoft is the exception
 that proves the mechanism: it shipped only the coastal strip, and over that
 near-identical ground the shaking term again drops to zero.
 
@@ -1381,7 +1380,7 @@ where $\pi$ is the prevalence of damage. The second term is free credit that any
 predictor whatsoever collects for the flag-everything endpoint. Because $\pi$ (0.023
 here) is far below every product's precision, the term drags each product's AP down
 toward prevalence, hardest for the products with the lowest recall. The effect is to
-compress genuinely different products into a narrow band (0.042–0.055 across our six,
+compress very different products into a narrow band (0.042–0.055 across our six,
 whose precisions actually range from 0.045 to 0.093), sitting right where a mediocre
 continuous score also lands (the forest null's AP is 0.045). Two products can share an
 AP because one has high precision and low recall while the other has the reverse; the
