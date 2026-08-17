@@ -521,10 +521,20 @@ few identifiable pockets ([results](#app-ranking-tables)), so discounting each
 product's vote inside its known bad pockets is a natural next step for fusion.
 
 The strongest way to harden every claim here is replication, and a specific candidate
-exists: the 2025 Myanmar earthquake has a comparable multi-product, crowd-validated
-landscape. The method transfers as-is; whether the single-product ceiling, the monotone
-ordering of the voting rules, and the grade gradient hold there is exactly what one
-event cannot establish.
+exists. After the March 2025 Myanmar earthquake, building-damage products were
+published by [Copernicus EMS](https://rapidmapping.emergency.copernicus.eu/EMSR798)
+(activation EMSR798, eleven areas of interest), [Microsoft's AI for Good
+Lab](https://data.humdata.org/dataset/myanmar-earthquake-building-damage-assessment-from-3-28-2025)
+(Mandalay),
+[UNOSAT](https://unosat.org/static/unosat_filesystem/4141/UNOSAT_Preliminary_Comprehensive_DA_Report_May2025_EQ20250328MM.pdf)
+and
+[UNU-INWEH](https://unu.edu/inweh/collection/building-damage-assessment-march-2025-myanmar-earthquake)
+(Sentinel-1), and HOT ran a [MapSwipe crowd
+campaign](https://www.hotosm.org/en/projects/myanmar-earthquake-response-2025/) over
+Mandalay and Sagaing: the same ingredients this method needs, and to our knowledge no
+head-to-head comparison of those products has been published. The method transfers
+as-is; whether the single-product ceiling, the monotone ordering of the voting rules,
+and the grade gradient hold there is exactly what one event cannot establish.
 
 ## Recommendations
 
