@@ -20,14 +20,14 @@ METRIC_CRS = 32619  # UTM 19N
 
 def _read_pq(layer, *parts):
     import ocha_stratus as stratus
-    path = S.blob_path(layer, *parts)
+    path = S.blob_path(layer, *parts, event=None)  # frozen VE layout predates event partitions
     b = stratus.load_blob_data(path, stage="dev", container_name=S.container)
     return gpd.read_parquet(io.BytesIO(b))
 
 
 def _read_gpkg(layer, *parts):
     import ocha_stratus as stratus
-    path = S.blob_path(layer, *parts)
+    path = S.blob_path(layer, *parts, event=None)  # frozen VE layout predates event partitions
     b = stratus.load_blob_data(path, stage="dev", container_name=S.container)
     with tempfile.NamedTemporaryFile(suffix=".gpkg", delete=False) as f:
         f.write(b); tmp = f.name
@@ -67,14 +67,14 @@ def building_flags(columns=None):
     import ocha_stratus as stratus
     import pandas as pd
     b = stratus.load_blob_data(S.blob_path("gold", "model=common", "adm0=VE",
-                                           "building_flags.parquet"),
+                                           "building_flags.parquet", event=None),
                                stage="dev", container_name=S.container)
     cols = None if columns is None else list(dict.fromkeys([*columns, "id"]))
     df = pd.read_parquet(io.BytesIO(b), columns=cols)
     if "osu_dmg" in df.columns:
         bb = stratus.load_blob_data(
             S.blob_path("silver", "source=osu", "adm0=VE",
-                        f"version={OSU_PAPER_VERSION}", "building_damage.parquet"),
+                        f"version={OSU_PAPER_VERSION}", "building_damage.parquet", event=None),
             stage="dev", container_name=S.container)
         ids = set(pd.read_parquet(io.BytesIO(bb), columns=["id"]).id)
         df["osu_dmg"] = df["id"].isin(ids).astype("int64")
@@ -163,7 +163,7 @@ def overture_window(minx, miny, maxx, maxy, region="la_guaira"):
             frames.append(g[g.geometry.intersects(win)])
     else:  # fall back to blob region parquets
         import ocha_stratus as stratus
-        pref = S.blob_path("silver", "source=overture", f"adm0=VE", f"region={region}")
+        pref = S.blob_path("silver", "source=overture", f"adm0=VE", f"region={region}", event=None)
         for b in stratus.list_container_blobs(name_starts_with=pref, stage="dev",
                                               container_name=S.container):
             if not b.endswith(".parquet"):
