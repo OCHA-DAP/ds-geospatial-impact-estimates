@@ -41,11 +41,15 @@ function busy(isBusy) {
 async function fetchEnvelope() {
   let res;
   try {
-    // Default cache mode deliberately. `cache: "force-cache"` was tried here to avoid refetching
-    // several MB on a return visit, and was observed hanging indefinitely in Chrome — no network
-    // request, no resolve, no reject — when the entry was already in the HTTP cache. Ordinary
-    // ETag/Last-Modified revalidation is what we want anyway; GitHub Pages sends both.
-    res = await fetch(encUrl);
+    // `cache: "no-cache"` = always revalidate with the server (a 304 when unchanged, a real
+    // download only after a republish). The default mode was tried first and serves a stale
+    // ciphertext for up to 10 minutes after a deploy (GitHub Pages sends max-age=600, and within
+    // that window the browser answers from cache without asking) — readers mid-review kept seeing
+    // the previous version. `cache: "force-cache"` was also tried, to avoid refetching several MB
+    // on a return visit, and was observed hanging indefinitely in Chrome — no network request, no
+    // resolve, no reject — when the entry was already in the HTTP cache. Revalidation is the
+    // behaviour we actually want; GitHub Pages sends both ETag and Last-Modified.
+    res = await fetch(encUrl, { cache: "no-cache" });
   } catch (err) {
     throw new GateError("load", `Could not reach ${encUrl}: ${err.message}`);
   }
