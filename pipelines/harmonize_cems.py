@@ -1,38 +1,42 @@
 """Harmonize Copernicus EMS damage grading into the gold fact table.
 
-Reads the graded built-up damage from the live GRA products for activation
-EMSR884 — `builtUpA` (coarse damage *areas*, the early estimate) and `builtUpP`
-(per-building damage *points*, the detailed update) — standardizes them to
-silver tagged by `layer_type` and product version, and aggregates the latest per
-AOI to the H3 grid + CODAB admin levels as a second `source` (`copernicus_ems`)
-in the *same* long fact-table schema as Microsoft. Which products are live (and
-which is latest) comes from `gie.cems_products`.
+Registry-driven, one event per run: ``--event <event_id>`` names the event and
+the activation code comes from its ``external_ids.cems_activation`` in
+events.yaml (ADR-0027; same pattern as ingest_cems). Reads the graded built-up
+damage from the live GRA products — `builtUpA` (coarse damage *areas*, the
+early estimate) and `builtUpP` (per-building damage *points*, the detailed
+update) — standardizes them to silver tagged by `layer_type` and product
+version, and aggregates the latest per AOI to the H3 grid + CODAB admin levels
+as a second `source` (`copernicus_ems`) in the *same* long fact-table schema as
+Microsoft. Which products are live (and which is latest) comes from
+`gie.cems_products`. The admin rollup goes to the deepest CODAB level the
+event's country actually has (VE: adm3; CO: adm2 — FieldMaps pads a fake adm3).
 
 This is the damage-signal side of the harmonization model (ADR-0001). CEMS maps
 damaged building blocks, not an exposure inventory, so its native metrics are
 `damage_features` (count) and `damaged_area_m2` — carried alongside Microsoft's
 building counts rather than forced into them. The EMS grade is mapped to an
-xBD-style class where possible and also kept verbatim.
+xBD-style class where possible and also kept verbatim; an unmapped grade is an
+error (extend EMS_TO_CLASS deliberately), never a silent null.
 
-Run: uv run --group etl python pipelines/harmonize_cems.py
+Run: uv run --group etl python pipelines/harmonize_cems.py --event 20260810-co-earthquake
 """
 
 from __future__ import annotations
+
+import argparse
 
 import geopandas as gpd
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import db, events, ledger
+from gie import codab, db, events, ledger
 from gie.cems_products import active_products, read_layer
-from gie.config import DEFAULT_H3_RESOLUTION, load_settings
+from gie.config import DEFAULT_H3_RESOLUTION, load_settings, source_segments
 
-ACTIVATION = "EMSR884"
 SOURCE = "copernicus_ems"
 METHOD = "cems_grading_v1"
-ADM0 = "VE"
 STAGE = "dev"
-EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 # Copernicus EMS damage grade -> xBD-style class (0..3). Raw grade kept too.
 EMS_TO_CLASS = {
@@ -47,7 +51,7 @@ EMS_TO_CLASS = {
 }
 
 
-def build_silver(settings) -> None:
+def build_silver(settings, ev: events.Event, activation: str) -> None:
     """Read the graded built-up damage from each live product's GRA zip.
 
     CEMS grades built-up damage two ways: ``builtUpA`` (damage *areas* — the
@@ -57,9 +61,11 @@ def build_silver(settings) -> None:
     so downstream can attribute from the latest per AOI and still break down by
     product. Superseded versions are already excluded by ``active_products``.
     """
-    products = active_products(settings, ACTIVATION, event=EVENT, stage=STAGE)
+    products = active_products(settings, activation, event=ev.event_id, stage=STAGE)
     products = products[products["product_type"] == "GRA"]
-    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"code={ACTIVATION}", event=EVENT)
+    bronze = settings.blob_path(
+        "bronze", f"source={SOURCE}", f"code={activation}", event=ev.event_id
+    )
     zip_by_name = {
         b.split("/")[-1]: b
         for b in stratus.list_container_blobs(
@@ -89,16 +95,30 @@ def build_silver(settings) -> None:
             keep["layer_type"] = layer_type
             parts.append(keep)
 
+    if not parts:
+        raise RuntimeError(
+            f"no graded builtUp layers found in any live {activation} GRA product — "
+            "bronze products missing or product structure changed."
+        )
     gdf = gpd.GeoDataFrame(pd.concat(parts, ignore_index=True), crs="EPSG:4326")
     gdf["ems_grade"] = gdf["damage_gra"]
     gdf["damage_class"] = gdf["ems_grade"].map(
         lambda v: EMS_TO_CLASS.get(str(v).strip().lower())
     )
+    unmapped = (
+        gdf.loc[gdf["damage_class"].isna(), "ems_grade"].astype(str).value_counts()
+    )
+    if len(unmapped):
+        raise RuntimeError(
+            f"unmapped EMS damage grade(s) in {activation}: {unmapped.to_dict()} — "
+            "extend EMS_TO_CLASS deliberately; refusing to write silent nulls."
+        )
     # Area is meaningful only for the polygon (builtUpA) layer; points get 0.
     gdf["area_m2"] = 0.0
     poly = gdf.geom_type.isin(["Polygon", "MultiPolygon"])
     if poly.any():
-        gdf.loc[poly, "area_m2"] = gdf.loc[poly].to_crs(32619).area  # UTM 19N coast
+        utm = gdf.loc[poly].estimate_utm_crs()  # e.g. 32619 for VE, 32618 for CO
+        gdf.loc[poly, "area_m2"] = gdf.loc[poly].to_crs(utm).area
     gdf = gdf[
         [
             "aoi_number", "aoi_name", "product_id", "monitoring_number",
@@ -108,7 +128,8 @@ def build_silver(settings) -> None:
     ]
 
     silver = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "builtup_damage.parquet", event=EVENT
+        "silver", *source_segments(SOURCE, ev.event_id), "builtup_damage.parquet",
+        event=ev.event_id,
     )
     stratus.upload_parquet_to_blob(
         gdf, silver, stage=STAGE, container_name=settings.container, compression="zstd"
@@ -118,27 +139,42 @@ def build_silver(settings) -> None:
     ledger.record(
         SOURCE,
         "silver",
-        f"CEMS {ACTIVATION} damage grading (builtUpA areas + builtUpP points)",
+        f"CEMS {activation} damage grading (builtUpA areas + builtUpP points)",
         silver,
         f"{len(gdf)} graded features; layer_type + is_latest + version; EPSG:4326",
         status="ingesting",
     )
 
 
-def build_gold(settings, res: int = DEFAULT_H3_RESOLUTION) -> None:
+def build_gold(
+    settings, ev: events.Event, activation: str, res: int = DEFAULT_H3_RESOLUTION
+) -> None:
+    if len(ev.countries) != 1:
+        raise NotImplementedError(
+            f"event {ev.event_id} spans countries {ev.countries} — the admin rollup "
+            "needs a CODAB union across countries; build it deliberately."
+        )
+    adm0 = ev.countries[0]
+    deepest = codab.deepest_level(settings, adm0, stage=STAGE)
+    levels = [f"adm{i}" for i in range(deepest + 1)]
+
     con = db.connect()
     sp = settings.az_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "builtup_damage.parquet", event=EVENT
+        "silver", *source_segments(SOURCE, ev.event_id), "builtup_damage.parquet",
+        event=ev.event_id,
     )
     # event=None: CODAB is shared, country-keyed REFERENCE data outside the
     # event tree — reusable across events (spec §3).
-    adm3 = settings.az_path("bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet", event=None)
+    admin = settings.az_path(
+        "bronze", "source=codab", f"adm0={adm0}", f"adm{deepest}.parquet", event=None
+    )
     metrics = "count(*)::DOUBLE AS damage_features, sum(area_m2) AS damaged_area_m2"
+    admin_cols = ", ".join(f"a.{lvl}_id, a.{lvl}_name" for lvl in levels)
     admin_unions = "\n        UNION ALL\n        ".join(
         f"SELECT '{lvl}', {lvl}_id, any_value({lvl}_name), "
         f"count(*)::DOUBLE, sum(area_m2) "
         f"FROM joined WHERE {lvl}_id IS NOT NULL GROUP BY {lvl}_id"
-        for lvl in ("adm0", "adm1", "adm2", "adm3")
+        for lvl in levels
     )
     sql = f"""
     WITH pts AS (
@@ -153,11 +189,9 @@ def build_gold(settings, res: int = DEFAULT_H3_RESOLUTION) -> None:
         FROM pts
     ),
     joined AS (
-        SELECT p.area_m2, p.h3,
-               a.adm0_id, a.adm0_name, a.adm1_id, a.adm1_name,
-               a.adm2_id, a.adm2_name, a.adm3_id, a.adm3_name
+        SELECT p.area_m2, p.h3, {admin_cols}
         FROM cells p
-        LEFT JOIN read_parquet('{adm3}') a ON ST_Within(p.c, a.geometry)
+        LEFT JOIN read_parquet('{admin}') a ON ST_Within(p.c, a.geometry)
     ),
     agg AS (
         SELECT 'h3' AS unit_type, h3 AS unit_id, NULL AS unit_name, {metrics}
@@ -176,29 +210,44 @@ def build_gold(settings, res: int = DEFAULT_H3_RESOLUTION) -> None:
     out["ingested_at"] = pd.Timestamp.now("UTC")
 
     gold = settings.blob_path(
-        "gold", f"source={SOURCE}", f"adm0={ADM0}", "damage_facts.parquet", event=EVENT
+        "gold", *source_segments(SOURCE, ev.event_id), "damage_facts.parquet",
+        event=ev.event_id,
     )
     stratus.upload_parquet_to_blob(
         out, gold, stage=STAGE, container_name=settings.container, compression="zstd"
     )
-    by_adm3 = out[(out.unit_type == "adm3") & (out.metric == "damage_features")]
-    print(f"gold <- {gold} ({len(out)} facts; adm3 units with CEMS damage: {len(by_adm3)})")
-    print(by_adm3[["unit_name", "value"]].to_string(index=False))
+    by_deep = out[(out.unit_type == f"adm{deepest}") & (out.metric == "damage_features")]
+    print(
+        f"gold <- {gold} ({len(out)} facts; adm{deepest} units with CEMS damage: {len(by_deep)})"
+    )
+    print(by_deep[["unit_name", "value"]].to_string(index=False))
     ledger.record(
         SOURCE,
         "gold",
-        f"CEMS {ACTIVATION} damage facts",
+        f"CEMS {activation} damage facts",
         gold,
-        f"{len(out)} fact rows; h3 + adm0-3; damage_features + damaged_area_m2",
+        f"{len(out)} fact rows; h3 + adm0-{deepest}; damage_features + damaged_area_m2",
         status="ingesting",
     )
 
 
-def main() -> None:
-    events.require_event(EVENT)
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--event",
+        required=True,
+        help="event_id from events.yaml; its external_ids.cems_activation is harmonized",
+    )
+    args = parser.parse_args(argv)
+    ev = events.get_event(args.event)  # fails loudly on an unregistered event
+    activation = ev.external_ids.get("cems_activation")
+    if not activation:
+        raise RuntimeError(
+            f"event {ev.event_id!r} has no external_ids.cems_activation in events.yaml."
+        )
     settings = load_settings(STAGE)
-    build_silver(settings)
-    build_gold(settings)
+    build_silver(settings, ev, activation)
+    build_gold(settings, ev, activation)
 
 
 if __name__ == "__main__":

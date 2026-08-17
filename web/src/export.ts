@@ -35,7 +35,7 @@ export async function downloadExport(tok: any, dir: string, ev: EventInfo): Prom
   rm.getCell("A1").value = `${ev.name} — Building Damage Exposure by Admin Unit`;
   rm.getCell("A1").font = { bold: true, size: 22, color: { argb: "FF3E8F6B" } };
   rm.getCell("A2").value =
-    "Multi-source — " + meta.subtitle_sources.join(", ") + " — buildings & damage by OCHA COD admin 1 / 2 / 3";
+    "Multi-source — " + meta.subtitle_sources.join(", ") + " — buildings & damage by OCHA COD admin " + (meta.levels ?? [1, 2, 3]).join(" / ");
   rm.getCell("A2").font = { italic: true, size: 13, color: { argb: "FF333333" } };
   const tier = tok.platinum_dir === "platinum-prod" ? "prod" : "staging";
   // The activation id line only applies to events with a CEMS activation on record.
@@ -76,15 +76,18 @@ export async function downloadExport(tok: any, dir: string, ev: EventInfo): Prom
 
   // --- adm1/2/3 data sheets ------------------------------------------------------
   // fetch all three levels in parallel before building
+  // Levels present for this event (export_meta.json levels — CO has no adm3);
+  // the [1,2,3] fallback keeps older metas behaving exactly as before.
+  const levels: number[] = meta.levels ?? [1, 2, 3];
   const levelRows = await Promise.all(
-    [1, 2, 3].map(async (level) =>
+    levels.map(async (level) =>
       (await parquetReadObjects({
         file: await asyncBufferFromUrl({ url: `${base}/values/export-adm${level}.parquet?${tok.sas}` }),
       })) as any[],
     ),
   );
-  for (const level of [1, 2, 3]) {
-    const rows = levelRows[level - 1];
+  for (const [li, level] of levels.entries()) {
+    const rows = levelRows[li];
     const cols = COLS(level);
     const ws = wb.addWorksheet(`adm${level}`, {
       views: [{ state: "frozen", ySplit: 1, showGridLines: false }],

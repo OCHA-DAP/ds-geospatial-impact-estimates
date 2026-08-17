@@ -86,6 +86,14 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
     adminLevel: 3,
     show: { admin: true, buildings: false, extent: true, h3: false } as Record<string, boolean>,
   };
+  // Admin levels this event's data actually has (meta/sources.json admin_levels —
+  // CO has no real adm3). Set from meta in init() before layer setup; the [1,2,3]
+  // default keeps older metas (no admin_levels key) behaving exactly as before.
+  let ADMIN_LEVELS: number[] = [1, 2, 3];
+  // Sources present in this event's gold (meta/sources.json). Set in init() before
+  // layer setup so setupPmtiles never requests native tiles for a source this
+  // event doesn't have (each absent source's tile URL would 404).
+  let AVAILABLE_SOURCES: Set<string> | null = null;
 
   let METRICS: { key: string; label: string }[] = [];
   const adminCache = new Map<string, any>();
@@ -568,7 +576,7 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
     // Insert BELOW the basemap labels so labels stay readable — this is the
     // layering the deck.gl admin (drawn over everything) couldn't do.
     const labelId = map.getStyle().layers?.find((l: any) => l.type === "symbol")?.id;
-    for (const lvl of [1, 2, 3]) {
+    for (const lvl of ADMIN_LEVELS) {
       const src = `pmt-src-admin-${lvl}`;
       const sl = `adm${lvl}`;
       map.addSource(src, {
@@ -677,7 +685,7 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
   // Show only the active admin level's fill+line (when admin is on).
   function syncAdmin() {
     if (ADMIN_SERVING !== "pmtiles") return;
-    for (const lvl of [1, 2, 3]) {
+    for (const lvl of ADMIN_LEVELS) {
       const vis = state.show.admin && state.sources.size && lvl === state.adminLevel ? "visible" : "none";
       for (const suf of ["fill", "line"]) {
         const id = `pmt-admin-${lvl}-${suf}`;
@@ -727,10 +735,9 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
   // Add each "pmtiles" source's MapLibre layers (hidden until shown by syncPmtiles)
   // and wire their hover. The read SAS + catalog base URL come from /api/token.
   async function setupPmtiles() {
-    const converted = Object.entries(LAYER_SERVING).filter(([, v]) => v.mode === "pmtiles") as [
-      string,
-      Extract<Serving, { mode: "pmtiles" }>,
-    ][];
+    const converted = Object.entries(LAYER_SERVING).filter(
+      ([s, v]) => v.mode === "pmtiles" && (AVAILABLE_SOURCES?.has(s) ?? true),
+    ) as [string, Extract<Serving, { mode: "pmtiles" }>][];
     if (!converted.length) return;
     const tok = await getToken();
     const dir = eventDir(tok, EVENT_ID!);
@@ -773,6 +780,15 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
   async function setupUsgs() {
     const tok = await getToken();
     const dir = eventDir(tok, EVENT_ID!);
+    // Probe first: an event without a staged ShakeMap (no USGS harmonize yet) is a
+    // real state, not an error — skip the layer and hide its toggle instead of
+    // letting MapLibre 404 on the source fetch.
+    const probe = await fetch(`${dir}/usgs/shakemap.geojson?${tok.sas}`, { method: "HEAD" });
+    if (!probe.ok) {
+      console.info(`usgs: no shakemap.geojson for this event (HTTP ${probe.status}) — layer hidden`);
+      document.querySelector('input[data-layer="usgs"]')?.closest("label")?.setAttribute("hidden", "");
+      return;
+    }
     map.addSource("usgs", {
       type: "geojson",
       data: `${dir}/usgs/shakemap.geojson?${tok.sas}`,
@@ -1267,6 +1283,34 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
     // memoized getToken() wherever it's needed).
     map.fitBounds([[ev.bbox[0], ev.bbox[1]], [ev.bbox[2], ev.bbox[3]]], { padding: 40, duration: 0 });
     renderEventTitle(ev);
+    // sources.json is fetched BEFORE layer setup: it now carries admin_levels, and
+    // setupAdmin must not request admin tiles the event doesn't have (CO: no adm3).
+    // A 404 here is a real, reportable state ("no products yet"), not a failure.
+    let srcMeta: any;
+    try {
+      srcMeta = await fetchMeta("sources.json");
+    } catch (err) {
+      el("status").textContent = /HTTP 404/.test(String(err))
+        ? "No data products have been published for this event yet."
+        : `Failed to load event data: ${err}`;
+      return;
+    }
+    ADMIN_LEVELS = srcMeta.admin_levels ?? [1, 2, 3];
+    AVAILABLE_SOURCES = new Set(srcMeta.sources);
+    try {
+      METHODS_ACTIVE = (await fetchMeta("methods.json")).methods;
+    } catch {
+      // meta predates methods.json — show the built-in cards for this event's sources
+      METHODS_ACTIVE = METHODS_SOURCES.filter((m) => srcMeta.sources.includes(m.key));
+    }
+    const maxLevel = Math.max(...ADMIN_LEVELS);
+    const lvlSel = el("adminLevel") as HTMLSelectElement;
+    for (const opt of [...lvlSel.options])
+      if (Number(opt.value) > maxLevel) opt.remove();
+    if (state.adminLevel > maxLevel) {
+      state.adminLevel = maxLevel;
+      lvlSel.value = String(maxLevel);
+    }
     // PMTiles/hyparquet setup is additive — a failure must never blank the app.
     for (const [name, fn] of [
       ["pmtiles", setupPmtiles],
@@ -1281,22 +1325,7 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
         console.error(`v2 ${name} setup failed:`, e);
       }
     }
-    // sources.json is written by build_platinum once an event has a published
-    // platinum tree — an event can be registered (events.json) before that ever
-    // runs (e.g. Colombia today). A 404 here is a real, reportable state ("no
-    // products yet"), not a failure — distinct from an actual load error, which
-    // gets its own message. Either way this is explicit in #status, never a
-    // silent basemap-only shell with the error stuck in the console.
-    let sources: string[];
-    try {
-      const meta = await fetchMeta("sources.json");
-      sources = meta.sources;
-    } catch (err) {
-      el("status").textContent = /HTTP 404/.test(String(err))
-        ? "No data products have been published for this event yet."
-        : `Failed to load event data: ${err}`;
-      return;
-    }
+    const sources: string[] = srcMeta.sources;
     METRICS = [
       { key: "damage_rate_detected", label: "Damage fraction" },
       { key: "coverage_fraction", label: "Coverage" },
@@ -1447,6 +1476,11 @@ boot().catch((err) => {
 // --- methodology slide-over: glass panel of how the map is built + per-source cards ---
 // TODO(product-history): surface each source's product version + availability dates
 // (e.g. OSU v0 25 Jun -> v1 1 Jul) as a small per-source timeline, not just the latest.
+// Per-event methodology cards (meta/methods.json, written by build_platinum from
+// gie.serving.methods_for). Set in init(); when an event's meta predates
+// methods.json, the built-in list below (filtered to the event's sources) is the
+// fallback, so older platinum trees keep rendering exactly as before.
+let METHODS_ACTIVE: { key: string; tag: string; blurb: string; note: string }[] | null = null;
 const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }[] = [
   {
     key: "copernicus_ems",
@@ -1516,7 +1550,7 @@ const METHODS_SOURCES: { key: string; tag: string; blurb: string; note: string }
 function renderMethodsCards() {
   const host = document.getElementById("methods-cards");
   if (!host) return;
-  host.innerHTML = METHODS_SOURCES.map((m, i) => {
+  host.innerHTML = (METHODS_ACTIVE ?? METHODS_SOURCES).map((m, i) => {
     const c = SOURCE_COLOR[m.key] ?? [120, 120, 120];
     return (
       `<article class="source-card" style="--accent:rgb(${c.join(",")});animation-delay:${i * 65}ms">` +
