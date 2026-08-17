@@ -169,15 +169,14 @@ alarms (@fig-refarch). Every matching radius in the paper (the 10 m rule, the 20
 points) is defined and justified in the [Appendix](#app-matching). Because their blind
 spots do not overlap, the three can be used to check one another, which is how the
 expert reference's own bias was measured (@sec-floor). Two definitions govern every
-number in this paper. First, a *false positive* is a flag that no reference
-corroborates. That is this study's classification scheme, applied uniformly to every
-product; no exhaustive survey of intact buildings exists, so there are no confirmed
-true negatives, and the scheme is specified in full in the
-[Appendix](#app-matching). Second, following directly from the first, **against an
-incomplete reference, measured precision is a floor and measured recall is a
-ceiling**: the reference itself misses damage, so some flags counted false are
-actually right (true precision is higher) and some real damage never entered the count
-(true recall is lower).
+number in this paper. First, a *false positive* is a product flag with no corroborating
+reference record: the standard detection-evaluation scheme, in which the reference is
+treated as complete within its analysed extent and every product is scored against it
+under the same rule ([specification](#app-matching)). Second, because we measured the
+reference's completeness rather than assuming it, **against an incomplete reference,
+measured precision is a floor and measured recall is a ceiling**: the reference misses
+some damage, so some flags counted false are actually right (true precision is higher)
+and some real damage never entered the count (true recall is lower).
 
 ![The three reference datasets at a glance. Two are HOT-run and easily confused:
 MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
@@ -197,8 +196,8 @@ nothing recorded underneath them (false positives).
 
 **How it was measured:** A flag counts as a hit if an expert-mapped damage point lies
 within 10 m of the flagged building, and otherwise as a false positive (the
-classification rule, and what it can and cannot claim without true negatives, is
-specified in the [Appendix](#app-matching)); the radius comes from an analysis of
+classification scheme is specified in the [Appendix](#app-matching)); the radius comes
+from an analysis of
 building spacing (median neighbour distance is 9.7 m; radius sensitivity in the
 [Appendix](#app-radius)). Results are quoted in the core region (each product's
 most favourable frame) unless labelled as-delivered (scored on everything the product
@@ -681,18 +680,19 @@ score by *proximity*, a standard approach for detection-style evaluation: precis
 anchors on the product (of its flagged buildings, how many have a CEMS damage point within
 radius r?), and recall anchors on the reference (of the CEMS damage points, how many have a
 product flag within r?). Each metric carries its own denominator. Because the two metrics
-are precision and recall, neither uses the undamaged background (true negatives), which we
-could not enumerate anyway, since CEMS never labels the undamaged buildings.
+are precision and recall, neither uses the undamaged background (true negatives), so the
+size of that set affects no score.
 
-**How false positives are classified.** The classification rule is fixed by the study
-design: a flag is scored a false positive when no reference we hold corroborates it at
-the matching radius. The limitation sits in the references, not in the rule: no
-exhaustive survey of intact buildings exists for this event, so there are no confirmed
-true negatives, and some share of the flags classified false is real damage the
-references missed. The design absorbs that known bias explicitly, by reporting every
-measured precision as a floor and re-judging the expert-unmatched flags against the
-crowd (@sec-floor). Within that design the classification is well-defined, and every
-number built on it carries the floor interpretation.
+**How false positives are classified.** The scheme is the standard one for detection
+evaluation. Within the analysed extent the reference is treated as complete: a flag
+with no reference record within the matching radius is a false positive, reference
+damage with no flag is a miss, and the remaining buildings are, under the scheme, true
+negatives (precision and recall never use that count, so it affects no headline
+number). The rule is applied uniformly, so no product is advantaged by it. What this
+paper adds is that the completeness assumption is tested rather than taken on faith:
+the field reports grade the expert reference's own recall, every measured precision is
+reported as a floor, and the expert-unmatched flags are re-judged against the crowd
+(@sec-floor).
 
 ```{python}
 #| fig-cap: "Dual-anchored matching. Left: a product is scored only where it AND the reference both looked. Middle: recall anchors on the reference; each CEMS damage point asks whether a product flag lies within radius r. Right: precision anchors on the product; each flagged building asks whether a CEMS point lies within r. Each metric brings its own denominator."
