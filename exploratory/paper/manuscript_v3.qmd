@@ -9,7 +9,8 @@ format:
     embed-resources: true
     number-sections: true
     comments:
-      hypothesis: true
+      hypothesis:
+        showHighlights: whenSidebarOpen
 execute:
   echo: false
   warning: false
