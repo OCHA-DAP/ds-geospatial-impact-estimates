@@ -31,7 +31,7 @@ AI-flagged locations (HOT's MapSwipe), and 415 field reports (HOT's ChatMap). Th
 references check each other, and that checking caught the expert reference itself missing
 damage: it captured 94% of field-reported destroyed buildings but only
 49% of those reported as significantly damaged. Every precision measured against it is
-therefore a floor: Microsoft's rises from 0.08 to roughly 0.24 once crowd-confirmed damage is
+therefore a lower bound: Microsoft's rises from 0.08 to roughly 0.24 once crowd-confirmed damage is
 counted.
 
 At building level, every product performed poorly. As delivered, precision ranged from 0.01 to
@@ -80,7 +80,7 @@ Their blind spots differ (the crowd saw only flagged places, so it can refute fa
 alarms but never reveal a miss; the field reports are the reverse), so each reference is
 used only for the question it can answer, and the three check each other. That checking
 mattered: the expert reference (CEMS) turned out to miss half of the lesser damage the field
-teams reported, so precision measured against it alone is a floor, not an estimate.
+teams reported, so precision measured against it alone is a lower bound, not an estimate.
 
 The paper is organised around three questions a coordinator would actually ask. Can a
 responder act on a single flagged building? Do the products at least rank neighbourhoods
@@ -175,10 +175,10 @@ number in this paper. First, a *false positive* is a product flag with no corrob
 reference record: the standard detection-evaluation scheme, in which the reference is
 treated as complete within its analysed extent and every product is scored against it
 under the same rule ([specification](#app-matching)). Second, because we measured the
-reference's completeness rather than assuming it, **against an incomplete reference,
-measured precision is a floor and measured recall is a ceiling**: the reference misses
-some damage, so some flags counted false are actually right (true precision is higher)
-and some real damage never entered the count (true recall is lower).
+reference's completeness rather than assuming it, we know which way the errors point:
+**against an incomplete reference, measured precision is a lower bound and measured
+recall an upper bound.** The reference misses some damage, so some flags counted false
+are actually right, and some damage never entered the count.
 
 ![The three reference datasets at a glance. Two are HOT-run and easily confused:
 MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
@@ -207,10 +207,10 @@ shipped, as a responder received it). The matching and point-classification syst
 two reporting regions are in the Appendix ([matching](#app-matching); [radius
 sensitivity](#app-radius); @tbl-regions).
 
-![**Region: each CEMS AOI separately, plus the pooled as-delivered total.** Per-AOI scorecard. Left: precision floor per product per CEMS AOI; right: recall where
+![**Region: each CEMS AOI separately, plus the pooled as-delivered total.** Per-AOI scorecard. Left: precision lower bound per product per CEMS AOI; right: recall where
 the reference is thick enough to support it. 96% of all CEMS damage points are in the
 first column. Outside Caraballeda, measured precision is 0.00–0.02 despite flag shares
-up to 27.5%: a floor against a nearly-empty reference, in which product over-flagging
+up to 27.5%: a lower bound against a nearly-empty reference, in which product over-flagging
 and reference incompleteness cannot be
 separated.](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 
@@ -298,7 +298,7 @@ was also tested and barely moved any score (they add only a few hundred points),
 is why CEMS stays the default reference. The MapSwipe crowd then re-judges the flags
 the expert reference calls false; the crowd is generous to products (it credits a flag
 if damage sits anywhere in its ~50 m cell), so the crowd-adjusted precision is read as
-the high end of the interval and the expert-measured value as the floor. An independent
+the high end of the interval and the expert-measured value as the lower end. An independent
 re-vote of the crowd campaign at three times the depth confirmed the adjustment's
 stability (13.2% versus 11.5% of flags confirmed). Mechanics and caveats are in the
 Appendix ([adjudication mechanics](#app-adjudication); [the crowd re-vote](#app-crowd)).
@@ -306,8 +306,8 @@ Appendix ([adjudication mechanics](#app-adjudication); [the crowd re-vote](#app-
 ![**Region: within the CEMS-analysed extents; reference: field reports (20 m GPS tolerance).** Recall by damage grade. Each line is one dataset's recall against
 field-reported damage, at "complete" destruction versus "significant" damage. Every
 line slopes down: the products and the expert reference alike find lighter damage far
-less often, which is why measured recall is a ceiling and measured precision a
-floor.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-gradeslope}
+less often, which is why measured recall is an upper bound and measured precision a
+lower bound.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-gradeslope}
 
 ## Area ranking works, and geography ranks about as well {#sec-ranking}
 
@@ -490,8 +490,9 @@ scene.](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png
 The three questions from the Introduction now have answers.
 
 *Can a responder act on a single flagged building?* No: precision is 0.04–0.09 even in
-the best-mapped area, every number measured against an incomplete reference is a floor,
-and no single product can be tuned out of that ceiling.
+the best-mapped area (and that is a lower bound against an incomplete reference, not a
+harsh measurement), and no single product can be tuned out of the single-product
+ceiling.
 
 *Do the products rank neighbourhoods well enough to triage?* Yes, once zoomed to an
 area already known to be damaged: there the ranking is usable in practice. Across
@@ -701,8 +702,8 @@ negatives (precision and recall never use that count, so it affects no headline
 number). The rule is applied uniformly, so no product is advantaged by it. What this
 paper adds is that the completeness assumption is tested rather than taken on faith:
 the field reports grade the expert reference's own recall, every measured precision is
-reported as a floor, and the expert-unmatched flags are re-judged against the crowd
-(@sec-floor).
+reported as a lower bound, and the expert-unmatched flags are re-judged against the
+crowd (@sec-floor).
 
 ```{python}
 #| fig-cap: "Dual-anchored matching. Left: a product is scored only where it AND the reference both looked. Middle: recall anchors on the reference; each CEMS damage point asks whether a product flag lies within radius r. Right: precision anchors on the product; each flagged building asks whether a CEMS point lies within r. Each metric brings its own denominator."
@@ -869,7 +870,7 @@ lower bound to the crowd-adjusted value. One caveat sets the character of the up
 MapSwipe verdicts are per ~50 m cell, not per building (@fig-refarch), so a
 crowd-confirmed flag means "damage somewhere in this cell," not "this building." The
 crowd-adjusted value is therefore an *upper* estimate of building-level precision, and the
-truth lies between it and the CEMS floor. The stability of that crowd verdict was itself
+truth lies between it and the CEMS lower bound. The stability of that crowd verdict was itself
 re-tested: an independent second crowd re-voted the same cells at three times the depth
 after this paper's freeze and confirmed 11.5% of the same flags where the first crowd
 confirmed 13.2%, so the upper estimates here sit slightly high; the mechanism and the
@@ -884,9 +885,9 @@ saw only AI-flagged places, and the field reports are positives-only with no sur
 frame, so the full denominator is unknowable. Because the reference over-represents
 destruction, which is the damage class every product detects best, recall measured
 against it is flattered rather than understated. The rule of thumb for this whole paper:
-**against an incomplete reference, measured precision is a floor and measured recall is
-a ceiling.** The grade-stratified field-frame measurements in @sec-floor quantify
-how much the recall ceiling gives back.
+**against an incomplete reference, measured precision is a lower bound and measured
+recall an upper bound.** The grade-stratified field-frame measurements in @sec-floor
+quantify how much the recall upper bound overstates.
 
 
 ### The geography null model and weighted fusion, in full {#app-null .unnumbered}
@@ -1094,7 +1095,7 @@ Caraballeda's numbers: the per-AOI Caraballeda row reproduces the headline score
 almost exactly. Second, outside Caraballeda every product keeps flagging at scale
 (IMPACT marks 9,445 buildings in the Caracas AOI, UH marks 32,145, 27.5% of the stock,
 in Santa Cruz) while measured precision collapses to 0.00–0.02 everywhere. We state
-plainly what those zeros can and cannot mean. They are floors against a reference that
+plainly what those zeros can and cannot mean. They are lower bounds against a reference that
 recorded almost nothing in those AOIs, so two explanations are confounded: the products
 false-alarming at scale where damage is sparse (the same low-damage-zone mechanism as
 the UH agricultural case and the Microsoft west strip), and CEMS under-recording damage
