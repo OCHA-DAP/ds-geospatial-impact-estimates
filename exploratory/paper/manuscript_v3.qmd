@@ -513,9 +513,11 @@ product's F1) and available during a response, and its cost at every setting is
 knowable in advance as a workload.
 
 A product's reliability cannot be judged
-from its own map: false alarms cluster the way real damage clusters, and nothing
-observable without a reference predicted measured reliability across fifteen
-product-and-area combinations ([method](#app-ranking-method)). And where a reference
+from its own map: false alarms cluster the way real damage clusters. We tried to
+predict how precise each product would prove in each expert-mapped area using only
+what is visible without a reference (its flag rate, how tightly its flags cluster, how
+much the other products agree with it), and across all fifteen product-and-area pairs
+none of it predicted anything ([method](#app-ranking-method)). And where a reference
 does exist, most errors scatter harmlessly while the real trouble concentrates in a
 few identifiable pockets ([results](#app-ranking-tables)), so discounting each
 product's vote inside its known bad pockets is a natural next step for fusion.
