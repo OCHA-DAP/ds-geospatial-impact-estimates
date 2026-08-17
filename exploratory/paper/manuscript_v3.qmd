@@ -168,11 +168,16 @@ alarms (@fig-refarch). Every matching radius in the paper (the 10 m rule, the 20
 30 m sensitivity columns of @tbl-dial, and the separate 20 m applied to ChatMap
 points) is defined and justified in the [Appendix](#app-matching). Because their blind
 spots do not overlap, the three can be used to check one another, which is how the
-expert reference's own bias was measured (@sec-floor). One rule governs every number
-in this paper: **against an incomplete reference, measured precision is a floor and
-measured recall is a ceiling.** Both follow from one fact: the reference itself misses
-damage, so some flags counted false are actually right (true precision is higher) and
-some real damage never entered the count (true recall is lower).
+expert reference's own bias was measured (@sec-floor). Two definitions govern every
+number in this paper. First, a *false positive* is a flag that no reference
+corroborates. That is this study's classification scheme, applied uniformly to every
+product; no exhaustive survey of intact buildings exists, so there are no confirmed
+true negatives, and the scheme is specified in full in the
+[Appendix](#app-matching). Second, following directly from the first, **against an
+incomplete reference, measured precision is a floor and measured recall is a
+ceiling**: the reference itself misses damage, so some flags counted false are
+actually right (true precision is higher) and some real damage never entered the count
+(true recall is lower).
 
 ![The three reference datasets at a glance. Two are HOT-run and easily confused:
 MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
