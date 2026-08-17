@@ -471,8 +471,7 @@ independent second crowd campaign over the same cells later reproduced the confi
 side of the verdict. Details, including what the re-vote could and could not re-test, are in the Appendix
 ([the case study in full](#app-weststrip); [the crowd re-vote](#app-crowd)).
 
-![**Region: the western half of Microsoft's delivered strip (Catia La Mar).** The western strip. Left panels are plotted in geographic space (WGS 84), without a
-basemap. Top left: where Microsoft flags far more than the expert map
+![**Region: the western half of Microsoft's delivered strip (Catia La Mar).** The western strip. Top left: where Microsoft flags far more than the expert map
 records. Bottom left: where crowd volunteers said nothing is there. Right: cell by cell
 the two do not track; the agreement is at the scale of the strip, which sat under a
 single satellite
@@ -757,12 +756,15 @@ this paper is the points graded Damaged or Destroyed (784 and 683 respectively i
 core region). Points graded *possibly damaged* are excluded entirely: they appear in
 neither the numerator nor the denominator of any score.
 
-**What "false positive" means here.** No exhaustive ground survey of intact buildings
-exists for this event, so there are no confirmed true negatives, and a "false positive"
-in this paper means only that no reference we hold corroborates the flag. Some share of
-them is real damage the references missed; that is exactly why every measured precision
-is reported as a floor and re-judged against the crowd (@sec-floor). Readers who prefer
-"unconfirmed flag" can substitute it throughout without changing any number.
+**How false positives are classified.** The classification rule is fixed by the study
+design: a flag is scored a false positive when no reference we hold corroborates it at
+the matching radius. The limitation sits in the references, not in the rule: no
+exhaustive survey of intact buildings exists for this event, so there are no confirmed
+true negatives, and some share of the flags classified false is real damage the
+references missed. The design absorbs that known bias explicitly, by reporting every
+measured precision as a floor and re-judging the expert-unmatched flags against the
+crowd (@sec-floor). Within that design the classification is well-defined, and every
+number built on it carries the floor interpretation.
 
 **One matching rule, two labelled exceptions.** Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled
