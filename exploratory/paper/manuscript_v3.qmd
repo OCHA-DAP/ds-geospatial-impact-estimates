@@ -270,11 +270,11 @@ destroyed buildings but only 49% of those significantly damaged (@fig-gradeslope
 expert map is thorough about complete destruction but patchier about lesser damage
 (including damage a nadir view cannot show, such as a collapsed ground floor under an
 intact roof), and the individual products share this same relationship. The same slope
-shows up inside the expert reference's own grades: every product finds CEMS-graded
-*destroyed* buildings more reliably than *damaged* ones, with the appearance- and
-debris-based products (Microsoft, UH, UNEP) destruction-biased on both precision and
-recall while the structural-change products (OSU, IMPACT, LIST, all radar-based) are
-grade-neutral. Crediting the flags that crowd
+shows up inside the expert reference's own grades: Microsoft, UH and UNEP are
+destruction-biased on both precision and recall, while OSU, IMPACT and LIST are
+grade-neutral. The split does not follow the sensor: UNEP also runs on Sentinel-1
+radar, yet it is the most destruction-biased of the six (recall 0.46 for destroyed
+against 0.19 for damaged). Crediting the flags that crowd
 reviewers confirmed as damaged lifts Microsoft's precision from 0.08 to roughly 0.24, a
 factor of three that reflects the reference, not the product. Some damage escaped
 everything: about 11% of field-reported damage points, mostly in inland hill
