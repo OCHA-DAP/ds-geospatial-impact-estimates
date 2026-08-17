@@ -442,12 +442,19 @@ this usable in the next event: give a building more credit when the products agr
 on it share nothing in the way they work, and less when the agreeing products are
 methodological cousins that fail together.
 
-Two caveats apply: flat voting trusts every product equally, which paid off
-here but could only be verified afterwards, with a reference in hand; and choosing the
-agreement threshold buys a known workload, not a guaranteed hit rate, because flag
-counts are observable on day one and the precision they deliver is not. No amount of
-tuning gets a single product to these numbers ([Appendix](#app-ceiling)). What this
-section implies for practice is collected in the Recommendations.
+Equal weighting is not the best possible combination, and the paper does not claim it
+is: a model that learns unequal weights from the damage map scores higher
+(@fig-bestf1). What the count showed instead is that it beat every single product with
+no learning at all, and that precision rose with every additional product that agreed.
+That ordering is the part a responder can use in real time. The learned weights need
+the reference, so they exist only in hindsight; counting agreement needs nothing beyond
+the products themselves, so from the moment they arrive, each added agreeing product
+raises the odds that a flag is real. Setting the threshold then fixes the size of the
+field job immediately, because the flagged list is known the same day. What is learned
+only afterwards is the precision achieved, whether one visit in three finds damage or
+one in twenty-six. Tuning a single product never reaches any of these numbers
+([Appendix](#app-ceiling)). What this section implies for practice is collected in the
+Recommendations.
 
 ![**Region: core (61 km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
 the pair sharing its entire method is the weakest of
