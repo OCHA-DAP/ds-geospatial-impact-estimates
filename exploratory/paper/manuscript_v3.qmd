@@ -1286,7 +1286,7 @@ correctly and the high-confidence cut is v1's best operating point: precision 0.
 against 0.032 for the probable tier and 0.046 for the published headline, with F1
 0.103 versus the headline's 0.085 (half the flags, two-thirds of the recall). So the
 tiering is a real quality signal, and it still does not change the story: OSU's best
-tier remains below Microsoft's core-region precision (0.093) and far below the
+tier remains below Microsoft's core-region precision (0.081) and far below the
 agreement rules, which puts the [ceiling appendix's](#app-ceiling) confidence finding,
 signal but no hidden headroom, on two products rather than one.
 
