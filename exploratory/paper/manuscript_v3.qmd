@@ -803,7 +803,12 @@ xBD-style scale (destroyed, completely destroyed and highly damaged → *Destroy
 moderately damaged and damaged → *Damaged*), and the reference set for every score in
 this paper is the points graded Damaged or Destroyed (784 and 683 respectively in the
 core region). Points graded *possibly damaged* are excluded entirely: they appear in
-neither the numerator nor the denominator of any score.
+neither the numerator nor the denominator of any score. Including them was checked as a
+sensitivity on the frozen data (RQ2q in the analysis archive): the reference roughly
+doubles, every precision rises mechanically by 1.6–2× (singles and voting rules alike),
+recall shifts along the grade slope (grade-neutral products gain, destruction-biased
+products lose), and no comparison in this paper changes direction. Excluding class 1 is
+the more demanding choice, and the paper keeps it.
 
 **One matching rule, two labelled exceptions.** Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled

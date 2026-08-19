@@ -876,6 +876,33 @@ tbl("RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv")
 - **Confidence: high** (id-keyed, frozen matching method, reproduction anchors pass);
   precision floors as always (incomplete reference).
 
+# RQ2q — sensitivity: include CEMS 'possibly damaged'? Nothing qualitative changes (2026-08-19, user question)
+
+The paper excludes class 1 from the reference; the only prior incl-possibly check
+(rq2_points, 3 products) predates the freeze (pre-MONIT2 reference, pre-merged-refresh
+MS), so its levels are dead. Re-run on the frozen basis — gold flags, CEMS latest, RQ5b
+core region, r=10 centroid; the {2,3} side reproduces the frozen rq5b scorecard exactly.
+Script `RQ2-cems-footprint-points/scripts/rq2q_incl_possibly.py`:
+
+```{python}
+tbl("RQ2-cems-footprint-points/rq2q_incl_possibly.csv")
+```
+
+- Reference grows 1,467 → 2,786 core points (+90%). **Every precision rises ~1.6–2×,
+  mechanically** (more targets to be near) — singles and all six voting rules alike.
+- **Recall moves along the RQ2l grade slope**: grade-neutral products gain or hold (OSU
+  0.688→0.717, LIST 0.564→0.574, IMPACT ~flat) while the destruction-biased trio loses
+  (MS 0.474→0.427, UH 0.337→0.260, UNEP 0.313→0.281) — class-1 points are exactly the
+  damage the appearance products miss. A third independent appearance of the grade-bias
+  split.
+- **No conclusion changes**: voting still beats every single, the dial stays monotone in
+  precision, 6-of-6 stays the precision extreme (0.640→0.729). Tiny precision reshuffles
+  among the statistically tied top singles (UH/UNEP/MS swap places) sit inside the RQ9
+  intervals.
+- **Confidence: high** (frozen basis, exact reproduction anchor). Manuscript: one
+  sentence in #app-matching's grade-rule paragraph. Exclusion is the more demanding
+  choice for the products; the paper keeps it.
+
 # RQ5d — is the agreement gain just filtering? NO — it's selection (2026-07-27, user experiment)
 
 User's skeptic test: agreement rules flag fewer buildings; maybe any thinning raises
