@@ -323,7 +323,22 @@ def main(argv: list[str] | None = None) -> None:
                 continue
             gdf.to_parquet(out)
         else:
-            out.write_bytes(raw)
+            g = None
+            if coll.startswith("native-"):
+                # serving shows the ACTIVE view: rows superseded by a newer
+                # delivery stay in silver but never reach the tiles
+                try:
+                    g = gpd.read_parquet(io.BytesIO(raw))
+                except Exception:  # noqa: BLE001 — non-geo/odd parquet: tile as-is
+                    g = None
+            if g is not None and "superseded" in g.columns and bool(g["superseded"].any()):
+                n0 = len(g)
+                g = g[~g["superseded"]]
+                g.to_parquet(out)
+                print(f"  {coll}: {n0 - len(g):,} superseded rows excluded from tiles",
+                      flush=True)
+            else:
+                out.write_bytes(raw)
         _portolan(["add", "--pmtiles", str(out)], cwd=str(cat))
         print(f"  added {coll}  ({len(raw) / 1e6:.1f} MB source)", flush=True)
 
