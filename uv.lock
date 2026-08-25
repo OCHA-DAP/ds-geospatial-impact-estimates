@@ -679,7 +679,7 @@ dev = [
     { name = "ruff", specifier = ">=0.7" },
 ]
 etl = [
-    { name = "ocha-lens", git = "https://github.com/OCHA-DAP/ocha-lens.git?rev=160a92a167b427e519fa21b69bbac330367a8a5b" },
+    { name = "ocha-lens", git = "https://github.com/OCHA-DAP/ocha-lens.git?tag=0.6.0" },
     { name = "ocha-stratus", specifier = ">=0.1.7" },
 ]
 
@@ -1557,7 +1557,7 @@ wheels = [
 [[package]]
 name = "ocha-lens"
 version = "0.5.2.dev1"
-source = { git = "https://github.com/OCHA-DAP/ocha-lens.git?rev=160a92a167b427e519fa21b69bbac330367a8a5b#160a92a167b427e519fa21b69bbac330367a8a5b" }
+source = { git = "https://github.com/OCHA-DAP/ocha-lens.git?tag=0.6.0#86d304762ce23f03ba1618517da2b499607551a5" }
 dependencies = [
     { name = "antimeridian" },
     { name = "beautifulsoup4" },
