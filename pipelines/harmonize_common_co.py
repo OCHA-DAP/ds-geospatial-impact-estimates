@@ -4,8 +4,13 @@ Event-pinned (ADR-0027) companion to harmonize_common.py (the VE common model,
 9 sources). Colombia currently has two harmonized sources, so this is the
 two-source common model on the shared exposure base (ADR-0001):
 
-  * Microsoft  -> predictions are ALREADY on the Overture base (id = Overture
-                  GERS), so damage joins by id — no spatial snap. Cloud rule:
+  * Microsoft  -> three deliveries (pereira, cali, pereira_extended), merged
+                  at silver with per-building supersession (the reviewed
+                  extended run wins inside its mask; only active rows are read
+                  here). Original deliveries are ALREADY on the Overture base
+                  (id = GERS) and join by id; the extended delivery ships
+                  row-index ids (nulled in silver), so its rows map spatially
+                  by point-on-surface containment (ADR-0015). Cloud rule:
                   a building with unknown_pct > 0 was partially cloud-covered
                   and could not be fully assessed, so it is NOT analysed
                   (Microsoft's own HDX notes exclude them from denominators);
@@ -96,7 +101,8 @@ def build_facts(settings, deepest: int, res: int = DEFAULT_H3_RESOLUTION) -> pd.
     admin_cols = ", ".join(f"a.{lvl}_id, a.{lvl}_name" for lvl in levels)
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
-    # Fail loudly if the Microsoft Overture ids don't match our base release.
+    # Fail loudly if the Microsoft Overture ids don't match our base release
+    # (GERS-id rows only — the extended delivery's rows are id-less by design).
     match = con.execute(
         f"""
         WITH base_ids AS (
@@ -104,7 +110,7 @@ def build_facts(settings, deepest: int, res: int = DEFAULT_H3_RESOLUTION) -> pd.
         )
         SELECT count(*) AS total,
                sum((m.id IN (SELECT id FROM base_ids))::INT) AS matched
-        FROM read_parquet('{ms}') m
+        FROM read_parquet('{ms}') m WHERE m.id IS NOT NULL
         """
     ).fetchone()
     total_ms, matched_ms = int(match[0]), int(match[1])
@@ -127,11 +133,29 @@ def build_facts(settings, deepest: int, res: int = DEFAULT_H3_RESOLUTION) -> pd.
             FROM read_parquet('{base}', hive_partitioning=true)
             QUALIFY row_number() OVER (PARTITION BY id) = 1
         ),
-        ms AS (SELECT id, damaged, unknown_pct FROM read_parquet('{ms}')),
-        ms_dmg AS (SELECT id FROM ms WHERE damaged = 1),
+        ms AS (
+            -- active rows only: per-building supersession already resolved in
+            -- silver (pereira defers to the reviewed pereira_extended inside
+            -- its mask), so verdicts here never conflict
+            SELECT id, damaged, unknown_pct, geometry AS g
+            FROM read_parquet('{ms}') WHERE NOT superseded
+        ),
+        -- GERS-id rows join the base directly; id-less (extended) rows map by
+        -- point-on-surface containment onto the exact Overture twin (ADR-0015)
+        ms_dmg AS (
+            SELECT id FROM ms WHERE damaged = 1 AND id IS NOT NULL
+            UNION
+            SELECT b.id FROM base b
+            JOIN ms m ON m.id IS NULL AND m.damaged = 1
+                     AND ST_Contains(b.geom, ST_PointOnSurface(m.g))
+        ),
         ms_seen AS (
             -- analysed = listed by Microsoft AND fully cloud-free (see docstring)
-            SELECT id FROM ms WHERE unknown_pct = 0
+            SELECT id FROM ms WHERE unknown_pct = 0 AND id IS NOT NULL
+            UNION
+            SELECT b.id FROM base b
+            JOIN ms m ON m.id IS NULL AND m.unknown_pct = 0
+                     AND ST_Contains(b.geom, ST_PointOnSurface(m.g))
         ),
         cems_latest AS (
             -- the authoritative latest CEMS layer per AOI

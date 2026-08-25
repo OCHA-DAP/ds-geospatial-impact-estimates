@@ -61,8 +61,10 @@ def build_facts(
     )
     sql = f"""
     WITH pts AS (
+        -- active rows only: superseded rows (an older delivery inside a newer
+        -- one's mask) stay in silver for provenance but never count here
         SELECT damaged, damage_pct_10m, ST_Centroid(geometry) AS c
-        FROM read_parquet('{fp}')
+        FROM read_parquet('{fp}') WHERE NOT superseded
     ),
     cells AS (
         SELECT damaged, damage_pct_10m, c,

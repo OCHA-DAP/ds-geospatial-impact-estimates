@@ -159,7 +159,12 @@ function initViewer(ev: EventInfo, events: EventInfo[]) {
           },
         },
       ],
-      hover: (p) => `Microsoft footprint<br>damaged: ${p.damaged ? "yes" : "no"}`,
+      hover: (p) =>
+        `Microsoft footprint<br>damaged: ${p.damaged ? "yes" : "no"}` +
+        (p.aoi ? `<br>delivery: ${p.aoi}` : "") +
+        // review_status ships only on reviewed deliveries (CO pereira_extended):
+        // ground_truth / confirmed / rejected / unsure per the provider's caveats
+        (p.review_status ? `<br>review: ${p.review_status}` : ""),
     },
     copernicus_ems: {
       mode: "pmtiles",

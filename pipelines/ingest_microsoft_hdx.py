@@ -41,6 +41,10 @@ HDX = "https://data.humdata.org/api/3/action/package_show?id={}"
 DATASETS = {  # aoi label -> HDX dataset slug
     "pereira": "colombia-2026-earthquake-pereira",
     "cali": "2026-colombia-earthquake",
+    # Extended Pereira re-run (Vantor 2026-08-13, human-reviewed): 3.3x the
+    # original mask but NOT a superset (the west strip stays original-only) —
+    # per-building supersession is applied at silver, both deliveries kept.
+    "pereira_extended": "colombia-2026-earthquake-pereira-extended",
 }
 SOURCE = "microsoft"
 STAGE = "dev"
@@ -119,8 +123,8 @@ def ingest_dataset(settings, container, fs, aoi: str, slug: str) -> None:
             "bronze",
             f"Microsoft AI for Good CO damage predictions — {aoi.title()} (HDX, CC-BY)",
             settings.blob_path("bronze", f"source={SOURCE}", f"aoi={aoi}", event=EVENT),
-            f"{len(resources)} resources as received (Overture + Google prediction "
-            "gpkgs, valid-area mask, model-prediction raster); "
+            f"{len(resources)} resources as received (per-base prediction gpkgs + "
+            "valid-area mask, raster where shipped); "
             + "; ".join(summaries)
             + "; footprint-base choice deferred to silver",
             status="ingesting",

@@ -341,9 +341,11 @@ _METHODS_OVERRIDES: dict[str, dict[str, dict[str, str]]] = {
     "20260810-co-earthquake": {
         "microsoft": {
             "blurb": (
-                "Microsoft AI for Good Lab machine-learning damage labels, classifying "
-                "building footprints (Overture base; a Google-footprint run is archived) "
-                "from post-event Vantor and Airbus imagery over Pereira and Cali."
+                "Microsoft AI for Good Lab machine-learning damage labels on building "
+                "footprints (Overture base) from post-event Vantor and Airbus imagery over "
+                "Pereira and Cali, extended 13 Aug with a human-reviewed re-run over a 3x "
+                "larger Pereira area. Where the reviewed run looked, its verdicts replace "
+                "the original's; the original stays authoritative elsewhere."
             ),
             "note": (
                 "Dense automated coverage where imagery allows; cloud-covered buildings are "
