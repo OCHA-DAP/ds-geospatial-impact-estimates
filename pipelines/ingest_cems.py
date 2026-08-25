@@ -76,6 +76,12 @@ def ingest_activation(settings, container, fs, ev: events.Event, activation: str
     print(f"manifest <- {manifest} ({len(prods)} products)")
 
     delivered = prods[prods["download_url"].notna()]
+    undelivered = prods[prods["download_url"].isna()]
+    # CEMS closes a product it will never publish with status_code "N" (not
+    # delivered — e.g. EMSR916's Western Colombia GRM: "remote sensing
+    # limitations"). That is a TERMINAL state, not a pending one: counting it
+    # as pending would leave the ledger saying "re-run to pick it up" forever.
+    closed = undelivered[undelivered["status_code"] == "N"]
     downloaded = skipped = 0
     for _, row in delivered.iterrows():
         fname = posixpath.basename(str(row["download_url"]))
@@ -110,7 +116,14 @@ def ingest_activation(settings, container, fs, ev: events.Event, activation: str
             stage=STAGE,
         )
 
-    pending = len(prods) - len(delivered)
+    pending = len(undelivered) - len(closed)
+    closed_txt = (
+        " closed without delivery: "
+        + ", ".join(f"{r.aoi_name} {r.product_type}" for r in closed.itertuples())
+        + ";"
+        if len(closed)
+        else ""
+    )
     ledger.record(
         source=SOURCE,
         layer="bronze",
@@ -119,14 +132,14 @@ def ingest_activation(settings, container, fs, ev: events.Event, activation: str
             "bronze", f"source={SOURCE}", f"code={activation}", event=ev.event_id
         ),
         detail=(
-            f"{len(delivered)} delivered, {pending} pending; "
+            f"{len(delivered)} delivered, {pending} pending;{closed_txt} "
             "reference/ground-truth (expert grading); idempotent poll"
         ),
         status="ingesting" if pending else "complete",
     )
     print(
         f"{activation} ({ev.event_id}): {downloaded} new, {skipped} already present, "
-        f"{pending} awaiting delivery (re-run to pick them up)."
+        f"{pending} awaiting delivery, {len(closed)} closed without delivery."
     )
 
 
