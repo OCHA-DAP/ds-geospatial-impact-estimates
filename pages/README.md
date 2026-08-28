@@ -12,7 +12,7 @@ pages/
   assets/site.css                 HDX v2 tokens, cards, gate form
   assets/hero.js                  particle-network hero canvas
   assets/decrypt.js               envelope parsing + AES-GCM/PBKDF2 (pure, no DOM)
-  assets/gate.js                  the passphrase form
+  assets/gate.js                  the passphrase form + back-to-home link injection
   slides/damage-evaluation/       -> /slides/damage-evaluation/
   manuscript/                     -> /manuscript/
 ```
@@ -22,6 +22,13 @@ pages/
 Create a directory with an `index.html`, then add a card to `index.html` — copy an existing
 `<a class="k">` block and change the href, title, blurb and foot. Chips are optional:
 `chip-ext` for something hosted elsewhere, `chip-gate` for a passphrase-gated page.
+
+Every nested page links back to the landing page (team convention — KB
+`methods/static-data-apps.md` § "Nested pages link back home"). A plain page carries the link
+itself, with a **relative** href (`../`, never `/` — project sites live under `/<repo>/`). The
+gated artefacts don't need it in their source: `gate.js` injects a fixed back-to-home pill into
+the decrypted document at display time, so it survives republishes without a re-render and
+appears even when a cached passphrase skips the gate page.
 
 That shared edit to `index.html` is the deliberate trade-off for having no build system. The
 sibling repo `ds-storm-impact-harmonisation` discovers products by globbing `page.toml`

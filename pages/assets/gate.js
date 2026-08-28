@@ -59,10 +59,39 @@ async function fetchEnvelope() {
   return res.arrayBuffer();
 }
 
+// Back-to-home link, injected into the decrypted document (team convention: every nested page
+// links back to the landing page — KB methods/static-data-apps.md § "Nested pages link back
+// home"). Injected here rather than at render/encrypt time so it survives every republish
+// without a re-render, and appears even when a cached passphrase skips the gate page entirely.
+// Fixed-position because the deck is reveal.js, which layers the whole viewport — a link in
+// normal document flow would be painted over. Styles are inline because the decrypted artefacts
+// are standalone documents that do not load site.css (colors mirror its --b6/--b05/--b1).
+const HOME_URL = new URL("..", import.meta.url); // assets/ sits directly under the site root
+const HOME_LINK = `
+<style>
+  .gie-home-link { position:fixed; top:10px; left:10px; z-index:1000; padding:6px 12px;
+    font:500 13px/1 'Roboto',system-ui,sans-serif; color:#1e795f; background:#e9f5f1;
+    border:1px solid #d4eae4; border-radius:4px; text-decoration:none; }
+  .gie-home-link:hover { background:#d4eae4; }
+  @media print { .gie-home-link { display:none; } }
+</style>
+<a class="gie-home-link" href="${HOME_URL}">← Geospatial impact estimates</a>`;
+
+function withHomeLink(html) {
+  // First <body ...> tag only; the artefacts are complete HTML documents (encrypt_page.py
+  // round-trips them), so a missing body tag means a malformed document — refuse rather than
+  // display it quietly without the link.
+  const injected = html.replace(/<body[^>]*>/i, (tag) => tag + HOME_LINK);
+  if (injected === html) {
+    throw new GateError("load", "Decrypted document has no <body> tag; refusing to display it.");
+  }
+  return injected;
+}
+
 function render(html) {
   // Point of no return: this tears down the current document, including this script.
   document.open();
-  document.write(html);
+  document.write(withHomeLink(html));
   document.close();
 }
 
