@@ -134,7 +134,10 @@ table.act a { color:var(--b6); }
        <em>public</em> is when it appeared in the open catalog — the day it became available.
        Delivery lag runs from the event date Vantor records on the collection to that public
        date. A dash means the catalog carries no usable event date, or no post-event imagery
-       has been released yet.</p>
+       has been released yet. The public date comes from catalog metadata; the daily tracker
+       also records when it first <em>observes</em> each image
+       (<a href="seen.json"><code>seen.json</code></a>), independent of that metadata — a ◆
+       marks activations where the two disagree.</p>
     <div class="tblwrap">
       <table class="act">
         <thead><tr>
@@ -244,6 +247,10 @@ table.act a { color:var(--b6); }
         (a.first_post_published
           ? "<br>first post-event image public " + esc(a.first_post_published) +
             (a.pub_lag_days !== null ? " (" + a.pub_lag_days + " d after event)" : "")
+          : "") +
+        (a.first_post_seen && a.first_post_seen !== a.first_post_published
+          ? "<br>first observed in catalog " + esc(a.first_post_seen) +
+            (a.first_post_seen_source === "observed" ? " (tracker observation)" : "")
           : "");
 
       [["pre", a.n_pre], ["post", a.n_post]].forEach(function (seg) {
@@ -285,7 +292,10 @@ table.act a { color:var(--b6); }
         '<td class="num">' + a.n_post + "</td>" +
         '<td class="num">' + a.n_items + "</td>" +
         "<td>" + esc(fmtDate(a.first_post_acquired)) + "</td>" +
-        "<td>" + esc(fmtDate(a.first_post_published)) + "</td>" +
+        "<td>" + esc(fmtDate(a.first_post_published)) +
+          (a.first_post_seen && a.first_post_seen !== a.first_post_published
+            ? ' <span class="qflag" title="The daily tracker first observed a post-event image for this activation on ' +
+              esc(a.first_post_seen) + ' — differs from the catalog metadata date shown">◆</span>' : "") + "</td>" +
         '<td class="num">' + (a.pub_lag_days === null ? "—" : a.pub_lag_days + " d") + "</td>" +
         "<td>" + esc(fmtDate(a.last_published)) + "</td>" +
         "<td>" + esc(a.satellites.join(", ")) + "</td>" +

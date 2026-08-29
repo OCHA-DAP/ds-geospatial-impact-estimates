@@ -18,7 +18,8 @@ pages/
   vantor-activations/             -> /vantor-activations/  (tracker page + data.json snapshot)
 ```
 
-One exception to "nothing is generated": `vantor-activations/data.json` is rebuilt daily by
+One exception to "nothing is generated": `vantor-activations/data.json` (and its first-seen
+ledger `seen.json`, which makes publication dates independently observable) is rebuilt daily by
 `.github/workflows/update-vantor-tracker.yml` (running `scripts/vantor_activation_tracker.py`),
 which commits to `v1` only when the Vantor catalog actually changed and then dispatches the
 deploy. The page itself is still static and checks its snapshot against the live catalog in the

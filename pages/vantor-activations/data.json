@@ -1,11 +1,11 @@
 {
  "catalog_url": "https://vantor-opendata.s3.amazonaws.com/events/catalog.json",
- "checked_at": "2026-08-29T02:13:59Z",
+ "checked_at": "2026-08-29T03:12:30Z",
  "totals": {
   "activations": 10,
-  "images": 182,
-  "pre": 61,
-  "post": 121
+  "images": 180,
+  "pre": 60,
+  "post": 120
  },
  "activations": [
   {
@@ -24,6 +24,9 @@
    "first_post_published": "2026-08-27",
    "acq_lag_days": 1,
    "pub_lag_days": 1,
+   "first_post_seen": "2026-08-27",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": 1,
    "satellites": [
     "GE01",
     "LG01",
@@ -56,6 +59,9 @@
    "first_post_published": "2026-08-21",
    "acq_lag_days": 4,
    "pub_lag_days": 7,
+   "first_post_seen": "2026-08-21",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": 7,
    "satellites": [
     "GE01",
     "LG01",
@@ -92,6 +98,9 @@
    "first_post_published": "2026-08-11",
    "acq_lag_days": 0,
    "pub_lag_days": 1,
+   "first_post_seen": "2026-08-11",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": 1,
    "satellites": [
     "GE01",
     "LG01",
@@ -126,6 +135,9 @@
    "first_post_published": "2026-08-04",
    "acq_lag_days": 2,
    "pub_lag_days": 3,
+   "first_post_seen": "2026-08-04",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": 3,
    "satellites": [
     "GE01",
     "LG01",
@@ -158,6 +170,9 @@
    "first_post_published": "2026-08-04",
    "acq_lag_days": 9,
    "pub_lag_days": 12,
+   "first_post_seen": "2026-08-04",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": 12,
    "satellites": [
     "LG01",
     "LG03",
@@ -190,6 +205,9 @@
    "first_post_published": null,
    "acq_lag_days": null,
    "pub_lag_days": null,
+   "first_post_seen": null,
+   "first_post_seen_source": null,
+   "seen_lag_days": null,
    "satellites": [
     "LG01",
     "LG02",
@@ -211,9 +229,9 @@
    "event_date": "2026-06-24",
    "event_date_raw": "2026-06-24T22:04:33Z",
    "event_date_quality": "ok",
-   "n_items": 49,
+   "n_items": 48,
    "n_pre": 10,
-   "n_post": 39,
+   "n_post": 38,
    "n_phase_unknown": 0,
    "first_published": "2026-06-25",
    "last_published": "2026-06-30",
@@ -221,6 +239,9 @@
    "first_post_published": "2026-06-25",
    "acq_lag_days": 1,
    "pub_lag_days": 1,
+   "first_post_seen": "2026-06-25",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": 1,
    "satellites": [
     "GE01",
     "LG01",
@@ -247,8 +268,8 @@
    "event_date": "2026-04-24",
    "event_date_raw": "2026-04-24:T00.00.00Z",
    "event_date_quality": "malformed",
-   "n_items": 19,
-   "n_pre": 19,
+   "n_items": 18,
+   "n_pre": 18,
    "n_post": 0,
    "n_phase_unknown": 0,
    "first_published": "2026-05-29",
@@ -257,6 +278,9 @@
    "first_post_published": null,
    "acq_lag_days": null,
    "pub_lag_days": null,
+   "first_post_seen": null,
+   "first_post_seen_source": null,
+   "seen_lag_days": null,
    "satellites": [
     "LG01",
     "LG02",
@@ -292,6 +316,9 @@
    "first_post_published": "2026-02-17",
    "acq_lag_days": null,
    "pub_lag_days": null,
+   "first_post_seen": "2026-02-17",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": null,
    "satellites": [
     "WV02"
    ],
@@ -320,6 +347,9 @@
    "first_post_published": "2026-02-12",
    "acq_lag_days": null,
    "pub_lag_days": null,
+   "first_post_seen": "2026-02-12",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": null,
    "satellites": [
     "LG02",
     "LG03",
