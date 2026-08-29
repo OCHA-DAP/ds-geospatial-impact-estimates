@@ -1,0 +1,59 @@
+name: Update Vantor activation tracker
+
+# Rebuilds pages/vantor-activations/data.json from the Vantor Open Data STAC catalog
+# and commits it when the content changed — i.e. when Vantor published or removed
+# imagery. Daily cadence matches the precedent set by opengeos/maxar-open-data
+# (cron "25 3 * * *") and GeoLibre's mirror sync ("17 7 * * *"); the tracker page
+# additionally verifies the snapshot against the live catalog client-side on every
+# load, so a missed run is visible rather than silent.
+#
+# The script is stdlib-only on purpose: no uv, no pip, no credentials — the same
+# no-unrelated-dependency rule the deploy workflow follows.
+#
+# The final step dispatches deploy-pages.yml explicitly because pushes made with
+# GITHUB_TOKEN do not trigger other workflows' push events.
+
+on:
+  schedule:
+    - cron: "43 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: vantor-tracker
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v1
+
+      - name: Rebuild snapshot
+        run: python3 scripts/vantor_activation_tracker.py
+
+      - name: Commit if changed
+        id: commit
+        run: |
+          if git diff --quiet -- pages/vantor-activations/data.json; then
+            echo "No content change — nothing to commit."
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add pages/vantor-activations/data.json
+            git commit -m "vantor tracker: refresh activation snapshot"
+            git push origin v1
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy pages
+        if: steps.commit.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-pages.yml --ref v1 --repo "$GITHUB_REPOSITORY"

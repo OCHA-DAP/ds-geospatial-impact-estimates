@@ -1,0 +1,342 @@
+{
+ "catalog_url": "https://vantor-opendata.s3.amazonaws.com/events/catalog.json",
+ "checked_at": "2026-08-29T02:13:59Z",
+ "totals": {
+  "activations": 10,
+  "images": 182,
+  "pre": 61,
+  "post": 121
+ },
+ "activations": [
+  {
+   "id": "Nepal-Flooding-Aug-2026",
+   "title": "Nepal-Flooding-Aug-2026",
+   "event_date": "2026-08-26",
+   "event_date_raw": "2026-08-26T03:30:00Z",
+   "event_date_quality": "ok",
+   "n_items": 13,
+   "n_pre": 4,
+   "n_post": 9,
+   "n_phase_unknown": 0,
+   "first_published": "2026-08-27",
+   "last_published": "2026-08-28",
+   "first_post_acquired": "2026-08-27",
+   "first_post_published": "2026-08-27",
+   "acq_lag_days": 1,
+   "pub_lag_days": 1,
+   "satellites": [
+    "GE01",
+    "LG01",
+    "LG06",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    84.35541227950617,
+    26.924453383659284,
+    85.82023439067271,
+    29.03598409372348
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Nepal-Flooding-Aug-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Nepal-Flooding-Aug-2026/collection.json"
+  },
+  {
+   "id": "Indonesia-Earthquakes-Aug-2026",
+   "title": "Indonesia-Earthquakes-Aug-2026",
+   "event_date": "2026-08-14",
+   "event_date_raw": "2026-08-14T21:58:21Z",
+   "event_date_quality": "ok",
+   "n_items": 48,
+   "n_pre": 6,
+   "n_post": 42,
+   "n_phase_unknown": 0,
+   "first_published": "2026-08-17",
+   "last_published": "2026-08-28",
+   "first_post_acquired": "2026-08-18",
+   "first_post_published": "2026-08-21",
+   "acq_lag_days": 4,
+   "pub_lag_days": 7,
+   "satellites": [
+    "GE01",
+    "LG01",
+    "LG02",
+    "LG03",
+    "LG04",
+    "LG05",
+    "LG06",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    96.24410512328511,
+    -9.033885939663511,
+    122.67700002080595,
+    5.0338969951749295
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Indonesia-Earthquakes-Aug-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Indonesia-Earthquakes-Aug-2026/collection.json"
+  },
+  {
+   "id": "Colombia-Earthquake-Aug-2026",
+   "title": "Colombia-Earthquake-Aug-2026",
+   "event_date": "2026-08-10",
+   "event_date_raw": "2026-08-10T12:34:28Z",
+   "event_date_quality": "ok",
+   "n_items": 21,
+   "n_pre": 4,
+   "n_post": 17,
+   "n_phase_unknown": 0,
+   "first_published": "2026-08-11",
+   "last_published": "2026-08-19",
+   "first_post_acquired": "2026-08-10",
+   "first_post_published": "2026-08-11",
+   "acq_lag_days": 0,
+   "pub_lag_days": 1,
+   "satellites": [
+    "GE01",
+    "LG01",
+    "LG03",
+    "LG04",
+    "LG05",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    -76.71986229830237,
+    3.1350390457406383,
+    -75.38716427547386,
+    5.221007197662272
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Colombia-Earthquake-Aug-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Colombia-Earthquake-Aug-2026/collection.json"
+  },
+  {
+   "id": "Spokane-Washington-Wildfire-Aug-2026",
+   "title": "Spokane-Washington-Wildfire-Aug-2026",
+   "event_date": "2026-08-01",
+   "event_date_raw": "2026-08-01T19:00:00Z",
+   "event_date_quality": "ok",
+   "n_items": 9,
+   "n_pre": 2,
+   "n_post": 7,
+   "n_phase_unknown": 0,
+   "first_published": "2026-08-04",
+   "last_published": "2026-08-08",
+   "first_post_acquired": "2026-08-03",
+   "first_post_published": "2026-08-04",
+   "acq_lag_days": 2,
+   "pub_lag_days": 3,
+   "satellites": [
+    "GE01",
+    "LG01",
+    "LG02",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    -117.6213520387283,
+    47.44127015106578,
+    -117.01393391074764,
+    48.044120923255726
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Spokane-Washington-Wildfire-Aug-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Spokane-Washington-Wildfire-Aug-2026/collection.json"
+  },
+  {
+   "id": "Bordeaux-France-Wildfire-July-2026",
+   "title": "Bordeaux-France-Wildfire-July-2026",
+   "event_date": "2026-07-23",
+   "event_date_raw": "2026-07-23T00:00:00Z",
+   "event_date_quality": "ok",
+   "n_items": 8,
+   "n_pre": 5,
+   "n_post": 3,
+   "n_phase_unknown": 0,
+   "first_published": "2026-08-04",
+   "last_published": "2026-08-04",
+   "first_post_acquired": "2026-08-01",
+   "first_post_published": "2026-08-04",
+   "acq_lag_days": 9,
+   "pub_lag_days": 12,
+   "satellites": [
+    "LG01",
+    "LG03",
+    "LG04",
+    "LG05",
+    "LG06"
+   ],
+   "bbox": [
+    -1.2742225653789223,
+    43.49679588933845,
+    -0.6395789564247755,
+    45.13192945640946
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Bordeaux-France-Wildfire-July-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Bordeaux-France-Wildfire-July-2026/collection.json"
+  },
+  {
+   "id": "Marianas-Typhoon-Bavi-Jul-2026",
+   "title": "Marianas-Typhoon-Bavi-Jul-2026",
+   "event_date": "2026-07-06",
+   "event_date_raw": "2026-07-06:00:00:00Z",
+   "event_date_quality": "malformed",
+   "n_items": 6,
+   "n_pre": 6,
+   "n_post": 0,
+   "n_phase_unknown": 0,
+   "first_published": "2026-07-03",
+   "last_published": "2026-07-03",
+   "first_post_acquired": null,
+   "first_post_published": null,
+   "acq_lag_days": null,
+   "pub_lag_days": null,
+   "satellites": [
+    "LG01",
+    "LG02",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    144.56106591096918,
+    12.97700911916687,
+    145.83083131046354,
+    15.518327558196063
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Marianas-Typhoon-Bavi-Jul-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Marianas-Typhoon-Bavi-Jul-2026/collection.json"
+  },
+  {
+   "id": "Venezuela-Earthquake-Jun-2026",
+   "title": "Venezuela-Earthquake-Jun-2026",
+   "event_date": "2026-06-24",
+   "event_date_raw": "2026-06-24T22:04:33Z",
+   "event_date_quality": "ok",
+   "n_items": 49,
+   "n_pre": 10,
+   "n_post": 39,
+   "n_phase_unknown": 0,
+   "first_published": "2026-06-25",
+   "last_published": "2026-06-30",
+   "first_post_acquired": "2026-06-25",
+   "first_post_published": "2026-06-25",
+   "acq_lag_days": 1,
+   "pub_lag_days": 1,
+   "satellites": [
+    "GE01",
+    "LG01",
+    "LG02",
+    "LG03",
+    "LG04",
+    "LG05",
+    "LG06",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    -68.87645983302886,
+    9.485856990655082,
+    -66.43490520353038,
+    10.802938794903389
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Venezuela-Earthquake-Jun-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Venezuela-Earthquake-Jun-2026/collection.json"
+  },
+  {
+   "id": "DRC-Ebola-May-2026",
+   "title": "DRC-Ebola-May-2026",
+   "event_date": "2026-04-24",
+   "event_date_raw": "2026-04-24:T00.00.00Z",
+   "event_date_quality": "malformed",
+   "n_items": 19,
+   "n_pre": 19,
+   "n_post": 0,
+   "n_phase_unknown": 0,
+   "first_published": "2026-05-29",
+   "last_published": "2026-06-04",
+   "first_post_acquired": null,
+   "first_post_published": null,
+   "acq_lag_days": null,
+   "pub_lag_days": null,
+   "satellites": [
+    "LG01",
+    "LG02",
+    "LG03",
+    "LG04",
+    "LG05",
+    "LG06",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    29.55773507665809,
+    1.244999897820449,
+    30.761984692277064,
+    2.5335525403891457
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/DRC-Ebola-May-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/DRC-Ebola-May-2026/collection.json"
+  },
+  {
+   "id": "Spain-Portugal-Flooding-Feb-2026",
+   "title": "Spain-Portugal-Flooding-Feb-2026",
+   "event_date": null,
+   "event_date_raw": null,
+   "event_date_quality": "missing",
+   "n_items": 1,
+   "n_pre": 0,
+   "n_post": 1,
+   "n_phase_unknown": 0,
+   "first_published": "2026-02-17",
+   "last_published": "2026-02-17",
+   "first_post_acquired": "2026-02-15",
+   "first_post_published": "2026-02-17",
+   "acq_lag_days": null,
+   "pub_lag_days": null,
+   "satellites": [
+    "WV02"
+   ],
+   "bbox": [
+    -5.356694321354673,
+    36.64943761047809,
+    -4.957435645240557,
+    36.85502905263383
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Spain-Portugal-Flooding-Feb-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Spain-Portugal-Flooding-Feb-2026/collection.json"
+  },
+  {
+   "id": "Typhoon-Gezani-Feb-2026",
+   "title": "Typhoon-Gezani-Feb-2026",
+   "event_date": null,
+   "event_date_raw": null,
+   "event_date_quality": "missing",
+   "n_items": 8,
+   "n_pre": 5,
+   "n_post": 3,
+   "n_phase_unknown": 0,
+   "first_published": "2026-02-11",
+   "last_published": "2026-02-16",
+   "first_post_acquired": "2026-02-08",
+   "first_post_published": "2026-02-12",
+   "acq_lag_days": null,
+   "pub_lag_days": null,
+   "satellites": [
+    "LG02",
+    "LG03",
+    "LG04",
+    "LG05",
+    "LG06",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    35.3204773,
+    -24.51409782485032,
+    49.5000011,
+    -17.5
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Typhoon-Gezani-Feb-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Typhoon-Gezani-Feb-2026/collection.json"
+  }
+ ]
+}
