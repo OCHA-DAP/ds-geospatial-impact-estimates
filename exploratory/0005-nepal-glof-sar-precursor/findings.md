@@ -23,6 +23,9 @@ that face in the weeks before?
 - `analysis.py`: seasonal climatology z (each 2026 acquisition vs prior years
   within ±12 days of the same day-of-year), source-minus-controls differencing,
   scar-pixel statistics; figures to `figs/` (regenerate by running).
+- `offset_tracking.py`: speckle offset tracking (windowed phase cross-correlation,
+  640 m windows, 1/10-px subpixel) on the last two pre-event GRD pairs per morning
+  orbit, with one-cycle-earlier reference pairs as the noise floor.
 - `falsealarms_extract.py` + `falsealarms_analysis.py`: the prospective test —
   45 'Langtang-like' faces from GLIMS (0.5–15 km², mean elev ≥ 4 800 m, GLO30
   mean slope ≥ 25°, deduped per glac_id) across 84.9–86.3°E / 27.9–28.7°N, same
@@ -72,6 +75,20 @@ Amplitude data flagged *which face* was anomalous, not *which 1 km² would fail*
 and showed no terminal acceleration in the last pre-event pass (08-24, 39 h
 before, z_d ≈ −1.5). Detecting the failing block itself would need InSAR
 coherence/offset tracking (SLC — outside GEE) or higher-resolution tasking.
+
+**3b. No detectable pre-failure sliding either (offset tracking).** Speckle
+tracking on the final pre-event pairs (orbit 19: 08-12→08-24, ending 39 h before
+collapse; orbit 121: 08-07→08-19) against one-cycle-earlier reference pairs:
+whole chips carry a 2–6 m common co-registration offset between GRD products
+(reference pairs are *worse* than final pairs, confirming it is systematic, not
+motion), and after removing the surround's median shift vector the face's
+differential displacement is median 1.4 m / p90 4.1 m in the final pairs —
+at or below the reference pairs' own noise (median 2.0 m / p90 4.2 m).
+Correlation held on 220–221 of 221 face windows, so this is a measured null,
+not a failure to measure: **no sliding above ~2 m per 12 days at 640 m window
+scale, up to 39 h out.** Consistent with a melt-driven sudden detachment rather
+than weeks of slow creep — and more support for the melt proxy over motion
+methods for this failure type (fig `figs/offset_tracking.png`).
 
 **4. The false-alarm test: ~1.3 % of face-seasons fire; the collapse is caught.**
 Replaying the detector prospectively — leave-one-out climatology per face ×
