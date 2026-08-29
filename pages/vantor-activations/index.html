@@ -130,15 +130,17 @@ table.act a { color:var(--b6); }
 
   <section id="table-sec" hidden>
     <h2>Activation detail</h2>
-    <p class="sub">Delivery lag is measured from the event date Vantor records on the collection
-       to the first <em>post-event</em> image being published. A dash means the catalog carries
-       no usable event date, or no post-event imagery has been released yet.</p>
+    <p class="sub">For the first post-event image, <em>acquired</em> is the satellite pass and
+       <em>public</em> is when it appeared in the open catalog — the day it became available.
+       Delivery lag runs from the event date Vantor records on the collection to that public
+       date. A dash means the catalog carries no usable event date, or no post-event imagery
+       has been released yet.</p>
     <div class="tblwrap">
       <table class="act">
         <thead><tr>
           <th>Activation</th><th>Event date</th>
           <th class="num">Pre</th><th class="num">Post</th><th class="num">Total</th>
-          <th>First post-event image</th><th class="num">Lag</th>
+          <th>First post acquired</th><th>First post public</th><th class="num">Lag</th>
           <th>Last release</th><th>Satellites</th><th>Catalog</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
@@ -238,8 +240,11 @@ table.act a { color:var(--b6); }
       var tipHtml = '<div class="tt">' + esc(a.id) + "</div>" +
         a.n_pre + " pre-event · " + a.n_post + " post-event" +
         (a.n_phase_unknown ? " · " + a.n_phase_unknown + " unphased" : "") +
-        "<br>last release " + esc(fmtDate(a.last_published)) +
-        (a.pub_lag_days !== null ? "<br>first post-event image public " + a.pub_lag_days + " d after event" : "");
+        "<br>releases " + esc(fmtDate(a.first_published)) + " → " + esc(fmtDate(a.last_published)) +
+        (a.first_post_published
+          ? "<br>first post-event image public " + esc(a.first_post_published) +
+            (a.pub_lag_days !== null ? " (" + a.pub_lag_days + " d after event)" : "")
+          : "");
 
       [["pre", a.n_pre], ["post", a.n_post]].forEach(function (seg) {
         if (!seg[1]) return;
@@ -279,6 +284,7 @@ table.act a { color:var(--b6); }
         '<td class="num">' + a.n_pre + "</td>" +
         '<td class="num">' + a.n_post + "</td>" +
         '<td class="num">' + a.n_items + "</td>" +
+        "<td>" + esc(fmtDate(a.first_post_acquired)) + "</td>" +
         "<td>" + esc(fmtDate(a.first_post_published)) + "</td>" +
         '<td class="num">' + (a.pub_lag_days === null ? "—" : a.pub_lag_days + " d") + "</td>" +
         "<td>" + esc(fmtDate(a.last_published)) + "</td>" +
