@@ -1,0 +1,726 @@
+{
+ "Bordeaux-France-Wildfire-July-2026/B110002101F01500": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Bordeaux-France-Wildfire-July-2026/B13000110028C410": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Bordeaux-France-Wildfire-July-2026/B1400011003A5A10": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Bordeaux-France-Wildfire-July-2026/B140001100C98210": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Bordeaux-France-Wildfire-July-2026/B150002101AF5610": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Bordeaux-France-Wildfire-July-2026/B1600011019EED10": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Bordeaux-France-Wildfire-July-2026/B160001101B07110": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Bordeaux-France-Wildfire-July-2026/B160001101B0A210": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B0300011004DF110": {
+  "seen": "2026-08-11",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B0300011004DF310": {
+  "seen": "2026-08-11",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B0300011007CD410": {
+  "seen": "2026-08-11",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B0300011009E4B10": {
+  "seen": "2026-08-11",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B0300011009E4D10": {
+  "seen": "2026-08-11",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B030001100A12710": {
+  "seen": "2026-08-12",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B0400011006AFC10": {
+  "seen": "2026-08-11",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B0400011006AFD10": {
+  "seen": "2026-08-11",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B0400011006CDE10": {
+  "seen": "2026-08-12",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B050001100497810": {
+  "seen": "2026-08-11",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B0500011004EF210": {
+  "seen": "2026-08-13",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B050001100598210": {
+  "seen": "2026-08-19",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B11000110100E710": {
+  "seen": "2026-08-12",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B11000110100E810": {
+  "seen": "2026-08-12",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B110001101025510": {
+  "seen": "2026-08-13",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B110001101025710": {
+  "seen": "2026-08-13",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B1100011010A6410": {
+  "seen": "2026-08-19",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B130001100FA3F10": {
+  "seen": "2026-08-15",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B130001100FA4010": {
+  "seen": "2026-08-15",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B140001100EE0910": {
+  "seen": "2026-08-13",
+  "source": "metadata"
+ },
+ "Colombia-Earthquake-Aug-2026/B1500011019C7E10": {
+  "seen": "2026-08-11",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/10300101253EF900": {
+  "seen": "2026-05-30",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/1030010129740200": {
+  "seen": "2026-05-29",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/1030010129A7DF00": {
+  "seen": "2026-05-29",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/1030010129B21800": {
+  "seen": "2026-05-29",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/10400100A9296B00": {
+  "seen": "2026-06-04",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/10400100B24B2600": {
+  "seen": "2026-05-30",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/10400100B3851600": {
+  "seen": "2026-05-31",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/10400100B394EB00": {
+  "seen": "2026-05-30",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/10400100B4483A00": {
+  "seen": "2026-05-30",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/10400100B7045B00": {
+  "seen": "2026-05-30",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/B1100011008C4C10": {
+  "seen": "2026-05-29",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/B110001102C59B00": {
+  "seen": "2026-05-31",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/B120001103163E00": {
+  "seen": "2026-05-30",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/B130001100551B10": {
+  "seen": "2026-05-30",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/B1400011008A0910": {
+  "seen": "2026-05-29",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/B140001101EE6600": {
+  "seen": "2026-05-31",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/B1500011013FC910": {
+  "seen": "2026-05-30",
+  "source": "metadata"
+ },
+ "DRC-Ebola-May-2026/B16000110143CE00": {
+  "seen": "2026-05-30",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/103001011748BA00": {
+  "seen": "2026-08-19",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/103001012628F900": {
+  "seen": "2026-08-17",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/10300101297FF100": {
+  "seen": "2026-08-17",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/1030010129CB7B00": {
+  "seen": "2026-08-17",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/10400100B90B7700": {
+  "seen": "2026-08-17",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B030001100BE1D10": {
+  "seen": "2026-08-22",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B030001100BE1F10": {
+  "seen": "2026-08-22",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B030001100BE2210": {
+  "seen": "2026-08-22",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B030001100C6AD10": {
+  "seen": "2026-08-25",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B030001100C6B710": {
+  "seen": "2026-08-25",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B0400011007EEC10": {
+  "seen": "2026-08-22",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B0400011007EED10": {
+  "seen": "2026-08-22",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B04000110080F510": {
+  "seen": "2026-08-23",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B040001100880F10": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B04000110089BC10": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B04000110089C610": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B04000110089D610": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B04000110089F210": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B04000110089F310": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B050001100601110": {
+  "seen": "2026-08-24",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B050001100632D10": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B1100011009D1610": {
+  "seen": "2026-08-17",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B1100011010C7E10": {
+  "seen": "2026-08-21",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B1100011010C9710": {
+  "seen": "2026-08-21",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B110001101137E10": {
+  "seen": "2026-08-26",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B1200011010AC310": {
+  "seen": "2026-08-21",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B12000110111CF10": {
+  "seen": "2026-08-24",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B12000110111F110": {
+  "seen": "2026-08-24",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B12000110111F310": {
+  "seen": "2026-08-24",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B13000110106A510": {
+  "seen": "2026-08-22",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B13000110106DF10": {
+  "seen": "2026-08-22",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B130001101088010": {
+  "seen": "2026-08-23",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B130001101088310": {
+  "seen": "2026-08-23",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B1300011010A1610": {
+  "seen": "2026-08-24",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B1300011010A1710": {
+  "seen": "2026-08-24",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B13000110110C810": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B13000110110C910": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B13000110110CA10": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B140001100F3E110": {
+  "seen": "2026-08-21",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B140001100F9B410": {
+  "seen": "2026-08-22",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B140001100FB4410": {
+  "seen": "2026-08-23",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B150001101CDA510": {
+  "seen": "2026-08-21",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B150001101CDBF10": {
+  "seen": "2026-08-21",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B150001101D44C10": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B150001101D45210": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B150001101D53710": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B160001101C97C10": {
+  "seen": "2026-08-26",
+  "source": "metadata"
+ },
+ "Indonesia-Earthquakes-Aug-2026/B160001101C97D10": {
+  "seen": "2026-08-26",
+  "source": "metadata"
+ },
+ "Marianas-Typhoon-Bavi-Jul-2026/10300101279CA500": {
+  "seen": "2026-07-03",
+  "source": "metadata"
+ },
+ "Marianas-Typhoon-Bavi-Jul-2026/1030010128C3B600": {
+  "seen": "2026-07-03",
+  "source": "metadata"
+ },
+ "Marianas-Typhoon-Bavi-Jul-2026/10400100B6AEE100": {
+  "seen": "2026-07-03",
+  "source": "metadata"
+ },
+ "Marianas-Typhoon-Bavi-Jul-2026/B04000110015C010": {
+  "seen": "2026-07-03",
+  "source": "metadata"
+ },
+ "Marianas-Typhoon-Bavi-Jul-2026/B110001100926810": {
+  "seen": "2026-07-03",
+  "source": "metadata"
+ },
+ "Marianas-Typhoon-Bavi-Jul-2026/B1200011008D3910": {
+  "seen": "2026-07-03",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/10300100C86CED00": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/10300100FCB83600": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/10500100364E8400": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B030001100CF1110": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B030001100CF1210": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B030001100CF1310": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B030001100CF1610": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B040001100881410": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B040001100881610": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B040001100881710": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B040001100882F10": {
+  "seen": "2026-08-27",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B110001101165110": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B160001100CDB210": {
+  "seen": "2026-08-28",
+  "source": "metadata"
+ },
+ "Spain-Portugal-Flooding-Feb-2026/103001012263FC00": {
+  "seen": "2026-02-17",
+  "source": "metadata"
+ },
+ "Spokane-Washington-Wildfire-Aug-2026/B0300011008F4310": {
+  "seen": "2026-08-07",
+  "source": "metadata"
+ },
+ "Spokane-Washington-Wildfire-Aug-2026/B040001100002410": {
+  "seen": "2026-08-05",
+  "source": "metadata"
+ },
+ "Spokane-Washington-Wildfire-Aug-2026/B040001100002710": {
+  "seen": "2026-08-05",
+  "source": "metadata"
+ },
+ "Spokane-Washington-Wildfire-Aug-2026/B0500011003DB010": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Spokane-Washington-Wildfire-Aug-2026/B050001100414A10": {
+  "seen": "2026-08-05",
+  "source": "metadata"
+ },
+ "Spokane-Washington-Wildfire-Aug-2026/B110001100F60310": {
+  "seen": "2026-08-04",
+  "source": "metadata"
+ },
+ "Spokane-Washington-Wildfire-Aug-2026/B110001100F63410": {
+  "seen": "2026-08-05",
+  "source": "metadata"
+ },
+ "Spokane-Washington-Wildfire-Aug-2026/B120001100FCD710": {
+  "seen": "2026-08-08",
+  "source": "metadata"
+ },
+ "Spokane-Washington-Wildfire-Aug-2026/B120001100FCD810": {
+  "seen": "2026-08-08",
+  "source": "metadata"
+ },
+ "Typhoon-Gezani-Feb-2026/1030010122291A00": {
+  "seen": "2026-02-12",
+  "source": "metadata"
+ },
+ "Typhoon-Gezani-Feb-2026/10400100A4305600": {
+  "seen": "2026-02-16",
+  "source": "metadata"
+ },
+ "Typhoon-Gezani-Feb-2026/B120001102F60700": {
+  "seen": "2026-02-16",
+  "source": "metadata"
+ },
+ "Typhoon-Gezani-Feb-2026/B13000110002C910": {
+  "seen": "2026-02-11",
+  "source": "metadata"
+ },
+ "Typhoon-Gezani-Feb-2026/B140001100103610": {
+  "seen": "2026-02-16",
+  "source": "metadata"
+ },
+ "Typhoon-Gezani-Feb-2026/B150001101A36400": {
+  "seen": "2026-02-11",
+  "source": "metadata"
+ },
+ "Typhoon-Gezani-Feb-2026/B150001101B05900": {
+  "seen": "2026-02-11",
+  "source": "metadata"
+ },
+ "Typhoon-Gezani-Feb-2026/B160001100D2AF10": {
+  "seen": "2026-02-12",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/10400100B979DD00": {
+  "seen": "2026-06-26",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B0300011000DF210": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B0300011000DF410": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B0300011000DF510": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B0300011000DF610": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B0300011000DFB10": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B0300011000DFC10": {
+  "seen": "2026-06-28",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B0300011000DFE10": {
+  "seen": "2026-06-28",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B0300011000E1810": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B030001100114010": {
+  "seen": "2026-06-28",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B040001100074D10": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B040001100075510": {
+  "seen": "2026-06-26",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B040001100075610": {
+  "seen": "2026-06-26",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B050001100041D10": {
+  "seen": "2026-06-28",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B05000110006BA10": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B05000110006BD10": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B110001100029010": {
+  "seen": "2026-06-25",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B110001100BB2210": {
+  "seen": "2026-06-26",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B110001100BB2310": {
+  "seen": "2026-06-25",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B110001100BB2510": {
+  "seen": "2026-06-26",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B120001100513B10": {
+  "seen": "2026-06-25",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B120001100BECE10": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B120001100BED010": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B130001101BE2A00": {
+  "seen": "2026-06-25",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B130001101BF9600": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B1400011000BDF10": {
+  "seen": "2026-06-25",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B140001100B5C710": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B140001100B5C810": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B140001100B5CA10": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B150001101008110": {
+  "seen": "2026-06-25",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B150001101015C10": {
+  "seen": "2026-06-25",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B15000110186C610": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B15000110186C710": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B15000110186C810": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B150001101890A10": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B150001101890B10": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B150001101890C10": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B150001101890E10": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B150001101891610": {
+  "seen": "2026-06-29",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B1500011018A1110": {
+  "seen": "2026-06-30",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B160001100FD1910": {
+  "seen": "2026-06-25",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B160001100FF4510": {
+  "seen": "2026-06-25",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B16000110179D310": {
+  "seen": "2026-06-26",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B16000110179D410": {
+  "seen": "2026-06-26",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B1600011017A8610": {
+  "seen": "2026-06-27",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B1600011017D8B10": {
+  "seen": "2026-06-30",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B1600011017D8D10": {
+  "seen": "2026-06-30",
+  "source": "metadata"
+ },
+ "Venezuela-Earthquake-Jun-2026/B1600011017D9010": {
+  "seen": "2026-06-30",
+  "source": "metadata"
+ },
+ "_meta": {
+  "bootstrapped": "2026-08-29",
+  "note": "First date each item id was seen in the catalog by the daily tracker. source=observed is a real observation; source=metadata entries predate the ledger and were seeded from the item's own published stamp; source=assumed had no published stamp either."
+ }
+}

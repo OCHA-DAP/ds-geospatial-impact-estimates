@@ -40,13 +40,13 @@ jobs:
       - name: Commit if changed
         id: commit
         run: |
-          if git diff --quiet -- pages/vantor-activations/data.json; then
+          if git diff --quiet -- pages/vantor-activations/; then
             echo "No content change — nothing to commit."
             echo "pushed=false" >> "$GITHUB_OUTPUT"
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add pages/vantor-activations/data.json
+            git add pages/vantor-activations/data.json pages/vantor-activations/seen.json
             git commit -m "vantor tracker: refresh activation snapshot"
             git push origin v1
             echo "pushed=true" >> "$GITHUB_OUTPUT"
