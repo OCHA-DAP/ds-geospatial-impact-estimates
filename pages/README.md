@@ -15,7 +15,14 @@ pages/
   assets/gate.js                  the passphrase form + back-to-home link injection
   slides/damage-evaluation/       -> /slides/damage-evaluation/
   manuscript/                     -> /manuscript/
+  vantor-activations/             -> /vantor-activations/  (tracker page + data.json snapshot)
 ```
+
+One exception to "nothing is generated": `vantor-activations/data.json` is rebuilt daily by
+`.github/workflows/update-vantor-tracker.yml` (running `scripts/vantor_activation_tracker.py`),
+which commits to `v1` only when the Vantor catalog actually changed and then dispatches the
+deploy. The page itself is still static and checks its snapshot against the live catalog in the
+browser, so a stalled cron shows up as a drift banner rather than silently stale numbers.
 
 ## Adding a page
 
