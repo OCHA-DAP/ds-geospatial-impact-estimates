@@ -23,6 +23,10 @@ that face in the weeks before?
 - `analysis.py`: seasonal climatology z (each 2026 acquisition vs prior years
   within ±12 days of the same day-of-year), source-minus-controls differencing,
   scar-pixel statistics; figures to `figs/` (regenerate by running).
+- `falsealarms_extract.py` + `falsealarms_analysis.py`: the prospective test —
+  45 'Langtang-like' faces from GLIMS (0.5–15 km², mean elev ≥ 4 800 m, GLO30
+  mean slope ≥ 25°, deduped per glac_id) across 84.9–86.3°E / 27.9–28.7°N, same
+  per-orbit morning-pass series, detector replayed on every face-season.
 
 ## Findings
 
@@ -69,6 +73,35 @@ and showed no terminal acceleration in the last pre-event pass (08-24, 39 h
 before, z_d ≈ −1.5). Detecting the failing block itself would need InSAR
 coherence/offset tracking (SLC — outside GEE) or higher-resolution tasking.
 
+**4. The false-alarm test: ~1.3 % of face-seasons fire; the collapse is caught.**
+Replaying the detector prospectively — leave-one-out climatology per face ×
+descending orbit, minus the same-date fleet-median z (the "everyone else"
+control), alarm = 3 consecutive monsoon acquisitions ≤ −2σ:
+
+| threshold | fleet false-alarm rate (226 face-seasons, 2022–26) | detachment box 2026 (stat −3.05) |
+|---|---|---|
+| −1.5σ | 2.2 % | caught |
+| −2.0σ | 1.3 % (3 alarms) | caught |
+| −2.5σ | 0.4 % (1 alarm) | caught |
+
+Two structural findings ride along:
+
+- **Scale matters.** At whole-glacier scale (the 10 km² GLIMS polygon) the
+  source glacier scores only −1.5 and is *missed* — the face-wide anomaly
+  dilutes. The detector needs face-scale AOIs (km-scale tiles over steep
+  glacier zones), which multiplies the number of tested units and would raise
+  the effective false-alarm count accordingly; the 1.3 % is per *glacier*, and
+  is therefore a lower bound on an operational tile-level rate. The detachment
+  box is also a hand-drawn 6 km² AOI while the fleet are inventory polygons —
+  a further asymmetry in the positive control's favour.
+- **The one 2026 fleet alarm is not obviously false.** G085489E28568N
+  (28.57°N 85.49°E, Tibet side, same Lende/Kyirong drainage, ~32 km north of
+  Langtang Lirung) shows a far stronger signal than the collapse face itself
+  (−7.5σ sustained, pre-event data only). Either the same regional melt
+  forcing expressed harder on that face, or it is a face genuinely worth
+  watching right now. The two 2024 alarms (−2.1, −2.4 nearby in the Shishapangma
+  area) had no known collapse and count as false.
+
 ## Caveats
 
 - Backscatter on a 40° Himalayan face carries layover/foreshortening; per-orbit
@@ -79,17 +112,22 @@ coherence/offset tracking (SLC — outside GEE) or higher-resolution tasking.
   plot (`figs/raw_vv_doy.png`) shows 2026 clearly below *all* six years, not the
   bottom of a drifting fan — the signal is 2026-specific.
 - "Precursor" here means an anomalous surface state, established retrospectively
-  with the detachment site known. Whether −2σ morning-pass divergence would work
-  as a *prospective* alarm (false-positive rate across other faces/years) is the
-  obvious follow-up: run the same statistic over every steep glacierised face in
-  the range and count how often it fires without a collapse.
+  with the detachment site known. The false-alarm replay (finding 4) is the
+  first-order prospective check, but it covers one region and five seasons with
+  exactly one collapse — a single true positive proves feasibility, not skill.
+  The 2024 alarms also show the detector fires on non-collapsing faces in warm
+  anomalies; any operational use would be as a watch-list ranker, not a siren.
 
 ## What it feeds
 
-Nothing operational yet — a side investigation prompted by the event. If the
-false-positive follow-up holds up, the morning/evening (asc/desc) differencing
-trick is cheap to run at scale in GEE and could complement the team's existing
-CEMS/IMPACT damage-mapping stack with a *pre-event* monitoring angle.
+Nothing operational yet — a side investigation prompted by the event. With the
+false-alarm replay at ~1.3 % per glacier-season (and the positive control
+caught at every threshold tried), the morning-pass anomaly is plausible as a
+cheap GEE-scale *watch-list ranker* for steep glacier faces — a pre-event
+complement to the team's CEMS/IMPACT damage-mapping stack. Open items before
+anyone leans on it: face-scale tiling (whole-glacier AOIs miss the signal),
+more regions/years for a real skill estimate, and a look at the Tibet-side
+face currently alarming at −7.5σ.
 
 ## Sources
 
