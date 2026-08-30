@@ -1,0 +1,240 @@
+<title>Langtang Lirung SAR Precursors</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#f7f9fb; --plate:#ffffff; --ink:#16232b; --ink-2:#576873; --ink-3:#8698a3;
+  --accent:#2a78d6; --rule:#dbe4ea; --plate-edge:#e4ebf0; --band:#eef3f7;
+  --neg:#b3402f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#131b21; --plate:#ffffff; --ink:#e6edf2; --ink-2:#9fb0bb; --ink-3:#6e8093;
+    --accent:#5c9be8; --rule:#26333c; --plate-edge:#26333c; --band:#1a242c;
+    --neg:#e07a6a;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#131b21; --plate:#ffffff; --ink:#e6edf2; --ink-2:#9fb0bb; --ink-3:#6e8093;
+  --accent:#5c9be8; --rule:#26333c; --plate-edge:#26333c; --band:#1a242c;
+  --neg:#e07a6a;
+}
+body{background:var(--ground); color:var(--ink); margin:0;
+  font:16px/1.65 "IBM Plex Sans", system-ui, sans-serif;}
+.wrap{max-width:960px; margin:0 auto; padding:48px 24px 96px;}
+.col{max-width:70ch; margin:0 auto;}
+.eyebrow{font:500 12px/1 "IBM Plex Mono", monospace; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--accent); margin:0 0 14px;}
+h1{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; font-weight:700;
+  font-size:clamp(30px,5vw,44px); line-height:1.12; margin:0 0 12px; text-wrap:balance;}
+.dek{font-size:19px; line-height:1.55; color:var(--ink-2); margin:0 0 34px; text-wrap:balance;}
+.facts{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); margin:0 0 48px;}
+.facts>div{background:var(--ground); padding:14px 16px;}
+.facts .k{font:500 11px/1.4 "IBM Plex Mono",monospace; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3);}
+.facts .v{font:500 15px/1.45 "IBM Plex Mono",monospace; color:var(--ink); margin-top:4px;
+  font-variant-numeric:tabular-nums;}
+h2{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; font-weight:600;
+  font-size:24px; line-height:1.25; margin:56px 0 14px; text-wrap:balance;}
+p{margin:0 0 16px;}
+strong{font-weight:600;}
+a{color:var(--accent);}
+.figure{margin:30px 0 8px;}
+.plate{background:var(--plate); border:1px solid var(--plate-edge); border-radius:4px;
+  padding:14px; overflow-x:auto;}
+.plate img{display:block; max-width:100%; margin:0 auto;}
+.cap{font:400 13px/1.55 "IBM Plex Sans",sans-serif; color:var(--ink-2); margin:10px 2px 0;}
+.cap .fig-n{font:500 11px/1 "IBM Plex Mono",monospace; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--accent); margin-right:8px;}
+table{border-collapse:collapse; font-size:14px; margin:18px 0 22px; width:100%;}
+th{font:500 11px/1.4 "IBM Plex Mono",monospace; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink-3); text-align:left; padding:8px 14px 8px 0; border-bottom:1px solid var(--rule);}
+td{padding:8px 14px 8px 0; border-bottom:1px solid var(--rule);
+  font-family:"IBM Plex Mono",monospace; font-size:13.5px; font-variant-numeric:tabular-nums;}
+td.rowlab{font-family:"IBM Plex Sans",sans-serif; font-size:14px;}
+.neg{color:var(--neg);}
+.callout{background:var(--band); border-left:3px solid var(--accent); padding:16px 20px;
+  margin:26px 0; border-radius:0 4px 4px 0;}
+.callout p{margin:0;}
+.foot{margin-top:64px; padding-top:20px; border-top:1px solid var(--rule);
+  font-size:13.5px; color:var(--ink-2);}
+.foot p{margin:0 0 8px;}
+ul{margin:0 0 16px; padding-left:22px;}
+li{margin-bottom:8px;}
+</style>
+
+<div class="wrap"><div class="col">
+<p class="eyebrow">Exploratory 0005 · Sentinel-1 · run 2026-08-28</p>
+<h1>Did SAR see the Langtang Lirung collapse coming?</h1>
+<p class="dek">On 26 August 2026 an ice–rock mass detached from the north flank of
+Langtang Lirung and ran ~100&nbsp;km down the Lende Khola and Trishuli, killing
+hundreds. Two days later, this scan of six years of Sentinel-1 backscatter asks
+whether the failing face looked different beforehand. It did — starting four
+months out, and only in the morning.</p>
+
+<div class="facts">
+  <div><div class="k">Collapse</div><div class="v">2026-08-26 02:52:10&nbsp;UTC</div></div>
+  <div><div class="k">Seismic signature</div><div class="v">M5.2-eq · us7000tbwb</div></div>
+  <div><div class="k">Published source</div><div class="v">28.28532°N 85.52515°E</div></div>
+  <div><div class="k">SAR scar centroid</div><div class="v">28.28648°N 85.52284°E · Δ260&nbsp;m</div></div>
+</div>
+
+<h2>1 · The scar is where the reports said it would be</h2>
+<p>The first post-event Sentinel-1 pass (orbit 85, 28 Aug, 36&nbsp;h after
+collapse) scored against that orbit's own June–August 2026 stack lights up a
+detachment arc and a runout track heading northwest into the upper Lende
+valley — 9.4&nbsp;km² of strong change in this 10&nbsp;km scene. The change
+centroid inside the source box lands <strong>260&nbsp;m</strong> from the
+coordinate Dave Petley published on the Landslide Blog. Everything below
+analyses that face knowing, from the data itself, that it is the right one.</p>
+<div class="figure"><div class="plate">{{FIG:scar_map}}</div>
+<p class="cap"><span class="fig-n">Fig 1</span>Post-event |z| (orbit 85, 2026-08-28 vs
+Jun–Aug 2026). Red crosses: published coordinates; orange box: the 2×3&nbsp;km source
+AOI used throughout.</p></div>
+
+<h2>2 · The face left its six-year envelope in April</h2>
+<p>Mean VV backscatter over the source box, plotted by day-of-year for each of
+the three orbital tracks that image it, shows 2026 dropping out of the 2020–25
+band from mid-April on the two descending (early-morning) tracks: melt-out came
+three to four weeks earlier than in any prior year, and the face then sat
+1–2&nbsp;dB below every previous monsoon all season.</p>
+<div class="figure"><div class="plate">{{FIG:raw_vv_doy}}</div>
+<p class="cap"><span class="fig-n">Fig 2</span>Raw VV backscatter over the source box by
+day-of-year — 2026 (blue) against each year 2020–25 (grey), per orbit. Dashed line:
+collapse.</p></div>
+
+<h2>3 · It's the face, not the weather</h2>
+<p>A warm year depresses backscatter everywhere. So every acquisition is scored
+against prior years at the same point in the season, for the source box and for
+two control boxes on the same massif matched in elevation and slope
+(4,973&nbsp;m/40° vs 4,990&nbsp;m/39.5° and 4,908&nbsp;m/37°). The controls dip
+mildly (−0.8 to −1.0σ on average); the source face runs at
+<strong>−2.3σ</strong>, reaching −5.6σ.</p>
+<div class="figure"><div class="plate">{{FIG:climatology_z}}</div>
+<p class="cap"><span class="fig-n">Fig 3</span>Each 2026 acquisition scored against
+2020–25 acquisitions within ±12 days of the same day-of-year. Grey band: ±2σ.</p></div>
+<table>
+<thead><tr><th>Box (Jun–Aug 2026)</th><th>mean z</th><th>min z</th></tr></thead>
+<tbody>
+<tr><td class="rowlab">Source (detachment face)</td><td class="neg">−2.33</td><td class="neg">−5.64</td></tr>
+<tr><td class="rowlab">Control W</td><td>−1.00</td><td>−3.58</td></tr>
+<tr><td class="rowlab">Control E</td><td>−0.77</td><td>−2.96</td></tr>
+</tbody>
+</table>
+
+<h2>4 · Morning passes see it; evening passes don't</h2>
+<p>Subtracting the controls from the source and scoring that difference against
+its own prior-year distribution removes valley-wide weather entirely. What
+remains splits cleanly by time of day: the two <strong>06:03-local</strong>
+descending tracks show a sustained face-specific departure beyond −2σ from
+<strong>2 July — eight weeks before the collapse</strong> (intermittent from
+late June) — while the <strong>18:06-local</strong> ascending track never
+leaves its envelope until the event itself.</p>
+<div class="callout"><p>In monsoon, an evening pass always sees a wet, melting
+face — 2026 looks normal at 18:06. A morning pass normally sees a surface that
+refroze overnight. A depression only at 06:03 means the face was
+<strong>staying wet through the night</strong>: an anomalously warm,
+melt-loaded hanging glacier, visible in free SAR data months before it failed.</p></div>
+<div class="figure"><div class="plate">{{FIG:divergence_z}}</div>
+<p class="cap"><span class="fig-n">Fig 4</span>Source-minus-controls VV difference,
+scored against the 2020–25 distribution of the same difference at the same
+day-of-year.</p></div>
+
+<h2>5 · What amplitude did <em>not</em> see</h2>
+<p>Inside the source box, the share of anomalous pixels within the future scar
+tracks the share just outside it on every orbit and every pre-event date — the
+anomaly is face-wide, with no concentration in the 1&nbsp;km² that ultimately
+failed, and no acceleration in the final pass 39&nbsp;h before collapse.
+Backscatter flagged <em>which face</em> was in trouble, not <em>which block</em>.</p>
+<div class="figure"><div class="plate">{{FIG:preevent_fraction}}</div>
+<p class="cap"><span class="fig-n">Fig 5</span>Share of pixels ≥2σ vs the 2023–25
+monsoon baseline, inside the future scar (blue) vs the rest of the source box (grey).
+The common June→July decline is a seasonal artefact of the pooled baseline; the two
+series never separate.</p></div>
+
+<p>The motion question was tested directly. InSAR phase is off the table here
+(GRD amplitude only in this archive, and a melting monsoon face decorrelates
+within any 12-day pair anyway), but <strong>speckle offset tracking</strong> works
+on amplitude: windowed phase cross-correlation (640&nbsp;m windows, 1/10-pixel
+subpixel) between the last two pre-event pairs per morning orbit — orbit 19's
+pair ends <strong>39&nbsp;h before the collapse</strong> — with one-cycle-earlier
+reference pairs as the noise floor. Whole chips carry a 2–6&nbsp;m common
+co-registration offset between GRD products (the reference pairs are
+<em>worse</em> than the final ones, confirming it is systematic, not motion);
+after removing the surround's median shift vector, the face's differential
+displacement in the final pairs is <strong>median 1.4&nbsp;m / p90 4.1&nbsp;m —
+at or below the reference pairs' own noise</strong> (2.0 / 4.2&nbsp;m). And
+220–221 of 221 face windows stayed correlated, so this is a measured null, not a
+failure to measure: no sliding above ~2&nbsp;m per 12&nbsp;days at this scale,
+right to the end. That supports melt-driven sudden detachment over weeks of slow
+creep — and strengthens the case for the thermal proxy over motion methods for
+this failure type.</p>
+<div class="figure"><div class="plate">{{FIG:offset_tracking}}</div>
+<p class="cap"><span class="fig-n">Fig 6</span>Offset-tracking displacement magnitude
+per 640&nbsp;m window (blue scale; pink = decorrelated). Top row: the final pre-event
+pairs; bottom row: reference pairs. The source box (orange) shows no coherent motion
+patch in any pair.</p></div>
+
+<h2>7 · How often would this cry wolf?</h2>
+<p>The natural objection: we analysed this face <em>knowing</em> it failed. So the
+detector was replayed prospectively over <strong>45 comparable faces</strong> —
+every GLIMS glacier in the surrounding 130×90&nbsp;km with 0.5–15&nbsp;km² area,
+mean elevation ≥&nbsp;4,800&nbsp;m and mean slope ≥&nbsp;25° — for five monsoon
+seasons (2022–26). Per face and morning orbit, each acquisition is scored against
+the <em>other</em> years (leave-one-out, ±12 days of day-of-year); the same-date
+fleet-median z is subtracted (the "everyone else" control, replacing the
+hand-picked boxes); an alarm is <strong>three consecutive acquisitions
+≤&nbsp;−2σ</strong>.</p>
+<div class="figure"><div class="plate">{{FIG:falsealarm_runstat}}</div>
+<p class="cap"><span class="fig-n">Fig 7</span>Worst 3-consecutive-acquisition
+statistic per face-season. Grey: the 45-face fleet; blue: the detachment box run
+through identical machinery. Below the dashed line = alarm.</p></div>
+<table>
+<thead><tr><th>Threshold</th><th>Fleet false-alarm rate (226 face-seasons)</th><th>Detachment box 2026 (−3.05)</th></tr></thead>
+<tbody>
+<tr><td>−1.5σ</td><td>2.2 %</td><td class="rowlab">caught</td></tr>
+<tr><td>−2.0σ</td><td class="neg">1.3 % (3 alarms)</td><td class="rowlab">caught</td></tr>
+<tr><td>−2.5σ</td><td>0.4 % (1 alarm)</td><td class="rowlab">caught</td></tr>
+</tbody>
+</table>
+<p>Two structural results ride along. <strong>Scale matters:</strong> at
+whole-glacier scale the source glacier's own 10&nbsp;km² polygon scores only
+−1.5 and is <em>missed</em> — the anomaly dilutes, so an operational version
+needs face-scale tiles, which multiplies tested units and makes 1.3&nbsp;% a
+lower bound. And <strong>the one 2026 fleet alarm may not be false:</strong>
+an uncollapsed face at 28.57°N&nbsp;85.49°E — Tibet side, same Lende/Kyirong
+drainage, ~32&nbsp;km north — is running at <strong>−7.5σ</strong> this season,
+stronger than the collapse face itself. Same regional forcing, or a face worth
+watching right now. The two 2024 alarms (−2.1, −2.4, Shishapangma area) had no
+known collapse and count as false.</p>
+
+<h2>Caveats, honestly</h2>
+<ul>
+<li><strong>One region, five seasons, one collapse.</strong> The replay makes the
+false-alarm rate concrete, but a single true positive proves feasibility, not
+skill. The 2024 alarms show it fires in warm anomalies without a collapse — any
+operational use is as a watch-list ranker, not a siren.</li>
+<li><strong>Geometry.</strong> A 40° Himalayan face means layover and foreshortening;
+orbits are never mixed and the controls share aspect and slope, but absolute dB
+levels are not comparable across tracks.</li>
+<li><strong>Trend vs event.</strong> A multi-year warming trend would also push z
+negative — but Fig&nbsp;2 shows 2026 below <em>all six</em> prior years, not the
+bottom of a drifting fan.</li>
+</ul>
+
+<div class="foot">
+<p>Branch <code>nepal-glof-sar-precursor</code> ·
+<code>exploratory/0005-nepal-glof-sar-precursor/</code> — <code>extract.py</code> +
+<code>analysis.py</code> (Earth Engine, Sentinel-1 GRD IW VV/VH, orbits
+19↓/85↑/121↓) and <code>falsealarms_extract.py</code> +
+<code>falsealarms_analysis.py</code> (45-face GLIMS fleet) and
+<code>offset_tracking.py</code> (speckle tracking) regenerate everything
+above.</p>
+<p>Sources: <a href="https://eos.org/thelandslideblog/26-august-2026-nepal-and-tibet">Petley,
+The Landslide Blog (Eos)</a> ·
+<a href="https://www.usgs.gov/programs/landslide-hazards/science/2026-nepal-debris-avalanche-and-flash-flood">USGS
+Landslide Hazards</a> ·
+<a href="https://earthsky.org/earth/nepal-flash-flood-glacier-collapse-landslide-aug-26-2026/">EarthSky</a> ·
+<a href="https://www.nature.com/articles/d41586-026-02716-w">Nature news</a></p>
+</div>
+</div></div>

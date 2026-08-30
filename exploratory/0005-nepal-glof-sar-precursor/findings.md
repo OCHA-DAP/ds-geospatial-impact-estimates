@@ -146,6 +146,14 @@ anyone leans on it: face-scale tiling (whole-glacier AOIs miss the signal),
 more regions/years for a real skill estimate, and a look at the Tibet-side
 face currently alarming at −7.5σ.
 
+## Reports
+
+Two self-contained HTML write-ups (figures embedded) build from
+`reports/build_reports.py` into `data/`: a technical report and a plain-language
+explainer. Live copies are published as claude.ai artifacts (account-private):
+technical <https://claude.ai/code/artifact/46583ce9-208b-4d4e-ab86-2f12774352c4>,
+explainer <https://claude.ai/code/artifact/8370a6df-724a-4a24-85fd-ea7e40065340>.
+
 ## Sources
 
 - Petley, The Landslide Blog (eos.org), 2026-08-27 — coordinates and event
