@@ -1,11 +1,16 @@
-"""Build the two self-contained HTML reports from the templates in this folder,
-embedding the figures from ../figs as data URIs. Output goes to ../data (git-
-ignored, like all generated products) — each file is a complete standalone page
-that can be opened locally, mailed, or republished as a claude.ai artifact.
+"""Build the combined HTML report (plain-language spine + expandable technical
+panels) from combined_template.html, embedding the figures from ../figs as data
+URIs. The page is fully self-contained and is written to two places:
 
-Published artifact URLs (private to the account; live copies of these builds):
-  technical: https://claude.ai/code/artifact/46583ce9-208b-4d4e-ab86-2f12774352c4
-  explainer: https://claude.ai/code/artifact/8370a6df-724a-4a24-85fd-ea7e40065340
+  ../data/langtang-sar-precursors.html     local copy (data/ is git-ignored)
+  ../../../pages/langtang-sar-precursors/index.html
+                                           the pages-site copy (committed —
+                                           pages/ deploys as-is on push to v1)
+
+A live copy is also published as a claude.ai artifact (account-private):
+https://claude.ai/code/artifact/8370a6df-724a-4a24-85fd-ea7e40065340
+(An earlier separate technical artifact, 46583ce9…, is superseded by this
+combined page.)
 
 Run figures first (analysis.py, falsealarms_analysis.py, offset_tracking.py), then:
   uv run python exploratory/0005-nepal-glof-sar-precursor/reports/build_reports.py
@@ -19,6 +24,7 @@ import re
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIGS = os.path.join(HERE, "..", "figs")
 OUT = os.path.join(HERE, "..", "data")
+PAGES = os.path.join(HERE, "..", "..", "..", "pages", "langtang-sar-precursors")
 os.makedirs(OUT, exist_ok=True)
 
 ALTS = {
@@ -46,13 +52,23 @@ def embed(match: re.Match) -> str:
     return f'<img src="data:image/png;base64,{b64}" alt="{ALTS[name]}">'
 
 
-for tpl, out_name in [
-    ("report_template.html", "langtang-sar-precursors.html"),
-    ("explainer_template.html", "glacier-explainer.html"),
-]:
-    with open(os.path.join(HERE, tpl)) as f:
-        html = re.sub(r"\{\{FIG:(\w+)\}\}", embed, f.read())
-    dst = os.path.join(OUT, out_name)
-    with open(dst, "w") as f:
-        f.write(html)
-    print(f"{len(html) / 1e6:.1f} MB -> {dst}")
+with open(os.path.join(HERE, "combined_template.html")) as f:
+    html = re.sub(r"\{\{FIG:(\w+)\}\}", embed, f.read())
+
+# The pages site serves this standalone, so it needs a full document skeleton;
+# the artifact publisher adds its own, so the data/ copy stays as a fragment.
+dst = os.path.join(OUT, "langtang-sar-precursors.html")
+with open(dst, "w") as f:
+    f.write(html)
+print(f"{len(html) / 1e6:.1f} MB -> {dst}")
+
+os.makedirs(PAGES, exist_ok=True)
+# a <title> inside <body> is ignored by browsers, so lift it into the head
+title = re.search(r"<title>.*?</title>", html).group(0)
+page = ('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+        f"{title}\n</head>\n<body>\n"
+        + html.replace(title, "", 1) + "\n</body>\n</html>\n")
+with open(os.path.join(PAGES, "index.html"), "w") as f:
+    f.write(page)
+print(f"{len(page) / 1e6:.1f} MB -> {os.path.join(PAGES, 'index.html')}")

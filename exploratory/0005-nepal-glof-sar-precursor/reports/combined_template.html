@@ -26,7 +26,12 @@ body{background:var(--ground); color:var(--ink); margin:0;
   text-transform:uppercase; color:var(--accent); margin:0 0 14px;}
 h1{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; font-weight:700;
   font-size:clamp(30px,5vw,44px); line-height:1.12; margin:0 0 12px; text-wrap:balance;}
-.dek{font-size:19px; line-height:1.55; color:var(--ink-2); margin:0 0 36px; text-wrap:balance;}
+.dek{font-size:19px; line-height:1.55; color:var(--ink-2); margin:0 0 26px; text-wrap:balance;}
+.banner{display:flex; flex-wrap:wrap; gap:10px; margin:0 0 40px; align-items:center;}
+.banner a,.banner button{font:500 12.5px/1 "IBM Plex Mono",monospace; letter-spacing:.06em;
+  color:var(--accent); background:var(--band); border:1px solid var(--rule);
+  border-radius:999px; padding:9px 16px; text-decoration:none; cursor:pointer;}
+.banner a:hover,.banner button:hover{border-color:var(--accent);}
 h2{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; font-weight:600;
   font-size:24px; line-height:1.25; margin:56px 0 14px; text-wrap:balance;}
 .facts{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:1px;
@@ -36,8 +41,6 @@ h2{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; font-weight
   text-transform:uppercase; color:var(--ink-3);}
 .facts .v{font:500 15px/1.45 "IBM Plex Mono",monospace; color:var(--ink); margin-top:4px;
   font-variant-numeric:tabular-nums;}
-h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif; font-weight:600;
-  font-size:17px; margin:0 0 10px;}
 p{margin:0 0 16px;}
 strong{font-weight:600;}
 a{color:var(--accent);}
@@ -57,6 +60,22 @@ a{color:var(--accent);}
 .callout{background:var(--band); border-left:3px solid var(--accent); padding:16px 20px;
   margin:26px 0; border-radius:0 4px 4px 0;}
 .callout p{margin:0;}
+details.tech{border:1px solid var(--rule); border-left:3px solid var(--ink-3);
+  border-radius:0 4px 4px 0; margin:22px 0; background:var(--ground);}
+details.tech summary{font:500 12px/1 "IBM Plex Mono",monospace; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-2); padding:13px 18px; cursor:pointer;
+  list-style:none;}
+details.tech summary::before{content:"▸ "; color:var(--accent);}
+details.tech[open] summary::before{content:"▾ ";}
+details.tech .body{padding:2px 20px 14px; font-size:15px;}
+details.tech .body p{margin:0 0 12px;}
+table{border-collapse:collapse; font-size:14px; margin:14px 0 18px; width:100%;}
+th{font:500 11px/1.4 "IBM Plex Mono",monospace; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink-3); text-align:left; padding:8px 14px 8px 0; border-bottom:1px solid var(--rule);}
+td{padding:8px 14px 8px 0; border-bottom:1px solid var(--rule);
+  font-family:"IBM Plex Mono",monospace; font-size:13px; font-variant-numeric:tabular-nums;}
+td.rowlab{font-family:"IBM Plex Sans",sans-serif; font-size:14px;}
+.neg{color:var(--neg);}
 dl{margin:18px 0 0; display:grid; gap:12px;}
 dt{font:500 14px/1.4 "IBM Plex Mono",monospace; color:var(--ink);}
 dd{margin:2px 0 0; color:var(--ink-2); font-size:15px;}
@@ -68,15 +87,31 @@ li{margin-bottom:8px;}
 </style>
 
 <div class="wrap"><div class="col">
-<p class="eyebrow">Plain-language companion · Langtang Lirung, Nepal · Aug 2026</p>
+<p class="eyebrow">OCHA CHD · exploratory analysis · Sentinel-1 · Langtang Lirung, Nepal</p>
 <h1>The glacier that stopped refreezing at night</h1>
 <p class="dek">On 26 August 2026, a huge chunk of ice and rock broke off a
 Himalayan peak in Nepal and caused a flood that killed hundreds of people.
-We went back through two years of free satellite radar images and asked a
+We went back through six years of free satellite radar images and asked a
 simple question: <strong>did the mountain look different before it failed?</strong>
-It did — for four months. Here's the whole story, no radar background required.</p>
+It did — for four months. The story reads in plain language; every step carries
+an expandable panel with the full technical detail.</p>
 
-<div class="primer">
+<div class="banner">
+  <a href="#story">The story</a>
+  <a href="#firealarm">The fire-alarm test</a>
+  <a href="#glossary">Glossary</a>
+  <a href="#method">Method &amp; code</a>
+  <button id="techtoggle" type="button">Open all technical panels</button>
+</div>
+
+<div class="facts">
+  <div><div class="k">Collapse</div><div class="v">2026-08-26 02:52:10&nbsp;UTC</div></div>
+  <div><div class="k">Seismic signature</div><div class="v">M5.2-eq · us7000tbwb</div></div>
+  <div><div class="k">Published source</div><div class="v">28.28532°N 85.52515°E</div></div>
+  <div><div class="k">SAR scar centroid</div><div class="v">28.28648°N 85.52284°E · Δ260&nbsp;m</div></div>
+</div>
+
+<div class="primer" id="story">
 <span class="tag">First: how satellite radar works, in 60 seconds</span>
 <p>The Sentinel-1 satellites fly over every spot on Earth every few days and
 send radar pulses at the ground, then measure how much echo bounces back. That
@@ -120,6 +155,22 @@ Everything after this point analyses that face, knowing it's the right one.</p>
 <p class="cap"><span class="fig-n">Fig 1</span>Darker blue = the radar echo after the
 collapse is very different from before. The red crosses are the published coordinates;
 the orange box is the mountain face we study for the rest of this page.</p></div>
+<details class="tech"><summary>Technical detail — event &amp; scar mapping</summary>
+<div class="body">
+<p>Event: ice/rock detachment, north flank of Langtang Lirung, 2026-08-26
+02:52:10&nbsp;UTC; seismic signature equivalent to M5.2 (USGS <code>us7000tbwb</code>),
+second M4.2-equivalent collapse <code>us7000tc90</code> ~3&nbsp;h later; debris flow
+ran ~100&nbsp;km down the Lende Khola → Trishuli. Published source coordinates:
+28.28532°N 85.52515°E (Petley, early) and 28.2765°N 85.5194°E (Petley, Landslide
+Blog).</p>
+<p>Scar map: orbit 85's first post-event scene (2026-08-28, 36&nbsp;h after) scored
+against that orbit's own Jun–Aug 2026 stack — per pixel,
+z&nbsp;=&nbsp;(post&nbsp;−&nbsp;mean<sub>pre</sub>)&nbsp;/&nbsp;std<sub>pre</sub>
+(std floored at 0.5&nbsp;dB), max&nbsp;|z| over VV/VH. |z|≥3 covers 9.4&nbsp;km² of
+the 10×10&nbsp;km scene (scar + runout); 1.06&nbsp;km² falls inside the 2×3&nbsp;km
+source box, with change centroid 28.28648°N 85.52284°E — 260&nbsp;m from the
+published point.</p>
+</div></details>
 
 <h2>Step 2 — Then compare 2026 to a "normal" year</h2>
 <p>For that mountain face, we averaged the radar echo over the box for every
@@ -140,6 +191,17 @@ in decibels) over the face, by day of year. One panel per orbit — 19 and 121 a
 6&nbsp;am tracks, 85 the 6&nbsp;pm one; they view the mountain from different angles,
 so their absolute levels differ and are never mixed. Blue = 2026, grey = the six
 previous years.</p></div>
+<details class="tech"><summary>Technical detail — AOIs &amp; extraction</summary>
+<div class="body">
+<p>Source AOI: a 2×3&nbsp;km lon/lat box (85.512–85.533°E, 28.269–28.293°N)
+covering both published coordinates. Controls: two boxes on the same massif
+matched on GLO30 terrain — source 4,973&nbsp;m / 40.0° slope; control&nbsp;W
+4,990&nbsp;m / 39.5°; control&nbsp;E 4,908&nbsp;m / 36.8°. Series: S1 GRD IW
+VV+VH mean per acquisition per AOI, 2020-01 → event, per relative orbit
+(19↓/85↑/121↓), acquisitions with &lt;80% box coverage dropped. GRD values are
+dB; box means are log-domain means, used only for relative change within one
+orbit.</p>
+</div></details>
 
 <h2>Step 3 — Rule out "maybe 2026 was just a warm year"</h2>
 <p>Fair objection: an early melt could just mean a warm spring everywhere, not a
@@ -161,6 +223,22 @@ are the 6&nbsp;am tracks, middle the 6&nbsp;pm one. Blue = the face that collaps
 orange/green = the two control patches. The grey band (±2) is the "nothing
 remarkable" zone. Notice the face separates from its controls mainly in the two
 morning panels.</p></div>
+<details class="tech"><summary>Technical detail — climatology numbers</summary>
+<div class="body">
+<p>z per acquisition = departure from prior-year (2020–25) acquisitions of the
+same orbit within ±12 days of the same day-of-year. Last five pre-event
+acquisitions, source box, VV:</p>
+<table>
+<thead><tr><th>Orbit (local)</th><th>Last five pre-event z</th></tr></thead>
+<tbody>
+<tr><td class="rowlab">19 (06:03)</td><td>07-07 −3.1 · 07-19 −1.5 · 07-31 −2.0 · 08-12 −3.7 · 08-24 −2.1</td></tr>
+<tr><td class="rowlab">85 (18:06)</td><td>06-29 −1.5 · 07-11 +0.3 · 07-23 −1.2 · 08-04 −0.8 · 08-16 −0.8</td></tr>
+<tr><td class="rowlab">121 (06:03)</td><td>07-02 −5.4 · 07-14 −2.0 · 07-26 −5.6 · 08-07 −3.5 · 08-19 −3.1</td></tr>
+</tbody>
+</table>
+<p>Jun–Aug 2026 means (VV z): source −2.33 (min −5.64), control&nbsp;W −1.00
+(min −3.58), control&nbsp;E −0.77 (min −2.96).</p>
+</div></details>
 
 <h2>Step 4 — The morning/evening clue</h2>
 <p>Now the detail that turns "the face looked odd" into a physical story.
@@ -187,6 +265,16 @@ exactly the kind that collapses.</p></div>
 controls. Blue lines: the two 6&nbsp;am tracks (orbits 19 and 121, descending) — out
 of the grey "normal" band from July. Green line: the 6&nbsp;pm track (orbit 85,
 ascending) — normal right up to the collapse.</p></div>
+<details class="tech"><summary>Technical detail — divergence statistic</summary>
+<div class="body">
+<p>d = source VV − mean(controls VV) per acquisition; z<sub>d</sub> scores d
+against the prior-year distribution of the same difference at the same
+day-of-year (±12 d). Orbit 121 sustains z<sub>d</sub>&nbsp;≤&nbsp;−2 from
+<strong>2026-07-02</strong> (6/18 pre-event acquisitions at ≤&nbsp;−2, deepest
+−6.8); orbit 19 is intermittently ≤&nbsp;−2 from late June (5/20); orbit 85
+never leaves its envelope pre-event (1/20). Removing the controls this way
+cancels valley-wide weather; what remains is specific to the face.</p>
+</div></details>
 
 <h2>Step 5 — What the radar could <em>not</em> see</h2>
 <p>An obvious hope: maybe the exact patch that broke off looked different from
@@ -196,8 +284,13 @@ collapse scar with pixels just outside it, week by week. The two groups track
 each other on every date. The warning was <strong>face-wide</strong>: the radar
 told us <em>this face is in trouble</em>, not <em>this exact block will
 fail</em>, and there was no last-minute change in the final pass 39 hours
-before the collapse. Pinpointing the failing block would take a different radar
-technique and data that isn't in the free, easy-to-use archive we used here.</p>
+before the collapse.</p>
+<div class="figure"><div class="plate">{{FIG:preevent_fraction}}</div>
+<p class="cap"><span class="fig-n">Fig 5</span>Share of "unusual" pixels inside the
+future collapse zone (blue) versus the rest of the face (grey). The lines never
+separate — no pixel-level early warning. (Both drift down from June to July for a
+boring technical reason: the comparison baseline is a summer average, so early-summer
+images naturally look a bit more "unusual".)</p></div>
 <div class="primer">
 <span class="tag">Wait — can't radar just see the block moving?</span>
 <p>Sometimes, but probably not here, and it's worth understanding why. Radar
@@ -229,14 +322,26 @@ the block did not creep metres-scale before it went. It let go suddenly, which
 is exactly why the early wetness warning matters more than motion for this kind
 of failure.</p>
 </div>
-<div class="figure"><div class="plate">{{FIG:preevent_fraction}}</div>
-<p class="cap"><span class="fig-n">Fig 5</span>Share of "unusual" pixels inside the
-future collapse zone (blue) versus the rest of the face (grey). The lines never
-separate — no pixel-level early warning. (Both drift down from June to July for a
-boring technical reason: the comparison baseline is a summer average, so early-summer
-images naturally look a bit more "unusual".)</p></div>
+<div class="figure"><div class="plate">{{FIG:offset_tracking}}</div>
+<p class="cap"><span class="fig-n">Fig 6</span>Offset-tracking displacement magnitude
+per 640&nbsp;m window (blue scale; pink = decorrelated). Top row: the final pre-event
+pairs; bottom row: earlier reference pairs. The source box (orange) shows no coherent
+motion patch in any pair.</p></div>
+<details class="tech"><summary>Technical detail — offset tracking numbers</summary>
+<div class="body">
+<p>Windowed phase cross-correlation on linear-power amplitude: 640&nbsp;m
+windows, 160&nbsp;m step, 1/10-pixel subpixel. Final pairs — orbit 19
+08-12→08-24 (ends 39&nbsp;h pre-collapse), orbit 121 08-07→08-19; reference
+pairs one cycle earlier. Whole chips carry a 2–6&nbsp;m common co-registration
+offset between GRD products (reference pairs <em>worse</em> than final ones —
+systematic, not motion). After removing the surround's median shift vector, the
+face's differential displacement in the final pairs is median 1.4&nbsp;m /
+p90 4.1&nbsp;m — at or below the reference pairs' own noise (2.0 / 4.2&nbsp;m).
+220–221 of 221 face windows stayed correlated: a measured null (no sliding
+above ~2&nbsp;m per 12&nbsp;days at this scale), not a failure to measure.</p>
+</div></details>
 
-<h2>Step 6 — The fire-alarm test: how often would it cry wolf?</h2>
+<h2 id="firealarm">Step 6 — The fire-alarm test: how often would it cry wolf?</h2>
 <p>Everything so far had a big asterisk: <strong>we knew where to look.</strong>
 A smoke detector that goes off during a fire is only useful if it doesn't also
 go off every time you make toast. So we ran the test: we took <strong>45 other
@@ -249,7 +354,7 @@ alarm rule: the face must look unusually dark to the morning radar
 neighbourhood is doing that day.</p>
 <p>The result, one dot per face per summer:</p>
 <div class="figure"><div class="plate">{{FIG:falsealarm_runstat}}</div>
-<p class="cap"><span class="fig-n">Fig 6</span>Each dot is one glacier face in one
+<p class="cap"><span class="fig-n">Fig 7</span>Each dot is one glacier face in one
 summer; lower = more anomalous. Grey dots are the 45 comparison faces; blue is the
 face that collapsed. Dots below the dashed line would have triggered the alarm.</p></div>
 <ul>
@@ -273,8 +378,31 @@ the 1-in-75 measured here.</li>
 one collapse to test against. But it's the difference between "neat hindsight"
 and "worth piloting": the data is free, global, sees through clouds, and updates
 every few days.</p>
+<details class="tech"><summary>Technical detail — detector spec &amp; sweep</summary>
+<div class="body">
+<p>Fleet: GLIMS 20230607 boundaries in 84.9–86.3°E / 27.9–28.7°N, deduped per
+glac_id, 0.5–15&nbsp;km², mean elevation ≥&nbsp;4,800&nbsp;m, GLO30 mean slope
+≥&nbsp;25°; 45 faces. Detector, per face × descending orbit: leave-one-out
+climatology z (±12 d day-of-year window, tested year excluded from its own
+baseline), minus the same-date fleet-median z; alarm = 3 consecutive Jun–Aug
+acquisitions ≤&nbsp;−2σ. The detachment box, run through identical machinery, is
+the positive control: statistic <strong>−3.05</strong>, alarming only in 2026.</p>
+<table>
+<thead><tr><th>Threshold</th><th>Fleet false-alarm rate (226 face-seasons)</th><th>Detachment box 2026</th></tr></thead>
+<tbody>
+<tr><td>−1.5σ</td><td>2.2%</td><td class="rowlab">caught</td></tr>
+<tr><td>−2.0σ</td><td class="neg">1.3% (3 alarms)</td><td class="rowlab">caught</td></tr>
+<tr><td>−2.5σ</td><td>0.4% (1 alarm)</td><td class="rowlab">caught</td></tr>
+</tbody>
+</table>
+<p>The three fleet alarms: G085489E28568N in 2024 (−2.14) and 2026 (−7.46 — the
+Tibet-side face above), and Lanong Glacier in 2024 (−2.41). At whole-glacier
+scale the source glacier's own polygon scores −1.5 and is missed — face-scale
+tiling is required, making 1.3% a lower bound on an operational tile-level
+rate.</p>
+</div></details>
 
-<h2>Mini-glossary</h2>
+<h2 id="glossary">Mini-glossary</h2>
 <dl>
 <dt>backscatter / VV / dB</dt><dd>Backscatter is the strength of the radar echo
 that returns to the satellite, measured in decibels (dB) — a few dB is a big
@@ -298,11 +426,16 @@ region-wide weather can be subtracted out.</dd>
 Its full archive is openly available (we used it via Google Earth Engine).</dd>
 </dl>
 
-<div class="foot">
-<p>Companion to the technical write-up in
-<code>exploratory/0005-nepal-glof-sar-precursor/</code> (branch
-<code>nepal-glof-sar-precursor</code>) — same data, same figures, full method and
-caveats there.</p>
+<div class="foot" id="method">
+<p><strong>Method &amp; code.</strong> Everything on this page regenerates from
+<code>exploratory/0005-nepal-glof-sar-precursor/</code> in the
+<a href="https://github.com/OCHA-DAP/ds-geospatial-impact-estimates">ds-geospatial-impact-estimates</a>
+repository: <code>extract.py</code> + <code>analysis.py</code> (single-face study),
+<code>falsealarms_extract.py</code> + <code>falsealarms_analysis.py</code> (45-face
+replay), <code>offset_tracking.py</code> (speckle tracking), and
+<code>reports/build_reports.py</code> (this page). Sentinel-1 GRD IW VV/VH via
+Google Earth Engine; full caveats in <code>findings.md</code>. This is an
+exploratory lab-notebook analysis, not an operational OCHA product or warning.</p>
 <p>Event sources: <a href="https://eos.org/thelandslideblog/26-august-2026-nepal-and-tibet">Petley,
 The Landslide Blog (Eos)</a> ·
 <a href="https://www.usgs.gov/programs/landslide-hazards/science/2026-nepal-debris-avalanche-and-flash-flood">USGS
@@ -311,3 +444,15 @@ Landslide Hazards</a> ·
 <a href="https://www.nature.com/articles/d41586-026-02716-w">Nature news</a></p>
 </div>
 </div></div>
+
+<script>
+(function () {
+  var btn = document.getElementById("techtoggle");
+  btn.addEventListener("click", function () {
+    var panels = document.querySelectorAll("details.tech");
+    var anyClosed = Array.prototype.some.call(panels, function (d) { return !d.open; });
+    panels.forEach(function (d) { d.open = anyClosed; });
+    btn.textContent = anyClosed ? "Close all technical panels" : "Open all technical panels";
+  });
+})();
+</script>
