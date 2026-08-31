@@ -214,6 +214,29 @@ up to 27.5%: a lower bound against a nearly-empty reference, in which product ov
 and reference incompleteness cannot be
 separated.](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 
+How low is "low"? Because the expert reference is itself incomplete (@sec-floor), each
+headline precision is a lower bound, and the two corrections this paper can measure
+bound it from above: counting the points CEMS graded *possibly damaged*, and crediting
+the flags the MapSwipe crowd reviewed and confirmed as damaged. @fig-bounds composes
+both, in the same core-region frame as the headline numbers. The two corrections
+overlap barely at all (only 10–17% of the crowd-confirmed flags sit near a
+*possibly-damaged* point — the crowd was mostly confirming damage CEMS never mapped,
+not re-grading its low-confidence calls), so their union is an honest upper bound: each
+flag is credited once. The interval is a factor of 2.2–3.6 wide, and even its upper end
+leaves every product below 0.28 — the poor-precision conclusion is not an artefact of
+the strictest reference choice.
+
+![**Region: core (61 km²).** Each product's precision under four references, flags
+fixed. The filled brown dot is the paper's headline reference (CEMS Damaged or
+Destroyed) — the lower bound. Open markers add the points CEMS graded *possibly
+damaged* (labelled values) and the flags the crowd reviewed and confirmed; the filled
+diamond is the union of both — the upper bound. A flag earns crowd credit only where
+volunteers actually reviewed its location and judged it damaged; unreviewed locations
+earn nothing, so products the crowd barely saw (UH: 27%) have understated upper bounds.
+(@tbl-dial's crowd-adjusted column instead assumes unreviewed flags contain damage at
+the reviewed-flag rate, which is why its values sit higher where coverage is
+thin.)](artefacts/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png){#fig-bounds}
+
 ## A hindsight geography model approximates the products' performance {#sec-null}
 
 **Result:** A model given only three context variables (distance to the coast, local
@@ -362,7 +385,7 @@ null, it explains the event afterwards and cannot run during one.
 
 ```{python}
 #| label: tbl-dial
-#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m). Visits/find is field visits per damage point reached at 30 m, the finding distance (close enough for one stop to plausibly find the damage); computed as flags ÷ R₃₀ × 1,467 reference points; as a ratio of counts it falls below 1 where damage is dense enough that one stop reaches several recorded points. Shading ranks values within each column (darker = higher; for visits/find, fewer). The geography and fusion models are compared at their operating points in @fig-bestf1 and the <a href='#app-radius'>Appendix</a>. 95% block-bootstrap confidence intervals for these values are tabulated in the <a href='#app-ci'>Appendix</a>."
+#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m); flags in cells the crowd never reviewed are assumed to contain damage at the same rate as the reviewed ones, so this column sits higher than @fig-bounds, which credits reviewed flags only. Visits/find is field visits per damage point reached at 30 m, the finding distance (close enough for one stop to plausibly find the damage); computed as flags ÷ R₃₀ × 1,467 reference points; as a ratio of counts it falls below 1 where damage is dense enough that one stop reaches several recorded points. Shading ranks values within each column (darker = higher; for visits/find, fewer). The geography and fusion models are compared at their operating points in @fig-bestf1 and the <a href='#app-radius'>Appendix</a>. 95% block-bootstrap confidence intervals for these values are tabulated in the <a href='#app-ci'>Appendix</a>."
 import pandas as pd
 from great_tables import GT, style, loc
 from matplotlib import colormaps
@@ -807,8 +830,22 @@ neither the numerator nor the denominator of any score. Including them was check
 sensitivity on the frozen data (RQ2q in the analysis archive): the reference roughly
 doubles, every precision rises mechanically by 1.6–2× (singles and voting rules alike),
 recall shifts along the grade slope (grade-neutral products gain, destruction-biased
-products lose), and no comparison in this paper changes direction. Excluding class 1 is
-the more demanding choice, and the paper keeps it.
+products lose), and no comparison in this paper changes direction. @fig-basis extends
+the check to every predictor in @fig-bestf1 across three bases — *Destroyed* only,
+the paper's *Damaged or Destroyed*, and including *possibly damaged* — with every flag
+list and operating point frozen, so the reference is the only moving part. Levels
+roughly double per step; the orderings the paper rests on do not move: the fused
+score keeps its precision margin over the best single product (~3–4×) at every basis,
+and the geography null stays inside the product band at every basis. Excluding class 1
+is the more demanding choice, and the paper keeps it.
+
+![**Region: core (61 km²).** Precision of every @fig-bestf1 predictor under three
+definitions of the CEMS reference, with flags and operating points frozen — only the
+target changes. Grey lines and band: the six products; coloured lines: the composites
+and the geography nulls. The dashed line marks the paper's reference. The rise is
+mechanical (same flags, more reference points to be near); the finding is what does
+*not* change: no comparison flips at any
+basis.](artefacts/RQ8-learned-fusion/figs/rq8c_basis_precision_r10.png){#fig-basis}
 
 **One matching rule, two labelled exceptions.** Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled
@@ -1534,14 +1571,18 @@ demonstrably clear it.
 
 ### How the crowd adjustment works, and what happened when the crowd voted again {#app-crowd .unnumbered}
 
-Every crowd-adjusted precision in this paper comes from one simple rule, and
+Every crowd-adjusted precision in this paper starts from one simple rule, and
 @fig-crowdmech shows it acting on a real street in Catia La Mar. A flagged building with
 an expert damage point within 10 m counts as a hit outright; the crowd plays no part in
 that. Every other flag sits inside one of the ~50 m cells that MapSwipe volunteers voted
 on, and the rule is: if most volunteers who saw that cell said *yes, damaged*, the flag is
 counted as confirmed damage and improves the adjusted precision; if they said *no* or *not
-sure*, it stays a false alarm. Flags in cells the volunteers never saw are assumed to
-contain damage at the same rate as the flags the volunteers did see.
+sure*, it stays a false alarm. The one point of divergence is the flags in cells the
+volunteers never saw. @tbl-dial's crowd-adjusted column assumes they contain damage at
+the same rate as the flags the volunteers did see; @fig-bounds and the re-vote deltas
+below credit nothing for them. The two conventions agree where the crowd reviewed most
+of a product's flags (Microsoft: 98%) and diverge where it saw few (UH: 27%), which is
+why each is stated where it is used.
 
 In August 2026, after this paper's numbers were frozen, the campaign over this strip was
 run a second time: 728 new volunteers re-judged exactly the same 3,482 cells, and each
