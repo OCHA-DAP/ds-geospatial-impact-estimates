@@ -214,27 +214,29 @@ up to 27.5%: a lower bound against a nearly-empty reference, in which product ov
 and reference incompleteness cannot be
 separated.](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 
-How low is "low"? Because the expert reference is itself incomplete (@sec-floor), each
-headline precision is a lower bound, and the two corrections this paper can measure
-bound it from above: counting the points CEMS graded *possibly damaged*, and crediting
-the flags the MapSwipe crowd reviewed and confirmed as damaged. @fig-bounds composes
-both, in the same core-region frame as the headline numbers. The two corrections
-overlap barely at all (only 10–17% of the crowd-confirmed flags sit near a
-*possibly-damaged* point — the crowd was mostly confirming damage CEMS never mapped,
-not re-grading its low-confidence calls), so their union is an honest upper bound: each
-flag is credited once. The interval is a factor of 2.2–3.6 wide, and even its upper end
-leaves every product below 0.28 — the poor-precision conclusion is not an artefact of
-the strictest reference choice.
+There is more than one defensible way to define the reference these precisions are
+measured against, and different choices give different numbers. This paper scores every
+product against the CEMS points graded *Damaged* or *Destroyed*, the strictest of the
+defensible choices, and @sec-floor lays out what that reference misses. @fig-bounds
+shows what happens to each product's precision as the grading criteria are loosened
+using the other reference data this study collected: first adding the points CEMS
+graded *possibly damaged*, then instead crediting the flags the MapSwipe crowd reviewed
+and confirmed as damaged, and finally both together (how the crowd credit works and how
+the two additions combine are in the [Appendix](#app-crowd)). The result is a range of
+possible precision values per product, with a realistic upper bound at the top. Even at
+the upper bound every product stays below 0.28. The poor-precision conclusion is not an
+artefact of the strict reference choice.
 
-![**Region: core (61 km²).** Each product's precision under four references, flags
-fixed. The filled brown dot is the paper's headline reference (CEMS Damaged or
-Destroyed) — the lower bound. Open markers add the points CEMS graded *possibly
-damaged* (labelled values) and the flags the crowd reviewed and confirmed; the filled
-diamond is the union of both — the upper bound. A flag earns crowd credit only where
-volunteers actually reviewed its location and judged it damaged; unreviewed locations
-earn nothing, so products the crowd barely saw (UH: 27%) have understated upper bounds.
-(@tbl-dial's crowd-adjusted column instead assumes unreviewed flags contain damage at
-the reviewed-flag rate, which is why its values sit higher where coverage is
+![**Region: core (61 km²).** Each product's precision under four reference definitions,
+flags fixed. Filled brown dot: the expert points graded *Damaged* or *Destroyed*, the
+paper's reference and the lower bound. Open circle: also counting the points graded
+*possibly damaged* (labelled values). Open square: instead also counting the flags the
+MapSwipe crowd reviewed and confirmed as damaged. Filled diamond: counting both
+additions, the upper bound. A flag earns crowd credit only where volunteers actually reviewed its
+location and judged it damaged; unreviewed locations earn nothing, so products the
+crowd barely saw (UH: 27%) have understated upper bounds. (@tbl-dial's crowd-adjusted
+column instead assumes unreviewed flags contain damage at the reviewed-flag rate, which
+is why its values sit higher where coverage is
 thin.)](artefacts/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png){#fig-bounds}
 
 ## A hindsight geography model approximates the products' performance {#sec-null}
@@ -831,8 +833,8 @@ sensitivity on the frozen data (RQ2q in the analysis archive): the reference rou
 doubles, every precision rises mechanically by 1.6–2× (singles and voting rules alike),
 recall shifts along the grade slope (grade-neutral products gain, destruction-biased
 products lose), and no comparison in this paper changes direction. @fig-basis extends
-the check to every predictor in @fig-bestf1 across three bases — *Destroyed* only,
-the paper's *Damaged or Destroyed*, and including *possibly damaged* — with every flag
+the check to every predictor in @fig-bestf1 across three bases (*Destroyed* only, the
+paper's *Damaged or Destroyed*, and including *possibly damaged*), with every flag
 list and operating point frozen, so the reference is the only moving part. Levels
 roughly double per step; the orderings the paper rests on do not move: the fused
 score keeps its precision margin over the best single product (~3–4×) at every basis,
@@ -840,7 +842,7 @@ and the geography null stays inside the product band at every basis. Excluding c
 is the more demanding choice, and the paper keeps it.
 
 ![**Region: core (61 km²).** Precision of every @fig-bestf1 predictor under three
-definitions of the CEMS reference, with flags and operating points frozen — only the
+definitions of the CEMS reference, with flags and operating points frozen, so only the
 target changes. Grey lines and band: the six products; coloured lines: the composites
 and the geography nulls. The dashed line marks the paper's reference. The rise is
 mechanical (same flags, more reference points to be near); the finding is what does
@@ -1583,6 +1585,12 @@ the same rate as the flags the volunteers did see; @fig-bounds and the re-vote d
 below credit nothing for them. The two conventions agree where the crowd reviewed most
 of a product's flags (Microsoft: 98%) and diverge where it saw few (UH: 27%), which is
 why each is stated where it is used.
+
+The upper bound in @fig-bounds combines the crowd credit with the *possibly damaged*
+points as a union: a flag that qualifies under both is counted once. The two additions
+mostly touch different flags anyway; only 10–17% of the crowd-confirmed flags sit
+within 10 m of a *possibly-damaged* point, so the crowd was mainly confirming damage
+the expert map never recorded rather than re-grading its low-confidence points.
 
 In August 2026, after this paper's numbers were frozen, the campaign over this strip was
 run a second time: 728 new volunteers re-judged exactly the same 3,482 cells, and each
