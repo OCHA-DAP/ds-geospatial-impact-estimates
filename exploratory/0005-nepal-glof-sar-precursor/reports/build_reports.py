@@ -65,9 +65,20 @@ print(f"{len(html) / 1e6:.1f} MB -> {dst}")
 os.makedirs(PAGES, exist_ok=True)
 # a <title> inside <body> is ignored by browsers, so lift it into the head
 title = re.search(r"<title>.*?</title>", html).group(0)
+# per the team pages convention (KB: methods/static-data-apps.md, "Nested pages
+# link back home"): a self-contained back-to-home link as the first element in
+# <body>, relative href, labelled with what it links back to. Pages copy only —
+# the claude.ai artifact has no landing page above it.
+home_link = (
+    "<style>.home-link{display:inline-block;margin:10px 12px;padding:6px 12px;"
+    "font:500 13px/1 'IBM Plex Mono',monospace;color:#2a78d6;background:#eaf2fb;"
+    "border:1px solid #c9ddf3;border-radius:4px;text-decoration:none}"
+    ".home-link:hover{background:#dcebf9}</style>\n"
+    '<a class="home-link" href="../">← All analysis &amp; tools</a>\n'
+)
 page = ('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        f"{title}\n</head>\n<body>\n"
+        f"{title}\n</head>\n<body>\n{home_link}"
         + html.replace(title, "", 1) + "\n</body>\n</html>\n")
 with open(os.path.join(PAGES, "index.html"), "w") as f:
     f.write(page)
