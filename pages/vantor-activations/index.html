@@ -305,49 +305,95 @@ table.act a { color:var(--b6); }
     document.getElementById("table-sec").hidden = false;
   }
 
-  // Freshness: the committed snapshot vs the live catalog, checked client-side.
-  // Three distinct outcomes — in sync, snapshot behind, could-not-check — because
-  // "no drift found" and "unable to look" must never render the same.
+  // Freshness: the committed snapshot vs the live catalog, checked client-side on
+  // every load — down to per-activation image counts, so the "as of" claim covers
+  // what is actually available, not just which activations exist. Three distinct
+  // outcomes — current, snapshot behind, could-not-check — because "no drift
+  // found" and "unable to look" must never render the same. The last scheduled
+  // run's result comes from the public GitHub API as a supplement: it makes a
+  // dead cron visible, but the live comparison is the authority.
+  var RUNS_API = "https://api.github.com/repos/OCHA-DAP/ds-geospatial-impact-estimates/" +
+    "actions/workflows/update-vantor-tracker.yml/runs?per_page=1&exclude_pull_requests=true";
+
+  function nowUTC() {
+    return new Date().toISOString().slice(0, 16).replace("T", " ") + " UTC";
+  }
+
   function checkLive(data) {
-    fetch(data.catalog_url, { cache: "no-store" })
+    var cronP = fetch(RUNS_API)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        var run = j && j.workflow_runs && j.workflow_runs[0];
+        return run ? { at: String(run.run_started_at).slice(0, 16).replace("T", " ") + " UTC",
+                       ok: run.conclusion === "success" } : null;
+      })
+      .catch(function () { return null; });
+
+    var liveP = fetch(data.catalog_url, { cache: "no-store" })
       .then(function (r) {
-        if (!r.ok) throw new Error("HTTP " + r.status);
+        if (!r.ok) throw new Error("catalog HTTP " + r.status);
         return r.json();
       })
       .then(function (cat) {
-        var live = (cat.links || []).filter(function (l) { return l.rel === "child"; })
-          .map(function (l) {
-            var m = String(l.href).match(/events\/([^/]+)\/collection\.json/);
-            return m ? m[1] : l.href;
+        var hrefs = (cat.links || []).filter(function (l) { return l.rel === "child"; })
+          .map(function (l) { return l.href; });
+        return Promise.all(hrefs.map(function (h) {
+          return fetch(h, { cache: "no-store" }).then(function (r) {
+            if (!r.ok) throw new Error("collection HTTP " + r.status);
+            return r.json();
           });
-        var have = {};
-        data.activations.forEach(function (a) { have[a.id] = true; });
-        var missing = live.filter(function (id) { return !have[id]; });
-        if (missing.length === 0 && live.length === data.activations.length) {
-          statusEl.dataset.state = "ok";
-          statusEl.innerHTML = "<strong>In sync with the live catalog.</strong> Snapshot of " +
-            esc(data.checked_at.slice(0, 10)) + " covers all " + live.length +
-            " activations currently published. Live check: just now.";
-        } else if (missing.length > 0) {
-          statusEl.dataset.state = "stale";
-          statusEl.innerHTML = "<strong>Snapshot is behind the live catalog.</strong> " +
-            missing.length + " activation" + (missing.length > 1 ? "s" : "") +
-            " not yet in this snapshot: " + esc(missing.join(", ")) +
-            ". The daily refresh will pick " + (missing.length > 1 ? "them" : "it") + " up.";
-        } else {
-          // Fewer live than snapshot: collections were removed upstream.
-          statusEl.dataset.state = "stale";
-          statusEl.innerHTML = "<strong>Live catalog has changed.</strong> It now lists " +
-            live.length + " activations vs " + data.activations.length +
-            " in this snapshot of " + esc(data.checked_at.slice(0, 10)) + ".";
-        }
-      })
-      .catch(function (e) {
+        }));
+      });
+
+    Promise.all([liveP, cronP]).then(function (res) {
+      var cols = res[0], cron = res[1];
+      var cronLine = cron
+        ? " Last scheduled check: " + esc(cron.at) + (cron.ok ? " ✓." :
+            " — <strong>failed</strong>; this live comparison is still authoritative.")
+        : " (Scheduled-check status unavailable.)";
+      var changedLine = " Snapshot last changed " + esc(data.checked_at.slice(0, 10)) + ".";
+
+      var live = {}, totalLive = 0;
+      cols.forEach(function (c) {
+        var seen = {};
+        (c.links || []).forEach(function (l) { if (l.rel === "item") seen[l.href] = 1; });
+        live[c.id] = Object.keys(seen).length;
+        totalLive += live[c.id];
+      });
+      var snap = {};
+      data.activations.forEach(function (a) { snap[a.id] = a.n_items; });
+
+      var drift = [];
+      Object.keys(live).forEach(function (id) {
+        if (!(id in snap)) drift.push("new activation " + id + " (" + live[id] + " images)");
+        else if (live[id] !== snap[id]) drift.push(id + " (" + snap[id] + " → " + live[id] + " images)");
+      });
+      Object.keys(snap).forEach(function (id) {
+        if (!(id in live)) drift.push(id + " removed upstream");
+      });
+
+      if (drift.length === 0) {
+        statusEl.dataset.state = "ok";
+        statusEl.innerHTML = "<strong>Current as of " + nowUTC() + " (live check).</strong> " +
+          "The catalog holds " + cols.length + " activations · " + totalLive +
+          " images, all shown here." + changedLine + cronLine;
+      } else {
+        statusEl.dataset.state = "stale";
+        statusEl.innerHTML = "<strong>The live catalog has moved ahead of this snapshot</strong> " +
+          "(checked " + nowUTC() + "): " + esc(drift.join("; ")) +
+          ". The daily refresh at 04:43 UTC will pick this up." + changedLine + cronLine;
+      }
+    }).catch(function (e) {
+      cronP.then(function (cron) {
+        var cronLine = cron
+          ? " Last scheduled check: " + esc(cron.at) + (cron.ok ? " ✓." : " — <strong>failed</strong>.")
+          : "";
         statusEl.dataset.state = "error";
         statusEl.innerHTML = "<strong>Could not verify against the live catalog</strong> (" +
-          esc(e.message) + "). Showing the snapshot of " + esc(data.checked_at.slice(0, 10)) +
-          " — it may be behind.";
+          esc(e.message) + "). Showing the snapshot last changed " +
+          esc(data.checked_at.slice(0, 10)) + " — it may be behind." + cronLine;
       });
+    });
   }
 
   fetch("data.json", { cache: "no-store" })
