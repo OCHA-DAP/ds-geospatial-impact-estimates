@@ -27,8 +27,8 @@ PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 CONS = {"weighted fusion": "#18614c", "flat k-of-6 voting": "#51ac92",
         "geography null (logistic)": "#c44536", "geography null (rand. forest)": "#dc8f86"}
 BASES = ["destroyed", "dmg+destroyed", "incl_possibly"]
-XLBL = ["Destroyed only\n{3}", "Damaged or Destroyed\n{2,3}  (the paper)",
-        "incl. Possibly damaged\n{1,2,3}"]
+XLBL = ["Destroyed only", "Damaged or Destroyed\n(the paper's reference)",
+        "also incl. Possibly damaged"]
 XLBL_SHORT = ["{3}\ndestroyed", "{2,3}\npaper", "{1,2,3}\n+ possibly"]
 
 
@@ -70,7 +70,7 @@ def slope_panel(ax, metric, label_right=True, lbl_fs=9.5, short_x=False):
 fig, ax = plt.subplots(figsize=(10.5, 7))
 slope_panel(ax, "precision")
 ax.set_ylabel("precision — share of flags within 10 m of a reference point", fontsize=11)
-ax.set_title("Precision is a function of which CEMS grades count as damage —\n"
+ax.set_title("Precision depends on which CEMS grades count as damage:\n"
              "levels roughly double per step (mechanical: more reference, same flags); "
              "no comparison flips",
              fontsize=12.5)

@@ -20,10 +20,10 @@ HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "figs")
 pb = pd.read_csv(os.path.join(HERE, "..", "rq2r_precision_bounds.csv"))
 
-DEFS = [("P_floor", "CEMS {2,3}  (the paper's reference — lower bound)", "#8a5a00", "o", True),
-        ("P_grade", "+ CEMS 'possibly damaged' {1,2,3}", "#c98a1e", "o", False),
-        ("P_crowd", "+ crowd-confirmed damage (MapSwipe)", "#2a78d6", "s", False),
-        ("P_upper", "union of both  (upper bound)", "#1b4f8a", "D", True)]
+DEFS = [("P_floor", "expert points graded Damaged or Destroyed\n(the paper's reference: lower bound)", "#8a5a00", "o", True),
+        ("P_grade", "also counting points graded Possibly damaged", "#c98a1e", "o", False),
+        ("P_crowd", "also counting crowd-confirmed flags (MapSwipe)", "#2a78d6", "s", False),
+        ("P_upper", "counting both additions  (upper bound)", "#1b4f8a", "D", True)]
 
 o = pb.sort_values("P_upper").reset_index(drop=True)
 fig, ax = plt.subplots(figsize=(11.5, 6.6))
@@ -41,7 +41,7 @@ for i, r in o.iterrows():
             ha="left", va="center", fontsize=9.5, color="#1b4f8a", weight="bold")
     cov = r.crowd_cov_of_fps
     warn = cov < 0.3
-    ax.text(0.405, i, f"{cov:.0%}" + ("  ← upper bound understated" if warn else ""),
+    ax.text(0.405, i, f"{cov:.0%}" + ("  (upper bound understated)" if warn else ""),
             ha="left", va="center", fontsize=10,
             color="#c62828" if warn else "#5a6570", weight="bold" if warn else "normal")
 
@@ -59,7 +59,7 @@ ax.set_title("The headline precision is a lower bound: crediting CEMS's own low-
              fontsize=12.5)
 fig.text(0.99, 0.012,
          "a flag earns credit only where the crowd actually reviewed its location and judged it damaged;\n"
-         "locations the crowd never reviewed earn nothing — so low review coverage understates the upper bound",
+         "locations the crowd never reviewed earn nothing, so low review coverage understates the upper bound",
          ha="right", fontsize=9, style="italic", color="#5a6570")
 fig.tight_layout(rect=(0, 0.09, 1, 1))
 fig.savefig(os.path.join(FIGS, "rq2r_bounds_ladder.png"), dpi=150)
