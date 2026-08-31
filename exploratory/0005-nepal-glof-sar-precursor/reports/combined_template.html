@@ -92,9 +92,9 @@ li{margin-bottom:8px;}
 <p class="dek">On 26 August 2026, a huge chunk of ice and rock broke off a
 Himalayan peak in Nepal and caused a flood that killed hundreds of people.
 We went back through six years of free satellite radar images and asked a
-simple question: <strong>did the mountain look different before it failed?</strong>
-It did — for four months. The story reads in plain language; every step carries
-an expandable panel with the full technical detail.</p>
+simple question: did the mountain look different before it failed? It did,
+starting four months out. The story below reads in plain language, and every
+step has an expandable panel with the full technical detail.</p>
 
 <div class="banner">
   <a href="#story">The story</a>
@@ -113,121 +113,120 @@ an expandable panel with the full technical detail.</p>
 
 <div class="primer" id="story">
 <span class="tag">First: how satellite radar works, in 60 seconds</span>
-<p>The Sentinel-1 satellites fly over every spot on Earth every few days and
-send radar pulses at the ground, then measure how much echo bounces back. That
-echo strength is one number per ~10&nbsp;m patch of ground, and it changes when
-the <em>surface</em> changes. The two things that matter here:</p>
-<p>• <strong>Water kills the echo.</strong> Dry snow and ice bounce radar back
-nicely. Wet, melting snow absorbs it — so a melting glacier face shows up
-<em>darker</em> to radar.</p>
-<p>• <strong>Radar doesn't care about clouds or darkness.</strong> This region
-was in monsoon — optical satellites saw mostly cloud for months. Radar saw the
-mountain the whole time. That's why we used it.</p>
-<p>One more thing: the satellite doesn't wander — it repeats a fixed set of
+<p>The Sentinel-1 satellites fly over every spot on Earth every few days, send
+radar pulses at the ground, and measure how much echo bounces back. That echo
+strength is one number per ~10&nbsp;m patch of ground, and it changes when the
+surface changes. Two properties matter here.</p>
+<p>Water kills the echo. Dry snow and ice bounce radar back nicely, while wet,
+melting snow absorbs it, so a melting glacier face shows up darker to radar.</p>
+<p>And radar doesn't care about clouds or darkness. This region was in monsoon,
+so optical satellites saw mostly cloud for months. Radar saw the mountain the
+whole time, which is why we used it.</p>
+<p>One more thing. The satellite doesn't wander; it repeats a fixed set of
 ground tracks, each with a number. In the charts below these appear as
-<strong>"orbit 19", "orbit 85" and "orbit 121"</strong> — the three tracks that
-see this mountain. Tracks flying north→south ("descending") cross here at
-<strong>~6 in the morning</strong> local time; the track flying south→north
-("ascending") crosses at <strong>~6 in the evening</strong>. Keep that in mind —
-it becomes the key to the whole finding.</p>
+"orbit 19", "orbit 85" and "orbit 121", the three tracks that see this
+mountain. Tracks flying north to south ("descending") cross here at about 6 in
+the morning local time; the track flying south to north ("ascending") crosses
+at about 6 in the evening. Keep that in mind, because it turns out to be the
+key to the whole finding.</p>
 </div>
 
 <div class="facts">
-  <div><div class="k">Orbit 19 · descending</div><div class="v">☀️ morning · 06:03</div></div>
-  <div><div class="k">Orbit 85 · ascending</div><div class="v">🌆 evening · 18:06</div></div>
-  <div><div class="k">Orbit 121 · descending</div><div class="v">☀️ morning · 06:03</div></div>
+  <div><div class="k">Orbit 19 · descending</div><div class="v">morning · 06:03</div></div>
+  <div><div class="k">Orbit 85 · ascending</div><div class="v">evening · 18:06</div></div>
+  <div><div class="k">Orbit 121 · descending</div><div class="v">morning · 06:03</div></div>
 </div>
 <p class="cap" style="margin:0 2px 36px">Decoder for every chart on this page.
 Whenever a panel or line is labelled with an orbit number, this is what it means.
 Each track views the mountain from its own fixed angle, so charts never mix
-orbits. ("VV" in the axis labels is simply the radar channel used — see the
+orbits. ("VV" in the axis labels is simply the radar channel used; see the
 glossary.)</p>
 
-<h2>Step 1 — First, prove we're looking at the right mountain face</h2>
+<h2>Step 1: prove we're looking at the right mountain face</h2>
 <p>News reports gave coordinates for where the collapse started. Before trusting
-them, we checked: we took the first radar image after the collapse and compared
+them, we checked. We took the first radar image after the collapse and compared
 it with the images from the weeks before. Where the surface got violently
-rearranged, the radar echo changed a lot — the dark shape below. It sits almost
-exactly on the published coordinate (260&nbsp;m away, about three football
-pitches), and you can see the debris trail heading off down the valley.
+rearranged, the radar echo changed a lot: that's the dark shape below. It sits
+almost exactly on the published coordinate (260&nbsp;m away, about three
+football pitches), and the debris trail is visible heading off down the valley.
 Everything after this point analyses that face, knowing it's the right one.</p>
 <div class="figure"><div class="plate">{{FIG:scar_map}}</div>
-<p class="cap"><span class="fig-n">Fig 1</span>Darker blue = the radar echo after the
-collapse is very different from before. The red crosses are the published coordinates;
-the orange box is the mountain face we study for the rest of this page.</p></div>
-<details class="tech"><summary>Technical detail — event &amp; scar mapping</summary>
+<p class="cap"><span class="fig-n">Fig 1</span>Darker blue means the radar echo after
+the collapse is very different from before. The red crosses are the published
+coordinates; the orange box is the mountain face we study for the rest of this
+page.</p></div>
+<details class="tech"><summary>Technical detail: event &amp; scar mapping</summary>
 <div class="body">
 <p>Event: ice/rock detachment, north flank of Langtang Lirung, 2026-08-26
 02:52:10&nbsp;UTC; seismic signature equivalent to M5.2 (USGS <code>us7000tbwb</code>),
-second M4.2-equivalent collapse <code>us7000tc90</code> ~3&nbsp;h later; debris flow
-ran ~100&nbsp;km down the Lende Khola → Trishuli. Published source coordinates:
-28.28532°N 85.52515°E (Petley, early) and 28.2765°N 85.5194°E (Petley, Landslide
-Blog).</p>
-<p>Scar map: orbit 85's first post-event scene (2026-08-28, 36&nbsp;h after) scored
-against that orbit's own Jun–Aug 2026 stack — per pixel,
-z&nbsp;=&nbsp;(post&nbsp;−&nbsp;mean<sub>pre</sub>)&nbsp;/&nbsp;std<sub>pre</sub>
-(std floored at 0.5&nbsp;dB), max&nbsp;|z| over VV/VH. |z|≥3 covers 9.4&nbsp;km² of
-the 10×10&nbsp;km scene (scar + runout); 1.06&nbsp;km² falls inside the 2×3&nbsp;km
-source box, with change centroid 28.28648°N 85.52284°E — 260&nbsp;m from the
-published point.</p>
+with a second M4.2-equivalent collapse (<code>us7000tc90</code>) about 3&nbsp;h
+later. The debris flow ran ~100&nbsp;km down the Lende Khola into the Trishuli.
+Published source coordinates: 28.28532°N 85.52515°E (Petley, early) and
+28.2765°N 85.5194°E (Petley, Landslide Blog).</p>
+<p>Scar map: orbit 85's first post-event scene (2026-08-28, 36&nbsp;h after)
+scored against that orbit's own Jun-Aug 2026 stack. Per pixel,
+z&nbsp;=&nbsp;(post&nbsp;−&nbsp;mean<sub>pre</sub>)&nbsp;/&nbsp;std<sub>pre</sub>,
+with std floored at 0.5&nbsp;dB and the max&nbsp;|z| taken over VV/VH. Pixels
+with |z|≥3 cover 9.4&nbsp;km² of the 10×10&nbsp;km scene (scar plus runout), of
+which 1.06&nbsp;km² falls inside the 2×3&nbsp;km source box. The change centroid
+is 28.28648°N 85.52284°E, 260&nbsp;m from the published point.</p>
 </div></details>
 
-<h2>Step 2 — Then compare 2026 to a "normal" year</h2>
+<h2>Step 2: compare 2026 to a normal year</h2>
 <p>For that mountain face, we averaged the radar echo over the box for every
-single satellite pass since 2020 — about 300 passes. The chart below lays every
+single satellite pass since 2020, about 300 passes. The chart below lays every
 year on top of each other, January to December. Grey lines are 2020 through
 2025; blue is 2026, up to the collapse (dashed line).</p>
 <p>Every year has the same rhythm: bright in winter (frozen), a dip through
 summer (melt), bright again in autumn. That dip is normal. What's not normal is
-<strong>when</strong> and <strong>how deep</strong> the blue line dips: in the
-top and bottom panels — <strong>orbits 19 and 121, the two morning
-tracks</strong> — 2026 drops earlier than every grey year (melt started roughly
-a month ahead of schedule) and then stays below all of them, all summer. The
-middle panel, evening orbit 85, already hints at the pattern: there, 2026 looks
-much more ordinary.</p>
+when and how deep the blue line dips. In the top and bottom panels, orbits 19
+and 121, the two morning tracks, 2026 drops earlier than every grey year (the
+melt started roughly a month ahead of schedule) and then stays below all of
+them, all summer. The middle panel, evening orbit 85, already hints at the
+pattern: there, 2026 looks much more ordinary.</p>
 <div class="figure"><div class="plate">{{FIG:raw_vv_doy}}</div>
 <p class="cap"><span class="fig-n">Fig 2</span>Radar echo strength ("VV backscatter",
-in decibels) over the face, by day of year. One panel per orbit — 19 and 121 are the
-6&nbsp;am tracks, 85 the 6&nbsp;pm one; they view the mountain from different angles,
-so their absolute levels differ and are never mixed. Blue = 2026, grey = the six
+in decibels) over the face, by day of year. One panel per orbit: 19 and 121 are the
+6&nbsp;am tracks, 85 the 6&nbsp;pm one. They view the mountain from different angles,
+so their absolute levels differ and are never mixed. Blue is 2026, grey the six
 previous years.</p></div>
-<details class="tech"><summary>Technical detail — AOIs &amp; extraction</summary>
+<details class="tech"><summary>Technical detail: AOIs &amp; extraction</summary>
 <div class="body">
-<p>Source AOI: a 2×3&nbsp;km lon/lat box (85.512–85.533°E, 28.269–28.293°N)
+<p>Source AOI: a 2×3&nbsp;km lon/lat box (85.512-85.533°E, 28.269-28.293°N)
 covering both published coordinates. Controls: two boxes on the same massif
-matched on GLO30 terrain — source 4,973&nbsp;m / 40.0° slope; control&nbsp;W
-4,990&nbsp;m / 39.5°; control&nbsp;E 4,908&nbsp;m / 36.8°. Series: S1 GRD IW
-VV+VH mean per acquisition per AOI, 2020-01 → event, per relative orbit
-(19↓/85↑/121↓), acquisitions with &lt;80% box coverage dropped. GRD values are
-dB; box means are log-domain means, used only for relative change within one
-orbit.</p>
+matched on GLO30 terrain. The source box sits at 4,973&nbsp;m with 40.0° mean
+slope; control&nbsp;W at 4,990&nbsp;m / 39.5°; control&nbsp;E at 4,908&nbsp;m /
+36.8°. Series: S1 GRD IW VV+VH mean per acquisition per AOI, 2020-01 to the
+event, per relative orbit (19↓/85↑/121↓), with acquisitions covering less than
+80% of the box dropped. GRD values are dB; box means are log-domain means, used
+only for relative change within one orbit.</p>
 </div></details>
 
-<h2>Step 3 — Rule out "maybe 2026 was just a warm year"</h2>
+<h2>Step 3: rule out "maybe 2026 was just a warm year"</h2>
 <p>Fair objection: an early melt could just mean a warm spring everywhere, not a
-sick glacier. So we picked two <strong>control patches</strong> — slopes on the
-same mountain, at the same altitude and steepness, a few kilometres left and
-right of the face that failed. If the whole region was simply warm, the controls
-should look just as unusual as the source face.</p>
+sick glacier. So we picked two control patches, slopes on the same mountain at
+the same altitude and steepness, a few kilometres left and right of the face
+that failed. If the whole region was simply warm, the controls should look just
+as unusual as the source face.</p>
 <p>They don't. To compare fairly, each 2026 measurement is turned into a
-<strong>z-score</strong>: "how many standard deviations is this from the same
-week in previous years?" A z of 0 means typical; −2 means unusual (roughly a
-1-in-40 event); −5 means it essentially never happens by chance. Summer 2026 on
-the control patches averaged about −1 (mildly warm, fine). The face that
-failed averaged <strong>−2.3, with dips to −5.6</strong>. The anomaly belongs to
-that face specifically.</p>
+z-score: how many standard deviations is this from the same week in previous
+years? A z of 0 means typical; −2 means unusual (roughly a 1-in-40 event); −5
+essentially never happens by chance. Summer 2026 on the control patches averaged
+about −1, which reads as mildly warm and nothing more. The face that failed
+averaged −2.3, with dips to −5.6. The anomaly belongs to that face
+specifically.</p>
 <div class="figure"><div class="plate">{{FIG:climatology_z}}</div>
 <p class="cap"><span class="fig-n">Fig 3</span>How unusual each 2026 measurement is
-(its z-score) versus the same season in 2020–25, one panel per orbit — top and bottom
-are the 6&nbsp;am tracks, middle the 6&nbsp;pm one. Blue = the face that collapsed,
-orange/green = the two control patches. The grey band (±2) is the "nothing
-remarkable" zone. Notice the face separates from its controls mainly in the two
+(its z-score) versus the same season in 2020-25, one panel per orbit. Top and bottom
+are the 6&nbsp;am tracks, the middle is the 6&nbsp;pm one. Blue is the face that
+collapsed, orange and green the two control patches. The grey band (±2) is the
+"nothing remarkable" zone. The face separates from its controls mainly in the two
 morning panels.</p></div>
-<details class="tech"><summary>Technical detail — climatology numbers</summary>
+<details class="tech"><summary>Technical detail: climatology numbers</summary>
 <div class="body">
-<p>z per acquisition = departure from prior-year (2020–25) acquisitions of the
-same orbit within ±12 days of the same day-of-year. Last five pre-event
-acquisitions, source box, VV:</p>
+<p>z per acquisition is the departure from prior-year (2020-25) acquisitions of
+the same orbit within ±12 days of the same day-of-year. Last five pre-event
+acquisitions over the source box, VV:</p>
 <table>
 <thead><tr><th>Orbit (local)</th><th>Last five pre-event z</th></tr></thead>
 <tbody>
@@ -236,157 +235,153 @@ acquisitions, source box, VV:</p>
 <tr><td class="rowlab">121 (06:03)</td><td>07-02 −5.4 · 07-14 −2.0 · 07-26 −5.6 · 08-07 −3.5 · 08-19 −3.1</td></tr>
 </tbody>
 </table>
-<p>Jun–Aug 2026 means (VV z): source −2.33 (min −5.64), control&nbsp;W −1.00
+<p>Jun-Aug 2026 means (VV z): source −2.33 (min −5.64), control&nbsp;W −1.00
 (min −3.58), control&nbsp;E −0.77 (min −2.96).</p>
 </div></details>
 
-<h2>Step 4 — The morning/evening clue</h2>
+<h2>Step 4: the morning/evening clue</h2>
 <p>Now the detail that turns "the face looked odd" into a physical story.
-Remember the pass times? Two of the satellite tracks image this mountain at
-<strong>6&nbsp;am</strong>, one at <strong>6&nbsp;pm</strong>. When we subtract
-the controls from the source face (cancelling out weather that affects the whole
-valley) and track what's left:</p>
+Remember the pass times: two of the satellite tracks image this mountain at
+6&nbsp;am, one at 6&nbsp;pm. We subtracted the controls from the source face,
+which cancels out weather that affects the whole valley, and tracked what was
+left.</p>
 <ul>
-<li>The <strong>6&nbsp;pm track (orbit 85, the green line in Fig&nbsp;4) sees
-nothing unusual all summer.</strong> That makes sense — on a monsoon afternoon,
-every glacier face is wet and dark to radar, every year. 2026 can't stand out.</li>
-<li>The <strong>6&nbsp;am tracks (orbits 19 and 121, the blue lines) see the face
-go wrong from early July</strong> — eight weeks before the collapse — and stay
-wrong.</li>
+<li>The 6&nbsp;pm track (orbit 85, the green line in Fig&nbsp;4) sees nothing
+unusual all summer. That makes sense: on a monsoon afternoon, every glacier face
+is wet and dark to radar, every year, so 2026 can't stand out.</li>
+<li>The 6&nbsp;am tracks (orbits 19 and 121, the blue lines) see the face go
+wrong from early July, eight weeks before the collapse, and stay wrong.</li>
 </ul>
 <div class="callout"><p>At 6&nbsp;am, a healthy high glacier face has refrozen
-overnight and looks radar-bright. This face didn't. A signal that appears
-<em>only</em> in the morning data means the surface was <strong>staying wet
-through the night</strong> — the face had absorbed so much heat and meltwater
-that it could no longer refreeze. A hanging glacier soaked in meltwater is
-exactly the kind that collapses.</p></div>
+overnight and looks radar-bright. This face didn't. A signal that appears only
+in the morning data means the surface was <strong>staying wet through the
+night</strong>: the face had absorbed so much heat and meltwater that it could
+no longer refreeze. A hanging glacier soaked in meltwater is exactly the kind
+that collapses.</p></div>
 <div class="figure"><div class="plate">{{FIG:divergence_z}}</div>
 <p class="cap"><span class="fig-n">Fig 4</span>The face compared against its own
-controls. Blue lines: the two 6&nbsp;am tracks (orbits 19 and 121, descending) — out
+controls. Blue lines: the two 6&nbsp;am tracks (orbits 19 and 121, descending), out
 of the grey "normal" band from July. Green line: the 6&nbsp;pm track (orbit 85,
-ascending) — normal right up to the collapse.</p></div>
-<details class="tech"><summary>Technical detail — divergence statistic</summary>
+ascending), normal right up to the collapse.</p></div>
+<details class="tech"><summary>Technical detail: divergence statistic</summary>
 <div class="body">
 <p>d = source VV − mean(controls VV) per acquisition; z<sub>d</sub> scores d
 against the prior-year distribution of the same difference at the same
 day-of-year (±12 d). Orbit 121 sustains z<sub>d</sub>&nbsp;≤&nbsp;−2 from
-<strong>2026-07-02</strong> (6/18 pre-event acquisitions at ≤&nbsp;−2, deepest
-−6.8); orbit 19 is intermittently ≤&nbsp;−2 from late June (5/20); orbit 85
-never leaves its envelope pre-event (1/20). Removing the controls this way
-cancels valley-wide weather; what remains is specific to the face.</p>
+2026-07-02 (6 of 18 pre-event acquisitions at or below −2, deepest −6.8);
+orbit 19 is intermittently at or below −2 from late June (5 of 20); orbit 85
+never leaves its envelope pre-event (1 of 20). Removing the controls this way
+cancels valley-wide weather, and what remains is specific to the face.</p>
 </div></details>
 
-<h2>Step 5 — What the radar could <em>not</em> see</h2>
+<h2>Step 5: what the radar could <em>not</em> see</h2>
 <p>An obvious hope: maybe the exact patch that broke off looked different from
-the rest of the face — that would let you point at a spot on the map in advance.
-We tested it: inside the source box, we compared pixels that ended up inside the
+the rest of the face, which would let you point at a spot on the map in advance.
+We tested it. Inside the source box, we compared pixels that ended up inside the
 collapse scar with pixels just outside it, week by week. The two groups track
-each other on every date. The warning was <strong>face-wide</strong>: the radar
-told us <em>this face is in trouble</em>, not <em>this exact block will
-fail</em>, and there was no last-minute change in the final pass 39 hours
-before the collapse.</p>
+each other on every date. The warning was face-wide. The radar told us this
+face was in trouble, not which exact block would fail, and there was no
+last-minute change in the final pass 39 hours before the collapse.</p>
 <div class="figure"><div class="plate">{{FIG:preevent_fraction}}</div>
 <p class="cap"><span class="fig-n">Fig 5</span>Share of "unusual" pixels inside the
 future collapse zone (blue) versus the rest of the face (grey). The lines never
-separate — no pixel-level early warning. (Both drift down from June to July for a
-boring technical reason: the comparison baseline is a summer average, so early-summer
-images naturally look a bit more "unusual".)</p></div>
+separate, so there was no pixel-level early warning. Both drift down from June to
+July for a boring technical reason: the comparison baseline is a summer average, so
+early-summer images naturally look a bit more "unusual".</p></div>
 <div class="primer">
-<span class="tag">Wait — can't radar just see the block moving?</span>
-<p>Sometimes, but probably not here, and it's worth understanding why. Radar
-interferometry (<strong>InSAR</strong>) compares the <em>phase</em> of the radar
-wave between two passes and can measure millimetres of ground motion — but it
-needs the surface to stay put between passes at the centimetre scale. A melting
-monsoon glacier face reshuffles completely between visits, so the phase turns to
-noise (the technical term is "loss of coherence") exactly where and when we'd
-want to look. It also needs a rawer data product (SLC) than the archive used
-here provides, and it can only track slow, small motion — a block creeping
-metres per day is too fast for it.</p>
-<p>The coarser cousin, <strong>offset tracking</strong>, follows recognisable
-speckle patterns between images and handles fast motion — but at Sentinel-1's
-~10&nbsp;m resolution it only sees a shift once the block has moved several
-metres between passes, which for most collapses means days, not weeks, of
-warning. So this study measures the <em>cause</em> (a face soaked in meltwater)
-rather than the <em>symptom</em> (the block starting to slide) — the cause shows
-up earlier and in easier data. Ideally you'd chain them: this cheap wetness
-watch flags a face, then motion techniques and high-resolution tasking zoom
-in.</p>
-<p><strong>And we did check.</strong> We ran offset tracking on the final image
-pairs — the last one ending just 39 hours before the collapse — using earlier
-pairs from the same summer to establish how noisy the method is on this terrain.
-Result: the face's apparent motion in those final weeks was
-<em>indistinguishable from the noise</em> (roughly a metre or two, the same as
-ground that didn't fail). The tracking itself worked fine — the surface stayed
-recognisable — so this is a real "it wasn't sliding," not a "we couldn't tell":
-the block did not creep metres-scale before it went. It let go suddenly, which
-is exactly why the early wetness warning matters more than motion for this kind
-of failure.</p>
+<span class="tag">Wait, can't radar just see the block moving?</span>
+<p>Sometimes, but probably not here, and the reasons are worth understanding.
+Radar interferometry (InSAR) compares the phase of the radar wave between two
+passes and can measure millimetres of ground motion, but it needs the surface to
+stay put between passes at the centimetre scale. A melting monsoon glacier face
+reshuffles completely between visits, so the phase turns to noise (the technical
+term is "loss of coherence") exactly where and when we'd want to look. It also
+needs a rawer data product (SLC) than the archive used here provides, and it can
+only track slow, small motion; a block creeping metres per day is too fast for
+it.</p>
+<p>The coarser cousin, offset tracking, follows recognisable speckle patterns
+between images and handles fast motion, but at Sentinel-1's ~10&nbsp;m
+resolution it only registers a shift once the block has moved several metres
+between passes. For most collapses that means days of warning, not weeks. So
+this study measures the cause (a face soaked in meltwater) rather than the
+symptom (the block starting to slide), because the cause shows up earlier and in
+easier data. Ideally you'd chain them: the cheap wetness watch flags a face,
+then motion techniques and high-resolution tasking zoom in.</p>
+<p>And we did check. We ran offset tracking on the final image pairs, the last
+one ending just 39 hours before the collapse, using earlier pairs from the same
+summer to establish how noisy the method is on this terrain. The face's apparent
+motion in those final weeks was indistinguishable from the noise: roughly a
+metre or two, the same as ground that didn't fail. The tracking itself worked
+fine, since the surface stayed recognisable, so this is a real "it wasn't
+sliding" rather than a "we couldn't tell". The block did not creep metres-scale
+before it went. It let go suddenly, which is exactly why the early wetness
+warning matters more than motion for this kind of failure.</p>
 </div>
 <div class="figure"><div class="plate">{{FIG:offset_tracking}}</div>
 <p class="cap"><span class="fig-n">Fig 6</span>Offset-tracking displacement magnitude
-per 640&nbsp;m window (blue scale; pink = decorrelated). Top row: the final pre-event
-pairs; bottom row: earlier reference pairs. The source box (orange) shows no coherent
-motion patch in any pair.</p></div>
-<details class="tech"><summary>Technical detail — offset tracking numbers</summary>
+per 640&nbsp;m window (blue scale; pink means decorrelated). Top row: the final
+pre-event pairs. Bottom row: earlier reference pairs. The source box (orange) shows
+no coherent motion patch in any pair.</p></div>
+<details class="tech"><summary>Technical detail: offset tracking numbers</summary>
 <div class="body">
 <p>Windowed phase cross-correlation on linear-power amplitude: 640&nbsp;m
-windows, 160&nbsp;m step, 1/10-pixel subpixel. Final pairs — orbit 19
-08-12→08-24 (ends 39&nbsp;h pre-collapse), orbit 121 08-07→08-19; reference
-pairs one cycle earlier. Whole chips carry a 2–6&nbsp;m common co-registration
-offset between GRD products (reference pairs <em>worse</em> than final ones —
-systematic, not motion). After removing the surround's median shift vector, the
-face's differential displacement in the final pairs is median 1.4&nbsp;m /
-p90 4.1&nbsp;m — at or below the reference pairs' own noise (2.0 / 4.2&nbsp;m).
-220–221 of 221 face windows stayed correlated: a measured null (no sliding
-above ~2&nbsp;m per 12&nbsp;days at this scale), not a failure to measure.</p>
+windows, 160&nbsp;m step, 1/10-pixel subpixel. Final pairs: orbit 19
+08-12→08-24 (ends 39&nbsp;h pre-collapse) and orbit 121 08-07→08-19, with
+reference pairs one cycle earlier. Whole chips carry a 2-6&nbsp;m common
+co-registration offset between GRD products; the reference pairs are worse than
+the final ones, which confirms the offset is systematic rather than motion.
+After removing the surround's median shift vector, the face's differential
+displacement in the final pairs is median 1.4&nbsp;m / p90 4.1&nbsp;m, at or
+below the reference pairs' own noise (2.0 / 4.2&nbsp;m). 220 to 221 of 221 face
+windows stayed correlated, so this is a measured null (no sliding above
+~2&nbsp;m per 12&nbsp;days at this scale), not a failure to measure.</p>
 </div></details>
 
-<h2 id="firealarm">Step 6 — The fire-alarm test: how often would it cry wolf?</h2>
-<p>Everything so far had a big asterisk: <strong>we knew where to look.</strong>
-A smoke detector that goes off during a fire is only useful if it doesn't also
-go off every time you make toast. So we ran the test: we took <strong>45 other
-glacier faces</strong> like this one — every glacier in the surrounding
-130×90&nbsp;km that is similarly steep, high, and hangs the same way — and
-replayed the exact same alarm rule on each of them, for five summers
-(2022–2026), always hiding the tested year from its own "normal" baseline. The
-alarm rule: the face must look unusually dark to the morning radar
-<em>three passes in a row</em>, after subtracting whatever the whole
-neighbourhood is doing that day.</p>
+<h2 id="firealarm">Step 6: the fire-alarm test, or how often this would cry wolf</h2>
+<p>Everything so far had a big asterisk: we knew where to look. We analysed this
+face because it had already collapsed. A smoke detector that goes off during a
+fire is only useful if it doesn't also go off every time you make toast. So we
+ran the test. We took 45 other glacier faces like this one, every glacier in
+the surrounding 130×90&nbsp;km that is similarly steep, high, and hangs the same
+way, and replayed the exact same alarm rule on each of them for five summers
+(2022-2026), always hiding the tested year from its own "normal" baseline. The
+alarm rule: the face must look unusually dark to the morning radar three passes
+in a row, after subtracting whatever the whole neighbourhood is doing that
+day.</p>
 <p>The result, one dot per face per summer:</p>
 <div class="figure"><div class="plate">{{FIG:falsealarm_runstat}}</div>
 <p class="cap"><span class="fig-n">Fig 7</span>Each dot is one glacier face in one
-summer; lower = more anomalous. Grey dots are the 45 comparison faces; blue is the
-face that collapsed. Dots below the dashed line would have triggered the alarm.</p></div>
-<ul>
-<li><strong>The collapse is caught.</strong> The failing face crosses the alarm line
-in 2026 — and in no earlier year.</li>
-<li><strong>False alarms are rare: about 1 in 75.</strong> Across 226 face-summers
-with no collapse, the alarm fired 3 times (1.3%). Tighten the threshold a notch
-and it's 1 in 200, still catching the collapse.</li>
-<li><strong>One "false" alarm might not be false.</strong> The strongest 2026 signal
-in the whole test isn't the face that collapsed — it's an uncollapsed face
-~32&nbsp;km north, on the Tibet side of the same river system, currently far more
-anomalous than the collapse face ever was. Either the same warm conditions hit it
-harder, or it's a face somebody should be watching right now.</li>
-<li><strong>One catch:</strong> zoom out too far and the signal disappears. Averaged
-over the whole 10&nbsp;km² glacier instead of the 6&nbsp;km² face, the collapsing
-glacier stays under the alarm line. A real monitoring system would have to watch
-face-sized patches, which means more patches and somewhat more false alarms than
-the 1-in-75 measured here.</li>
-</ul>
-<p>So: not a proven early-warning system — one region, five summers, and exactly
-one collapse to test against. But it's the difference between "neat hindsight"
-and "worth piloting": the data is free, global, sees through clouds, and updates
-every few days.</p>
-<details class="tech"><summary>Technical detail — detector spec &amp; sweep</summary>
+summer; lower means more anomalous. Grey dots are the 45 comparison faces; blue is
+the face that collapsed. Dots below the dashed line would have triggered the
+alarm.</p></div>
+<p>The collapse is caught: the failing face crosses the alarm line in 2026, and
+in no earlier year. False alarms are rare, about 1 in 75. Across 226
+face-summers with no collapse, the alarm fired 3 times (1.3%), and tightening
+the threshold a notch brings that to 1 in 200 while still catching the
+collapse.</p>
+<p>One of those "false" alarms might not be false. The strongest 2026 signal in
+the whole test isn't the face that collapsed. It's an uncollapsed face about
+32&nbsp;km north, on the Tibet side of the same river system, currently far
+more anomalous than the collapse face ever was. Either the same warm conditions
+hit it harder, or it's a face somebody should be watching right now.</p>
+<p>There's also a catch: zoom out too far and the signal disappears. Averaged
+over the whole 10&nbsp;km² glacier instead of the 6&nbsp;km² face, the
+collapsing glacier stays under the alarm line. A real monitoring system would
+have to watch face-sized patches, which means more patches and somewhat more
+false alarms than the 1-in-75 measured here.</p>
+<p>So this is not a proven early-warning system. It rests on one region, five
+summers, and exactly one collapse to test against. But it's the difference
+between neat hindsight and something worth piloting: the data is free, global,
+sees through clouds, and updates every few days.</p>
+<details class="tech"><summary>Technical detail: detector spec &amp; sweep</summary>
 <div class="body">
-<p>Fleet: GLIMS 20230607 boundaries in 84.9–86.3°E / 27.9–28.7°N, deduped per
-glac_id, 0.5–15&nbsp;km², mean elevation ≥&nbsp;4,800&nbsp;m, GLO30 mean slope
+<p>Fleet: GLIMS 20230607 boundaries in 84.9-86.3°E / 27.9-28.7°N, deduped per
+glac_id, 0.5-15&nbsp;km², mean elevation ≥&nbsp;4,800&nbsp;m, GLO30 mean slope
 ≥&nbsp;25°; 45 faces. Detector, per face × descending orbit: leave-one-out
 climatology z (±12 d day-of-year window, tested year excluded from its own
-baseline), minus the same-date fleet-median z; alarm = 3 consecutive Jun–Aug
-acquisitions ≤&nbsp;−2σ. The detachment box, run through identical machinery, is
-the positive control: statistic <strong>−3.05</strong>, alarming only in 2026.</p>
+baseline), minus the same-date fleet-median z; an alarm is 3 consecutive
+Jun-Aug acquisitions at or below −2σ. The detachment box, run through identical
+machinery, is the positive control: statistic −3.05, alarming only in 2026.</p>
 <table>
 <thead><tr><th>Threshold</th><th>Fleet false-alarm rate (226 face-seasons)</th><th>Detachment box 2026</th></tr></thead>
 <tbody>
@@ -395,9 +390,9 @@ the positive control: statistic <strong>−3.05</strong>, alarming only in 2026.
 <tr><td>−2.5σ</td><td>0.4% (1 alarm)</td><td class="rowlab">caught</td></tr>
 </tbody>
 </table>
-<p>The three fleet alarms: G085489E28568N in 2024 (−2.14) and 2026 (−7.46 — the
+<p>The three fleet alarms: G085489E28568N in 2024 (−2.14) and 2026 (−7.46, the
 Tibet-side face above), and Lanong Glacier in 2024 (−2.41). At whole-glacier
-scale the source glacier's own polygon scores −1.5 and is missed — face-scale
+scale the source glacier's own polygon scores −1.5 and is missed, so face-scale
 tiling is required, making 1.3% a lower bound on an operational tile-level
 rate.</p>
 </div></details>
@@ -405,37 +400,38 @@ rate.</p>
 <h2 id="glossary">Mini-glossary</h2>
 <dl>
 <dt>backscatter / VV / dB</dt><dd>Backscatter is the strength of the radar echo
-that returns to the satellite, measured in decibels (dB) — a few dB is a big
-change; wet surfaces → weaker echo → "darker". "VV" names the radar channel
-(polarisation) used in every chart here: the pulse is sent and received
-vertically polarised. Sentinel-1 also records a VH channel; it tells the same
-story, so the charts show VV.</dd>
+that returns to the satellite, measured in decibels (dB); a few dB is a big
+change, and wet surfaces return a weaker echo, reading as "darker". "VV" names
+the radar channel (polarisation) used in every chart here: the pulse is sent and
+received vertically polarised. Sentinel-1 also records a VH channel, which tells
+the same story, so the charts show VV.</dd>
 <dt>orbit / pass / ascending / descending</dt><dd>One satellite flyover. The
 satellite repeats the same numbered ground tracks; each views the mountain from
 a fixed angle at a fixed time of day, so a track is only ever compared with
-itself. Here: <strong>orbits 19 and 121</strong> are "descending" (flying
-north→south, crossing at ~06:03 local — the morning passes) and
-<strong>orbit 85</strong> is "ascending" (south→north, ~18:06 — the evening
-pass).</dd>
-<dt>z-score</dt><dd>"How many standard deviations from normal?" — where "normal"
-is the same face, the same track, the same weeks of the year, in 2020–2025.
-Beyond ±2 starts being noteworthy; −5 is extreme.</dd>
+itself. Here, orbits 19 and 121 are descending (flying north to south, crossing
+at about 06:03 local, the morning passes) and orbit 85 is ascending (south to
+north, 18:06, the evening pass).</dd>
+<dt>z-score</dt><dd>How many standard deviations from normal, where "normal" is
+the same face, the same track, the same weeks of the year, in 2020-2025. Beyond
+±2 starts being noteworthy; −5 is extreme.</dd>
 <dt>control patch</dt><dd>A nearby similar slope used as a fair comparison, so
 region-wide weather can be subtracted out.</dd>
 <dt>Sentinel-1</dt><dd>The European Space Agency's free radar satellite family.
-Its full archive is openly available (we used it via Google Earth Engine).</dd>
+Its full archive is openly available; we used it via Google Earth Engine.</dd>
 </dl>
 
 <div class="foot" id="method">
 <p><strong>Method &amp; code.</strong> Everything on this page regenerates from
 <code>exploratory/0005-nepal-glof-sar-precursor/</code> in the
 <a href="https://github.com/OCHA-DAP/ds-geospatial-impact-estimates">ds-geospatial-impact-estimates</a>
-repository: <code>extract.py</code> + <code>analysis.py</code> (single-face study),
-<code>falsealarms_extract.py</code> + <code>falsealarms_analysis.py</code> (45-face
-replay), <code>offset_tracking.py</code> (speckle tracking), and
+repository: <code>extract.py</code> and <code>analysis.py</code> (single-face
+study), <code>falsealarms_extract.py</code> and
+<code>falsealarms_analysis.py</code> (45-face replay),
+<code>offset_tracking.py</code> (speckle tracking), and
 <code>reports/build_reports.py</code> (this page). Sentinel-1 GRD IW VV/VH via
 Google Earth Engine; full caveats in <code>findings.md</code>. This is an
-exploratory lab-notebook analysis, not an operational OCHA product or warning.</p>
+exploratory lab-notebook analysis, not an operational OCHA product or
+warning.</p>
 <p>Event sources: <a href="https://eos.org/thelandslideblog/26-august-2026-nepal-and-tibet">Petley,
 The Landslide Blog (Eos)</a> ·
 <a href="https://www.usgs.gov/programs/landslide-hazards/science/2026-nepal-debris-avalanche-and-flash-flood">USGS
