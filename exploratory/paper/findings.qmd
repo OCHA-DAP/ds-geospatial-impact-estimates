@@ -903,6 +903,73 @@ tbl("RQ2-cems-footprint-points/rq2q_incl_possibly.csv")
   sentence in #app-matching's grade-rule paragraph. Exclusion is the more demanding
   choice for the products; the paper keeps it.
 
+# RQ2r — precision lower → upper bound per product, one frame (2026-08-28, user request)
+
+Composes the two reference corrections the paper had only quoted separately — CEMS
+class 1 (RQ2q) and crowd-confirmed damage (RQ2i/RQ5b) — into one bounded interval per
+product, all in the core region at r = 10 m, flags fixed. The upper bound is the UNION
+{1,2,3} ∪ crowd-damaged, each flag credited once. Script
+`RQ2-cems-footprint-points/scripts/rq2r_precision_bounds.py`; figure
+`rq2r_bounds_fig.py` (manuscript #fig-bounds in #sec-flags):
+
+```{python}
+tbl("RQ2-cems-footprint-points/rq2r_precision_bounds.csv")
+```
+
+![](artefacts/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png)
+
+- **Lower → upper bound is 2.2–3.6×** (MS 0.081→0.279, OSU 0.045→0.160). The two
+  corrections barely overlap: only 10–17% of crowd-confirmed CEMS-false flags sit within
+  10 m of a class-1 point (`crowd_fp_near_class1`), so the crowd was mostly finding
+  damage CEMS never mapped, not re-grading CEMS's own low-grade calls — the union is
+  nearly the additive stack and does not double-count.
+- **Convention audit (the reason this artefact carries two crowd columns).** The paper's
+  artefacts held two different crowd-adjustment rules under one name: rq2i (and the
+  #app-crowd re-vote deltas) credit only flags the crowd actually reviewed
+  (*measured*), while rq5b (#tbl-dial's crowd-adj column) assumes unreviewed flags
+  contain damage at the reviewed-flag rate (*extrapolated*). They agree at high crowd
+  coverage (MS 98%: 0.239 vs 0.242) and diverge badly at low (UH 27%: 0.182 vs 0.418).
+  The figure draws the **measured** convention (user decision, 2026-08-28); #tbl-dial's
+  caption and #app-crowd now state which rule each number uses.
+- **Anchors (all exact): P_floor/P_grade reproduce rq2q; P_crowd_extrap reproduces
+  rq5b's P_crowd_adj** — proving the two published conventions reconcile through one
+  computation.
+- **Confidence: high** (frozen basis, three exact reproduction anchors). Caveat: the
+  measured upper bound is itself understated where crowd coverage is thin (UH 27%),
+  which the figure annotates per product.
+
+# RQ8c — reference-basis sensitivity for the best-F1 figure's ten predictors (2026-08-28, user request)
+
+Extends RQ2q from products+voting to ALL ten #fig-bestf1 predictors (six products, flat
+voting, weighted fusion, both geography nulls) across three reference bases — {3},
+{2,3}, {1,2,3} — with everything else frozen: RQ8 OOF scores, gold flags, operating
+points recovered exactly from `n_flags` (no refits; refitting would let our
+constructions adapt to each target while the shipped products cannot). rq8-style
+building-denominator recall, NOT rq2q's point-denominator. Script
+`RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py`; figures `rq8c_basis_fig.py`
+(precision panel → manuscript #app-matching):
+
+```{python}
+tbl("RQ8-learned-fusion/rq8c_basis_pr_r10.csv")
+```
+
+![](artefacts/RQ8-learned-fusion/figs/rq8c_basis_prf1_r10.png)
+
+- **Precision roughly doubles per step for everyone — mechanically** (same flags, more
+  reference). The paper's two core comparisons are basis-invariant: fusion's precision
+  stays ~3–4× the best single product at every basis (0.206/0.297/0.423), and the
+  logistic geography null stays inside the product band at every basis.
+- **The non-mechanical finding is in F1**: weighted fusion is nearly flat across bases
+  (0.306/0.343/0.339) while flat k-of-6 voting falls monotonically (0.318/0.290/0.244)
+  — the learned weighting is robust to the reference definition; the flat vote is not.
+- **Recall splits along the RQ2l grade slope** (fourth independent appearance):
+  grade-neutral products hold as lesser damage enters the target; destruction-biased
+  products fall fastest.
+- **Anchor: the {2,3} rows reproduce rq8_best_f1_r10.csv exactly** (all ten predictors;
+  the rounded `threshold` column moves one building across the cut for the learned
+  scores, so operating points are recovered from `n_flags`).
+- **Confidence: high** (frozen scores, exact reproduction anchor).
+
 # RQ5d — is the agreement gain just filtering? NO — it's selection (2026-07-27, user experiment)
 
 User's skeptic test: agreement rules flag fewer buildings; maybe any thinning raises
