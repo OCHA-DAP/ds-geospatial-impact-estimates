@@ -1,0 +1,31 @@
+basis,predictor,n_flags,n_pos,precision,recall,f1
+destroyed,MS,9138,638,0.053,0.759,0.099
+destroyed,IMPACT,10788,638,0.036,0.616,0.069
+destroyed,OSU,25882,638,0.022,0.886,0.043
+destroyed,UH,5362,638,0.061,0.514,0.109
+destroyed,LIST,15904,638,0.028,0.694,0.054
+destroyed,UNEP,5605,638,0.061,0.534,0.109
+destroyed,geography null (logistic),9241,638,0.037,0.538,0.069
+destroyed,geography null (rand. forest),12134,638,0.026,0.494,0.049
+destroyed,flat k-of-6 voting,1005,638,0.26,0.409,0.318
+destroyed,weighted fusion,1843,638,0.206,0.594,0.306
+dmg+destroyed,MS,9138,1348,0.081,0.552,0.142
+dmg+destroyed,IMPACT,10788,1348,0.069,0.552,0.123
+dmg+destroyed,OSU,25882,1348,0.045,0.858,0.085
+dmg+destroyed,UH,5362,1348,0.093,0.369,0.148
+dmg+destroyed,LIST,15904,1348,0.057,0.667,0.104
+dmg+destroyed,UNEP,5605,1348,0.086,0.359,0.139
+dmg+destroyed,geography null (logistic),9241,1348,0.073,0.502,0.128
+dmg+destroyed,geography null (rand. forest),12134,1348,0.055,0.494,0.099
+dmg+destroyed,flat k-of-6 voting,1005,1348,0.339,0.253,0.29
+dmg+destroyed,weighted fusion,1843,1348,0.297,0.407,0.343
+incl_possibly,MS,9138,2757,0.137,0.453,0.21
+incl_possibly,IMPACT,10788,2757,0.126,0.494,0.201
+incl_possibly,OSU,25882,2757,0.088,0.823,0.158
+incl_possibly,UH,5362,2757,0.133,0.258,0.175
+incl_possibly,LIST,15904,2757,0.109,0.626,0.185
+incl_possibly,UNEP,5605,2757,0.144,0.292,0.193
+incl_possibly,geography null (logistic),9241,2757,0.134,0.449,0.206
+incl_possibly,geography null (rand. forest),12134,2757,0.104,0.459,0.17
+incl_possibly,flat k-of-6 voting,1005,2757,0.457,0.166,0.244
+incl_possibly,weighted fusion,1843,2757,0.423,0.283,0.339
