@@ -272,7 +272,7 @@ cut. The geography null (0.128) lands inside the product range, while flat votin
 which is where the products' real value shows
 (@sec-dial).](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){#fig-bestf1}
 
-## The expert reference misses lesser damage, so precision is reported as a range {#sec-floor}
+## With an imperfect reference and many defensible test configurations, precision is also presented as a range {#sec-floor}
 
 **Result:** Every score so far uses one definition of damage: an expert point graded
 *Damaged* or *Destroyed* within 10 m ([matching](#app-matching)). That reference has
