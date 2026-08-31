@@ -194,7 +194,10 @@ the reference overlap and every product scores best, precision reached only 0.04
 against recall of 0.31–0.69: ten to twenty misses for every hit, in the products' best
 case (@fig-peraoi). The
 products do find damage; what they also produce is an enormous number of flags with
-nothing recorded underneath them (false positives).
+nothing recorded underneath them (false positives). Because the expert reference is
+itself incomplete, these precisions are lower bounds; @sec-floor examines the reference
+and shows that even the most generous defensible reading leaves every product below
+0.28.
 
 **How it was measured:** A flag counts as a hit if an expert-mapped damage point lies
 within 10 m of the flagged building, and otherwise as a false positive (the
@@ -213,31 +216,6 @@ first column. Outside Caraballeda, measured precision is 0.00–0.02 despite fla
 up to 27.5%: a lower bound against a nearly-empty reference, in which product over-flagging
 and reference incompleteness cannot be
 separated.](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
-
-There is more than one defensible way to define the reference these precisions are
-measured against, and different choices give different numbers. This paper scores every
-product against the CEMS points graded *Damaged* or *Destroyed*, the strictest of the
-defensible choices, and @sec-floor lays out what that reference misses. @fig-bounds
-shows what happens to each product's precision as the grading criteria are loosened
-using the other reference data this study collected: first adding the points CEMS
-graded *possibly damaged*, then instead crediting the flags the MapSwipe crowd reviewed
-and confirmed as damaged, and finally both together (how the crowd credit works and how
-the two additions combine are in the [Appendix](#app-crowd)). The result is a range of
-possible precision values per product, with a realistic upper bound at the top. Even at
-the upper bound every product stays below 0.28. The poor-precision conclusion is not an
-artefact of the strict reference choice.
-
-![**Region: core (61 km²).** Each product's precision under four reference definitions,
-flags fixed. Filled brown dot: the expert points graded *Damaged* or *Destroyed*, the
-paper's reference and the lower bound. Open circle: also counting the points graded
-*possibly damaged* (labelled values). Open square: instead also counting the flags the
-MapSwipe crowd reviewed and confirmed as damaged. Filled diamond: counting both
-additions, the upper bound. A flag earns crowd credit only where volunteers actually reviewed its
-location and judged it damaged; unreviewed locations earn nothing, so products the
-crowd barely saw (UH: 27%) have understated upper bounds. (@tbl-dial's crowd-adjusted
-column instead assumes unreviewed flags contain damage at the reviewed-flag rate, which
-is why its values sit higher where coverage is
-thin.)](artefacts/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png){#fig-bounds}
 
 ## A hindsight geography model approximates the products' performance {#sec-null}
 
@@ -294,9 +272,12 @@ cut. The geography null (0.128) lands inside the product range, while flat votin
 which is where the products' real value shows
 (@sec-dial).](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10.png){#fig-bestf1}
 
-## The expert reference misses lesser damage, so precision is reported as an interval {#sec-floor}
+## The expert reference misses lesser damage, so precision is reported as a range {#sec-floor}
 
-**Result:** ChatMap is the one reference collected on the ground independently of any
+**Result:** Every score so far uses one definition of damage: an expert point graded
+*Damaged* or *Destroyed* within 10 m ([matching](#app-matching)). That reference has
+real limitations, and this section measures them. ChatMap is the one reference
+collected on the ground independently of any
 satellite imagery, so, although it is small and nowhere near comprehensive, it is the
 set that can audit the expert map. Checked against it, Copernicus EMS captured 94% of
 destroyed buildings but only 49% of those significantly damaged (@fig-gradeslope): the
@@ -307,9 +288,7 @@ shows up inside the expert reference's own grades: Microsoft, UH and UNEP are
 destruction-biased on both precision and recall, while OSU, IMPACT and LIST are
 grade-neutral. The split does not follow the sensor: UNEP also runs on Sentinel-1
 radar, yet it is the most destruction-biased of the six (recall 0.46 for destroyed
-against 0.19 for damaged). Crediting the flags that crowd
-reviewers confirmed as damaged lifts Microsoft's precision from 0.08 to roughly 0.24, a
-factor of three that reflects the reference, not the product. Some damage escaped
+against 0.19 for damaged). Some damage escaped
 everything: about 11% of field-reported damage points, mostly in inland hill
 communities, had no flag from any product within 20 m (the field-report GPS tolerance)
 despite lying inside analysed extents. Recall was never the products' weakness: four of
@@ -322,8 +301,8 @@ reference itself, grading its recall by damage class. Unioning them into the ref
 was also tested and barely moved any score (they add only a few hundred points), which
 is why CEMS stays the default reference. The MapSwipe crowd then re-judges the flags
 the expert reference calls false; the crowd is generous to products (it credits a flag
-if damage sits anywhere in its ~50 m cell), so the crowd-adjusted precision is read as
-the high end of the interval and the expert-measured value as the lower end. An independent
+if damage sits anywhere in its ~50 m cell), so crowd-adjusted values are read as upper
+estimates, which is how @fig-bounds draws them. An independent
 re-vote of the crowd campaign at three times the depth confirmed the adjustment's
 stability (13.2% versus 11.5% of flags confirmed). Mechanics and caveats are in the
 Appendix ([adjudication mechanics](#app-adjudication); [the crowd re-vote](#app-crowd)).
@@ -333,6 +312,29 @@ field-reported damage, at "complete" destruction versus "significant" damage. Ev
 line slopes down: the products and the expert reference alike find lighter damage far
 less often, which is why measured recall is an upper bound and measured precision a
 lower bound.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-gradeslope}
+
+A reference with these limitations admits more than one defensible configuration, and
+different configurations give different numbers. @fig-bounds shows what happens to each
+product's precision as the grading criteria are loosened using the other reference data
+this study collected: first adding the points CEMS graded *possibly damaged*, then
+instead crediting the flags the MapSwipe crowd reviewed and confirmed as damaged, and
+finally both together (how the crowd credit works and how the two additions combine are
+in the [Appendix](#app-crowd)). The result is a range of possible precision values per
+product, with a realistic upper bound at the top. Even at the upper bound every product
+stays below 0.28. The poor-precision conclusion is not an artefact of the strict
+reference choice.
+
+![**Region: core (61 km²).** Each product's precision under four reference definitions,
+flags fixed. Filled brown dot: the expert points graded *Damaged* or *Destroyed*, the
+paper's reference and the lower bound. Open circle: also counting the points graded
+*possibly damaged* (labelled values). Open square: instead also counting the flags the
+MapSwipe crowd reviewed and confirmed as damaged. Filled diamond: counting both
+additions, the upper bound. A flag earns crowd credit only where volunteers actually reviewed its
+location and judged it damaged; unreviewed locations earn nothing, so products the
+crowd barely saw (UH: 27%) have understated upper bounds. (@tbl-dial's crowd-adjusted
+column instead assumes unreviewed flags contain damage at the reviewed-flag rate, which
+is why its values sit higher where coverage is
+thin.)](artefacts/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png){#fig-bounds}
 
 ## Area ranking works, and geography ranks about as well {#sec-ranking}
 

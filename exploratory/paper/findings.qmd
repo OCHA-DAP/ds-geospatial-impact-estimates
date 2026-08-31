@@ -910,7 +910,7 @@ class 1 (RQ2q) and crowd-confirmed damage (RQ2i/RQ5b) — into one bounded inter
 product, all in the core region at r = 10 m, flags fixed. The upper bound is the UNION
 {1,2,3} ∪ crowd-damaged, each flag credited once. Script
 `RQ2-cems-footprint-points/scripts/rq2r_precision_bounds.py`; figure
-`rq2r_bounds_fig.py` (manuscript #fig-bounds in #sec-flags):
+`rq2r_bounds_fig.py` (manuscript #fig-bounds in #sec-floor):
 
 ```{python}
 tbl("RQ2-cems-footprint-points/rq2r_precision_bounds.csv")
