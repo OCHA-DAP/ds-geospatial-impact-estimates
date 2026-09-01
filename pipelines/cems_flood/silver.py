@@ -197,13 +197,37 @@ def _api_key_from_basename(basename: str) -> tuple | None:
     return (int(m.group(1)), m.group(2), int(m.group(4) or 0))
 
 
+_DATESTAMP = re.compile(r"<dateStamp>\s*<gco:Date>(\d{4}-\d{2}-\d{2})</gco:Date>", re.S)
+
+
+def _xml_datestamp(zf: zipfile.ZipFile) -> pd.Timestamp | None:
+    """Earliest ISO-metadata dateStamp in the package. This is the product's
+    publish date, which imagery cannot postdate — a tighter window end than
+    the (sometimes days-later) delivery_time of the latest version."""
+    stamps = []
+    for n in zf.namelist():
+        if n.lower().endswith(".xml") and not n.lower().endswith(".shp.xml"):
+            m = _DATESTAMP.search(zf.read(n).decode("utf-8", "ignore"))
+            if m:
+                stamps.append(pd.Timestamp(m.group(1)))
+    return min(stamps) if stamps else None
+
+
 def process_zip(row: pd.Series, data: bytes, api_images: dict) -> dict[str, list]:
     """One bronze zip -> rows for observed_event and coverage."""
     zf = zipfile.ZipFile(io.BytesIO(data))
     out: dict[str, list] = {"observed_event": [], "coverage": []}
+    window_end = row["delivery_time"]
+    stamp = _xml_datestamp(zf)
+    if stamp is not None:
+        end_of_stamp_day = stamp + pd.Timedelta(hours=23, minutes=59)
+        if pd.notna(window_end):
+            window_end = min(pd.Timestamp(window_end), end_of_stamp_day)
+        else:
+            window_end = end_of_stamp_day
     window = {
         "acq_window_start": row.get("event_time"),
-        "acq_window_end": row["delivery_time"],
+        "acq_window_end": window_end,
         "acq_precision": "window",
         "acq_method": "window",
     }
