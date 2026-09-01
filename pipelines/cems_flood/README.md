@@ -1,93 +1,92 @@
 # CEMS flood historical archive harvester
 
-Standalone module that archives **every Copernicus EMS Rapid Mapping flood
-product zip (2012 → present)** to blob. Evidence and feasibility analysis:
-`exploratory/0005-cems-flood-feasibility/`. Endpoint-by-endpoint provenance
-and methods: [`ACQUISITION.md`](ACQUISITION.md).
+Archives every Copernicus EMS Rapid Mapping flood vector package since 2012
+(302 activations, ~2,900 zips, ~20 GB) to Azure blob, byte identical, with a
+ledger that accounts for everything: what exists, what we archived, what
+upstream lost, and what is inside every zip.
 
-This corpus is a general historical archive, **not** event-scoped project
-data, so it lives outside the project prefix — container **`global`**:
+Endpoints and provenance: [ACQUISITION.md](ACQUISITION.md).
+Evidence behind the design: `exploratory/0005-cems-flood-feasibility/`.
+
+## How it works
+
+```mermaid
+flowchart LR
+  A["archive portal API<br/>all activations, 2012+"] --> D
+  B["new portal API (ocha-lens)<br/>EMSR656+"] --> D
+  C["legacy activation pages<br/>HTML product cards"] --> D
+  D["discovery.py"] --> L[("products.parquet<br/>the ledger")]
+  L --> H["harvest.py<br/>6 workers"]
+  H -- "download / testzip /<br/>inventory / sha256" --> U["upload (gie.blobio)<br/>+ size verify"]
+  U --> G[("global/<br/>copernicus_ems/flood/bronze/")]
+  H --> J[("_meta/: transfers.jsonl,<br/>zip_contents.parquet")]
+```
 
 ```
-global/copernicus_ems/flood/bronze/
-  code=EMSR009/
-    EMSR009_01MARIANNELUND_DELINEATION_DETAIL03-MONIT03_v1_vector.zip  ← byte-identical original
-  code=EMSR927/
-    EMSR927_AOI03_GRA_MONIT01_v1.zip
-  _meta/
-    activations.parquet    # all EMSR flood activations, both portals
-    products.parquet       # THE ledger — one row per target incl. unavailable ones
-    zip_contents.parquet   # one row per file inside every uploaded zip
-    transfers.jsonl        # append-only attempt journal (every download/upload, incl. failures)
+bronze/
+  code=EMSR009/ … code=EMSR927/   original basenames, one folder per activation
+  _meta/                          ledger, zip inventory, journal, activations
 ```
 
-Partitioning is deliberately flat (`code=`/original basename): legacy
-filenames span five naming generations, so parsing AOI/product/version into
-path segments would be fragile — parsed metadata lives in `products.parquet`
-where it can be fixed without moving blobs.
+Partitioning is flat on purpose. Legacy filenames span five naming
+generations, so parsed metadata lives in the ledger where a wrong parse is a
+one-line fix, not a blob migration.
 
-## Scope
+## Status lifecycle
 
-Delineation, First Estimate and Grading vector zips (~2,900). Excluded, but
-still inventoried in the ledger: Reference maps (`excluded_ref`), map
-PDFs/JPGs (not listed — vector packages only), `EMSN*` Risk & Recovery
-products. Known-unavailable targets carry explicit statuses:
-`unavailable_not_migrated` (legacy pages the portal lost),
-`unavailable_no_products`, `unavailable_status_N` (closed without delivery),
-`unavailable_no_url`.
+```mermaid
+stateDiagram-v2
+  [*] --> pending: discovery finds a download URL
+  [*] --> excluded_ref: REF map, inventoried but not fetched
+  [*] --> unavailable_x: upstream never published or lost it
+  pending --> uploaded: transferred + verified
+  pending --> failed_download: bad HTTP / bad zip
+  pending --> failed_upload: transfer error
+  failed_download --> pending: harvest.py &#45;&#45;retry&#45;failed
+  failed_upload --> pending: harvest.py &#45;&#45;retry&#45;failed
+  uploaded --> pending: blob copy corrupt, re queued
+```
 
-## Running
+Scope: DEL, FEP and GRA vector packages, every AOI, monitoring and version.
+Reference maps and map PDFs are inventoried but not fetched. A target we
+cannot fetch keeps its ledger row and says why. Nothing is silently skipped.
+
+## Run
 
 ```sh
 uv run --group etl --group api python pipelines/cems_flood/discovery.py            # build/refresh ledger
-uv run --group etl --group api python pipelines/cems_flood/harvest.py --dry-run    # see what would transfer
-uv run --group etl --group api python pipelines/cems_flood/harvest.py --limit 20   # shakedown
-uv run --group etl --group api python pipelines/cems_flood/harvest.py              # full crawl (hours)
+uv run --group etl --group api python pipelines/cems_flood/harvest.py --dry-run    # preview
+uv run --group etl --group api python pipelines/cems_flood/harvest.py              # transfer (resumable)
 uv run --group etl --group api python pipelines/cems_flood/harvest.py --retry-failed
+uv run --group etl --group api python pipelines/cems_flood/report.py --pages       # status page
 ```
 
-Needs the repo's `.env` (`DSCI_AZ_BLOB_*_SAS_WRITE`, via `gie.config`).
-Default stage is `dev`; `--stage prod` when promoting.
+Needs the repo `.env` (`DSCI_AZ_BLOB_*_SAS_WRITE` via `gie.config`). Default
+stage is dev; `--stage prod` when promoting.
 
-## Resume / backfill semantics
+## Guarantees
 
-- **Blob existence is the source of truth** (same idempotency model as
-  `ingest_cems.py` / ADR-0005). Every harvest run first reconciles the ledger
-  against a blob listing: already-uploaded targets are skipped, and ledger
-  rows claiming `uploaded` whose blob is missing are demoted to pending with
-  a warning. A killed run (Ctrl-C included — checkpoint runs in `finally`)
-  loses at most the in-flight file.
-- **Re-running `discovery.py` is the backfill**: fresh discovery merges onto
-  the existing ledger — transfer outcomes are preserved, new activations /
-  monitoring updates become `pending`, previously-unavailable targets that
-  appear upstream become `pending`, and targets that vanish upstream are kept
-  and flagged `missing_upstream`, never dropped.
-- Failures are never retried silently: they stay visible in the ledger
-  (`failed_download` / `failed_upload`, with HTTP status + error) until an
-  explicit `--retry-failed`.
+- **Resume is exact.** The blob store is the source of truth (ADR-0005
+  model): every run reconciles the ledger against a blob listing, skips what
+  landed, demotes ledger rows whose blob is missing, and re-hashes blobs that
+  lack metadata (corrupt copies get re queued). Kill it anytime; checkpoints
+  run every 25 transfers and on exit.
+- **Backfill is a re-run.** Fresh discovery merges onto the ledger: transfer
+  outcomes survive, new products become pending, vanished targets are kept
+  and flagged `missing_upstream`.
+- **Every attempt is journaled.** `transfers.jsonl` records success and
+  failure alike, with sha256, size, origin URL and licence, in the same shape
+  as this repo's `data_transfers.jsonl`. Failures are retried only when you
+  ask.
 
-## Integrity & transparency guarantees
+## Design calls
 
-Per uploaded zip: HTTP status checked, zip integrity verified
-(`ZipFile.testzip`), member inventory recorded to `zip_contents.parquet`
-**during** download, `sha256` + size recorded, post-upload size verified
-against the blob. Every attempt (success or failure) appends a record to
-`transfers.jsonl` in this repo's `data_transfers.jsonl` field shape.
-
-## Design decisions
-
-- Full zips, not selective range-extraction: the whole corpus is ~15–25 GB
-  (trivial storage) and the 7 `unavailable_not_migrated` activations prove
-  CEMS history disappears — the raw zip is the insurance.
-- Reuses this repo's machinery (`gie.config` credentials pointed at the
-  `global` container, `gie.blobio` tuned uploads, ledger record shape) while
-  staying structurally standalone: nothing here is wired into `run_all.py`
-  or the event-keyed pipelines.
-- `ocha-stratus` is used for reads/listing; **uploads go through
-  `gie.blobio`** because stratus's plain-SDK upload path is the documented
-  single-PUT timeout failure on this lake (see `src/gie/blobio.py` — measured
-  ~8× slower and timeout-prone; same reason `ingest_cems.py` bypasses
-  `to_blob`).
-- Transfers run in a small thread pool (`--workers`, default 6): workers do
-  pure download→verify→upload; the ledger, journal and checkpoints are
-  main-thread only. Worker count is the politeness knob.
+- Full zips, not selective range extraction: the corpus is small and upstream
+  demonstrably loses history (7 legacy activations already gone).
+- `ocha-stratus` for reads and listing; uploads through `gie.blobio` because
+  the plain SDK single PUT path is the documented timeout failure on this
+  lake (see `src/gie/blobio.py`; `ingest_cems.py` bypasses `to_blob` for the
+  same reason).
+- Workers do pure download and upload; the ledger, journal and checkpoints
+  stay in the main thread. `--workers` is the politeness knob (12 caused
+  upload timeouts on a home uplink, 6 is the default for a reason).
