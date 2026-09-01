@@ -1,11 +1,11 @@
 {
  "catalog_url": "https://vantor-opendata.s3.amazonaws.com/events/catalog.json",
- "checked_at": "2026-08-29T03:12:30Z",
+ "checked_at": "2026-09-01T04:46:28Z",
  "totals": {
   "activations": 10,
-  "images": 180,
+  "images": 183,
   "pre": 60,
-  "post": 120
+  "post": 123
  },
  "activations": [
   {
@@ -14,12 +14,12 @@
    "event_date": "2026-08-26",
    "event_date_raw": "2026-08-26T03:30:00Z",
    "event_date_quality": "ok",
-   "n_items": 13,
+   "n_items": 16,
    "n_pre": 4,
-   "n_post": 9,
+   "n_post": 12,
    "n_phase_unknown": 0,
    "first_published": "2026-08-27",
-   "last_published": "2026-08-28",
+   "last_published": "2026-09-01",
    "first_post_acquired": "2026-08-27",
    "first_post_published": "2026-08-27",
    "acq_lag_days": 1,
@@ -30,6 +30,8 @@
    "satellites": [
     "GE01",
     "LG01",
+    "LG03",
+    "LG04",
     "LG06",
     "WV02",
     "WV03"
