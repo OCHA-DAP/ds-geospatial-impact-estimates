@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CEMS Flood Archive Ledger</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#faf9f6; --surface:#ffffff; --ink:#20242b; --ink-2:#5c636e; --ink-3:#8a8f98;
+  --line:#e4e1da; --line-strong:#cfcbc2; --accent:#0f62a8; --accent-ink:#0b4d85;
+  --code-bg:#f1efe9;
+  --s-uploaded:#2e7d4f; --s-pending:#0f62a8; --s-unavail:#a8721c; --s-excluded:#7461c9; --s-failed:#b3403a;
+  --chip-uploaded-bg:#e3f0e8; --chip-pending-bg:#e3edf7; --chip-unavail-bg:#f5ecdc; --chip-excluded-bg:#ece9f8; --chip-failed-bg:#f8e6e4;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10161d; --surface:#171f28; --ink:#e6e9ed; --ink-2:#a8b0ba; --ink-3:#7b828c;
+    --line:#2a333e; --line-strong:#3a4552; --accent:#3f8ed6; --accent-ink:#6cabe3;
+    --code-bg:#1c2530;
+    --s-uploaded:#4da375; --s-pending:#3f8ed6; --s-unavail:#bb8630; --s-excluded:#8d7bd0; --s-failed:#d1655e;
+    --chip-uploaded-bg:#1b2f24; --chip-pending-bg:#182a3b; --chip-unavail-bg:#332712; --chip-excluded-bg:#262038; --chip-failed-bg:#39201e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10161d; --surface:#171f28; --ink:#e6e9ed; --ink-2:#a8b0ba; --ink-3:#7b828c;
+  --line:#2a333e; --line-strong:#3a4552; --accent:#3f8ed6; --accent-ink:#6cabe3;
+  --code-bg:#1c2530;
+  --s-uploaded:#4da375; --s-pending:#3f8ed6; --s-unavail:#bb8630; --s-excluded:#8d7bd0; --s-failed:#d1655e;
+  --chip-uploaded-bg:#1b2f24; --chip-pending-bg:#182a3b; --chip-unavail-bg:#332712; --chip-excluded-bg:#262038; --chip-failed-bg:#39201e;
+}
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font:16px/1.55 "Source Sans 3",system-ui,sans-serif; margin:0}
+main{max-width:1060px; margin:0 auto; padding:48px 28px 80px}
+h1,h2,h3{font-family:Archivo,system-ui,sans-serif; text-wrap:balance; line-height:1.15}
+h1{font-size:2.1rem; font-weight:700; margin:.2rem 0 .4rem}
+h2{font-size:1.35rem; font-weight:600; margin:0 0 .35rem}
+h3{font-size:1.02rem; font-weight:600; margin:0 0 .3rem}
+p{max-width:68ch; margin:.4rem 0}
+.eyebrow{font-family:Archivo,sans-serif; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink); font-weight:600}
+.lede{color:var(--ink-2); font-size:1.05rem; max-width:72ch}
+section{margin-top:52px}
+.file-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; border-bottom:2px solid var(--line-strong); padding-bottom:10px; margin-bottom:16px}
+.file-head code{font-size:1.05rem}
+.file-note{color:var(--ink-3); font-size:.88rem}
+code,pre,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+code{background:var(--code-bg); padding:.08em .35em; border-radius:4px; font-size:.86em}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:16px 18px; overflow-x:auto; font-size:.82rem; line-height:1.5; margin:.6rem 0}
+pre code{background:none; padding:0}
+.tree .dim{color:var(--ink-3)} .tree .hl{color:var(--accent-ink); font-weight:500}
+.stats{display:flex; gap:0; flex-wrap:wrap; border:1px solid var(--line); border-radius:10px; background:var(--surface); margin:22px 0 0; overflow:hidden}
+.stat{flex:1 1 140px; padding:14px 18px; border-left:1px solid var(--line)}
+.stat:first-child{border-left:none}
+.stat .n{font-family:Archivo,sans-serif; font-size:1.55rem; font-weight:700; font-variant-numeric:tabular-nums}
+.stat .l{font-size:.78rem; color:var(--ink-2); text-transform:uppercase; letter-spacing:.07em}
+.bar{display:flex; height:34px; border-radius:6px; overflow:hidden; gap:2px; background:var(--bg); margin:14px 0 10px}
+.bar div{position:relative; min-width:3px}
+.bar div:hover{filter:brightness(1.12)}
+.seg-uploaded{background:var(--s-uploaded)} .seg-pending{background:var(--s-pending)}
+.seg-unavail{background:var(--s-unavail)} .seg-excluded{background:var(--s-excluded)}
+.seg-failed{background:var(--s-failed)}
+.legend{display:flex; gap:22px; flex-wrap:wrap; font-size:.9rem; color:var(--ink-2)}
+.legend b{color:var(--ink); font-variant-numeric:tabular-nums; font-weight:600}
+.dot{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:7px; vertical-align:baseline}
+#tip{position:fixed; pointer-events:none; background:var(--ink); color:var(--bg); font-size:.8rem; padding:5px 9px; border-radius:6px; opacity:0; transition:opacity .12s; z-index:10; font-variant-numeric:tabular-nums}
+.tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface); margin:.7rem 0}
+table{border-collapse:collapse; width:100%; font-size:.85rem}
+th{font-family:Archivo,sans-serif; font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-2); text-align:left; padding:9px 14px; border-bottom:1px solid var(--line-strong); white-space:nowrap; background:var(--surface)}
+td{padding:8px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.mono{font-size:.78rem; white-space:nowrap}
+td.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+th.num{text-align:right}
+td.wrap{min-width:220px}
+.muted{color:var(--ink-3)}
+td.null{color:var(--ink-3); text-align:center}
+.chip{display:inline-flex; align-items:center; gap:6px; font-family:Archivo,sans-serif; font-size:.72rem; font-weight:600; letter-spacing:.03em; padding:2px 9px; border-radius:99px; white-space:nowrap}
+.chip::before{content:""; width:7px; height:7px; border-radius:50%}
+.chip-uploaded{background:var(--chip-uploaded-bg); color:var(--s-uploaded)} .chip-uploaded::before{background:var(--s-uploaded)}
+.chip-pending{background:var(--chip-pending-bg); color:var(--s-pending)} .chip-pending::before{background:var(--s-pending)}
+.chip-unavail{background:var(--chip-unavail-bg); color:var(--s-unavail)} .chip-unavail::before{background:var(--s-unavail)}
+.chip-excluded{background:var(--chip-excluded-bg); color:var(--s-excluded)} .chip-excluded::before{background:var(--s-excluded)}
+.chip-failed{background:var(--chip-failed-bg); color:var(--s-failed)} .chip-failed::before{background:var(--s-failed)}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:4px 18px; font-size:.85rem; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin:.7rem 0; overflow-x:auto}
+.kv dt{font-family:"IBM Plex Mono",monospace; font-size:.76rem; color:var(--ink-2); white-space:nowrap}
+.kv dd{margin:0; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+footer{margin-top:70px; border-top:1px solid var(--line); padding-top:16px; color:var(--ink-3); font-size:.82rem}
+.crumb{margin:0 0 18px; font-size:.88rem}
+.crumb a{color:var(--accent-ink); text-decoration:none}
+.crumb a:hover{text-decoration:underline}
+a{color:var(--accent-ink)}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+
+
+<main>
+<p class="crumb"><a href="../">← Geospatial Impact Estimates</a></p>
+<div class="eyebrow">Copernicus EMS · Rapid Mapping · container <code>global</code> (dev) · generated 2026-09-01 01:48 UTC</div>
+<h1>CEMS Flood Archive Ledger</h1>
+<p class="lede">Rendered directly from <code>_meta/products.parquet</code> and friends — regenerate at any point (<code>report.py</code>) for the true current state of the harvest. Every row below is real.</p>
+
+<div class="stats">
+  <div class="stat"><div class="n">302</div><div class="l">flood activations</div></div>
+  <div class="stat"><div class="n">3,611</div><div class="l">ledger rows</div></div>
+  <div class="stat"><div class="n">2,721 / 2,888</div><div class="l">zips archived (94.2%)</div></div>
+  <div class="stat"><div class="n">29.1 GB</div><div class="l">uploaded</div></div>
+  <div class="stat"><div class="n">4</div><div class="l">failures on ledger</div></div>
+</div>
+
+<section>
+<h2>Blob layout</h2>
+<pre class="tree"><code>global/
+└─ copernicus_ems/flood/
+   └─ bronze/
+      ├─ code=EMSR009/ … code=EMSR927/     <span class="dim">← one folder per activation, original zip basenames</span>
+      ├─ <span class="dim">(silver/ and gold/ land beside bronze/ when we harmonize)</span>
+      └─ _meta/
+         ├─ <span class="hl">products.parquet</span>      <span class="dim">the ledger — one row per target, incl. what we can't get</span>
+         ├─ <span class="hl">zip_contents.parquet</span>  <span class="dim">one row per file inside every uploaded zip</span>
+         ├─ <span class="hl">transfers.jsonl</span>       <span class="dim">append-only journal of every attempt</span>
+         └─ <span class="hl">activations.parquet</span>   <span class="dim">all flood activations, both portals</span></code></pre>
+</section>
+
+<section>
+<h2>The status model</h2>
+<p>Every ledger row carries exactly one status. Nothing is silently skipped — a target we chose not to fetch or physically cannot fetch keeps its row and says why. Pending by class: DEL 129 · GRA 28 · FEP 6.</p>
+<div class="bar" id="bar" aria-label="Ledger rows by status group"></div>
+<div class="legend" id="legend"></div>
+<div class="tblwrap">
+<table>
+<thead><tr><th>Status</th><th>Set by</th><th>Meaning</th><th class="num">Rows</th></tr></thead>
+<tbody>
+<tr><td><span class="chip chip-uploaded">uploaded</span></td><td>harvest</td><td class="wrap">In blob, size-verified; sha256 + member inventory recorded</td><td class="num">2,721</td></tr>
+<tr><td><span class="chip chip-excluded">excluded_ref</span></td><td>discovery</td><td class="wrap">Pre-event Reference map — inventoried, deliberately not fetched</td><td class="num">414</td></tr>
+<tr><td><span class="chip chip-unavail">unavailable_status_N</span></td><td>discovery</td><td class="wrap">New-portal product closed without delivery (never published)</td><td class="num">300</td></tr>
+<tr><td><span class="chip chip-pending">pending</span></td><td>discovery</td><td class="wrap">Has a download URL; will be fetched</td><td class="num">163</td></tr>
+<tr><td><span class="chip chip-unavail">unavailable_not_migrated</span></td><td>discovery</td><td class="wrap">Legacy activation whose products were never migrated to the archive portal</td><td class="num">7</td></tr>
+<tr><td><span class="chip chip-failed">failed_download</span></td><td>harvest</td><td class="wrap">Download failed; HTTP status + error kept; retried via --retry-failed</td><td class="num">4</td></tr>
+<tr><td><span class="chip chip-unavail">unavailable_no_products</span></td><td>discovery</td><td class="wrap">Activation delivered nothing</td><td class="num">1</td></tr>
+<tr><td><span class="chip chip-unavail">unavailable_no_url</span></td><td>discovery</td><td class="wrap">Product not (yet) delivered, not closed</td><td class="num">1</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="file-head"><h2><code>products.parquet</code></h2><span class="file-note">the ledger · one representative real row per status · re-running discovery merges, never drops</span></div>
+<div class="tblwrap">
+<table>
+<thead><tr><th>target_id</th><th>Status</th><th>class</th><th>source</th><th>aoi</th><th>delivery</th><th class="num">size</th><th class="num">files</th><th>sha256</th><th>error</th></tr></thead>
+<tbody>
+<tr><td class="mono" title="EMSR009/EMSR009_01MARIANNELUND_DELINEATION_DETAIL03-MONIT03_v1_vector.zip">EMSR009/EMSR…DETAIL03-MONIT03_v1_vector.zip</td><td><span class="chip chip-uploaded">uploaded</span></td><td class="">DEL</td><td class="">archive</td><td class="wrap">AOI01 Mariannelund</td><td class="mono">2012-07-12</td><td class="num">3.19 MB</td><td class="num">73</td><td class="mono" title="e59ab29116093b36ac78f4b04742fadb8bf09fb8f88063d873337b14f7643b07">e59ab291…</td><td class="null">—</td></tr>
+<tr><td class="mono" title="EMSR069/EMSR069_01MAIDENHEAD_DELINEATION_OVERVIEW-MONIT01_v1_vector.zip">EMSR069/EMSR…OVERVIEW-MONIT01_v1_vector.zip</td><td><span class="chip chip-failed">failed_download</span></td><td class="">DEL</td><td class="">archive</td><td class="wrap">AOI01 Maidenhead</td><td class="mono">2014-02-13</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="mono">BadZipFile: File is not a zip file</td></tr>
+<tr><td class="mono" title="EMSR857/EMSR857_AOI06_DEL_MONIT03_v2.zip">EMSR857/EMSR857_AOI06_DEL_MONIT03_v2.zip</td><td><span class="chip chip-pending">pending</span></td><td class="">DEL</td><td class="">new_portal</td><td class="wrap">AOI06 Palmeira</td><td class="mono">2026-01-24</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="null">—</td></tr>
+<tr><td class="mono" title="EMSR009/EMSR009_01MARIANNELUND_REFERENCE_DETAIL03_v2_vector.zip">EMSR009/EMSR…FERENCE_DETAIL03_v2_vector.zip</td><td><span class="chip chip-excluded">excluded_ref</span></td><td class="">REF</td><td class="">archive</td><td class="wrap">AOI01 Mariannelund</td><td class="mono">2012-07-12</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="null">—</td></tr>
+<tr><td class="mono" title="EMSR129/__unavailable_not_migrated__">EMSR129/__unavailable_not_migrated__</td><td><span class="chip chip-unavail">unavailable_not_migrated</span></td><td class="null">—</td><td class="">archive</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="mono">API metadata: n_aois=4 n_products=8</td></tr>
+<tr><td class="mono" title="EMSR659/product_id=63">EMSR659/product_id=63</td><td><span class="chip chip-unavail">unavailable_status_N</span></td><td class="">DEL</td><td class="">new_portal</td><td class="wrap">AOI01 Spazzate-Sassatelli</td><td class="mono">2023-04-24</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="mono">status_code=N feasible=False</td></tr>
+</tbody>
+</table>
+</div>
+<h3>Most recent fully-recorded upload, in full</h3>
+<div class="kv"><dt>target_id</dt><dd class="mono">EMSR773/EMSR773_AOI30_GRA_PRODUCT_v1.zip</dd><dt>code</dt><dd class="mono">EMSR773</dd><dt>source</dt><dd class="mono">new_portal</dd><dt>aoi</dt><dd class="mono">AOI30 Valencia Sud</dd><dt>title</dt><dd class="mono"></dd><dt>product_class</dt><dd class="mono">GRA</dd><dt>delivery_time</dt><dd class="mono">2024-11-16 11:11:25.719258</dd><dt>url</dt><dd class="mono">https://rapidmapping.emergency.copernicus.eu/backend/EMSR773/AOI30/GRA_PRODUCT/EMSR773_AOI30_GRA_PRODUCT_v1.zip</dd><dt>blob_path</dt><dd class="mono">copernicus_ems/flood/bronze/code=EMSR773/EMSR773_AOI30_GRA_PRODUCT_v1.zip</dd><dt>status</dt><dd class="mono">uploaded</dd><dt>attempts</dt><dd class="mono">0</dd><dt>attempted_at</dt><dd class="mono"></dd><dt>uploaded_at</dt><dd class="mono"></dd><dt>sha256</dt><dd class="mono">8dddf8a13b63a3d816e6cb450e0b99bf9bcb6e9ca1238bf6fc27dcf404a57730</dd><dt>size_bytes</dt><dd class="mono">10472119</dd><dt>n_members</dt><dd class="mono">45</dd></div>
+</section>
+
+<section>
+<div class="file-head"><h2><code>zip_contents.parquet</code></h2><span class="file-note">member inventory, built during download · largest members of the upload above</span></div>
+<div class="tblwrap">
+<table>
+<thead><tr><th>member</th><th class="num">file_size</th><th class="num">compress_size</th></tr></thead>
+<tbody>
+<tr><td class="mono">Maps/EMSR773_AOI30_GRA_PRODUCT_20000_map_v1.pdf</td><td class="num">10,358,105</td><td class="num">10,264,248</td></tr>
+<tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_summaryTable_v1.xlsx</td><td class="num">121,303</td><td class="num">111,958</td></tr>
+<tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_observedEventA_v1.json</td><td class="num">79,009</td><td class="num">19,445</td></tr>
+<tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_observedEventA_v1.dbf</td><td class="num">38,484</td><td class="num">590</td></tr>
+<tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_transportationL_v1.lyr</td><td class="num">35,840</td><td class="num">5,136</td></tr>
+<tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_builtUpP_v1.dbf</td><td class="num">33,042</td><td class="num">472</td></tr>
+<tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_observedEventA_v1.shp</td><td class="num">27,616</td><td class="num">18,371</td></tr>
+<tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_transportationL_v1.dbf</td><td class="num">26,913</td><td class="num">536</td></tr><tr><td class="muted" colspan="3">… of 45 members in this zip; 156,069 member rows across 2,715 inventoried zips</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="file-head"><h2><code>transfers.jsonl</code></h2><span class="file-note">append-only journal · 2,794 attempt records so far · latest record:</span></div>
+<pre><code>{
+  &quot;ts&quot;: &quot;2026-09-01T01:48:15+00:00&quot;,
+  &quot;outcome&quot;: &quot;uploaded&quot;,
+  &quot;target_id&quot;: &quot;EMSR857/EMSR857_AOI08_DEL_PRODUCT_v2.zip&quot;,
+  &quot;source&quot;: &quot;copernicus_ems&quot;,
+  &quot;category&quot;: &quot;reference&quot;,
+  &quot;dataset&quot;: &quot;Copernicus EMS EMSR857 DEL product&quot;,
+  &quot;provider&quot;: &quot;Copernicus Emergency Management Service (rapid mapping)&quot;,
+  &quot;licence&quot;: &quot;CEMS free re-use with attribution (\u00a9 European Union)&quot;,
+  &quot;origin_url&quot;: &quot;https://rapidmapping.emergency.copernicus.eu/backend/EMSR857/AOI08/DEL_PRODUCT/EMSR857_AOI08_DEL_PRODUCT_v2.zip&quot;,
+  &quot;blob_path&quot;: &quot;copernicus_ems/flood/bronze/code=EMSR857/EMSR857_AOI08_DEL_PRODUCT_v2.zip&quot;,
+  &quot;stage&quot;: &quot;dev&quot;,
+  &quot;size_bytes&quot;: 9727848,
+  &quot;sha256&quot;: &quot;1f8a767f30b04d59c56e0c5fe55d8b82d950a3ec2d55e848f2ba38f0aed9c910&quot;,
+  &quot;error&quot;: null
+}</code></pre>
+</section>
+
+<section>
+<div class="file-head"><h2><code>activations.parquet</code></h2><span class="file-note">all EMSR flood activations, cross-validated across both portals · newest three:</span></div>
+<div class="tblwrap">
+<table>
+<thead><tr><th>code</th><th>name</th><th>countries</th><th>activated</th><th class="num">AOIs</th><th class="num">products</th><th>closed</th></tr></thead>
+<tbody>
+<tr><td class="mono">EMSR927</td><td class="">Flood in Nepal</td><td class="">Nepal</td><td class="mono">2026-08-26</td><td class="num">4</td><td class="num">4</td><td class="">no</td></tr>
+<tr><td class="mono">EMSR926</td><td class="">Flood in Latvia and Lithuania</td><td class="">Latvia; Lithuania</td><td class="mono">2026-08-22</td><td class="num">4</td><td class="num">9</td><td class="">yes</td></tr>
+<tr><td class="mono">EMSR871</td><td class="">Flood in Abruzzo, Molise and Basilicata regions, Italy</td><td class="">Italy</td><td class="mono">2026-04-01</td><td class="num">6</td><td class="num">15</td><td class="">yes</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>
+Code: <span class="mono">pipelines/cems_flood/</span> on branch <span class="mono">cems-flood</span> · evidence: <span class="mono">exploratory/0005-cems-flood-feasibility/</span> · regenerate: <span class="mono">report.py</span> then republish. Local working copies in <span class="mono">/tmp/gie_cems_flood_archive/</span>, checkpointed to blob every 25 transfers.
+</footer>
+</main>
+
+<div id="tip" role="presentation"></div>
+<script>
+const groups = [{"label": "uploaded", "n": 2721, "cls": "seg-uploaded"}, {"label": "pending", "n": 163, "cls": "seg-pending"}, {"label": "failed", "n": 4, "cls": "seg-failed"}, {"label": "unavailable (upstream)", "n": 309, "cls": "seg-unavail"}, {"label": "excluded (REF maps)", "n": 414, "cls": "seg-excluded"}];
+const clsMap = {};
+const total = groups.reduce((s,g)=>s+g.n,0);
+const bar = document.getElementById("bar"), leg = document.getElementById("legend"), tip = document.getElementById("tip");
+for (const g of groups){
+  const d = document.createElement("div");
+  d.className = g.cls;
+  d.style.flex = `${g.n} 0 auto`;
+  d.setAttribute("aria-label", `${g.label}: ${g.n} rows`);
+  d.addEventListener("mousemove", e => {
+    tip.textContent = `${g.label} · ${g.n.toLocaleString()} rows (${(100*g.n/total).toFixed(1)}%)`;
+    tip.style.left = Math.min(e.clientX + 12, innerWidth - 240) + "px";
+    tip.style.top = (e.clientY - 34) + "px";
+    tip.style.opacity = 1;
+  });
+  d.addEventListener("mouseleave", () => tip.style.opacity = 0);
+  bar.appendChild(d);
+  const s = document.createElement("span");
+  s.innerHTML = `<span class="dot ${g.cls}"></span>${g.label} <b>${g.n.toLocaleString()}</b>`;
+  leg.appendChild(s);
+}
+</script>
+
+</body>
+</html>
