@@ -73,12 +73,36 @@ polygon means *unobserved*, not dry.
 
 ## Product types (`product_class`)
 
-Per the Rapid Mapping portfolio: **FEP** First Estimate (fastest, rough);
-**DEL** Delineation (event extent, optional MONITnn re-assessments);
-**GRA** Grading (damage grades; superset of delineation); REF (pre-event
-reference) exists upstream but is inventoried-only (`excluded_ref` in the
-bronze ledger). `MONITnn` in `target_id` = the nth monitoring re-assessment;
-`v2`+ = re-delivered version.
+A "product" is one analysis of one area of interest, delivered as printable
+maps plus the vector package we archive. The manual (p. 8) defines four
+types, "one pre-event (reference) and three post-event (first estimate,
+delineation, grading)":
+
+| code | name | what it answers | speed / depth |
+|---|---|---|---|
+| REF | Reference | what the area looked like before the event | pre-event baseline. Not fetched by this pipeline (rows are kept in the bronze ledger as `excluded_ref`) |
+| FEP | First Estimate | "where is it worst?" | fastest, deliberately rough |
+| DEL | Delineation | how far does the flood extend? | the standard flood-extent product |
+| GRA | Grading | how badly is each asset damaged? | slowest, includes the extent plus per-asset damage grades |
+
+Two suffixes appear in file names (and so in `target_id`), defined on p. 9
+of the manual:
+
+- **`MONITnn`** means the product is a *monitoring update*: the same AOI
+  re-analysed later with new imagery. `MONIT01` is the first update,
+  `MONIT02` the second, and so on; the original analysis carries `PRODUCT`
+  instead. For floods this is how the rise and recession of water shows up
+  as a time series.
+- **`vN`** is a re-delivery of the same analysis (a correction). `v2`
+  supersedes `v1`; both are archived.
+
+**Interpretation caveat for monitoring floods** (manual §3.2.9): in some
+monitoring products the reported affected area "cumulates all affected area
+extents from previous post-event products" (a disclaimer note on the map
+says so). So a monitoring extent is not guaranteed to be a same-day
+snapshot; where the distinction matters, compare geometries across the
+series (a shrinking area, as in EMSR871 AOI01, proves a snapshot) or check
+the archived map PDF's disclaimer.
 
 ## Era mapping (raw → canonical)
 
