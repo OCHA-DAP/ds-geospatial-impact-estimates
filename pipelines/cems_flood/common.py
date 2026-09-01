@@ -38,6 +38,32 @@ _TITLE_TO_CLASS = (
 )
 
 
+# Flood-extent layer name patterns across all CEMS naming eras (casefolded
+# substring match on the .shp basename). Validated in exploratory/0005.
+EXTENT_PATTERNS = (
+    "observedeventa",  # 2019+ camelCase, incl. new portal
+    "crisis_information_poly",  # ~2014-2016
+    "_event_a",  # 2012-13 zoo (Crisis_event_A, Event_A_M) + 2017-18 observed_event_a
+)
+# Supplementary flood layers in some 2025+ DEL products: layer_kind tags.
+SUPPLEMENTARY_LAYERS = {
+    "modelledeventa": "modelled",
+    "maximumfloodextenta": "max_extent",
+    "flooddeptha": "flood_depth",
+}
+# Coverage layers (what was actually observed), era-specific names -> role.
+COVERAGE_LAYERS = {
+    "areaofinteresta": "aoi",
+    "area_of_interest": "aoi",
+    "imagefootprinta": "footprint",
+    "image_footprint": "footprint",
+    "sensor_metadata": "footprint",
+    "notanalyseda": "not_analysed",
+    "not_analysed": "not_analysed",
+    "general_information_poly": "footprint",  # era B: satellite footprint + void areas
+}
+
+
 def classify_title(title: str | None) -> str:
     """Legacy product-card title -> product class (UNK = new family: harvest
     it anyway and let it show up in the ledger, exclusion is REF-only)."""
