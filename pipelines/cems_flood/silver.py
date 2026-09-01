@@ -276,6 +276,7 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--stage", default="dev", choices=["dev", "prod"])
     ap.add_argument("--codes", default=None, help="comma-separated subset, e.g. EMSR009,EMSR927")
     ap.add_argument("--limit", type=int, default=None, help="max activations")
+    ap.add_argument("--force", action="store_true", help="reprocess codes already in silver")
     args = ap.parse_args(argv)
 
     import ocha_stratus as stratus
@@ -296,6 +297,21 @@ def main(argv: list[str] | None = None) -> None:
 
     cc = stratus.get_container_client(container_name=common.CONTAINER, stage=args.stage)
     fs = blobio.uploader(common.global_settings(args.stage))
+
+    if not args.codes and not args.force:
+        # resume: skip codes with BOTH partitions present; a code killed
+        # mid-write has observed_event but not coverage yet, so it gets redone
+        def done_codes(table: str) -> set[str]:
+            return {
+                b.name.split("code=")[1].split("/")[0]
+                for b in cc.list_blobs(name_starts_with=f"{SILVER}/{table}/code=")
+            }
+
+        complete = done_codes("observed_event") & done_codes("coverage")
+        skipped = [c for c in codes if c in complete]
+        codes = [c for c in codes if c not in complete]
+        print(f"resume: {len(skipped)} codes already in silver, {len(codes)} to process")
+
     proc_rows = []
     for ci, code in enumerate(codes):
         targets = up[up["code"] == code]
@@ -331,16 +347,31 @@ def main(argv: list[str] | None = None) -> None:
             blobio.upload(fs, buf.getvalue(), f"{SILVER}/sources/code={code}/data.parquet")
         print(
             f"[{ci + 1}/{len(codes)}] {code}: extent={n_e} coverage={n_c} "
-            f"api_images={sum(len(v) for v in api_images.values())}"
+            f"api_images={sum(len(v) for v in api_images.values())}",
+            flush=True,
         )
+        if (ci + 1) % 10 == 0:  # ledger checkpoint: survive kills mid-run
+            save_proc(args.work_dir, fs, proc_rows)
 
+    proc = save_proc(args.work_dir, fs, proc_rows)
+    print("\nprocessing ledger:")
+    print(proc["status"].value_counts().to_string())
+
+
+def save_proc(work: Path, fs, proc_rows: list[dict]) -> pd.DataFrame:
+    """Merge this run's rows onto the existing processing ledger (idempotent
+    per code) and persist locally + to blob."""
     proc = pd.DataFrame(proc_rows)
-    proc.to_parquet(args.work_dir / "silver_processing.parquet")
+    path = work / "silver_processing.parquet"
+    if path.exists():
+        old = pd.read_parquet(path)
+        done = proc["code"].unique() if len(proc) else []
+        proc = pd.concat([old[~old["code"].isin(done)], proc], ignore_index=True)
+    proc.to_parquet(path)
     buf = io.BytesIO()
     proc.to_parquet(buf)
     blobio.upload(fs, buf.getvalue(), f"{SILVER}/_meta/processing.parquet")
-    print("\nprocessing ledger:")
-    print(proc["status"].value_counts().to_string())
+    return proc
 
 
 def _now() -> str:
