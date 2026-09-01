@@ -97,15 +97,15 @@ a{color:var(--accent-ink)}
 
 <main>
 <p class="crumb"><a href="../">← Geospatial Impact Estimates</a></p>
-<div class="eyebrow">Copernicus EMS · Rapid Mapping · container <code>global</code> (dev) · generated 2026-09-01 01:48 UTC</div>
+<div class="eyebrow">Copernicus EMS · Rapid Mapping · container <code>global</code> (dev) · generated 2026-09-01 03:16 UTC</div>
 <h1>CEMS Flood Archive Ledger</h1>
 <p class="lede">Rendered directly from <code>_meta/products.parquet</code> and friends — regenerate at any point (<code>report.py</code>) for the true current state of the harvest. Every row below is real.</p>
 
 <div class="stats">
   <div class="stat"><div class="n">302</div><div class="l">flood activations</div></div>
   <div class="stat"><div class="n">3,611</div><div class="l">ledger rows</div></div>
-  <div class="stat"><div class="n">2,721 / 2,888</div><div class="l">zips archived (94.2%)</div></div>
-  <div class="stat"><div class="n">29.1 GB</div><div class="l">uploaded</div></div>
+  <div class="stat"><div class="n">2,884 / 2,888</div><div class="l">zips archived (99.9%)</div></div>
+  <div class="stat"><div class="n">31.5 GB</div><div class="l">uploaded</div></div>
   <div class="stat"><div class="n">4</div><div class="l">failures on ledger</div></div>
 </div>
 
@@ -125,17 +125,16 @@ a{color:var(--accent-ink)}
 
 <section>
 <h2>The status model</h2>
-<p>Every ledger row carries exactly one status. Nothing is silently skipped — a target we chose not to fetch or physically cannot fetch keeps its row and says why. Pending by class: DEL 129 · GRA 28 · FEP 6.</p>
+<p>Every ledger row carries exactly one status. Nothing is silently skipped — a target we chose not to fetch or physically cannot fetch keeps its row and says why. Pending by class: .</p>
 <div class="bar" id="bar" aria-label="Ledger rows by status group"></div>
 <div class="legend" id="legend"></div>
 <div class="tblwrap">
 <table>
 <thead><tr><th>Status</th><th>Set by</th><th>Meaning</th><th class="num">Rows</th></tr></thead>
 <tbody>
-<tr><td><span class="chip chip-uploaded">uploaded</span></td><td>harvest</td><td class="wrap">In blob, size-verified; sha256 + member inventory recorded</td><td class="num">2,721</td></tr>
+<tr><td><span class="chip chip-uploaded">uploaded</span></td><td>harvest</td><td class="wrap">In blob, size-verified; sha256 + member inventory recorded</td><td class="num">2,884</td></tr>
 <tr><td><span class="chip chip-excluded">excluded_ref</span></td><td>discovery</td><td class="wrap">Pre-event Reference map — inventoried, deliberately not fetched</td><td class="num">414</td></tr>
 <tr><td><span class="chip chip-unavail">unavailable_status_N</span></td><td>discovery</td><td class="wrap">New-portal product closed without delivery (never published)</td><td class="num">300</td></tr>
-<tr><td><span class="chip chip-pending">pending</span></td><td>discovery</td><td class="wrap">Has a download URL; will be fetched</td><td class="num">163</td></tr>
 <tr><td><span class="chip chip-unavail">unavailable_not_migrated</span></td><td>discovery</td><td class="wrap">Legacy activation whose products were never migrated to the archive portal</td><td class="num">7</td></tr>
 <tr><td><span class="chip chip-failed">failed_download</span></td><td>harvest</td><td class="wrap">Download failed; HTTP status + error kept; retried via --retry-failed</td><td class="num">4</td></tr>
 <tr><td><span class="chip chip-unavail">unavailable_no_products</span></td><td>discovery</td><td class="wrap">Activation delivered nothing</td><td class="num">1</td></tr>
@@ -153,7 +152,6 @@ a{color:var(--accent-ink)}
 <tbody>
 <tr><td class="mono" title="EMSR009/EMSR009_01MARIANNELUND_DELINEATION_DETAIL03-MONIT03_v1_vector.zip">EMSR009/EMSR…DETAIL03-MONIT03_v1_vector.zip</td><td><span class="chip chip-uploaded">uploaded</span></td><td class="">DEL</td><td class="">archive</td><td class="wrap">AOI01 Mariannelund</td><td class="mono">2012-07-12</td><td class="num">3.19 MB</td><td class="num">73</td><td class="mono" title="e59ab29116093b36ac78f4b04742fadb8bf09fb8f88063d873337b14f7643b07">e59ab291…</td><td class="null">—</td></tr>
 <tr><td class="mono" title="EMSR069/EMSR069_01MAIDENHEAD_DELINEATION_OVERVIEW-MONIT01_v1_vector.zip">EMSR069/EMSR…OVERVIEW-MONIT01_v1_vector.zip</td><td><span class="chip chip-failed">failed_download</span></td><td class="">DEL</td><td class="">archive</td><td class="wrap">AOI01 Maidenhead</td><td class="mono">2014-02-13</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="mono">BadZipFile: File is not a zip file</td></tr>
-<tr><td class="mono" title="EMSR857/EMSR857_AOI06_DEL_MONIT03_v2.zip">EMSR857/EMSR857_AOI06_DEL_MONIT03_v2.zip</td><td><span class="chip chip-pending">pending</span></td><td class="">DEL</td><td class="">new_portal</td><td class="wrap">AOI06 Palmeira</td><td class="mono">2026-01-24</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="null">—</td></tr>
 <tr><td class="mono" title="EMSR009/EMSR009_01MARIANNELUND_REFERENCE_DETAIL03_v2_vector.zip">EMSR009/EMSR…FERENCE_DETAIL03_v2_vector.zip</td><td><span class="chip chip-excluded">excluded_ref</span></td><td class="">REF</td><td class="">archive</td><td class="wrap">AOI01 Mariannelund</td><td class="mono">2012-07-12</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="null">—</td></tr>
 <tr><td class="mono" title="EMSR129/__unavailable_not_migrated__">EMSR129/__unavailable_not_migrated__</td><td><span class="chip chip-unavail">unavailable_not_migrated</span></td><td class="null">—</td><td class="">archive</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="mono">API metadata: n_aois=4 n_products=8</td></tr>
 <tr><td class="mono" title="EMSR659/product_id=63">EMSR659/product_id=63</td><td><span class="chip chip-unavail">unavailable_status_N</span></td><td class="">DEL</td><td class="">new_portal</td><td class="wrap">AOI01 Spazzate-Sassatelli</td><td class="mono">2023-04-24</td><td class="null">—</td><td class="null">—</td><td class="null">—</td><td class="mono">status_code=N feasible=False</td></tr>
@@ -177,28 +175,28 @@ a{color:var(--accent-ink)}
 <tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_transportationL_v1.lyr</td><td class="num">35,840</td><td class="num">5,136</td></tr>
 <tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_builtUpP_v1.dbf</td><td class="num">33,042</td><td class="num">472</td></tr>
 <tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_observedEventA_v1.shp</td><td class="num">27,616</td><td class="num">18,371</td></tr>
-<tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_transportationL_v1.dbf</td><td class="num">26,913</td><td class="num">536</td></tr><tr><td class="muted" colspan="3">… of 45 members in this zip; 156,069 member rows across 2,715 inventoried zips</td></tr>
+<tr><td class="mono">EMSR773_AOI30_GRA_PRODUCT_transportationL_v1.dbf</td><td class="num">26,913</td><td class="num">536</td></tr><tr><td class="muted" colspan="3">… of 45 members in this zip; 164,746 member rows across 2,884 inventoried zips</td></tr>
 </tbody>
 </table>
 </div>
 </section>
 
 <section>
-<div class="file-head"><h2><code>transfers.jsonl</code></h2><span class="file-note">append-only journal · 2,794 attempt records so far · latest record:</span></div>
+<div class="file-head"><h2><code>transfers.jsonl</code></h2><span class="file-note">append-only journal · 2,963 attempt records so far · latest record:</span></div>
 <pre><code>{
-  &quot;ts&quot;: &quot;2026-09-01T01:48:15+00:00&quot;,
+  &quot;ts&quot;: &quot;2026-09-01T03:14:24+00:00&quot;,
   &quot;outcome&quot;: &quot;uploaded&quot;,
-  &quot;target_id&quot;: &quot;EMSR857/EMSR857_AOI08_DEL_PRODUCT_v2.zip&quot;,
+  &quot;target_id&quot;: &quot;EMSR427/EMSR427_AOI06_DEL_MONIT01_r1_RTP01_v1_vector.zip&quot;,
   &quot;source&quot;: &quot;copernicus_ems&quot;,
   &quot;category&quot;: &quot;reference&quot;,
-  &quot;dataset&quot;: &quot;Copernicus EMS EMSR857 DEL product&quot;,
+  &quot;dataset&quot;: &quot;Copernicus EMS EMSR427 DEL product&quot;,
   &quot;provider&quot;: &quot;Copernicus Emergency Management Service (rapid mapping)&quot;,
   &quot;licence&quot;: &quot;CEMS free re-use with attribution (\u00a9 European Union)&quot;,
-  &quot;origin_url&quot;: &quot;https://rapidmapping.emergency.copernicus.eu/backend/EMSR857/AOI08/DEL_PRODUCT/EMSR857_AOI08_DEL_PRODUCT_v2.zip&quot;,
-  &quot;blob_path&quot;: &quot;copernicus_ems/flood/bronze/code=EMSR857/EMSR857_AOI08_DEL_PRODUCT_v2.zip&quot;,
+  &quot;origin_url&quot;: &quot;https://cems-mapping-website.s3.eu-west-1.amazonaws.com/static/activations/EMSR427/EMSR427_AOI06_DEL_MONIT01_r1_RTP01_v1_vector.zip&quot;,
+  &quot;blob_path&quot;: &quot;copernicus_ems/flood/bronze/code=EMSR427/EMSR427_AOI06_DEL_MONIT01_r1_RTP01_v1_vector.zip&quot;,
   &quot;stage&quot;: &quot;dev&quot;,
-  &quot;size_bytes&quot;: 9727848,
-  &quot;sha256&quot;: &quot;1f8a767f30b04d59c56e0c5fe55d8b82d950a3ec2d55e848f2ba38f0aed9c910&quot;,
+  &quot;size_bytes&quot;: 85778670,
+  &quot;sha256&quot;: &quot;5a563d46e9109885a5c1825c8b116e27205cbaa1ed52f76f33e848e80786ed7a&quot;,
   &quot;error&quot;: null
 }</code></pre>
 </section>
@@ -224,7 +222,7 @@ Code: <span class="mono">pipelines/cems_flood/</span> on branch <span class="mon
 
 <div id="tip" role="presentation"></div>
 <script>
-const groups = [{"label": "uploaded", "n": 2721, "cls": "seg-uploaded"}, {"label": "pending", "n": 163, "cls": "seg-pending"}, {"label": "failed", "n": 4, "cls": "seg-failed"}, {"label": "unavailable (upstream)", "n": 309, "cls": "seg-unavail"}, {"label": "excluded (REF maps)", "n": 414, "cls": "seg-excluded"}];
+const groups = [{"label": "uploaded", "n": 2884, "cls": "seg-uploaded"}, {"label": "failed", "n": 4, "cls": "seg-failed"}, {"label": "unavailable (upstream)", "n": 309, "cls": "seg-unavail"}, {"label": "excluded (REF maps)", "n": 414, "cls": "seg-excluded"}];
 const clsMap = {};
 const total = groups.reduce((s,g)=>s+g.n,0);
 const bar = document.getElementById("bar"), leg = document.getElementById("legend"), tip = document.getElementById("tip");
