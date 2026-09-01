@@ -48,20 +48,39 @@ def _now() -> str:
 
 
 def reconcile_with_blob(ledger: pd.DataFrame, stage: str) -> pd.DataFrame:
-    """Blob listing is truth: sync ledger statuses to what actually exists."""
-    existing = set(
-        stratus.list_container_blobs(
-            name_starts_with=f"{common.BRONZE}/code=",
-            stage=stage,
-            container_name=common.CONTAINER,
-        )
-    )
-    in_blob = ledger["blob_path"].isin(existing)
-    to_mark = in_blob & (ledger["status"] != "uploaded")
+    """Blob listing is truth: sync ledger statuses to what actually exists.
+
+    Compares SIZES, not just names: a kill mid-upload can leave a created but
+    empty/partial DFS file, and a row that already carries a sha256 from a
+    failed attempt would otherwise be laundered to uploaded without any check.
+    """
+    cc = stratus.get_container_client(container_name=common.CONTAINER, stage=stage)
+    blob_sizes = {b.name: b.size for b in cc.list_blobs(name_starts_with=f"{common.BRONZE}/code=")}
+    got = ledger["blob_path"].map(blob_sizes.get)  # NaN when blob absent
+    in_blob = got.notna()
+    # sizes agree when the ledger has none recorded yet (backfill fills it) or they match
+    size_ok = ledger["size_bytes"].isna() | (got == ledger["size_bytes"])
+
+    to_mark = in_blob & size_ok & (ledger["status"] != "uploaded")
     if to_mark.any():
         print(f"reconcile: {to_mark.sum()} targets already in blob -> uploaded")
         ledger.loc[to_mark, "status"] = "uploaded"
         ledger.loc[to_mark, "error"] = "reconciled: found in blob"
+
+    stale = in_blob & ~size_ok
+    if stale.any():
+        for tid, ls, bs in zip(
+            ledger.loc[stale, "target_id"],
+            ledger.loc[stale, "size_bytes"],
+            got[stale],
+            strict=True,
+        ):
+            print(
+                f"WARNING reconcile: {tid} blob size {int(bs)} != ledger {int(ls)} "
+                f"(partial upload?) -> pending re-transfer"
+            )
+        ledger.loc[stale, "status"] = "pending"
+
     lost = (ledger["status"] == "uploaded") & ~in_blob & ledger["blob_path"].notna()
     if lost.any():
         print(
