@@ -31,9 +31,10 @@ survives? Evidence: `exploratory/0005-cems-flood-feasibility/`.
   layers only (~10% of bytes); (c) extracted layers only, re-fetch on demand.
 * **Keying**: (a) corpus layout in the `global` container keyed by
   activation code; (b) the repo's event-keyed `projects` layout.
-* **Silver acquisition datetime**: (a) only exact values, drop the rest;
-  (b) best available value per era with explicit precision/method columns;
-  (c) delivery time as a proxy everywhere.
+* **Silver acquisition datetime**: (a) only exact values, drop the rest
+  (rejected); (b) **keep every row**, best available value per era with
+  explicit precision/method columns (CHOSEN); (c) delivery time as a proxy
+  everywhere (rejected).
 * **Era mapping**: (a) full canonical schema only; (b) thin canonical columns
   plus raw attributes preserved verbatim.
 
