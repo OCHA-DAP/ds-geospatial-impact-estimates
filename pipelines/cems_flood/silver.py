@@ -258,13 +258,14 @@ def _xml_datestamp(zf: zipfile.ZipFile) -> pd.Timestamp | None:
     """Earliest ISO-metadata dateStamp in the package. This is the product's
     publish date, which imagery cannot postdate — a tighter window end than
     the (sometimes days-later) delivery_time of the latest version."""
-    stamps = []
+    # the stamp is the package publish date, identical across the package's
+    # ISO XMLs — read until the first hit rather than decoding every XML
     for n in zf.namelist():
         if n.lower().endswith(".xml") and not n.lower().endswith(".shp.xml"):
             m = _DATESTAMP.search(zf.read(n).decode("utf-8", "ignore"))
             if m:
-                stamps.append(pd.Timestamp(m.group(1)))
-    return min(stamps) if stamps else None
+                return pd.Timestamp(m.group(1))
+    return None
 
 
 def process_zip(row: pd.Series, data: bytes, api_images: dict) -> dict[str, list]:
