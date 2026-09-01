@@ -252,6 +252,12 @@ def process_zip(row: pd.Series, data: bytes, api_images: dict) -> dict[str, list
 
 def write_table(fs, code: str, table: str, rows: list, cols: list | None = None) -> int:
     if not rows:
+        # schema-only partition: "this code has zero rows" is a result, and
+        # resume needs the partition to exist to see the code as complete
+        g = gpd.GeoDataFrame(columns=cols or ["geometry"], geometry="geometry", crs="EPSG:4326")
+        buf = io.BytesIO()
+        g.to_parquet(buf, compression="zstd")
+        blobio.upload(fs, buf.getvalue(), f"{SILVER}/{table}/code={code}/data.parquet")
         return 0
     g = gpd.GeoDataFrame(rows, geometry="geometry", crs="EPSG:4326")
     if cols:

@@ -53,7 +53,7 @@ SUPPLEMENTARY_LAYERS = {
 }
 # Coverage layers (what was actually observed), era-specific names -> role.
 COVERAGE_LAYERS = {
-    "areaofinteresta": "aoi",
+    "areaofinterest": "aoi",  # areaOfInterestA (2017+) and AreaOfInterest (2013 era)
     "area_of_interest": "aoi",
     "imagefootprinta": "footprint",
     "image_footprint": "footprint",
