@@ -64,6 +64,21 @@ uv run --group etl --group api python pipelines/cems_flood/report.py --pages    
 Needs the repo `.env` (`DSCI_AZ_BLOB_*_SAS_WRITE` via `gie.config`). Default
 stage is dev; `--stage prod` when promoting.
 
+## Defect-fix loop (always this order)
+
+```sh
+# 1. fix the rule or code (silver.py / common.py / ...) and commit
+uv run --group etl --group api python pipelines/cems_flood/audit.py     # 2. -> audit_stale_codes.txt
+uv run --group etl --group api python pipelines/cems_flood/silver.py \
+  --codes $(cat /tmp/gie_cems_flood_archive/audit_stale_codes.txt)      # 3. reprocess exactly those
+uv run --group etl --group api python pipelines/cems_flood/audit.py     # 4. must pass clean
+```
+
+`audit.py` checks bronze (ledger vs blob, names and sizes) and silver
+(processing-ledger completeness, partition census, acquisition-date
+plausibility, vocabulary and null rules) and emits the stale-code list, so
+reprocessing is never hand-curated.
+
 ## Guarantees
 
 - **Resume is exact.** The blob store is the source of truth (ADR-0005

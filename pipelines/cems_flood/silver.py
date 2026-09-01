@@ -131,7 +131,9 @@ def acq_from_attributes(props: dict) -> dict | None:
     if src_date is None:
         return None
     ts = pd.to_datetime(str(src_date), errors="coerce")
-    if pd.isna(ts):
+    # 1899-12-30 (and kin) is the ESRI null-date placeholder; CEMS Rapid
+    # Mapping starts 2012 — implausible dates fall back to the window
+    if pd.isna(ts) or ts.year < 2011:
         return None
     m = _SRC_INFO_DT.search(str(_get(props, "src_info") or ""))
     if m:
