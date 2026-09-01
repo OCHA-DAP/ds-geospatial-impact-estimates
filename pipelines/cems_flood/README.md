@@ -6,6 +6,7 @@ ledger that accounts for everything: what exists, what we archived, what
 upstream lost, and what is inside every zip.
 
 Endpoints and provenance: [ACQUISITION.md](ACQUISITION.md).
+Column and attribute definitions: [DATA_DICTIONARY.md](DATA_DICTIONARY.md).
 Evidence behind the design: `exploratory/0005-cems-flood-feasibility/`.
 
 ## How it works
