@@ -17,11 +17,14 @@ activation code. Reads zips FROM BRONZE BLOB only (never from CEMS).
 Acquisition columns on observed_event (the ML-label requirement):
   acq_datetime / acq_window_start / acq_window_end : timestamps (UTC naive)
   acq_precision : minute | date | window
-  acq_method    : attribute   (2012-16: per-feature src_date/src_info)
-                  api         (2023+: single-image product, exact time)
-                  api_window  (2023+: multi-image product, span of its images)
-                  window      (2017-23: event_time -> delivery_time; a later
-                               catalog-match stage can tighten these)
+  acq_method    : attribute    (2012-16: per-feature src_date/src_info)
+                  source_table (2017+: the package's geometry-less `source`
+                                DBF, joined polygon.dmg_src_id -> src_id;
+                                per-image sensor + minute time, in-package)
+                  api          (2023+: single-image product, exact time)
+                  api_window   (2023+: multi-image product, span of images,
+                                when the source table cannot resolve it)
+                  window       (last resort: event_time -> publish/delivery)
 
 Processing ledger at silver/_meta/processing.parquet: one row per bronze zip,
 status ok | no_extent_layer | error. Absence of flood polygons in a
@@ -146,6 +149,57 @@ def acq_from_attributes(props: dict) -> dict | None:
     return {"acq_datetime": ts, "acq_precision": "date", "acq_method": "attribute"}
 
 
+_SOURCE_DBF = re.compile(r"_source(_r\d+)?(_v\d+)?\.dbf$", re.I)
+_TM = re.compile(r"T?(\d{1,2}):(\d{2})")
+
+
+def read_source_table(zf: zipfile.ZipFile) -> tuple[dict, list[dict]]:
+    """The package's geometry-less ``source`` DBF (2017+ eras): one row per
+    source image with src_id, sensor, GSD, event phase and acquisition
+    date+time. Returns ({src_id: acq dict}, raw rows) — the src_id map joins
+    to polygons' dmg_src_id, the most authoritative acquisition source of all
+    (in-package, per-image, minute precision)."""
+    members = [n for n in zf.namelist() if _SOURCE_DBF.search(n)]
+    if not members:
+        return {}, []
+    with tempfile.TemporaryDirectory() as td:
+        f = Path(td) / "source.dbf"
+        f.write_bytes(zf.read(members[0]))
+        df = gpd.read_file(f)
+    lookup: dict[str, dict] = {}
+    rows: list[dict] = []
+    for r in df.itertuples():
+        raw = {
+            c: getattr(r, c, None)
+            for c in ("source_nam", "src_date", "source_tm", "sensor_gsd", "eventphase", "src_id")
+        }
+        rows.append(raw)
+        ts = pd.to_datetime(str(raw["src_date"]), format="%d/%m/%Y", errors="coerce")
+        if pd.isna(ts) or ts.year < 2011:
+            continue
+        m = _TM.search(str(raw["source_tm"] or ""))
+        if m:
+            ts = ts + pd.Timedelta(hours=int(m.group(1)), minutes=int(m.group(2)))
+            acq = {"acq_datetime": ts, "acq_precision": "minute", "acq_method": "source_table"}
+        else:
+            acq = {"acq_datetime": ts, "acq_precision": "date", "acq_method": "source_table"}
+        try:
+            lookup[str(int(float(raw["src_id"])))] = acq
+        except (TypeError, ValueError):
+            continue
+    return lookup, rows
+
+
+def acq_from_source_table(props: dict, lookup: dict) -> dict | None:
+    dmg = _get(props, "dmg_src_id")
+    if dmg is None or not lookup:
+        return None
+    try:
+        return lookup.get(str(int(float(dmg))))
+    except (TypeError, ValueError):
+        return None
+
+
 def acq_from_api(images: list[dict]) -> dict | None:
     times = sorted(pd.to_datetime(i["acquisitionTime"]) for i in images if i.get("acquisitionTime"))
     if not times:
@@ -214,9 +268,14 @@ def _xml_datestamp(zf: zipfile.ZipFile) -> pd.Timestamp | None:
 
 
 def process_zip(row: pd.Series, data: bytes, api_images: dict) -> dict[str, list]:
-    """One bronze zip -> rows for observed_event and coverage."""
+    """One bronze zip -> rows for observed_event, coverage and sources."""
     zf = zipfile.ZipFile(io.BytesIO(data))
-    out: dict[str, list] = {"observed_event": [], "coverage": []}
+    out: dict[str, list] = {"observed_event": [], "coverage": [], "sources": []}
+    src_lookup, src_rows = read_source_table(zf)
+    out["sources"] = [
+        {"code": row["code"], "target_id": row["target_id"], "method": "package"} | r
+        for r in src_rows
+    ]
     window_end = row["delivery_time"]
     stamp = _xml_datestamp(zf)
     if stamp is not None:
@@ -259,7 +318,15 @@ def process_zip(row: pd.Series, data: bytes, api_images: dict) -> dict[str, list
             if table == "coverage":
                 rec |= {"role": kind, "or_src_id": _get(props, "or_src_id")}
             else:
-                acq = acq_from_attributes(props) or api_acq or window
+                # authority order: per-feature attribute (eras A/B) ->
+                # in-package source table via dmg_src_id (2017+) ->
+                # portal API (2023+) -> event->publish window (last resort)
+                acq = (
+                    acq_from_attributes(props)
+                    or acq_from_source_table(props, src_lookup)
+                    or api_acq
+                    or window
+                )
                 rec |= {
                     "layer_kind": kind,
                     # prefer descriptive fields; era A also carries numeric codes
@@ -348,7 +415,7 @@ def main(argv: list[str] | None = None) -> None:
     for ci, code in enumerate(codes):
         targets = up[up["code"] == code]
         api_images, source_rows = fetch_api_images(code)
-        tables: dict[str, list] = {"observed_event": [], "coverage": []}
+        tables: dict[str, list] = {"observed_event": [], "coverage": [], "sources": []}
         for _, row in targets.iterrows():
             rec = {"code": code, "target_id": row["target_id"], "processed_at": _now()}
             try:
@@ -359,21 +426,27 @@ def main(argv: list[str] | None = None) -> None:
                 print(f"  ERROR {row['target_id']}: {e!r:.120}")
                 continue
             n_ext = len(got["observed_event"])
-            tables["observed_event"] += got["observed_event"]
-            tables["coverage"] += got["coverage"]
+            for t in tables:
+                tables[t] += got[t]
             proc_rows.append(
                 rec
                 | {
                     "status": "ok" if n_ext else "no_extent_layer",
                     "n_extent": n_ext,
                     "n_coverage": len(got["coverage"]),
+                    "n_sources": len(got["sources"]),
                 }
             )
         n_e = write_table(fs, code, "observed_event", tables["observed_event"], EXTENT_COLS)
         n_c = write_table(fs, code, "coverage", tables["coverage"])
+        # sources: package tables (all eras that ship one) + portal API images
+        src = pd.DataFrame(tables["sources"]).astype(str) if tables["sources"] else pd.DataFrame()
         if source_rows:
-            src = pd.DataFrame(source_rows)
-            src["acq_datetime"] = pd.to_datetime(src["acq_datetime"], errors="raise")
+            api_df = pd.DataFrame(source_rows).astype(str)
+            api_df["method"] = "api"
+            api_df["code"] = code
+            src = pd.concat([src, api_df], ignore_index=True)
+        if len(src):
             buf = io.BytesIO()
             src.to_parquet(buf, compression="zstd")
             blobio.upload(fs, buf.getvalue(), f"{SILVER}/sources/code={code}/data.parquet")

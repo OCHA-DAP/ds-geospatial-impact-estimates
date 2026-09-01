@@ -50,12 +50,15 @@ metadata lives in the ledger where mistakes are one-line fixes.
 Silver = three GeoParquet tables partitioned by code (`observed_event`,
 `coverage`, `sources`), built only from bronze. Acquisition metadata is
 **best-available-with-honesty**: `acq_datetime`/`acq_window_*` plus
-`acq_precision` (minute | date | window) and `acq_method` (attribute | api |
-api_window | window), so consumers filter to the precision they can tolerate
-instead of receiving silently degraded dates. Era C/D (2017-23) starts as
-event-to-delivery windows; a later catalog-matching stage (image footprint x
-time window against Sentinel STAC, validated on EMSR574) can tighten those
-without overwriting the conservative value. Canonical columns are thin;
+`acq_precision` (minute | date | window) and `acq_method` (attribute |
+source_table | api | api_window | window), so consumers filter to the
+precision they can tolerate instead of receiving silently degraded dates.
+The primary mechanism for 2017+ is the package's own `source` DBF
+(`dmg_src_id` -> `src_id` join; per-image sensor + minute timestamp), which
+makes era C/D minute-precise in-package. External catalog matching was
+considered and retracted as a primary mechanism: it proposed a Sentinel-1
+pass for a product actually derived from RADARSAT-2 (absent from public
+catalogs) — it survives only as an optional cross-check. Canonical columns are thin;
 every source attribute is preserved verbatim in `attrs_json`, so no era
 mapping error is destructive. All monitorings/versions are kept (flood
 evolution is signal), and `coverage` ships from day one because "no flood

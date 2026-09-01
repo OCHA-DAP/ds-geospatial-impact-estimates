@@ -36,7 +36,7 @@ import pandas as pd
 
 SILVER = "copernicus_ems/flood/silver"
 PRECISIONS = {"minute", "date", "window"}
-METHODS = {"attribute", "api", "api_window", "window"}
+METHODS = {"attribute", "source_table", "api", "api_window", "window"}
 ACQ_COLS = ["acq_datetime", "acq_window_end", "acq_precision", "acq_method"]
 
 

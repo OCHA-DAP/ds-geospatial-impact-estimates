@@ -95,20 +95,26 @@ Audited era by era against real packages:
 |---|---|---|
 | A 2012–13 | **on every polygon**: `SRC_DATE` (+ `EXT_DATE`) | date |
 | B 2014–16 | **on every polygon**: `src_date`; time often in `src_info` ("COSMO-SkyMed 01/06/2016 17:50") | date, often minute |
-| C 2017–18 | **NOT in the vector package.** Polygons carry `dmg_src_id` → `sensor_metadata_a.or_src_id` (numeric only) | — |
-| D 2019–23 | **NOT in the vector package.** `dmg_src_id` → `imageFootprintA.or_src_id`; checked shp/GeoJSON attrs, summaryTable xlsx, ISO XML (only a `dateStamp`), map PDF (rasterized, no text layer) | — |
+| C 2017–18 | **in-package `source` DBF** (see correction below) | minute |
+| D 2019–23 | **in-package `source` DBF** (see correction below) | minute |
 | E 2023+ | **new-portal API**: each product's `images[]` carries `sensorName` + `acquisitionTime` to the minute (also encoded in image `fileName`) | minute |
 
-Era C/D recovery (validated on EMSR574): the package's `imageFootprintA`
-polygon IS the source-scene footprint, and event→delivery bounds the window —
-querying a public Sentinel-1 STAC catalog (earth-search) with footprint bbox +
-window returned exactly one plausible pass (S1A 2022-05-16 08:33 UTC, delivery
-next day). So a **footprint × time-window × catalog match** can recover exact
-scene + timestamp for SAR-derived products (most flood delineations);
-optical/commercial-source products need an OCR-the-map-title-block fallback or
-stay flagged date-window-only. Old-portal Wayback product pages were checked
-and carry only publish times. Prior art (Kuro Siwo, NeurIPS 2024) hand-curated
-~43 events rather than solving this at scale.
+**CORRECTION (2026-09-01).** The initial audit missed a geometry-less
+**`source` DBF** shipped in every 2017+ package (`*_source*_v*.dbf`) — the
+layer scan only globbed `.shp` members. It carries, per source image:
+`src_id` (joining polygons' `dmg_src_id`), `source_nam`, `src_date`,
+`source_tm` (minute), `sensor_gsd`, `eventphase` — matching the official
+Crisis Information Package data model
+(mapping.emergency.copernicus.eu/…/vector-package/, JRC121741). The
+in-package join gives era C/D **minute precision** (validated: EMSR293,
+EMSR459, EMSR574 → 100% minute) and disambiguates multi-image 2023+ products.
+
+The earlier catalog-match idea is retracted as the primary mechanism: on
+EMSR574 the STAC search proposed a Sentinel-1 pass, but the source table
+shows the actual image was **RADARSAT-2** (2022-05-15 08:44 UTC), which no
+public catalog serves — catalog matching would have silently mislabeled it.
+It remains a validation cross-check only. Wayback product pages carry only
+publish times; the map PDF title block is rasterized (OCR-only).
 
 Implication for silver: the canonical extent schema needs
 `acq_datetime` + `acq_precision` (exact / date / window) + `acq_method`
