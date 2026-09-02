@@ -262,6 +262,45 @@ tbl("RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv")
 - **Confidence: high** (frozen basis, exact anchor). Manuscript: paragraph + figure in
   #app-ranking-tables; half-sentence pointer in #sec-ranking.
 
+# RQ3h — the agreement dial also RANKS: mid-k beats every single (2026-09-02, external review)
+
+Reviewer objection (Leo): the closing recommendation ("count agreement") was proven at
+building level only; ranking was never tested for the voting system. Tested on the
+rq3f core frame (fixed shared cell set, res 9/8), with vote-sum, k-of-6 cell counts
+and the fusion expected count added to the frozen singles/null. Anchors: singles and
+null reproduce rq3f_null_ranking_core.csv exactly. Script
+`RQ3-prioritization-error-structure/scripts/rq3h_agreement_ranking.py`; figure
+`rq3h_agreement_ranking_fig.py` (manuscript #fig-agreerank in #sec-dial):
+
+```{python}
+tbl("RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv")
+```
+
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3h_agreement_ranking.png)
+
+- **Mid-dial out-ranks everything**: 3/4-of-6 ρ 0.78 vs best single (LIST) 0.74 at
+  res 8; 0.66 vs 0.56 at res 9. Beats fusion too (0.72/0.58) — fusion was trained to
+  score buildings, not order cells, and its geography inputs smooth away inter-cell
+  contrast.
+- **Two metrics answer two questions and reward different k**: ρ (full ordering) peaks
+  at 3–4-of-6; top-20 shortlist overlap peaks at 5-of-6 (0.78 tie-aware at res 8;
+  res 9: 0.52 vs best single 0.20 and null 0.00).
+- **Null top-20 dig ("right neighbourhood, wrong block")**: at res 9 the null ranks the
+  true worst-20 cells at 26–271 of 594 — consistently top-fifth, never top-20. Its
+  failure is resolution, not location; corroborated products resolve the block.
+- **Tie-aware top-20** (`top20_exp`): at high k many cells tie at 1 flagged building
+  and the naive top-20 depends on sort order; expected overlap credits each tied cell
+  at slots/tie-group-size. Moves 5-of-6 0.80→0.78, 6-of-6 0.65→0.67; nothing else.
+- **Open item (parked 2026-09-02)**: a near-miss ranking diagnostic (median rank the
+  predictor assigns the true worst-20; or NDCG@20 if a reviewer demands the standard
+  form) — the "ranks it gives the truth" view made the null dig legible and may be
+  worth reporting alongside ρ/top-20. Not integrated yet.
+- **No bootstrap intervals on these ρ yet** — margins like 0.78 vs 0.74 are reported
+  without CIs; direction is consistent across both resolutions and both metrics.
+- **Confidence: high** on direction (exact anchors, two resolutions, two metrics);
+  medium on margins (no CIs). Manuscript: #fig-agreerank + paragraph in #sec-dial,
+  pointer in #sec-ranking, recommendation sentence now carries the ranking evidence.
+
 # RQ3b — the error is structured, but structured along the earthquake
 
 ```{python}
