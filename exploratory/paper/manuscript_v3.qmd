@@ -76,7 +76,7 @@ Organization for Nuclear Research (CERN)), a volunteer AI platform (the Humanita
 OpenStreetMap Team's fAIr), and DISHA (Data Insights for Social and Humanitarian
 Action), an initiative of UN Global Pulse.
 These products disagree with each other, sometimes dramatically. A coordinator of
-search-and-rescue teams receiving
+search-and-rescue (SAR) teams receiving
 several of them in the same week has no established way to decide which to trust, for
 what purpose, and at what spatial scale.
 
@@ -89,7 +89,8 @@ used only for the question it can answer, and the three check each other. That c
 mattered: the expert reference (CEMS) turned out to miss half of the lesser damage the field
 teams reported, so precision measured against it alone is a lower bound, not an estimate.
 
-The paper is organised around three questions a coordinator would actually ask:
+This paper is organised around three questions that could inform a coordinator when
+attempting to use these products:
 
 - Can a responder act on a single flagged building?
 - Do the products at least rank neighbourhoods well enough to triage?
@@ -358,7 +359,9 @@ product and the geography model score the identical cells, the model has a singl
 score (0.65), and the six split three–three around it: LIST (0.74), IMPACT (0.72) and
 OSU (0.70) above, Microsoft (0.61), UNEP (0.58) and UH (0.48) below
 (@fig-nullranking). The products do carry real information about where *within* a
-damage zone to go first. The as-delivered view is weaker: across everything each
+damage zone to go first, and counting agreement between them sharpens it: ranking
+cells by mid-level agreement beats every single product's ordering (@sec-dial,
+@fig-agreerank). The as-delivered view is weaker: across everything each
 product shipped, the hindsight geography model out-ranks five of the six, largely
 because 96% of the reference sits in one damage zone, so the as-delivered task reduces
 to "find the damage zone", which coast-plus-density solves almost by definition. What
@@ -501,6 +504,31 @@ Recommendations.
 the pair sharing its entire method is the weakest of
 all.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){#fig-frontier}
 
+**The dial also ranks.** Counting agreement was tested above as a classifier; the same
+dial was then tested at the area-ranking task (external review request), and it wins
+there too (@fig-agreerank). Ranking cells by their count of buildings with at least
+three or four products agreeing beats every single product's ordering (ρ 0.78 against
+LIST's 0.74 at ~0.74 km² cells, 0.66 against 0.56 at ~0.11 km²), and it beats the
+fitted fusion score as well, which was trained to score buildings, not to order cells.
+The two ranking questions reward different dial settings. For a full priority ordering
+of every cell, mid-agreement (3 or 4 of 6) is best. For a shortlist, "which 20 sectors
+first", high agreement is decisively better: 5-of-6 puts 16 of the 20 worst-hit cells
+on its list where the best single product manages 13, and at the finer scale the
+contrast hardens, 10 of 20 against 4 of 20 for the best single, while the geography
+model shortlists none. That last number is the sharpest statement of the division of
+labour in this paper: geography names the right neighbourhoods (it ranks the true
+worst cells consistently in its top fifth) but cannot tell the worst block from the
+block next door; corroborated products can.
+
+![**Region: core (61 km²), both cell scales.** The k-of-6 agreement dial at the
+area-ranking task, against each single product (grey), the geography null (red) and
+weighted fusion (blue). Top row: rank correlation with the expert ordering over all
+cells. Bottom row: share of the 20 worst-hit cells that make the predictor's own
+top-20 shortlist (tie-aware expected value; at high k many cells tie at one flagged
+building, and each tied cell is credited at its probability of a shortlist place
+rather than by arbitrary sort
+order).](artefacts/RQ3-prioritization-error-structure/figs/rq3h_agreement_ranking.png){#fig-agreerank}
+
 ## One failure could be traced; five could not be examined {#sec-casestudy}
 
 **Result:** Microsoft's largest failure is a western strip where crowd reviewers judged
@@ -598,7 +626,8 @@ supports acting on individual flags. **So do not spend time choosing a product; 
 it counting agreement between products.** On this event no single product was
 meaningfully better than a model of coastline distance and building density, but the
 number of products agreeing on a building roughly doubled the performance (F1) of any
-of them alone. Unlike a fitted model, counting requires no weights, no training data
+of them alone, and the same count out-ranked every single product at sector scale
+(@fig-agreerank). Unlike a fitted model, counting requires no weights, no training data
 and no reference, so it can be done the hour the second product arrives. Weight the
 count toward *independent methods*: products that share a sensing method fail together
 and their agreement carried the least information in our tests, while products with
