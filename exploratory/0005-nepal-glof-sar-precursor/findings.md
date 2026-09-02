@@ -202,6 +202,30 @@ aggregation, which the pre-declared facet design already addresses. The
 structural limit is unchanged: two positives cannot demonstrate skill, and
 prospective seasons remain the only real validation.
 
+**8. Threshold-free skill summary — the correct reading of the whole record.**
+Findings 4–7 scored events pass/fail against −2σ, but that threshold was
+calibrated by eye on the Langtang case itself, so caught/missed verdicts at it
+are circular. `skill_analysis.py` reframes everything without a privileged
+threshold: each positive is placed in its own dataset's null distribution of
+unit-season statistics (worst 3-consecutive adjusted z), as a rank and an
+empirical p-value.
+
+- Langtang 2026 on its auto-facet: **rank 5 / 217 unit-seasons, p = 0.023**
+  (four quiet unit-seasons scored lower — it is extreme, not unique).
+- Sedongpu 2018 as min-over-tiles vs the same statistic in other years:
+  **rank 1 / 7, p = 0.143** — the best possible p with six null years; the
+  event maxed out its evidential resolution.
+- **Fisher combination: p ≈ 0.022.** One line for the whole exploration: about
+  a 1-in-45 chance of both collapse seasons ranking this extreme if the
+  detector carried no signal — and even that flatters it, since the window,
+  run length, and unit scale were partly shaped on the Langtang case.
+- Full sweep over the pooled 988-unit-season null (5 regions): the loosest
+  threshold catching both positives (−2.07) implies a 1.11 % false-alarm rate
+  per unit-season; the pooled null itself reaches −3.19 (a Chamoli-region
+  winter window — winter windows are noisier, per finding 5). There is no
+  threshold with clean separation, and choosing an operating point from two
+  positives would be meaningless — the curve, not a verdict, is the result.
+
 ## Caveats
 
 - Backscatter on a 40° Himalayan face carries layover/foreshortening; per-orbit
