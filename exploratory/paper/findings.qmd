@@ -233,6 +233,35 @@ over-detection averages out at operational scale. **Confidence: high.**
 
 ![Rank scatter, res 8](artefacts/RQ3-prioritization-error-structure/figs/rq3_rank_scatter_res8.png)
 
+# RQ3g — ranking by damage FRACTION instead of count: nothing flips (2026-09-02, external review)
+
+Reviewer question (Leo): are we ranking damage rate or total damaged buildings — urban
+vs rural could differ. The published ranking is COUNT per cell. Re-ranked by damage
+fraction (damaged ÷ building stock; cells ≥20 buildings, rate noise below that), same
+pipeline as rq3f (anchor: count columns reproduce rq3f_null_ranking.csv exactly).
+Script `RQ3-prioritization-error-structure/scripts/rq3g_frac_ranking.py`:
+
+```{python}
+tbl("RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv")
+```
+
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3g_frac_vs_count_rho.png)
+
+- **The "count flatters geography" hypothesis fails**: the null ranks fractions about
+  as well as counts (ρ 0.43–0.65 both metrics). Damage *rate* is geographically
+  structured (coastal gradient), so dividing out building stock removes nothing the
+  null uses. Only OSU beats its null under either target, at either scale — the
+  published conclusion is target-invariant.
+- **Grade-bias split, fifth appearance**: coherence products gain under fractions
+  (IMPACT 0.29→0.46, LIST 0.28→0.35 at res 8), appearance products lose (MS 0.47→0.37,
+  UH −0.11→−0.21).
+- Scatter grid (fractions, res 8): `figs/rq3g_frac_scatter_res8.png` — diagnostic only.
+- Caveats: fraction cells restricted to ≥20 buildings; CEMS incompleteness biases
+  measured rates down everywhere (ranks care only about the spatial pattern of the
+  undercount). Scope 'all' (as-delivered); Caraballeda/core scopes not re-run.
+- **Confidence: high** (frozen basis, exact anchor). Manuscript: paragraph + figure in
+  #app-ranking-tables; half-sentence pointer in #sec-ranking.
+
 # RQ3b — the error is structured, but structured along the earthquake
 
 ```{python}
