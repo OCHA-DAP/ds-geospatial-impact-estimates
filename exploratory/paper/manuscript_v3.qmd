@@ -48,7 +48,8 @@ the fact.
 
 The rest of their value lies in their disagreement. How many products must agree before a
 building is flagged works as a dial a responder can set, from flagging every building any
-product marked (97% of known damage, but 26 visits per damaged building found) to flagging
+product marked (97% of known damage, but a field team following those flags would make
+26 site visits for each damaged building it reached) to flagging
 only unanimous buildings (93% of flags correct, 18% of the damage). Counting agreement
 between methodologically independent products roughly doubles the F1 score of any single
 product and requires no weights, no training data and no reference, which makes it the
@@ -65,11 +66,17 @@ In the first days after a major earthquake, responders need to know where the da
 and how bad it is, before ground access is possible. Satellite-derived damage products
 fill this window, and their supply has grown quickly. The 2026 Venezuela earthquake drew
 products from a variety of organisations: the EU's rapid-mapping service (Copernicus
-EMS), a technology company (Microsoft AI for Good), universities (Oregon State
+Emergency Management Service, CEMS), a technology company (Microsoft AI for Good),
+universities (Oregon State
 University, working with NASA; the University of Houston), an NGO (IMPACT Initiatives),
-UN bodies (the UNEP/OCHA Joint Environment Unit; the World Food Programme, working with
-the LIST and CERN research institutes), and volunteer AI platforms (HOT fAIr, DISHA).
-These products disagree with each other, sometimes dramatically. A coordinator receiving
+UN bodies (the United Nations Environment Programme / Office for the Coordination of
+Humanitarian Affairs (UNEP/OCHA) Joint Environment Unit; the World Food Programme,
+working with the Luxembourg Institute of Science and Technology (LIST) and the European
+Organization for Nuclear Research (CERN)), a volunteer AI platform (the Humanitarian
+OpenStreetMap Team's fAIr), and DISHA (Data Insights for Social and Humanitarian
+Action), an initiative of UN Global Pulse.
+These products disagree with each other, sometimes dramatically. A coordinator of
+search-and-rescue teams receiving
 several of them in the same week has no established way to decide which to trust, for
 what purpose, and at what spatial scale.
 
@@ -82,9 +89,13 @@ used only for the question it can answer, and the three check each other. That c
 mattered: the expert reference (CEMS) turned out to miss half of the lesser damage the field
 teams reported, so precision measured against it alone is a lower bound, not an estimate.
 
-The paper is organised around three questions a coordinator would actually ask. Can a
-responder act on a single flagged building? Do the products at least rank neighbourhoods
-well enough to triage? And what is the sensible way to use them in the next event? Each
+The paper is organised around three questions a coordinator would actually ask:
+
+- Can a responder act on a single flagged building?
+- Do the products at least rank neighbourhoods well enough to triage?
+- What is the sensible way to use them in the next event?
+
+Each
 results section answers one piece, states how the answer was measured in a few
 sentences, and points to the Appendix for the full method. Everything here comes from
 one event in one coastal, dense-urban geography: the method transfers, and the specific
