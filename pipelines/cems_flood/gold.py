@@ -84,6 +84,11 @@ def build_code(cc, fs, code: str, meta: dict) -> list[dict]:
     # grain keeps them apart, which is the point
     index_rows: list[dict] = []
     label_rows: list[dict] = []
+    # CEMS shapefiles contain occasionally invalid rings (self-intersections)
+    # that crash GEOS unions; make_valid is lossless for valid geometry
+    obs.geometry = obs.geometry.make_valid()
+    cov = cov.copy()
+    cov.geometry = cov.geometry.make_valid()
     for (aoi, a0, a1), grp in obs.groupby(["aoi", "acq_start", "acq_end"], dropna=False):
         tids = sorted(grp.target_id.unique())
         flood = grp.geometry.union_all()
@@ -219,6 +224,8 @@ def main(argv: list[str] | None = None) -> None:
     all_rows: list[dict] = []
     done = 0
 
+    failures: list[tuple[str, str]] = []
+
     def worker(code: str) -> tuple[str, int]:
         meta = acts.loc[code].to_dict() if code in acts.index else {}
         rows = build_code(cc, fs, code, meta)
@@ -227,10 +234,15 @@ def main(argv: list[str] | None = None) -> None:
         return code, len(rows)
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        for fut in as_completed({ex.submit(worker, c) for c in codes}):
-            code, n = fut.result()
+        futures = {ex.submit(worker, c): c for c in codes}
+        for fut in as_completed(futures):
             done += 1
-            print(f"[{done}/{len(codes)}] {code}: {n} label sets", flush=True)
+            try:
+                code, n = fut.result()
+                print(f"[{done}/{len(codes)}] {code}: {n} label sets", flush=True)
+            except Exception as e:  # noqa: BLE001 — one bad code must not abort the corpus
+                failures.append((futures[fut], repr(e)[:200]))
+                print(f"[{done}/{len(codes)}] {futures[fut]} FAILED: {e!r:.120}", flush=True)
 
     idx = pd.DataFrame(all_rows).reindex(columns=INDEX_COLS)
     for c in ("acq_start", "acq_end"):
@@ -245,6 +257,11 @@ def main(argv: list[str] | None = None) -> None:
         f"({idx.label_day.notna().sum():,} with label_day) -> {GOLD}/label_index.parquet"
     )
     print(f"processed at {datetime.now(UTC).isoformat(timespec='seconds')}")
+    if failures:
+        print(f"\nFAILED codes ({len(failures)}) - rerun with --codes after fixing:")
+        for c, e in failures:
+            print(f"  {c}: {e}")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
