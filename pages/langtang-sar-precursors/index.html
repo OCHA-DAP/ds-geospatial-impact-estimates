@@ -417,35 +417,41 @@ scorecard:</p>
 <tbody>
 <tr><td class="rowlab">Aru-1, Tibet</td><td>Jul 2016</td><td>·</td><td class="rowlab">not testable: S1 barely imaged western Tibet before 2017</td></tr>
 <tr><td class="rowlab">Aru-2, Tibet</td><td>Sep 2016</td><td>·</td><td class="rowlab">not testable, same archive gap</td></tr>
-<tr><td class="rowlab">Sedongpu, SE Tibet</td><td>Oct 2018</td><td class="neg">−1.92</td><td class="rowlab">missed at −2, caught at −1.5; its worst season by far</td></tr>
+<tr><td class="rowlab">Sedongpu, SE Tibet</td><td>Oct 2018</td><td class="neg">−1.92 / −2.51</td><td class="rowlab">missed by one big box; caught at the tile scale (see below)</td></tr>
 <tr><td class="rowlab">Chamoli, India</td><td>Feb 2021</td><td>+0.81</td><td class="rowlab">missed, as predicted: winter failure, no melt signature</td></tr>
 <tr><td class="rowlab">Marmolada, Alps</td><td>Jul 2022</td><td>+0.31</td><td class="rowlab">missed: a serac fall thousands of times smaller than Langtang</td></tr>
 </tbody>
 </table>
 <p>Before running this we wrote down a pass condition: catch at least two of the
-three melt-driven events, or say plainly that the method isn't ready. It caught
-zero of the two that were testable, so that is what we're saying. The details
-soften the verdict without reversing it. Sedongpu came within a hair of the
-line and 2018 is by far the most anomalous season that face ever had (next
-worst: −0.5), under a comparison baseline that is itself contaminated: the
-basin kept collapsing for years afterwards, so "normal" for that face includes
-the aftermath. Chamoli failing to register is the prediction working, since a
-winter rock-and-ice failure has no melt story for radar to see. And Marmolada
-turns out to be a scale error in our test design rather than a detector
-failure: a 64,000&nbsp;m³ serac is three to four orders of magnitude smaller
-than Langtang or Sedongpu, invisible to a box average by the same dilution
-physics as Step 6's "one catch".</p>
-<p>Two useful things emerged from the wreckage. First, the honest scope: this
-is a candidate method for <em>giant glacier detachments</em>, the
-Langtang/Sedongpu class, in melt seasons, and the satellite archive holds only
-about two testable historical positives, so no amount of backtesting can
-validate it properly. Watching future seasons is the only real test left.
-Second, the monitoring unit can be computed rather than hand-drawn: an
-automatic enumeration of steep-ice faces for this region (580 facets from
-inventory, slope, elevation and aspect alone) still catches the Langtang
-collapse on the facet covering the detachment, at −2.07, with a 2.4% false-alarm
-rate per facet-season. Weaker than the hand-drawn box's −3.05, and honestly so:
-nobody gets to draw the box in advance.</p>
+three melt-driven events, or say plainly that the method isn't ready. At the
+original one-box-per-event scale it caught zero of the two that were testable,
+and that record stands. Then we tested whether the misses were the detector or
+the experiment. Chamoli failing to register is the prediction working, since a
+winter rock-and-ice failure has no melt story for radar to see. Marmolada turns
+out to be a scope error in our test design: a 64,000&nbsp;m³ serac is three to
+four orders of magnitude smaller than Langtang, and re-measuring with a 400 m
+box on the exact serac still shows nothing (−0.4, like any other year), so it
+is out of reach on mechanism and size, not mis-measured.</p>
+<p>Sedongpu is the interesting one. Its 2018 score of −1.92 came from a single
+2.4&nbsp;km box laid over a detachment about 4&nbsp;km long, the same dilution
+mistake we had already documented on Langtang's glacier polygon. Re-run the
+way a real system would watch the basin, as 65 tiles of ~1.3&nbsp;km, and two
+tiles over the detachment cross the alarm line before the collapse (worst
+−2.51). The catch that keeps this honest: watching 65 tiles gives 65 chances
+per year to fire by luck, so we computed the same worst-tile statistic for all
+six non-event years, and none of them reaches −2 (worst −1.8). Quiet years
+stay quiet; the collapse year doesn't.</p>
+<p>So the scorecard at the scale a real system would operate: both testable
+giant melt-season detachments are caught (Langtang at −3.05 by the hand box
+and −2.07 by the automatically enumerated facet; Sedongpu at −2.51 by tile),
+the winter failure is missed exactly as predicted, and the serac fall is out
+of scope. The honest limits are unchanged: two positives cannot demonstrate
+skill, the satellite archive holds no more testable events of this class, and
+watching future seasons is the only real test left. The monitoring unit, at
+least, no longer needs a human: automatic enumeration of steep-ice faces
+(580 facets for this region from inventory, slope, elevation and aspect alone)
+carries both catches, at a facet-level false-alarm rate of 2.4% per
+facet-season.</p>
 
 <h2 id="glossary">Mini-glossary</h2>
 <dl>
@@ -479,7 +485,7 @@ study), <code>falsealarms_extract.py</code> and
 <code>falsealarms_analysis.py</code> (45-face replay),
 <code>offset_tracking.py</code> (speckle tracking),
 <code>historical_replay.py</code> (the history test),
-<code>facets_prototype.py</code> (computed monitoring units), and
+<code>facets_prototype.py</code> (computed monitoring units), <code>miss_retest.py</code> (tile-scale retest of the misses), and
 <code>reports/build_reports.py</code> (this page). Sentinel-1 GRD IW VV/VH via
 Google Earth Engine; full caveats in <code>findings.md</code>. This is an
 exploratory lab-notebook analysis, not an operational OCHA product or

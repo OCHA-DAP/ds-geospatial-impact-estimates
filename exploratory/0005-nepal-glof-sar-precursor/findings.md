@@ -174,6 +174,34 @@ glacier-mean floors (the scar centroid sits at 4 704 m), and post-event change
 centroids are biased downslope, so facet-to-event assignment should use overlap
 with the source zone, not point membership.
 
+**7. The Sedongpu miss was an aggregation artefact; Marmolada's was not.**
+Review of finding 5 hypothesised the misses were measurement setup, not
+detector physics. `miss_retest.py` tests both:
+
+- **Sedongpu, retested at the operational unit scale** (65 ~1.3 km tiles over
+  the full post-event change zone, fleet-median adjustment unchanged): two
+  tiles over the detachment alarm pre-event — **T59 −2.51, T55 −2.06: caught.**
+  The multiple-testing guard passes: the min-over-65-tiles statistic in the six
+  non-event years never reaches −2 (worst −1.8, 0/6), so watching 65 units is
+  quiet in quiet years and loud in 2018. The finding-5 miss was one 2.4 km box
+  averaging over a ~4 km detachment — the same dilution physics as finding 4,
+  which the facet design (finding 6) exists to fix.
+- **Marmolada, retested with a ~400 m micro-box on the published serac**: −0.40
+  in the collapse season, indistinguishable from any other year (0/9 non-event
+  years fire either). Not an aggregation artefact — there is no morning-pass
+  melt anomaly at any scale GRD can see. Stays out of scope
+  (mechanism/magnitude), as does Chamoli (winter).
+
+**Revised Phase-0 tally at the operational (tile/facet) scale:** both testable
+in-scope giant melt-season detachments are caught — Langtang 2026 (hand box
+−3.05, auto facet −2.07) and Sedongpu 2018 (tile −2.51, guard clean) — with
+Chamoli the confirmed out-of-scope null and Aru untestable. The gate *as
+originally written* still failed at the original box scale and that record
+stands; the retest shows the failure was in the experiment's unit of
+aggregation, which the pre-declared facet design already addresses. The
+structural limit is unchanged: two positives cannot demonstrate skill, and
+prospective seasons remain the only real validation.
+
 ## Caveats
 
 - Backscatter on a 40° Himalayan face carries layover/foreshortening; per-orbit
