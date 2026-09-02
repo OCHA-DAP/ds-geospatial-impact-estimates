@@ -119,6 +119,61 @@ Two structural findings ride along:
   watching right now. The two 2024 alarms (−2.1, −2.4 nearby in the Shishapangma
   area) had no known collapse and count as false.
 
+**5. Phase-0 historical replay: the pre-registered gate FAILS as written.**
+`historical_replay.py` ran the detector (90-day pre-event window, otherwise
+identical spec) over the S1-era detachment inventory, with scar locations
+re-derived from post-event change where the archive allows:
+
+| event | date | source stat | verdict | fleet alarms |
+|---|---|---|---|---|
+| Aru-1 (Tibet) | 2016-07-17 | — | not testable — S1 has ~1 scene over W Tibet before 2017 | 0/91 |
+| Aru-2 (Tibet) | 2016-09-21 | — | not testable (same archive gap) | 0/96 |
+| Sedongpu (SE Tibet) | 2018-10-16 | −1.92 | missed at −2.0 (caught at −1.5) | 0/175 |
+| Chamoli (India) | 2021-02-07 | +0.81 | missed — **as predicted** (winter failure, no melt signature) | 8/221 |
+| Marmolada (Alps) | 2022-07-03 | +0.31 | missed — no signal at all | 0/70 |
+
+The gate said "catch ≥ 2 of the 3 melt-driven positives, otherwise publish the
+negative result": 0 of 2 testable melt-driven events cleared −2σ. Reported as
+such. The honest nuances that survive the failure:
+
+- **As a ranker, Sedongpu works**: −1.92 is that face's worst year by a wide
+  margin (next: −0.5) — rank 1 of 7 seasons, and an alarm at −1.5σ. Its test is
+  also uniquely biased *against* detection: the leave-one-out baseline is
+  post-collapse years, and the Sedongpu basin kept failing and eroding
+  (~335 M m³ after 2018), so "normal" for that box is itself dark and disturbed.
+  A pre-event-only baseline is impossible (archive starts 2017).
+- **Chamoli confirms the scope boundary exactly as pre-registered** — a winter
+  rock/ice failure carries no melt signature, and the event year isn't even
+  negative. (Its 3.6 % fleet alarm rate in Nov–Feb windows also says the
+  detector is a melt-season tool; winter windows are noisier.)
+- **Marmolada is a magnitude lesson, not just a miss**: a ~6.4×10⁴ m³ serac fall
+  is 3–4 orders smaller than Langtang/Sedongpu (10⁷–10⁸ m³) — sub-resolution
+  for a 2.4 km box mean, the same dilution physics as finding 4. The detector's
+  plausible scope is *giant glacier detachments*, not serac falls.
+- Within that scope the honest tally is: Langtang caught (−3.05), Sedongpu
+  rank-1/near-miss under an adverse baseline, Aru untestable, Chamoli a
+  confirmed out-of-scope null, Marmolada out of scope by magnitude. Suggestive
+  for large detachments, nowhere near demonstrated skill — and the S1 archive
+  supplies only two testable large melt-driven positives in total, so the
+  method may be unvalidatable to operational standard on historical data alone.
+
+**6. Facet enumeration works, at a sensitivity cost.** `facets_prototype.py`
+computes the monitoring unit instead of curating it: GLIMS ice + 200 m headwall
+buffer ∩ GLO30 slope ≥ 25° ∩ elevation ≥ 4 500 m, aspect smoothed with a 300 m
+circular mean and split into octants, components ≥ 0.25 km², 0.5–4 km² enforced
+client-side. For the Langtang test region: 580 facets (573 km², median
+0.77 km²). Three facets overlap the detachment box; the best-overlapping one
+(F00182, 1.84 km², 0.68 km² overlap) scores **−2.07 in 2026 — caught at −2,
+its only sub-−2 season** (next-worst −0.9), with a facet-fleet alarm rate of
+**2.4 %** per facet-season (5/210) — worse than the glacier-level 1.3 %, as
+expected from smaller/noisier units. The catch is thinner than the hand-drawn
+box (−3.05) because the anomaly straddles facet boundaries: facet size and the
+aspect-splitting rule are a real sensitivity/precision tuning axis, and two
+lessons are already concrete — pixel-level elevation floors must be lower than
+glacier-mean floors (the scar centroid sits at 4 704 m), and post-event change
+centroids are biased downslope, so facet-to-event assignment should use overlap
+with the source zone, not point membership.
+
 ## Caveats
 
 - Backscatter on a 40° Himalayan face carries layover/foreshortening; per-orbit

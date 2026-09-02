@@ -4,6 +4,20 @@ Status: **brainstorm**, written 2026-08-30 alongside exploratory 0005. Not a
 commitment — a design sketch for what a global (HMA-first) monitoring system
 built on the 0005 detector would look like, and the gate it must pass first.
 
+> **Phase-0 update (2026-09-02): the gate below FAILED as pre-registered.**
+> `historical_replay.py`: Aru-1/Aru-2 untestable (S1 archive over W Tibet starts
+> 2017), Sedongpu −1.92 (missed at −2σ, caught at −1.5σ, rank-1 season under a
+> post-collapse-contaminated baseline), Chamoli missed as predicted (winter,
+> out of scope), Marmolada no signal (serac fall, 3–4 orders of magnitude
+> smaller than the detector's plausible scope). Full table in `findings.md`
+> finding 5. Consequence: per its own terms this document is void as a plan for
+> an *operational warning system*; the honest reframing left standing is a
+> research-grade watch-list for *giant glacier detachments* (10⁷+ m³ class),
+> validated so far by one caught event (Langtang), one rank-1 near-miss
+> (Sedongpu), and one confirmed out-of-scope null (Chamoli) — with the
+> structural problem that historical S1 data can supply only two testable
+> positives, so prospective seasons are the only remaining validation path.
+
 ## 0. What 0005 actually established (and the design constraints it sets)
 
 - A face-scale (~6 km²) morning-pass backscatter anomaly, referenced to its own
