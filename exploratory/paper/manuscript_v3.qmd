@@ -529,38 +529,6 @@ building, and each tied cell is credited at its probability of a shortlist place
 rather than by arbitrary sort
 order).](artefacts/RQ3-prioritization-error-structure/figs/rq3h_agreement_ranking.png){#fig-agreerank}
 
-## One failure could be traced; five could not be examined {#sec-casestudy}
-
-**Result:** Microsoft's largest failure is a western strip where crowd reviewers judged
-71% of its flags undamaged. Its own per-building metadata shows that strip was covered
-by a single satellite scene, processed alone (@fig-weststrip); east of the boundary,
-where two scenes overlap, the same product's precision is four times higher (0.205
-against 0.052). A second product points the same way: UH, which its authors confirm ran
-only on imagery from the same vendor (Vantor), flags just 3% of that strip where Microsoft flags
-32%. Microsoft's own public report names this area (the Catia La Mar overlap) as its
-largest source of disagreement between scenes: its 25 June Vantor scene flagged ~2,600
-buildings as damaged that its 26 June Planet scene calls intact. Where both scenes existed, Microsoft kept the later Planet read; the failing
-strip is where there was no second scene to overrule the first. The failure therefore
-travels with the scene, though whether the fault was the image itself or the model's
-handling of it cannot be separated with current data. Microsoft was the only product
-publishing per-building scene provenance, which is why its failure is the only one that
-could be examined this way.
-
-**How it was measured:** The crowd is the arbiter here because the expert reference
-cannot be: this strip is where the expert map records far less than the products flag,
-and a thin reference cannot separate over-flagging from its own incompleteness, whereas
-the crowd reviewed exactly the flagged cells. Its verdicts were aggregated over the
-strip and compared with the product's per-building scene counts and dates; an
-independent second crowd campaign over the same cells later reproduced the confirmation
-side of the verdict. Details, including what the re-vote could and could not re-test, are in the Appendix
-([the case study in full](#app-weststrip); [the crowd re-vote](#app-crowd)).
-
-![**Region: the western half of Microsoft's delivered strip (Catia La Mar).** The western strip. Top left: where Microsoft flags far more than the expert map
-records. Bottom left: where crowd volunteers said nothing is there. Right: cell by cell
-the two do not track; the agreement is at the scale of the strip, which sat under a
-single satellite
-scene.](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png){#fig-weststrip}
-
 ## Summary and discussion {#sec-discussion}
 
 The three questions from the Introduction now have answers.
@@ -615,26 +583,29 @@ The results imply changes in practice for three audiences. We collect them here,
 
 ::: {.callout-tip title="For responders"}
 These recommendations feed an ongoing dialogue with responders about what is
-operationally most useful, and the clearest signal so far concerns the first 72 hours:
-the pressing need is to narrow down the worst-hit areas, and at that job the
-neighbourhood ranking can be trusted. Used at sector scale, any major product ranks
-where to go first: trust that ranking, not the building counts (coarse geography ranks
-about as well, but it is available either way). What building-level performance a
-response actually requires, and by when (how much recall is worth trading for
-precision), is still under discussion; what is settled is that no single product
-supports acting on individual flags. **So do not spend time choosing a product; spend
-it counting agreement between products.** On this event no single product was
-meaningfully better than a model of coastline distance and building density, but the
-number of products agreeing on a building roughly doubled the performance (F1) of any
-of them alone, and the same count out-ranked every single product at sector scale
-(@fig-agreerank). Unlike a fitted model, counting requires no weights, no training data
+operationally most useful, and the clearest signal so far concerns the first 72 hours,
+when the pressing need is to narrow down the worst-hit areas. Start from what a single
+product can and cannot carry. No single product supports acting on individual flagged
+buildings. The neighbourhood ranking can be trusted, but only *within* a damage zone
+that is already identified: scored across everything a product delivered, its ranking
+adds little to what coarse geography already encodes, while within the known damage
+zone the products carry real information about where to go first (@sec-ranking).
+
+The promise is in combining them. Counting agreement between products outperformed
+every single product on both tasks: at ranking neighbourhoods (@fig-agreerank) and at
+flagging individual buildings, where the count roughly doubled the F1 of any product
+alone. **So do not spend time choosing a product; spend it counting agreement between
+products.** Unlike a fitted model, counting requires no weights, no training data
 and no reference, so it can be done the hour the second product arrives. Weight the
 count toward *independent methods*: products that share a sensing method fail together
 and their agreement carried the least information in our tests, while products with
-nothing in common but the event cover for each other's failure zones. Then set the
-threshold from your own capacity (@tbl-dial gives the flag counts and visit costs at
-each level), remembering that you are choosing a workload, not a guaranteed hit rate.
-Nothing in the current ecosystem sees lighter damage reliably, so plan shelter
+nothing in common but the event cover for each other's failure zones.
+
+That combination is also the promising route toward a derived product usable at
+building level. Which agreement threshold to act on depends on the precision-recall
+trade a response is willing to make; @tbl-dial gives the flag counts and visit costs at
+each level, and the choice is a workload, not a guaranteed hit rate. Nothing in the
+current ecosystem sees lighter damage reliably, so plan shelter
 assessments accordingly.
 :::
 
@@ -1204,13 +1175,13 @@ clustering, agreement with other products) and measured reliability was statisti
 distinguishable from zero. Second, mapping each product's errors cell by cell, 78–86% of
 each product's territory shows errors scattered at random (noise rather than bias), with
 the failures concentrated in a few identifiable pockets; Microsoft's western strip,
-taken up in @sec-casestudy, is the largest.
+taken up in the [west-strip case study](#app-weststrip), is the largest.
 
 One product does not fit this benign pattern. Microsoft's residual error is not a
 gradient but a single dense cluster in the western coastal strip, and no covariate
 explains it. At this point in the analysis we cannot say what the cluster is: real
-over-detection and a local gap in the reference would look identical. Section
-@sec-casestudy resolves the question with the other two references.
+over-detection and a local gap in the reference would look identical. The [west-strip
+case study](#app-weststrip) resolves the question with the other two references.
 
 That ambiguity applies to every number in this section, not just the anomaly. Everything
 above assumes CEMS is complete within its extents. The next section tests that
@@ -1326,13 +1297,29 @@ higher than measured; the ceiling means single-product performance stops improvi
 The scorecard left the Microsoft west-strip anomaly unexplained. It can now be resolved
 completely, and the resolution is the paper's best argument for metadata transparency.
 
-The crowd settles what the cluster is. In the western strip, volunteers judged 71% of
+The crowd settles what the cluster is, and it has to be the crowd: this strip is where
+the expert map records far less than the products flag, and a thin reference cannot
+separate over-flagging from its own incompleteness, whereas the crowd reviewed exactly
+the flagged cells. In the western strip, volunteers judged 71% of
 Microsoft-flagged locations "no damage", against a roughly even split in the damage-dense
 east. Independent people looking at post-event imagery saw nothing at most of the places
-the cluster flags. The cluster is real over-detection, not a gap in the reference.
+the cluster flags (@fig-weststrip). The cluster is real over-detection, not a gap in the
+reference.
+
+![**Region: the western half of Microsoft's delivered strip (Catia La Mar).** Top left:
+where Microsoft flags far more than the expert map
+records. Bottom left: where crowd volunteers said nothing is there. Right: cell by cell
+the two do not track; the agreement is at the scale of the strip, which sat under a
+single satellite
+scene.](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png){#fig-weststrip}
 
 The product's own metadata explains where it came from. Every building in the strip has
-`num_observations = 1`: the zone was covered by exactly one satellite scene. The platform
+`num_observations = 1`: the zone was covered by exactly one satellite scene, processed
+alone. Microsoft's own public report names this area (the Catia La Mar overlap) as its
+largest source of disagreement between scenes: its 25 June Vantor scene flagged ~2,600
+buildings as damaged that its 26 June Planet scene calls intact, and where both scenes
+existed the merge kept the later Planet read; the failing strip is where there was no
+second scene to overrule the first. The platform
 behind the product (HASTE; Robinson, Ortiz et al. 2026) trains a fresh model for each
 scene and uses agreement between overlapping scenes as its only internal check. The west
 never got that check. Cloud is ruled out as an alternative explanation: the west is the
