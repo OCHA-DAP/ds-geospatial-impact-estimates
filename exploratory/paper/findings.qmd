@@ -1256,6 +1256,43 @@ after the v3 draft. Four takeaways:
   area), severity-graded, location error median 2.1 m with a long tail. Logged in
   OPEN-ITEMS as a possible fourth reference; check overlap with ChatMap first.
 
+# RQ8d — is coast distance a fair null covariate? Feature ablation (2026-09-02, external review)
+
+Objection (user, after Leo's null comments): the null's coast-distance feature looks
+event-specific, "just luck". Ablated on the frozen core buildings, exact rq3f null
+pipeline; the paper arm anchors to the rq3f core null exactly (rho .648/.478). Script
+`RQ8-learned-fusion/scripts/rq8d_null_ablation.py` (DEM auto-fetched; soil arm behind
+`--with-soil`):
+
+```{python}
+tbl("RQ8-learned-fusion/rq8d_null_ablation.csv")
+```
+
+- **The conclusions never depended on coast.** Density alone (nothing event-specific)
+  scores F1 .086, inside the product band (.085–.148), ranking rho .543 at res 8.
+  Coast adds ~+.04 F1 / +.10 rho over that.
+- **A fully generalizable DEM null is STRONGER than the published one**: Copernicus
+  GLO-30 elevation alone beats the paper's coast set (F1 .143 vs .127, rho8 .706 vs
+  .648); with slope added, coast contributes almost nothing on top (+.007 F1). If
+  anything the published null was undertuned — no product was flattered.
+- **Physical reading**: within the 61 km² core no hazard covariate varies (one MMI
+  band; the finite-fault surface projection covers the strip, Rjb ≈ 0 everywhere).
+  Elevation works as a substrate covariate: the low-lying surfaces ARE the debris-flow
+  fans USGS mapped after the 1999 Vargas disaster (Wieczorek et al. OFR 01-0144;
+  I-2772) — named physics, globally available day-zero.
+- **Two instructive dead ends, kept as rows**: (1) distance to the rupture surface
+  projection degenerates (median 0 km) into an accidental beachfront detector with a
+  physically backwards sign — F1 .226 is an artifact, do not cite; (2) SoilGrids
+  sand/clay adds nothing (F1 .085): global soil products mask built-up land (86% of
+  core buildings NoData, nearest-filled from ~310 m) and are near-constant across the
+  strip. Local alternatives (FUNVISIS microzonation, INGEOMIN geology, the 1999 fan
+  plates) exist only as PDF cartography.
+- **Open item**: digitizing the Caraballeda fan outlines from OFR 01-0144 plates as a
+  categorical substrate covariate — parked.
+- **Confidence: high** (frozen basis, exact anchor). Manuscript: paragraph + table in
+  #app-fair. Frozen v3 keeps its published null (all anchors intact); the brief/summary
+  describes the null as "building density and terrain".
+
 # RQ8 — learned fusion: a meta-model beats the flat dial, and the skill IS the products
 
 User proposal (2026-07-15): stack the six products (+ their confidences + context) into a

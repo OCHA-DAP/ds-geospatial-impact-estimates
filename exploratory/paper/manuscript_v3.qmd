@@ -19,7 +19,10 @@ jupyter: python3
 
 <!-- Editors' note (not rendered): numbers frozen to the 2026-07-15 snapshot; this
 version supersedes manuscript_v2; deliberately short (takeaway / figure / how /
-appendix-pointer per result). Pending: timeliness (provider dates), bootstrap CIs. -->
+appendix-pointer per result).
+FROZEN 2026-09-02 (ADR-0029): this document is the immutable technical record — factual
+errata only. The living document is the technical brief (pages/brief/), built by
+subtraction from this one; review annotations anchor here, so this URL and text stay. -->
 
 ## Abstract {.unnumbered}
 
@@ -1470,6 +1473,25 @@ under cloud rather than flagging into it.
 
 This section carries the machinery behind @sec-null's fairness claims, for the reader
 who wants to check them.
+
+**Is coast distance a fair covariate?** A reviewer asked whether the null's
+distance-to-coast feature is an event-specific choice that flatters the model. An
+ablation on the same frozen pipeline answers it. Density alone, with nothing
+event-specific at all, already lands inside the product band (best F1 0.086 against the
+products' 0.085–0.148) and ranks cells at ρ 0.54; coast adds about +0.04 F1 on top.
+ShakeMap intensity adds nothing, because the entire core region sits inside a single
+MMI band, and globally available soil data adds nothing either (SoilGrids masks
+built-up land; 86% of core buildings sample no value). The strongest replacement is
+also the most generalizable: elevation from the open Copernicus GLO-30 terrain model
+beats the published coast-based null outright (F1 0.143 against 0.127; ranking ρ 0.71
+against 0.65), and once elevation and slope are included, coast contributes almost
+nothing further. Elevation is not a coastal accident here: the low-lying surfaces of
+the core region are the debris-flow fans mapped by USGS after the 1999 Vargas disaster
+(Wieczorek et al., OFR 01-0144; Larsen et al., I-2772), so it functions as a substrate
+covariate with named physics. The conclusion is two-sided: the paper's findings never
+depended on the coast feature, and if anything the published null was slightly
+undertuned, so no product was flattered by it. The full ablation is RQ8d in the
+analysis archive.
 
 **Which learner represents geography best.** Every feature set is fitted with both a
 class-balanced logistic regression and a random forest (400 trees, minimum leaf 20), and
