@@ -41,7 +41,9 @@ import io
 import json
 import re
 import tempfile
+import threading
 import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -149,6 +151,7 @@ def acq_from_attributes(props: dict) -> dict | None:
     return {"acq_datetime": ts, "acq_precision": "date", "acq_method": "attribute"}
 
 
+_lens_lock = threading.Lock()
 _SOURCE_DBF = re.compile(r"_source(_r\d+)?(_v\d+)?\.dbf$", re.I)
 _TM = re.compile(r"T?(\d{1,2}):(\d{2})")
 
@@ -377,6 +380,12 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--codes", default=None, help="comma-separated subset, e.g. EMSR009,EMSR927")
     ap.add_argument("--limit", type=int, default=None, help="max activations")
     ap.add_argument("--force", action="store_true", help="reprocess codes already in silver")
+    ap.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="concurrent codes (the pass is single-stream network-bound at ~1.6 MB/s otherwise)",
+    )
     args = ap.parse_args(argv)
 
     import ocha_stratus as stratus
@@ -412,10 +421,13 @@ def main(argv: list[str] | None = None) -> None:
         codes = [c for c in codes if c not in complete]
         print(f"resume: {len(skipped)} codes already in silver, {len(codes)} to process")
 
-    proc_rows = []
-    for ci, code in enumerate(codes):
+    def process_code(code: str) -> tuple[list[dict], str]:
+        """Whole-code unit of work, safe to run in a worker thread: downloads
+        its own zips, writes its own partitions (no cross-code writes)."""
         targets = up[up["code"] == code]
-        api_images, source_rows = fetch_api_images(code)
+        with _lens_lock:  # ocha-lens shares one requests.Session
+            api_images, source_rows = fetch_api_images(code)
+        rows: list[dict] = []
         tables: dict[str, list] = {"observed_event": [], "coverage": [], "sources": []}
         for _, row in targets.iterrows():
             rec = {"code": code, "target_id": row["target_id"], "processed_at": _now()}
@@ -423,13 +435,12 @@ def main(argv: list[str] | None = None) -> None:
                 data = cc.download_blob(row["blob_path"]).readall()
                 got = process_zip(row, data, api_images)
             except Exception as e:  # noqa: BLE001 — recorded per zip, visible in ledger
-                proc_rows.append(rec | {"status": "error", "error": repr(e)[:300]})
-                print(f"  ERROR {row['target_id']}: {e!r:.120}")
+                rows.append(rec | {"status": "error", "error": repr(e)[:300]})
                 continue
             n_ext = len(got["observed_event"])
             for t in tables:
                 tables[t] += got[t]
-            proc_rows.append(
+            rows.append(
                 rec
                 | {
                     "status": "ok" if n_ext else "no_extent_layer",
@@ -451,15 +462,30 @@ def main(argv: list[str] | None = None) -> None:
             buf = io.BytesIO()
             src.to_parquet(buf, compression="zstd")
             blobio.upload(fs, buf.getvalue(), f"{SILVER}/sources/code={code}/data.parquet")
-        print(
-            f"[{ci + 1}/{len(codes)}] {code}: extent={n_e} coverage={n_c} "
-            f"api_images={sum(len(v) for v in api_images.values())}",
-            flush=True,
-        )
-        if (ci + 1) % 10 == 0:  # ledger checkpoint: survive kills mid-run
-            save_proc(args.work_dir, fs, proc_rows)
+        return rows, f"{code}: extent={n_e} coverage={n_c} api_images={len(source_rows)}"
 
-    proc = save_proc(args.work_dir, fs, proc_rows)
+    # Workers each own one code end-to-end (the pipeline is ~97% network
+    # wait on single streams, measured); the processing ledger is merged and
+    # checkpointed only here in the main thread.
+    proc_rows: list[dict] = []
+    done = 0
+    pool = ThreadPoolExecutor(max_workers=args.workers)
+    try:
+        futures = {pool.submit(process_code, c): c for c in codes}
+        for fut in as_completed(futures):
+            rows, line = fut.result()
+            proc_rows += rows
+            for r in rows:
+                if r["status"] == "error":
+                    print(f"  ERROR {r['target_id']}: {r['error'][:120]}")
+            done += 1
+            print(f"[{done}/{len(codes)}] {line}", flush=True)
+            if done % 10 == 0:  # ledger checkpoint: survive kills mid-run
+                save_proc(args.work_dir, fs, proc_rows)
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+        proc = save_proc(args.work_dir, fs, proc_rows)
+
     print("\nprocessing ledger:")
     print(proc["status"].value_counts().to_string())
 
