@@ -4,6 +4,19 @@ Status: **brainstorm**, written 2026-08-30 alongside exploratory 0005. Not a
 commitment — a design sketch for what a global (HMA-first) monitoring system
 built on the 0005 detector would look like, and the gate it must pass first.
 
+> **Phase-0 update 2 (2026-09-03): the Sedongpu miss was an aggregation
+> artefact.** Retested at the operational unit scale (65 ~1.3 km tiles over the
+> change zone, `miss_retest.py`), Sedongpu 2018 is caught (−2.51) with a clean
+> multiple-testing guard (0/6 non-event years fire the min-over-tiles
+> statistic). Marmolada stays signal-free at every scale (micro-box −0.40) and
+> is reclassified out of scope by magnitude/mechanism. Revised tally: both
+> testable in-scope giant detachments caught at tile/facet scale (Langtang
+> −3.05 box / −2.07 auto-facet; Sedongpu −2.51 tile); Chamoli the confirmed
+> out-of-scope null; Aru untestable. The §1 facet design is therefore not
+> optional tuning — it is the difference between catching and missing
+> Sedongpu-class events. The structural limit stands: two positives cannot
+> demonstrate skill; prospective seasons are the real test.
+>
 > **Phase-0 update (2026-09-02): the gate below FAILED as pre-registered.**
 > `historical_replay.py`: Aru-1/Aru-2 untestable (S1 archive over W Tibet starts
 > 2017), Sedongpu −1.92 (missed at −2σ, caught at −1.5σ, rank-1 season under a
