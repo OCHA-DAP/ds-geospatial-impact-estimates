@@ -397,9 +397,10 @@ the geography benchmark are in the frozen technical record (manuscript v3).
 
 ## Appendix {.unnumbered}
 
-**The record.** A longer-form draft technical version of this study is available
-[here](https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/); the
-appendix sections below are imported from it verbatim.
+The main text states each result with a summary of how it was measured; this appendix
+carries the more in-depth detail, inherited from the [longer-form draft technical
+version](https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/) of this
+study.
 
 ### The two reporting regions {#app-regions .unnumbered}
 
@@ -529,9 +530,10 @@ sight of the damage, but close enough that a responder standing at the flag coul
 plausibly find the damaged building. That reading is what turns the 30 m column into
 the visits-per-find workload metric; the sweep stands on its own without it.
 
-**Which CEMS grades count as damage.** The delivery's text grades collapse to an
-xBD-style scale (destroyed, completely destroyed and highly damaged → *Destroyed*;
-moderately damaged and damaged → *Damaged*), and the reference set for every score in
+**Which CEMS grades count as damage.** The delivery's text grades collapse to two
+classes (destroyed, completely destroyed and highly damaged → *Destroyed*;
+moderately damaged and damaged → *Damaged*), following the convention of the xBD
+building-damage benchmark dataset, and the reference set for every score in
 this paper is the points graded Damaged or Destroyed (784 and 683 respectively in the
 core region). Points graded *possibly damaged* are excluded entirely: they appear in
 neither the numerator nor the denominator of any score. Including them was checked as a
@@ -683,9 +685,6 @@ geography model", its appendix "The geography null model and weighted fusion, in
 and "Was the model-versus-product comparison fair?").*
 
 
-The main text states each result with a summary of how it was measured; this
-appendix carries the more in-depth detail, inherited from the long-form draft
-(`manuscript_v2`), which it supersedes.
 
 ### The geography null model and weighted fusion, in full {#app-null .unnumbered}
 
