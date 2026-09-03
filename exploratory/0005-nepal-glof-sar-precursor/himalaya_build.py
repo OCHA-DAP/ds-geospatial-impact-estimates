@@ -101,15 +101,18 @@ def main() -> None:
     }
     with open(os.path.join(HERE, "reports", "live_dashboard_template.html")) as f:
         html = f.read()
+    import re as _re
+
     html = (html
             .replace("Langtang Facet Watch", "Himalaya Facet Watch")
             .replace("Langtang pilot region", "central Himalaya 82–89°E")
             .replace("last image ${DATA.last_acq}", "coverage ${DATA.last_acq}")
             .replace("Tier · percentile of the last 90 days vs 2020–25 history",
                      "Tier · percentile of the 2026 season vs 2020–25 history")
-            .replace("worst\nrecent 3-pass morning-radar anomaly",
-                     "season-mean morning-radar anomaly (tier-1 screening statistic)")
-            .replace("last90d", "s2026"))
+            .replace("Last-90d stat", "2026 season stat"))
+    html = _re.sub(r"worst\s+recent 3-pass morning-radar\s+anomaly",
+                   "2026 season-mean morning-radar anomaly (the scalable "
+                   "screening statistic)", html)
     html = html.replace("{{DATA}}", json.dumps(payload, separators=(",", ":")))
     html = html.replace("{{HILLSHADE}}", base64.b64encode(buf.getvalue()).decode())
     dst = os.path.join(DATA, "himalaya-facet-watch.html")

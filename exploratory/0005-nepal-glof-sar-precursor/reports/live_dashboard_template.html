@@ -83,6 +83,25 @@ h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:
     <div id="tip"></div>
   </div>
   <div class="side">
+    <div class="card" id="howto">
+      <h2>How to read this map</h2>
+      <div class="legend-note" style="font-size:12.5px;color:var(--ink-2);line-height:1.55">
+      <p style="margin:0 0 8px"><strong>Color = how unusual the face looks to
+      radar right now</strong>: the face's worst recent 3-pass morning-radar
+      anomaly, ranked against every face-season in this region's 2020–25
+      history. Red does not mean "will collapse"; it means "darker to morning
+      radar than this region's faces almost ever are", which is the signal that
+      preceded the Langtang collapse.</p>
+      <p style="margin:0 0 8px"><strong>Numbered pins = where anomaly meets
+      consequence.</strong> Each face also carries three fixed factors: how far
+      a failure could fall, whether standing water sits below it, and how many
+      people live in the valleys within 50 km. The pins mark the top faces by
+      anomaly × consequence, in the same order as the list below.</p>
+      <p style="margin:0"><strong>Click any face</strong> for its year-by-year
+      history and its consequence factors. Consequence never changes a face's
+      color; it only decides which anomalies deserve a human first.</p>
+      </div>
+    </div>
     <div class="card legend" id="legend">
       <h2>Tier · percentile of the last 90 days vs 2020–25 history</h2>
     </div>
@@ -171,6 +190,20 @@ function draw() {
       ctx.strokeStyle = css("ink"); ctx.lineWidth = 2 * devicePixelRatio; ctx.stroke();
     }
   }
+  // numbered attention pins (top faces by anomaly x consequence), matching
+  // the Top-attention card order
+  ctx.font = `bold ${10 * devicePixelRatio}px IBM Plex Mono, monospace`;
+  topAttn.forEach((f, i) => {
+    const c = f.poly.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0])
+      .map(v => v / f.poly.length);
+    const [x, y] = px(c[0], c[1]);
+    ctx.beginPath(); ctx.arc(x, y, 8.5 * devicePixelRatio, 0, 7);
+    ctx.fillStyle = css("panel"); ctx.fill();
+    ctx.strokeStyle = tierColor(f.tier); ctx.lineWidth = 2 * devicePixelRatio; ctx.stroke();
+    ctx.fillStyle = css("ink"); ctx.textAlign = "center";
+    ctx.fillText(String(i + 1), x, y + 3.5 * devicePixelRatio);
+  });
+  ctx.textAlign = "left";
   ctx.font = `${11 * devicePixelRatio}px IBM Plex Mono, monospace`;
   for (const m of MARKS) {
     const [x, y] = px(m.lon, m.lat);
@@ -209,8 +242,12 @@ cv.addEventListener("pointermove", e => {
   if (f) {
     tip.style.display = "block";
     tip.style.left = (e.clientX - r.left + 14) + "px"; tip.style.top = (e.clientY - r.top + 10) + "px";
+    const cons = f.chain != null
+      ? `<div class="head" style="color:var(--ink-3)">${(f.drop / 1000).toFixed(1)}km drop · ` +
+        `water ${f.lake}% · ${f.pop >= 1000 ? (f.pop / 1000).toFixed(0) + "k" : f.pop} ppl ≤50km</div>`
+      : "";
     tip.innerHTML = `<div class="head">${f.id} · ${f.tier}` +
-      (f.live != null ? ` · now ${f.live > 0 ? "+" : ""}${f.live}` : "") + "</div>" + spark(f);
+      (f.live != null ? ` · now ${f.live > 0 ? "+" : ""}${f.live}` : "") + "</div>" + cons + spark(f);
   } else tip.style.display = "none";
 });
 cv.addEventListener("pointerup", e => {
@@ -305,17 +342,19 @@ function detail() {
 }
 
 const withAttn = DATA.facets.filter(f => f.attn != null);
-if (withAttn.length) {
+const topAttn = withAttn.sort((a, b) => b.attn - a.attn).slice(0, 8);
+if (topAttn.length) {
   const card = document.getElementById("attn");
   card.style.display = "";
-  for (const f of withAttn.sort((a, b) => b.attn - a.attn).slice(0, 8)) {
+  topAttn.forEach((f, i) => {
     const b = document.createElement("button");
+    const pop = f.pop >= 1000 ? (f.pop / 1000).toFixed(0) + "k" : String(f.pop);
     b.innerHTML = `<span style="display:flex;align-items:center;gap:7px">
-      <i style="background:${tierColor(f.tier)}"></i>${f.id}</span>
-      <span>${f.attn.toFixed(0)}</span>`;
+      <i style="background:${tierColor(f.tier)}"></i>${i + 1} · ${f.id}</span>
+      <span>${(f.drop / 1000).toFixed(1)}km drop · ${pop} ppl · ${f.attn.toFixed(0)}</span>`;
     b.addEventListener("click", () => { sel = f; detail(); draw(); });
     card.appendChild(b);
-  }
+  });
 }
 
 hill.onload = draw;
