@@ -37,7 +37,8 @@ lesser damage, the most generous defensible reading still leaves every product b
 0.28. The products do rank neighbourhoods well enough to triage, within a damage zone
 that is already identified. The practical way to use them is to count agreement between
 independent products. The count roughly doubles the building-level performance (F1) of
-any single product, out-ranks every single product at sector scale, and needs no
+any single product, out-ranks every single product at ranking neighbourhoods (at both
+cell sizes tested), and needs no
 weights, training data or reference, so it can be computed the hour the second
 product arrives.
 
