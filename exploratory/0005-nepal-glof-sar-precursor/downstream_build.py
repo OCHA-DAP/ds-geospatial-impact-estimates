@@ -59,14 +59,20 @@ def main() -> None:
 
     pop = ee.ImageCollection("JRC/GHSL/P2023A/GHS_POP").filter(
         ee.Filter.eq("system:index", "2025")).first()
-    pops = {}
-    ids = [f["properties"]["HYBAS_ID"] for f in feats]
+    # two exposure figures per basin: total, and near-channel — population
+    # within ~1 km of a river channel (MERIT-Hydro upstream area >= 50 km2),
+    # which is what a debris flow / flood wave can actually reach
+    upa = ee.Image("MERIT/Hydro/v1_0_1").select("upa")
+    channel = upa.gte(50).selfMask().focalMax(1000, "circle", "meters")
+    both = (pop.rename("pop_all")
+            .addBands(pop.updateMask(channel).unmask(0).rename("pop_ch")))
+    pops, pops_ch = {}, {}
     for off in range(0, n, POP_BATCH):
         sub = ee.FeatureCollection([
             ee.Feature(ee.Geometry(f["geometry"]), {"HYBAS_ID": f["properties"]["HYBAS_ID"]})
             for f in feats[off:off + POP_BATCH]
         ])
-        rr = pop.reduceRegions(sub, ee.Reducer.sum(), 250)
+        rr = both.reduceRegions(sub, ee.Reducer.sum(), 250)
         for attempt in range(4):
             try:
                 got = rr.getInfo()["features"]
@@ -76,7 +82,9 @@ def main() -> None:
                     raise RuntimeError(f"pop chunk {off}: {e}") from e
                 time.sleep(15 * (attempt + 1))
         for r in got:
-            pops[r["properties"]["HYBAS_ID"]] = int(r["properties"].get("sum") or 0)
+            p = r["properties"]
+            pops[p["HYBAS_ID"]] = int(p.get("pop_all") or 0)
+            pops_ch[p["HYBAS_ID"]] = int(p.get("pop_ch") or 0)
         print(f"  pop {off + len(got)}/{n}", flush=True)
 
     gdf = gpd.GeoDataFrame.from_features(feats, crs=4326)
@@ -95,6 +103,7 @@ def main() -> None:
         basins[int(row.HYBAS_ID)] = {
             "next": int(row.NEXT_DOWN),
             "pop": pops.get(row.HYBAS_ID, 0),
+            "popc": pops_ch.get(row.HYBAS_ID, 0),
             "poly": [[round(x, 3), round(y, 3)] for x, y in g.exterior.coords],
         }
     with open(dst, "w") as f:
