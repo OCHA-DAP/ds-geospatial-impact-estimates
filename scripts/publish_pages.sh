@@ -140,7 +140,20 @@ fi
 
 if [[ $TARGET == all || $TARGET == brief ]]; then
   render manuscript_brief.qmd html
-  encrypt manuscript_brief.html "$PAGES_DIR/brief/content.enc"
+  # The brief has its OWN passphrase (shared with providers), separate from the one the
+  # other gated pages use: GIE_PAGE_PASS_BRIEF, else ~/.gie-page-passphrase-brief, else
+  # fall through to the default. Without this, a routine republish would silently
+  # re-encrypt the brief under the default passphrase and lock out everyone holding the
+  # brief's link.
+  BRIEF_PASS="${GIE_PAGE_PASS_BRIEF:-}"
+  [[ -z $BRIEF_PASS && -r $HOME/.gie-page-passphrase-brief ]] \
+    && BRIEF_PASS="$(< "$HOME/.gie-page-passphrase-brief")"
+  if [[ -n $BRIEF_PASS ]]; then
+    echo "brief passphrase: its own (not the shared one)"
+    GIE_PAGE_PASS="$BRIEF_PASS" encrypt manuscript_brief.html "$PAGES_DIR/brief/content.enc"
+  else
+    encrypt manuscript_brief.html "$PAGES_DIR/brief/content.enc"
+  fi
 fi
 
 step "Result"
