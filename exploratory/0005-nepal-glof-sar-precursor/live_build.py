@@ -100,6 +100,19 @@ def main() -> None:
             live_stats[fid] = round(s, 2)
 
     facets = gpd.read_file(os.path.join(DATA, "facets_langtang_final.geojson"))
+    # static hazard-chain factors (consequence triage, never detection): each
+    # factor as a percentile rank across the layer, chain = their mean
+    chain = {}
+    hc_path = os.path.join(DATA, "hazard_chain_langtang.csv")
+    if os.path.exists(hc_path):
+        hc = pd.read_csv(hc_path).set_index("facet_id")
+        ranks = hc.rank(pct=True) * 100
+        for fid in hc.index:
+            chain[fid] = {
+                "drop": int(hc.drop_m[fid]), "lake": int(hc.lake_pct[fid]),
+                "pop": int(hc.pop_50k[fid]),
+                "chain": round(float(ranks.loc[fid].mean()), 1),
+            }
     out = []
     tiers_count = {"critical": 0, "elevated": 0, "watch": 0, "quiet": 0, "nodata": 0}
     for _, r in facets.iterrows():
@@ -114,9 +127,15 @@ def main() -> None:
         geom = max(getattr(r.geometry, "geoms", [r.geometry]), key=lambda g: g.area)
         poly = [[round(x, 4), round(y, 4)] for x, y in
                 geom.simplify(0.0008).exterior.coords]
-        out.append({"id": fid, "aspect": r.aspect, "km2": round(r.km2, 2),
-                    "tier": tier, "live": live, "pct": pct,
-                    "years": season_stats.get(fid, {}), "poly": poly})
+        rec = {"id": fid, "aspect": r.aspect, "km2": round(r.km2, 2),
+               "tier": tier, "live": live, "pct": pct,
+               "years": season_stats.get(fid, {}), "poly": poly}
+        if fid in chain:
+            rec.update(chain[fid])
+            if pct is not None:
+                # attention = anomaly extremity x consequence rank (both 0-100)
+                rec["attn"] = round((100 - pct) * rec["chain"] / 100, 1)
+        out.append(rec)
     print("tiers:", tiers_count)
 
     with rasterio.open(os.path.join(DATA, "live_hillshade.tif")) as src:

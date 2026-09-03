@@ -38,9 +38,11 @@ h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:
   border:1px solid var(--rule); border-radius:4px; overflow:hidden;}
 #map{display:block; width:100%; cursor:grab;}
 #tip{position:absolute; pointer-events:none; background:var(--panel); color:var(--ink);
-  border:1px solid var(--rule); border-radius:4px; padding:6px 10px;
+  border:1px solid var(--rule); border-radius:4px; padding:8px 10px 6px;
   font:400 12px/1.5 "IBM Plex Mono",monospace; display:none; z-index:5;
   box-shadow:0 2px 8px rgba(0,0,0,.18);}
+#tip .head{margin-bottom:2px;}
+#tip svg{display:block;}
 .side{flex:0 0 280px; display:flex; flex-direction:column; gap:14px;}
 .card{background:var(--panel); border:1px solid var(--rule); border-radius:4px; padding:14px 16px;}
 .card h2{font-family:"IBM Plex Sans Condensed",sans-serif; font-size:15px; font-weight:600;
@@ -51,6 +53,12 @@ h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:
 #detail .row{display:flex; justify-content:space-between; font-size:13px; margin:3px 0;
   font-variant-numeric:tabular-nums;}
 #detail .row span:first-child{color:var(--ink-2);}
+#attn button{display:flex; width:100%; justify-content:space-between; gap:8px;
+  background:none; border:0; border-bottom:1px solid var(--rule); color:var(--ink);
+  font:400 12px/1.7 "IBM Plex Mono",monospace; padding:3px 2px; cursor:pointer;
+  align-items:center; text-align:left;}
+#attn button:hover{color:var(--accent);}
+#attn i{width:9px; height:9px; border-radius:2px; flex:none;}
 .bars{margin-top:10px;}
 .bar{display:flex; align-items:center; gap:8px; margin:3px 0;
   font:400 11.5px/1.4 "IBM Plex Mono",monospace; color:var(--ink-2);}
@@ -78,6 +86,7 @@ h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:
     <div class="card legend" id="legend">
       <h2>Tier · percentile of the last 90 days vs 2020–25 history</h2>
     </div>
+    <div class="card" id="attn" style="display:none"><h2>Top attention · anomaly × consequence</h2></div>
     <div class="card" id="detail"><h2>Facet detail</h2>
       <div class="row"><span>Click a facet on the map.</span></div>
     </div>
@@ -87,8 +96,10 @@ h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:
 face) from the exploratory 0005 enumeration. Color places the face's worst
 recent 3-pass morning-radar anomaly as a percentile within the region's own
 2020–25 history of the same statistic; it is a rank against the past, not a
-prediction. Snapshot dashboard, refreshed by rerunning
-<code>live_extract.py</code> + <code>live_build.py</code>. Evidence base for the
+prediction. Consequence factors (fall height, standing water below the face, valley
+population) are radius-buffer proxies, not flow-path models; they rank
+attention and never alter the anomaly tier itself. Snapshot dashboard,
+refreshed by rerunning <code>live_extract.py</code> + <code>live_build.py</code>. Evidence base for the
 method: two historical case studies, jointly p ≈ 0.02 — details in the
 <a href="https://ocha-dap.github.io/ds-geospatial-impact-estimates/langtang-sar-precursors/">companion report</a>.
 Exploratory analysis, not an operational OCHA product or warning.</p>
@@ -198,7 +209,8 @@ cv.addEventListener("pointermove", e => {
   if (f) {
     tip.style.display = "block";
     tip.style.left = (e.clientX - r.left + 14) + "px"; tip.style.top = (e.clientY - r.top + 10) + "px";
-    tip.textContent = `${f.id} · ${f.tier}` + (f.live != null ? ` · last90d ${f.live > 0 ? "+" : ""}${f.live}` : "");
+    tip.innerHTML = `<div class="head">${f.id} · ${f.tier}` +
+      (f.live != null ? ` · now ${f.live > 0 ? "+" : ""}${f.live}` : "") + "</div>" + spark(f);
   } else tip.style.display = "none";
 });
 cv.addEventListener("pointerup", e => {
@@ -220,6 +232,43 @@ cv.addEventListener("wheel", e => {
   draw();
 }, {passive: false});
 
+function spark(f) {
+  // hover mini time series: per-year detector stat, current value as a filled
+  // point plus a dashed horizontal reference line
+  const years = Object.keys(f.years).sort();
+  if (!years.length) return "";
+  const vals = years.map(y => f.years[y]);
+  const cur = f.live != null ? f.live : vals[vals.length - 1];
+  const W = 210, H = 74, P = 8, PL = 4, PR = 34;
+  const all = vals.concat([cur, 0]);
+  const lo = Math.min(...all) - 0.4, hi = Math.max(...all) + 0.4;
+  const X = i => PL + i / Math.max(1, years.length - 1) * (W - PL - PR);
+  const Y = v => P + (hi - v) / (hi - lo) * (H - 2 * P - 12);
+  const line = vals.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+  const pts = vals.map((v, i) =>
+    `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.4" fill="${css("accent")}"/>`).join("");
+  const tc = tierColor(f.tier === "nodata" ? "quiet" : f.tier);
+  const yc = Y(cur).toFixed(1);
+  const last = f.live != null
+    ? "" : `<circle cx="${X(vals.length - 1).toFixed(1)}" cy="${yc}" r="4.5"
+        fill="${tc}" stroke="${css("panel")}" stroke-width="1.5"/>`;
+  return `<svg width="${W}" height="${H}" role="img" aria-label="per-year detector history">
+    <line x1="${PL}" x2="${W - PR}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}"
+      stroke="${css("rule")}" stroke-width="1"/>
+    <line x1="${PL}" x2="${W - PR}" y1="${yc}" y2="${yc}"
+      stroke="${tc}" stroke-width="1.2" stroke-dasharray="4 3"/>
+    <path d="${line}" fill="none" stroke="${css("accent")}" stroke-width="1.8"/>
+    ${pts}${last}
+    <circle cx="${(W - PR + 5)}" cy="${yc}" r="3.5" fill="${tc}"/>
+    <text x="${W - PR + 11}" y="${(+yc + 4)}" font-size="10"
+      font-family="IBM Plex Mono,monospace" fill="${css("ink-2")}">${cur > 0 ? "+" : ""}${(+cur).toFixed(1)}</text>
+    <text x="${PL}" y="${H - 2}" font-size="9" font-family="IBM Plex Mono,monospace"
+      fill="${css("ink-3")}">${years[0]}</text>
+    <text x="${X(years.length - 1) - 14}" y="${H - 2}" font-size="9"
+      font-family="IBM Plex Mono,monospace" fill="${css("ink-3")}">${years[years.length - 1]}</text>
+  </svg>`;
+}
+
 function detail() {
   const d = document.getElementById("detail");
   if (!sel) { d.innerHTML = '<h2>Facet detail</h2><div class="row"><span>Click a facet on the map.</span></div>'; return; }
@@ -229,6 +278,13 @@ function detail() {
     ["Last-90d stat", sel.live == null ? "no data" : sel.live],
     ["Pctile vs history", sel.pct == null ? "·" : sel.pct + "%"],
   ];
+  if (sel.chain != null) rows.push(
+    ["Fall height", sel.drop + " m"],
+    ["Water body ≤10 km", sel.lake + "% occurrence"],
+    ["Valley pop ≤50 km", sel.pop.toLocaleString()],
+    ["Consequence rank", sel.chain + "/100"],
+    ["Attention score", sel.attn == null ? "·" : sel.attn.toFixed(0)],
+  );
   let h = "<h2>Facet detail</h2>" + rows.map(r =>
     `<div class="row"><span>${r[0]}</span><span>${r[1]}</span></div>`).join("");
   h += '<div class="bars">';
@@ -246,6 +302,20 @@ function detail() {
   }
   h += '</div><div class="note" style="margin-top:8px">Bars: the season detector statistic per year (left of the centre line = darker than its own history on morning passes).</div>';
   d.innerHTML = h;
+}
+
+const withAttn = DATA.facets.filter(f => f.attn != null);
+if (withAttn.length) {
+  const card = document.getElementById("attn");
+  card.style.display = "";
+  for (const f of withAttn.sort((a, b) => b.attn - a.attn).slice(0, 8)) {
+    const b = document.createElement("button");
+    b.innerHTML = `<span style="display:flex;align-items:center;gap:7px">
+      <i style="background:${tierColor(f.tier)}"></i>${f.id}</span>
+      <span>${f.attn.toFixed(0)}</span>`;
+    b.addEventListener("click", () => { sel = f; detail(); draw(); });
+    card.appendChild(b);
+  }
 }
 
 hill.onload = draw;
