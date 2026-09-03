@@ -49,7 +49,9 @@ def _portolan(args: list[str], cwd: Path, env: dict | None = None) -> None:
 
 def build_collections(src: Path, cat: Path) -> None:
     idx = pd.read_parquet(src / "label_index.parquet")
-    idx_keyed = idx.set_index(["code", "aoi", "acq_start"])
+    # full interval key: (code, aoi, acq_start) alone collides where a
+    # date-precision interval and a window interval share a start
+    idx_keyed = idx.set_index(["code", "aoi", "acq_start", "acq_end"]).sort_index()
 
     labels_rows, mask_rows = [], []
     parts = sorted(src.glob("labels_*.parquet"))
@@ -57,8 +59,10 @@ def build_collections(src: Path, cat: Path) -> None:
         g = gpd.read_parquet(p)
         g.geometry = g.geometry.simplify(SIMPLIFY_FLOOD).make_valid()
         for r in g.itertuples():
-            key = (r.code, r.aoi, r.acq_start)
+            key = (r.code, r.aoi, r.acq_start, r.acq_end)
             m = idx_keyed.loc[key] if key in idx_keyed.index else None
+            if m is not None and isinstance(m, pd.DataFrame):
+                raise ValueError(f"label_index not unique on interval key {key}")
             labels_rows.append(
                 {
                     "code": r.code,
