@@ -128,6 +128,22 @@ density and terrain performs in the same range ([the geography
 benchmark](#app-null-brief)), so single-product flags should be treated as weak
 evidence on their own.
 
+The gap between the two frames is itself a takeaway. Core-region numbers are each
+product's favourable case; as delivered, the same product can be several times weaker
+(UH: 0.093 in the core against 0.009 across its delivery), because precision falls by
+roughly the share of a product's flags spent in areas with little recorded damage
+(@fig-peraoi). What a provider chooses to ship matters about as much as how well its
+model detects: the product that shipped only its best-covered strip kept most of its
+core-region precision as delivered, while products that shipped broad extents diluted
+theirs.
+
+![**Region: each CEMS AOI separately, plus the pooled as-delivered total.** Per-AOI
+scorecard. Left: precision lower bound per product per CEMS AOI; right: recall where
+the reference is thick enough to support it. 96% of all CEMS damage points are in the
+first column; outside it, measured precision (0.00–0.02) cannot separate product
+over-flagging from reference
+incompleteness.](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
+
 The expert reference is itself incomplete, and this was measured rather than assumed.
 ChatMap, the one reference collected on the ground independently of any satellite
 imagery, audits the expert map: CEMS captured 94% of field-reported destroyed buildings
@@ -169,9 +185,20 @@ improves a lot. In the core region, zoomed to the area already known to be damag
 every product orders ~0.74 km² cells against the expert ordering at rank correlations
 of 0.48–0.74, and the best products correctly identify most of the twenty worst-hit
 sectors. The qualifier matters: scored across everything each product delivered, the
-ranking task largely reduces to "find the damage zone", which coarse geography solves
+correlations spread from −0.09 to 0.59 at the ~5 km² sector scale (@fig-ranktests), and
+the ranking
+task largely reduces to "find the damage zone", which coarse geography solves
 almost by definition; the products' real ranking information is about where to go first
-*within* a zone.
+*within* a zone. Ranking is useful once the response has already narrowed to a known
+damage area; it is not a way to find that area.
+
+![**Regions: as delivered (left), core (right).** Each product's ranking of areas by
+damage, compared with the expert ordering (Spearman rank correlation; higher = ranks
+the worst-hit areas better). As delivered, rankings spread widely and one product's is
+negative; restricted to the known damage zone, every product ranks usefully. This is
+the basis for the caveat that runs through the paper: trust the neighbourhood ranking
+*within* an identified damage zone, not for finding
+one.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both_summary.png){#fig-ranktests}
 
 Counting agreement between products sharpens that ranking (@fig-agreerank). Ranking
 cells by their count of buildings with three or four products agreeing beats every
@@ -280,15 +307,14 @@ fitting it requires the damage map a responder is still waiting for, so it expla
 event afterwards and cannot run during one; flat counting can be done the hour the
 second product arrives (@fig-bestf1).
 
-![**Region: core (61 km²).** Every predictor at one operating point, F1 side by side.
-Grey bars are the six products exactly as shipped; coloured bars are the combinations
-at their best single cut. Flat voting roughly doubles the best single product; the
-fitted fusion adds another 18% but needs the damage map to
-fit.](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10_summary.png){#fig-bestf1}
+![**Regions: core (left), as delivered (right).** Comparing performance measurements of
+all products against each other and the derived combined products. Bar length and bar
+label show F1, followed by precision and recall. The derived combined products (green)
+are shown at their optimal performance weighting/configuration; they are defined on the
+shared building base, so they exist only in the core
+region.](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10_summary.png){#fig-bestf1}
 
 ## Recommendations
-
-The results imply changes in practice for three audiences.
 
 ::: {.callout-tip title="For responders"}
 These recommendations feed an ongoing dialogue with responders about what is
@@ -879,14 +905,6 @@ assumption.
 
 
 ### The scorecard in both frames, in full {#app-frames .unnumbered}
-
-![**Region: each CEMS AOI separately, plus the pooled as-delivered total.** Per-AOI
-scorecard. Left: precision lower bound per product per CEMS AOI; right: recall where
-the reference is thick enough to support it. 96% of all CEMS damage points are in the
-first column. Outside Caraballeda, measured precision is 0.00–0.02 despite flag shares
-up to 27.5%: a lower bound against a nearly-empty reference, in which product
-over-flagging and reference incompleteness cannot be
-separated.](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 
 **The pooled scorecard is one place's scorecard.** That cautionary tale generalizes,
 and it bounds every headline number in this paper. CEMS activated five separate AOIs,
