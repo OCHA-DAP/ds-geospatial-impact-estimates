@@ -98,8 +98,12 @@ h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:
       people live in the valleys within 50 km. The pins mark the top faces by
       anomaly × consequence, in the same order as the list below.</p>
       <p style="margin:0"><strong>Click any face</strong> for its year-by-year
-      history and its consequence factors. Consequence never changes a face's
-      color; it only decides which anomalies deserve a human first.</p>
+      history and its consequence factors. Where basin data is loaded, clicking
+      also lights up the face's <strong>downstream watershed chain</strong>
+      (HydroBASINS, pre-linked, no flow modelling) with the population living in
+      each basin, so the route from face to people is visible. Consequence never
+      changes a face's color; it only decides which anomalies deserve a human
+      first.</p>
       </div>
     </div>
     <div class="card legend" id="legend">
@@ -171,10 +175,33 @@ const px = (lon, lat) => [
   ((lon - W0) / (E0 - W0) * cv.width) * view.k + view.tx,
   ((N0 - lat) / (N0 - S0) * cv.height) * view.k + view.ty,
 ];
+function chainOf(f) {
+  // downstream basin chain via HydroBASINS NEXT_DOWN pointers (no routing)
+  if (!DATA.basins || !f || !f.basin) return [];
+  const out = [];
+  let b = DATA.basins[f.basin];
+  while (b && out.length < 40) {
+    out.push(b);
+    b = DATA.basins[b.next];
+  }
+  return out;
+}
 function draw() {
   ctx.clearRect(0, 0, cv.width, cv.height);
   const [x0, y0] = px(W0, N0), [x1, y1] = px(E0, S0);
   if (hill.complete) { ctx.globalAlpha = 0.9; ctx.drawImage(hill, x0, y0, x1 - x0, y1 - y0); ctx.globalAlpha = 1; }
+  const chain = chainOf(sel);
+  for (const b of chain) {
+    ctx.beginPath();
+    for (let i = 0; i < b.poly.length; i++) {
+      const [x, y] = px(b.poly[i][0], b.poly[i][1]);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = css("accent"); ctx.globalAlpha = 0.16; ctx.fill();
+    ctx.globalAlpha = 1; ctx.strokeStyle = css("accent");
+    ctx.lineWidth = 1.4 * devicePixelRatio; ctx.stroke();
+  }
   for (const f of DATA.facets) {
     ctx.beginPath();
     for (let i = 0; i < f.poly.length; i++) {
@@ -203,6 +230,18 @@ function draw() {
     ctx.fillStyle = css("ink"); ctx.textAlign = "center";
     ctx.fillText(String(i + 1), x, y + 3.5 * devicePixelRatio);
   });
+  // population labels along the selected face's downstream chain, on top
+  ctx.font = `${10 * devicePixelRatio}px IBM Plex Mono, monospace`;
+  ctx.textAlign = "center";
+  for (const b of chain) {
+    if (b.pop < 500) continue;
+    const c = b.poly.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0])
+      .map(v => v / b.poly.length);
+    const [x, y] = px(c[0], c[1]);
+    const label = b.pop >= 1000 ? (b.pop / 1000).toFixed(0) + "k" : String(b.pop);
+    ctx.lineWidth = 3 * devicePixelRatio; ctx.strokeStyle = css("ground");
+    ctx.strokeText(label, x, y); ctx.fillStyle = css("ink"); ctx.fillText(label, x, y);
+  }
   ctx.textAlign = "left";
   ctx.font = `${11 * devicePixelRatio}px IBM Plex Mono, monospace`;
   for (const m of MARKS) {
@@ -321,6 +360,11 @@ function detail() {
     ["Valley pop ≤50 km", sel.pop.toLocaleString()],
     ["Consequence rank", sel.chain + "/100"],
     ["Attention score", sel.attn == null ? "·" : sel.attn.toFixed(0)],
+  );
+  const dchain = chainOf(sel);
+  if (dchain.length) rows.push(
+    ["Downstream chain", `${dchain.length} basins · ` +
+      `${dchain.reduce((s, b) => s + b.pop, 0).toLocaleString()} people`],
   );
   let h = "<h2>Facet detail</h2>" + rows.map(r =>
     `<div class="row"><span>${r[0]}</span><span>${r[1]}</span></div>`).join("");
