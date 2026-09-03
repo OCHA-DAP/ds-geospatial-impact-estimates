@@ -109,6 +109,12 @@ h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:
     <div class="card legend" id="legend">
       <h2>Tier · percentile of the last 90 days vs 2020–25 history</h2>
     </div>
+    <div class="card" id="context" style="display:none">
+      <h2>Context · top faces vs the collapse face</h2>
+      <div id="ctxchart"></div>
+      <div class="legend-note" style="font-size:11.5px;color:var(--ink-2);line-height:1.5;margin-top:6px"
+        id="ctxnote"></div>
+    </div>
     <div class="card" id="attn" style="display:none"><h2>Top attention · anomaly × consequence</h2></div>
     <div class="card" id="detail"><h2>Facet detail</h2>
       <div class="row"><span>Click a facet on the map.</span></div>
@@ -313,21 +319,22 @@ function spark(f) {
   // point plus a dashed horizontal reference line
   const years = Object.keys(f.years).sort();
   if (!years.length) return "";
+  const cur = f.live != null ? f.live : f.years[years[years.length - 1]];
+  // the current value is the series' final, connected point
   const vals = years.map(y => f.years[y]);
-  const cur = f.live != null ? f.live : vals[vals.length - 1];
+  if (f.live != null) vals.push(cur);
   const W = 210, H = 74, P = 8, PL = 4, PR = 34;
-  const all = vals.concat([cur, 0]);
+  const all = vals.concat([0]);
   const lo = Math.min(...all) - 0.4, hi = Math.max(...all) + 0.4;
-  const X = i => PL + i / Math.max(1, years.length - 1) * (W - PL - PR);
+  const X = i => PL + i / Math.max(1, vals.length - 1) * (W - PL - PR);
   const Y = v => P + (hi - v) / (hi - lo) * (H - 2 * P - 12);
   const line = vals.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
   const pts = vals.map((v, i) =>
     `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.4" fill="${css("accent")}"/>`).join("");
   const tc = tierColor(f.tier === "nodata" ? "quiet" : f.tier);
   const yc = Y(cur).toFixed(1);
-  const last = f.live != null
-    ? "" : `<circle cx="${X(vals.length - 1).toFixed(1)}" cy="${yc}" r="4.5"
-        fill="${tc}" stroke="${css("panel")}" stroke-width="1.5"/>`;
+  const last = `<circle cx="${X(vals.length - 1).toFixed(1)}" cy="${Y(vals[vals.length - 1]).toFixed(1)}"
+      r="4.5" fill="${tc}" stroke="${css("panel")}" stroke-width="1.5"/>`;
   return `<svg width="${W}" height="${H}" role="img" aria-label="per-year detector history">
     <line x1="${PL}" x2="${W - PR}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}"
       stroke="${css("rule")}" stroke-width="1"/>
@@ -340,8 +347,8 @@ function spark(f) {
       font-family="IBM Plex Mono,monospace" fill="${css("ink-2")}">${cur > 0 ? "+" : ""}${(+cur).toFixed(1)}</text>
     <text x="${PL}" y="${H - 2}" font-size="9" font-family="IBM Plex Mono,monospace"
       fill="${css("ink-3")}">${years[0]}</text>
-    <text x="${X(years.length - 1) - 14}" y="${H - 2}" font-size="9"
-      font-family="IBM Plex Mono,monospace" fill="${css("ink-3")}">${years[years.length - 1]}</text>
+    <text x="${X(vals.length - 1) - 16}" y="${H - 2}" font-size="9"
+      font-family="IBM Plex Mono,monospace" fill="${css("ink-3")}">${f.live != null ? "now" : years[years.length - 1]}</text>
   </svg>`;
 }
 
@@ -400,6 +407,67 @@ if (topAttn.length) {
     card.appendChild(b);
   });
 }
+
+// context chart: top-10 attention faces vs the collapse face vs the region's
+// background band, on the shared per-year statistic (current value connected)
+(function () {
+  if (!DATA.bg) return;
+  const collapse = DATA.facets.find(f => f.collapse);
+  const top = (withAttn.length ? withAttn : DATA.facets.filter(f => f.pct != null))
+    .filter(f => !f.collapse)
+    .sort((a, b) => (b.attn ?? (100 - b.pct)) - (a.attn ?? (100 - a.pct)))
+    .slice(0, 10);
+  if (!top.length) return;
+  const yearsAll = Object.keys(DATA.bg).sort();
+  const seriesOf = f => {
+    const ys = Object.keys(f.years).sort();
+    const v = ys.map(y => f.years[y]);
+    if (f.live != null) v.push(f.live);
+    return v;
+  };
+  const n = Math.max(...top.map(f => seriesOf(f).length),
+                     collapse ? seriesOf(collapse).length : 0, yearsAll.length);
+  const W = 250, H = 170, P = 10, PB = 16;
+  let lo = -0.5, hi = 0.5;
+  const eat = v => { lo = Math.min(lo, v - 0.3); hi = Math.max(hi, v + 0.3); };
+  top.forEach(f => seriesOf(f).forEach(eat));
+  if (collapse) seriesOf(collapse).forEach(eat);
+  yearsAll.forEach(y => { eat(DATA.bg[y][0]); eat(DATA.bg[y][2]); });
+  const X = i => P + i / (n - 1) * (W - 2 * P);
+  const Y = v => P + (hi - v) / (hi - lo) * (H - P - PB - 10);
+  const path = v => v.map((x, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(x).toFixed(1)}`).join("");
+  // background band p10-p90 + median
+  const bandTop = yearsAll.map((y, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(DATA.bg[y][2]).toFixed(1)}`).join("");
+  const bandBack = yearsAll.slice().reverse().map((y, i) =>
+    `L${X(yearsAll.length - 1 - i).toFixed(1)},${Y(DATA.bg[y][0]).toFixed(1)}`).join("");
+  let svg = `<svg width="${W}" height="${H}" role="img" aria-label="top faces vs collapse face vs background">
+    <path d="${bandTop}${bandBack}Z" fill="${css("ink-3")}" opacity="0.15"/>
+    <path d="${yearsAll.map((y, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(DATA.bg[y][1]).toFixed(1)}`).join("")}"
+      fill="none" stroke="${css("ink-3")}" stroke-width="1"/>
+    <line x1="${P}" x2="${W - P}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}"
+      stroke="${css("rule")}" stroke-width="1"/>`;
+  for (const f of top)
+    svg += `<path d="${path(seriesOf(f))}" fill="none" stroke="${css("accent")}"
+      stroke-width="1.3" opacity="0.55"/>`;
+  if (collapse) {
+    const v = seriesOf(collapse);
+    svg += `<path d="${path(v)}" fill="none" stroke="${css("critical")}" stroke-width="2.2"/>
+      <circle cx="${X(v.length - 1)}" cy="${Y(v[v.length - 1])}" r="4.5"
+        fill="${css("critical")}" stroke="${css("panel")}" stroke-width="1.5"/>`;
+  }
+  svg += `<text x="${P}" y="${H - 3}" font-size="9" font-family="IBM Plex Mono,monospace"
+      fill="${css("ink-3")}">${yearsAll[0]}</text>
+    <text x="${W - P - 22}" y="${H - 3}" font-size="9" font-family="IBM Plex Mono,monospace"
+      fill="${css("ink-3")}">now</text></svg>`;
+  document.getElementById("ctxchart").innerHTML = svg;
+  document.getElementById("ctxnote").innerHTML =
+    `<span style="color:${css("critical")};font-weight:600">▬</span> the face that
+     collapsed on 26 Aug 2026, ending at its collapse-season value ·
+     <span style="color:${css("accent")}">▬</span> today's top-10 attention faces ·
+     <span style="color:${css("ink-3")}">▬</span> regional median and 10–90%
+     band of all faces. Same statistic and scale as the hover charts.`;
+  document.getElementById("context").style.display = "";
+})();
 
 hill.onload = draw;
 addEventListener("resize", size);

@@ -100,6 +100,15 @@ def main() -> None:
             live_stats[fid] = round(s, 2)
 
     facets = gpd.read_file(os.path.join(DATA, "facets_langtang_final.geojson"))
+    from shapely.geometry import Point
+
+    scar = Point(85.52284, 28.28648)
+    all_years = {}
+    for d in season_stats.values():
+        for y, s in d.items():
+            all_years.setdefault(y, []).append(s)
+    bg = {str(y): [round(float(np.percentile(v, q)), 2) for q in (10, 50, 90)]
+          for y, v in sorted(all_years.items())}
     # static hazard-chain factors (consequence triage, never detection): each
     # factor as a percentile rank across the layer, chain = their mean
     chain = {}
@@ -130,6 +139,8 @@ def main() -> None:
         rec = {"id": fid, "aspect": r.aspect, "km2": round(r.km2, 2),
                "tier": tier, "live": live, "pct": pct,
                "years": season_stats.get(fid, {}), "poly": poly}
+        if r.geometry.contains(scar):
+            rec["collapse"] = True
         if fid in chain:
             rec.update(chain[fid])
             if pct is not None:
@@ -155,6 +166,7 @@ def main() -> None:
         "tiers": tiers_count,
         "null_n": int(len(null)),
         "facets": out,
+        "bg": bg,
     }
     with open(os.path.join(HERE, "reports", "live_dashboard_template.html")) as f:
         html = f.read()
