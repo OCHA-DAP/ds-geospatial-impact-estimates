@@ -11,6 +11,7 @@ Leaflet + OSM basemap from public CDNs; data inlined; nothing is uploaded.
 
 Run:  uv run --group etl --group api python pipelines/cems_flood/inspect_labels.py --codes EMSR871
 """
+# ruff: noqa: E501  (inline HTML/JS templates; line breaks would hurt readability)
 
 from __future__ import annotations
 
@@ -83,56 +84,108 @@ map.fitBounds(layer.getBounds());
     return dest
 
 
+EVENT_PAGE = """<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+html,body{{height:100%;margin:0;font:14px/1.45 system-ui}}
+#wrap{{display:flex;height:100%}}
+#map{{flex:1}}
+#side{{width:320px;padding:14px 16px;overflow-y:auto;border-right:1px solid #ddd;background:#fafafa}}
+h1{{font-size:1.1rem;margin:0 0 2px}} .sub{{color:#666;font-size:.85rem;margin-bottom:12px}}
+select,button{{font:inherit;padding:5px 9px;border-radius:6px;border:1px solid #bbb;background:#fff;cursor:pointer}}
+#nav{{display:flex;gap:8px;align-items:center;margin:12px 0}}
+#step{{font-weight:600}}
+.meta{{background:#fff;border:1px solid #ddd;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:.9rem}}
+.meta b{{font-size:1.05rem}}
+label{{display:block;margin:6px 0;font-size:.9rem;cursor:pointer}}
+.hint{{color:#888;font-size:.8rem;margin-top:14px}}
+</style></head><body>
+<div id="wrap">
+<div id="side">
+  <h1>{code}</h1><div class="sub">{name}</div>
+  <div>AOI: <select id="aoi"></select></div>
+  <div id="nav"><button id="prev">&#9664;</button><span id="step"></span><button id="next">&#9654;</button></div>
+  <div class="meta" id="meta"></div>
+  <label><input type="checkbox" id="ghost" checked> ghost previous extent (orange outline)</label>
+  <label><input type="checkbox" id="mask"> show valid (analysed) mask</label>
+  <div class="hint">Arrow keys step through acquisitions. Blue fill = observed
+  flood extent for the shown acquisition. Data: gold/labels (dev).</div>
+</div>
+<div id="map"></div>
+</div>
+<script>
+const DATA = __EVDATA__;
+const map = L.map('map');
+L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png',
+  {{attribution:'&copy; OpenStreetMap · labels &copy; European Union, Copernicus EMS'}}).addTo(map);
+let cur = 0, layers = [];
+const aoiSel = document.getElementById('aoi');
+Object.keys(DATA).forEach(a => aoiSel.add(new Option(a, a)));
+function clearLayers() {{ layers.forEach(l => map.removeLayer(l)); layers = []; }}
+function render(fit) {{
+  clearLayers();
+  const steps = DATA[aoiSel.value];
+  cur = Math.max(0, Math.min(cur, steps.length - 1));
+  const s = steps[cur];
+  if (document.getElementById('mask').checked && s.valid)
+    layers.push(L.geoJSON(s.valid, {{style: {{color:'#777', weight:1, dashArray:'4 3', fillOpacity:.04}}}}).addTo(map));
+  if (document.getElementById('ghost').checked && cur > 0)
+    layers.push(L.geoJSON(steps[cur-1].flood, {{style: {{color:'#d97706', weight:1.5, fill:false, dashArray:'2 4'}}}}).addTo(map));
+  const fl = L.geoJSON(s.flood, {{style: {{color:'#0f62a8', weight:1, fillOpacity:.5}}}}).addTo(map);
+  layers.push(fl);
+  document.getElementById('step').textContent = (cur+1) + ' / ' + steps.length;
+  document.getElementById('meta').innerHTML =
+    '<b>' + s.dt + '</b><br>' + (s.sensor || 'sensor unknown') + ' · ' + s.method +
+    '<br>' + s.area + ' km² observed' + (s.products ? '<br>' + s.products : '');
+  if (fit) map.fitBounds(L.geoJSON(steps[steps.length-1].flood).getBounds().pad(0.4));
+}}
+aoiSel.onchange = () => {{ cur = 0; render(true); }};
+document.getElementById('prev').onclick = () => {{ cur--; render(false); }};
+document.getElementById('next').onclick = () => {{ cur++; render(false); }};
+document.getElementById('ghost').onchange = () => render(false);
+document.getElementById('mask').onchange = () => render(false);
+document.addEventListener('keydown', e => {{
+  if (e.key === 'ArrowLeft') {{ cur--; render(false); }}
+  if (e.key === 'ArrowRight') {{ cur++; render(false); }}
+}});
+render(true);
+</script></body></html>"""
+
+
+def _gj(geom, tol: float) -> dict:
+    from shapely import set_precision
+
+    g = set_precision(geom.simplify(tol), 1e-5)
+    return json.loads(gpd.GeoSeries([g], crs="EPSG:4326").to_json())
+
+
 def event_map(cc, idx: pd.DataFrame, code: str, out: Path) -> Path:
     raw = cc.download_blob(f"{GOLD}/labels/code={code}/data.parquet").readall()
     lab = gpd.read_parquet(io.BytesIO(raw)).sort_values(["aoi", "acq_start"])
     meta = idx[idx.code == code].set_index(["aoi", "acq_start"])
-    groups = []
+    data: dict[str, list] = {}
     for r in lab.itertuples():
         m = meta.loc[(r.aoi, r.acq_start)] if (r.aoi, r.acq_start) in meta.index else None
-        name = f"{r.aoi} · {str(r.acq_start)[:16]}"
-        popup = f"<b>{code}</b> {name}<br>" + (
-            f"{m.sensor or '?'} · {m.acq_method} · {m.area_km2} km²" if m is not None else ""
+        data.setdefault(r.aoi, []).append(
+            {
+                "dt": str(r.acq_start)[:16] if pd.notna(r.acq_start) else "window",
+                "sensor": (None if m is None or pd.isna(m.sensor) else m.sensor),
+                "method": "" if m is None else m.acq_method,
+                "area": 0 if m is None else m.area_km2,
+                "products": "" if m is None else m.product_classes,
+                "flood": _gj(r.geometry, 1e-4),
+                "valid": _gj(r.valid_geometry, 5e-4) if r.valid_geometry is not None else None,
+            }
         )
-        flood = json.loads(gpd.GeoSeries([r.geometry], crs="EPSG:4326").simplify(1e-4).to_json())
-        valid = (
-            json.loads(gpd.GeoSeries([r.valid_geometry], crs="EPSG:4326").simplify(5e-4).to_json())
-            if r.valid_geometry is not None
-            else None
-        )
-        groups.append({"name": name, "popup": popup, "flood": flood, "valid": valid})
-    flood_style = "{style: {color:'#0f62a8', weight:1, fillOpacity:.45}}"
-    valid_style = "{style: {color:'#666', weight:1, dashArray:'4 3', fillOpacity:.03}}"
-    script_parts = ["const overlays = {};"]
-    for i, g in enumerate(groups):
-        script_parts.append(
-            f"const fl{i} = L.geoJSON({json.dumps(g['flood'])}, {flood_style})"
-            f".bindPopup({json.dumps(g['popup'])});"
-        )
-        if g["valid"]:
-            script_parts.append(
-                f"const va{i} = L.geoJSON({json.dumps(g['valid'])}, {valid_style});\n"
-                f"overlays[{json.dumps(g['name'] + ' · valid mask')}] = va{i};"
-            )
-        script_parts.append(f"overlays[{json.dumps(g['name'])}] = fl{i};")
-    script_parts.append("""
-const first = Object.values(overlays)[Object.keys(overlays).length > 1 ? 1 : 0];
-let bounds = null;
-for (const l of Object.values(overlays)) { const b = L.geoJSON(l.toGeoJSON()).getBounds();
-  bounds = bounds ? bounds.extend(b) : b; }
-Object.values(overlays).forEach(l => l.addTo(map));
-L.control.layers(null, overlays, {collapsed:false}).addTo(map);
-map.fitBounds(bounds);""")
-    n = len(groups)
-    info = (
-        f"<b>{code}</b> — {meta.iloc[0]['name'] if len(meta) else ''}<br>{n} label sets. "
-        "Blue = observed flood extent; dashed grey = valid (analysed) mask. "
-        "Toggle layers to step through acquisitions."
-    )
+    name = meta.iloc[0]["name"] if len(meta) else ""
+    # format() first (the JSON payload is full of braces), then inject data
+    html = EVENT_PAGE.format(title=f"{code} flood labels", code=code, name=name)
+    html = html.replace("__EVDATA__", json.dumps(data))
     dest = out / f"{code}.html"
-    dest.write_text(
-        PAGE.format(title=f"{code} flood labels", info=info, script="\n".join(script_parts))
-    )
+    dest.write_text(html)
     return dest
 
 
