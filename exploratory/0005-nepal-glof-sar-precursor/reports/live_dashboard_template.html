@@ -320,31 +320,39 @@ function spark(f) {
   const years = Object.keys(f.years).sort();
   if (!years.length) return "";
   const cur = f.live != null ? f.live : f.years[years[years.length - 1]];
-  // the current value is the series' final, connected point
-  const vals = years.map(y => f.years[y]);
-  if (f.live != null) vals.push(cur);
-  const W = 210, H = 74, P = 8, PL = 4, PR = 34;
-  const all = vals.concat([0]);
+  // the current value is the series' final, connected point; the dashed line
+  // is the face's own historical median (its "normal"), so the endpoint's
+  // departure from the line is the story
+  const hist = years.map(y => f.years[y]);
+  const vals = f.live != null ? hist.concat([cur]) : hist.slice();
+  const histSorted = (f.live != null ? hist : hist.slice(0, -1)).slice().sort((a, b) => a - b);
+  const med = histSorted.length
+    ? (histSorted[(histSorted.length - 1) >> 1] + histSorted[histSorted.length >> 1]) / 2
+    : 0;
+  const W = 210, H = 74, P = 8, PL = 4, PR = 40;
+  const all = vals.concat([med]);
   const lo = Math.min(...all) - 0.4, hi = Math.max(...all) + 0.4;
   const X = i => PL + i / Math.max(1, vals.length - 1) * (W - PL - PR);
   const Y = v => P + (hi - v) / (hi - lo) * (H - 2 * P - 12);
   const line = vals.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join("");
-  const pts = vals.map((v, i) =>
+  const pts = vals.slice(0, -1).map((v, i) =>
     `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.4" fill="${css("accent")}"/>`).join("");
   const tc = tierColor(f.tier === "nodata" ? "quiet" : f.tier);
-  const yc = Y(cur).toFixed(1);
-  const last = `<circle cx="${X(vals.length - 1).toFixed(1)}" cy="${Y(vals[vals.length - 1]).toFixed(1)}"
-      r="4.5" fill="${tc}" stroke="${css("panel")}" stroke-width="1.5"/>`;
+  const ex = X(vals.length - 1).toFixed(1), ey = Y(vals[vals.length - 1]).toFixed(1);
+  const ym = Y(med).toFixed(1);
+  let medLabelY = +ym + 3;
+  if (Math.abs(+ey - +ym) < 12) medLabelY = +ym + (+ey <= +ym ? 12 : -7);
   return `<svg width="${W}" height="${H}" role="img" aria-label="per-year detector history">
-    <line x1="${PL}" x2="${W - PR}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}"
-      stroke="${css("rule")}" stroke-width="1"/>
-    <line x1="${PL}" x2="${W - PR}" y1="${yc}" y2="${yc}"
-      stroke="${tc}" stroke-width="1.2" stroke-dasharray="4 3"/>
+    <line x1="${PL}" x2="${W - PR}" y1="${ym}" y2="${ym}"
+      stroke="${css("ink-3")}" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="${W - PR + 4}" y="${medLabelY.toFixed(1)}" font-size="8.5"
+      font-family="IBM Plex Mono,monospace" fill="${css("ink-3")}">med</text>
     <path d="${line}" fill="none" stroke="${css("accent")}" stroke-width="1.8"/>
-    ${pts}${last}
-    <circle cx="${(W - PR + 5)}" cy="${yc}" r="3.5" fill="${tc}"/>
-    <text x="${W - PR + 11}" y="${(+yc + 4)}" font-size="10"
-      font-family="IBM Plex Mono,monospace" fill="${css("ink-2")}">${cur > 0 ? "+" : ""}${(+cur).toFixed(1)}</text>
+    ${pts}
+    <circle cx="${ex}" cy="${ey}" r="4.5" fill="${tc}"
+      stroke="${css("panel")}" stroke-width="1.5"/>
+    <text x="${W - PR + 4}" y="${(+ey + 3.5)}" font-size="10" font-weight="600"
+      font-family="IBM Plex Mono,monospace" fill="${tc}">${cur > 0 ? "+" : ""}${(+cur).toFixed(1)}</text>
     <text x="${PL}" y="${H - 2}" font-size="9" font-family="IBM Plex Mono,monospace"
       fill="${css("ink-3")}">${years[0]}</text>
     <text x="${X(vals.length - 1) - 16}" y="${H - 2}" font-size="9"
