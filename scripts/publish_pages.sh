@@ -5,6 +5,7 @@
 #   ./scripts/publish_pages.sh            # both: render, encrypt, commit
 #   ./scripts/publish_pages.sh deck       # just the results deck
 #   ./scripts/publish_pages.sh paper      # just the manuscript
+#   ./scripts/publish_pages.sh brief      # just the technical brief
 #   ./scripts/publish_pages.sh briefing   # just the A&A Cell 5-slide briefing
 #   ./scripts/publish_pages.sh --ship     # ...and push + open a PR against v1
 #   ./scripts/publish_pages.sh deck --no-commit
@@ -37,11 +38,11 @@ COMMIT=yes
 SHIP=no
 for arg in "$@"; do
   case "$arg" in
-    deck|paper|briefing|all) TARGET="$arg" ;;
+    deck|paper|briefing|brief|all) TARGET="$arg" ;;
     --no-commit)    COMMIT=no ;;
     --ship)         SHIP=yes ;;
     -h|--help)      sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *)              die "unknown argument '$arg' (expected: deck | paper | briefing | all | --ship | --no-commit)" ;;
+    *)              die "unknown argument '$arg' (expected: deck | paper | briefing | brief | all | --ship | --no-commit)" ;;
   esac
 done
 [[ $SHIP == yes && $COMMIT == no ]] && die "--ship and --no-commit contradict each other"
@@ -137,6 +138,11 @@ if [[ $TARGET == all || $TARGET == paper ]]; then
   encrypt manuscript_v3.html "$PAGES_DIR/manuscript/content.enc"
 fi
 
+if [[ $TARGET == all || $TARGET == brief ]]; then
+  render manuscript_brief.qmd html
+  encrypt manuscript_brief.html "$PAGES_DIR/brief/content.enc"
+fi
+
 step "Result"
 for f in "${CHANGED[@]}"; do
   printf '  %s  (%s)\n' "${f#"$REPO_ROOT"/}" "$(du -h "$f" | cut -f1)"
@@ -148,8 +154,9 @@ if [[ $COMMIT == no ]]; then
   exit 0
 fi
 
-if git -C "$PAGES_REPO" diff --quiet -- "$PAGES_DIR" && \
-   git -C "$PAGES_REPO" diff --cached --quiet -- "$PAGES_DIR"; then
+# status --porcelain also sees UNTRACKED files (a first-time target's content.enc),
+# which the diff pair used here previously did not.
+if [[ -z "$(git -C "$PAGES_REPO" status --porcelain -- "$PAGES_DIR")" ]]; then
   step "Nothing to commit"
   echo "  The re-rendered artefacts are byte-identical to what is already published."
   if [[ $SHIP == yes ]]; then
@@ -161,7 +168,7 @@ fi
 
 step "Committing"
 git -C "$PAGES_REPO" add -- "$PAGES_DIR"
-git -C "$PAGES_REPO" commit -q -m "pages: republish $( [[ $TARGET == all ]] && echo 'deck, briefing and manuscript' || echo "$TARGET" )
+git -C "$PAGES_REPO" commit -q -m "pages: republish $( [[ $TARGET == all ]] && echo 'deck, briefing, manuscript and brief' || echo "$TARGET" )
 
 Re-rendered from exploratory/paper and re-encrypted. Content only; no code change."
 git -C "$PAGES_REPO" --no-pager log --oneline -1
@@ -189,7 +196,7 @@ fi
 step "Pushing and opening a PR"
 git -C "$PAGES_REPO" push -q origin "$BRANCH" || die "push failed — nothing is public"
 PR_URL="$(cd "$PAGES_REPO" && gh pr create --base v1 --head "$BRANCH" \
-  --title "pages: republish $( [[ $TARGET == all ]] && echo 'deck, briefing and manuscript' || echo "$TARGET" )" \
+  --title "pages: republish $( [[ $TARGET == all ]] && echo 'deck, briefing, manuscript and brief' || echo "$TARGET" )" \
   --body "Re-rendered from \`exploratory/paper\` and re-encrypted. Content only; no code change.
 
 Opened by \`scripts/publish_pages.sh --ship\`.")" \

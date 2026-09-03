@@ -12,12 +12,17 @@ Run: uv run --with pandas --with matplotlib python \
        exploratory/paper/artefacts/RQ3-prioritization-error-structure/scripts/rq3h_agreement_ranking_fig.py
 """
 from __future__ import annotations
-import os
+import os, sys
 import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+# --summary: the technical-brief variant (ADR-0029) — singles + the dial only (no
+# geography-null or fusion reference lines). Writes *_summary.png beside the unchanged
+# default output.
+SUMMARY = "--summary" in sys.argv[1:]
 
 HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "figs")
@@ -35,10 +40,11 @@ for col, res in enumerate((8, 9)):
         ax = axes[row][col]
         # every reference line labelled at the right edge, one dodged stack
         refs = [(v.loc[s, metric], s, "#9db1b3", "#5a6570", 1.1, "-") for s in SINGLES]
-        refs.append((v.loc["geography null", metric], "geography null",
-                     "#c44536", "#c44536", 2.0, (0, (4, 3))))
-        refs.append((v.loc["weighted fusion", metric], "weighted fusion",
-                     "#1b4f8a", "#1b4f8a", 1.6, ":"))
+        if not SUMMARY:
+            refs.append((v.loc["geography null", metric], "geography null",
+                         "#c44536", "#c44536", 2.0, (0, (4, 3))))
+            refs.append((v.loc["weighted fusion", metric], "weighted fusion",
+                         "#1b4f8a", "#1b4f8a", 1.6, ":"))
         refs.sort(key=lambda t: t[0])
         min_gap = 0.04
         ys = []
@@ -71,9 +77,14 @@ for col, res in enumerate((8, 9)):
             ax.set_xlabel("k — products that must agree", fontsize=11)
         if col == 0:
             ax.set_ylabel(mlab, fontsize=10.5)
-fig.suptitle("Ranking the core region by k-of-6 agreement (green) against every single "
-             "product (grey),\nthe geography null (red) and weighted fusion (blue)",
-             fontsize=13)
+if SUMMARY:
+    fig.suptitle("Ranking the core region by k-of-6 agreement (green) against every "
+                 "single product (grey)", fontsize=13)
+else:
+    fig.suptitle("Ranking the core region by k-of-6 agreement (green) against every single "
+                 "product (grey),\nthe geography null (red) and weighted fusion (blue)",
+                 fontsize=13)
 fig.tight_layout(rect=(0, 0, 1, 0.96))
-fig.savefig(os.path.join(FIGS, "rq3h_agreement_ranking.png"), dpi=150)
-print("wrote figs/rq3h_agreement_ranking.png")
+out = f"rq3h_agreement_ranking{'_summary' if SUMMARY else ''}.png"
+fig.savefig(os.path.join(FIGS, out), dpi=150)
+print(f"wrote figs/{out}")
