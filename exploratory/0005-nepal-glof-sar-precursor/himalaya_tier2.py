@@ -35,6 +35,9 @@ SEASON = (152, 237)
 
 def tier1_z() -> pd.DataFrame:
     t1 = pd.read_csv(os.path.join(DATA, "himalaya_tier1.csv"))
+    # batch facet ids repeat across disjoint polygons of one cell-octant unit
+    # (and across block seams) — aggregate to one value per unit-year
+    t1 = t1.groupby(["facet_id", "year"], as_index=False).vv_db.mean()
     rows = []
     for fid, g in t1.groupby("facet_id"):
         g = g.set_index("year").vv_db
@@ -50,6 +53,8 @@ def tier1_z() -> pd.DataFrame:
 
     fac = gpd.read_file(os.path.join(DATA, "facets_himalaya_final.geojson"))
     cent = fac.set_index("facet_id").geometry.centroid
+    # tier-1 also covers sub-threshold units dropped from the facet layer
+    z = z[z.facet_id.isin(cent.index)]
     z["cell"] = z.facet_id.map(lambda f: f"{cent[f].x:.0f}_{cent[f].y:.0f}")
     med_cell = z.groupby(["cell", "year"]).z1.transform("median")
     n_cell = z.groupby(["cell", "year"]).z1.transform("size")

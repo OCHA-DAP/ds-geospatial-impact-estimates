@@ -74,6 +74,18 @@ def running_tasks() -> dict[str, str]:
     return out
 
 
+def empty_blocks() -> set[str]:
+    """Blocks whose export FAILED with 'Table is empty' — a correct result (no
+    glacierized faces there, e.g. the Terai row), not an error. Absence of
+    facets is a real state of the world; treat it as done, never resubmit."""
+    out = set()
+    for t in ee.data.getTaskList():
+        if (t["state"] == "FAILED"
+                and "Table is empty" in t.get("error_message", "")):
+            out.add(t.get("description", ""))
+    return out
+
+
 def facet_image(region: ee.Geometry) -> ee.Image:
     g = (
         ee.FeatureCollection("GLIMS/20230607")
@@ -108,12 +120,13 @@ def submit_facets() -> tuple[int, int]:
     W, S, E, N = DOMAIN
     dx, dy = (E - W) / BLOCKS_X, (N - S) / BLOCKS_Y
     tasks = running_tasks()
+    empties = empty_blocks()
     submitted = done = 0
     for i in range(BLOCKS_X):
         for j in range(BLOCKS_Y):
             name = f"facets_arc_{i}_{j}"
             asset = f"{FOLDER}/{name}"
-            if asset_exists(asset):
+            if asset_exists(asset) or name in empties:
                 done += 1
                 continue
             if name in tasks:
@@ -132,7 +145,8 @@ def submit_facets() -> tuple[int, int]:
 
 def merged_facets() -> ee.FeatureCollection:
     fcs = [ee.FeatureCollection(f"{FOLDER}/facets_arc_{i}_{j}")
-           for i in range(BLOCKS_X) for j in range(BLOCKS_Y)]
+           for i in range(BLOCKS_X) for j in range(BLOCKS_Y)
+           if asset_exists(f"{FOLDER}/facets_arc_{i}_{j}")]
     fc = fcs[0]
     for x in fcs[1:]:
         fc = fc.merge(x)
@@ -157,9 +171,11 @@ def submit_tier1() -> tuple[int, int]:
         comp = (s1().filterDate(f"{year}{SEASON[0]}", f"{year}{SEASON[1]}")
                 .filter(ee.Filter.eq("orbitProperties_pass", "DESCENDING"))
                 .select("VV").mean())
+        # toAsset refuses null-geometry features — carry a centroid point
         stats = comp.reduceRegions(fc, ee.Reducer.mean(), 30).map(
-            lambda f: ee.Feature(None, {"facet_id": f.get("facet_id"),
-                                        "year": year, "vv_db": f.get("mean")}))
+            lambda f: ee.Feature(f.geometry().centroid(100),
+                                 {"facet_id": f.get("facet_id"),
+                                  "year": year, "vv_db": f.get("mean")}))
         ee.batch.Export.table.toAsset(stats, description=name, assetId=asset).start()
         submitted += 1
         print(f"submitted {name}")
@@ -192,8 +208,9 @@ def collect() -> None:
         import geopandas as gpd
 
         fc = merged_facets().map(
-            lambda f: f.setGeometry(f.geometry().simplify(60))
-            .select(["facet_id", "fkey"]))
+            lambda f: ee.Feature(f.geometry().simplify(60),
+                                 {"facet_id": f.get("facet_id"),
+                                  "fkey": f.get("fkey")}))
         n = fc.size().getInfo()
         print(f"facets: {n} — downloading simplified geometries", flush=True)
         feats = []
