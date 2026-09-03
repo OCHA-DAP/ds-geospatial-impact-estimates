@@ -368,32 +368,6 @@ the geography benchmark are in the frozen technical record (manuscript v3).
 
 **The record.** The full technical version of this study, frozen manuscript v3, is the citable record behind this brief; the appendix sections below are imported from it verbatim.
 
-### The geography benchmark: framing for this brief {#app-null-brief .unnumbered}
-
-Every product was compared against a deliberately simple benchmark model that uses no
-satellite imagery: a logistic model of building density and terrain, fitted with
-hindsight to this event's own damage labels and validated on spatial blocks it never
-trained on. Its inputs were available on day zero; its fitted coefficients were not, so
-it is a benchmark, not an operational alternative. At building level it lands inside
-the six products' performance band (F1 0.13 against the products' 0.09–0.15), and at
-area ranking it performs comparably to the better single products; the combinations are
-what clear it decisively (flat voting +0.16 F1, fitted fusion +0.21). A covariate
-ablation confirmed the benchmark's strength does not depend on any event-specific
-feature choice: building density alone already lands inside the product band, and a
-fully generalizable terrain-based variant (open Copernicus DEM elevation) is slightly
-stronger than the version reported in v3.
-
-*TBD: the framing of the benchmark comparison is being reworked for this document
-(what it does and does not imply about using satellites); until then, the full
-construction, fairness analysis and results are in the v3 record ("A hindsight
-geography model", its appendix "The geography null model and weighted fusion, in full",
-and "Was the model-versus-product comparison fair?").*
-
-
-The main text states each result with a summary of how it was measured; this
-appendix carries the more in-depth detail, inherited from the long-form draft
-(`manuscript_v2`), which it supersedes.
-
 ### The two reporting regions {#app-regions .unnumbered}
 
 Results are reported in one of two *regions*, and numbers are comparable only within
@@ -653,6 +627,32 @@ against it is flattered rather than understated. The rule of thumb for this whol
 recall an upper bound.** The grade-stratified field-frame measurements in @sec-flags
 quantify how much the recall upper bound overstates.
 
+
+### The geography benchmark: framing for this brief {#app-null-brief .unnumbered}
+
+Every product was compared against a deliberately simple benchmark model that uses no
+satellite imagery: a logistic model of building density and terrain, fitted with
+hindsight to this event's own damage labels and validated on spatial blocks it never
+trained on. Its inputs were available on day zero; its fitted coefficients were not, so
+it is a benchmark, not an operational alternative. At building level it lands inside
+the six products' performance band (F1 0.13 against the products' 0.09–0.15), and at
+area ranking it performs comparably to the better single products; the combinations are
+what clear it decisively (flat voting +0.16 F1, fitted fusion +0.21). A covariate
+ablation confirmed the benchmark's strength does not depend on any event-specific
+feature choice: building density alone already lands inside the product band, and a
+fully generalizable terrain-based variant (open Copernicus DEM elevation) is slightly
+stronger than the version reported in v3.
+
+*TBD: the framing of the benchmark comparison is being reworked for this document
+(what it does and does not imply about using satellites); until then, the full
+construction, fairness analysis and results are in the v3 record ("A hindsight
+geography model", its appendix "The geography null model and weighted fusion, in full",
+and "Was the model-versus-product comparison fair?").*
+
+
+The main text states each result with a summary of how it was measured; this
+appendix carries the more in-depth detail, inherited from the long-form draft
+(`manuscript_v2`), which it supersedes.
 
 ### The geography null model and weighted fusion, in full {#app-null .unnumbered}
 
