@@ -41,8 +41,6 @@ any single product, out-ranks every single product at sector scale, and needs no
 weights, training data or reference, so it can be computed the hour the second
 product arrives.
 
-This brief carries the results and the numbers; the full technical record, including
-the geography benchmark and all sensitivity analyses, is the frozen manuscript v3.
 
 ## The event, the products, and the references
 
@@ -113,16 +111,21 @@ MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false al
 ChatMap is field teams reporting building-level points from the ground, used to reveal
 misses.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refarch}
 
+(A side note on sources: this brief condenses a longer technical write-up. The full
+record, including the geography benchmark and all sensitivity analyses, is the frozen
+manuscript v3 at <https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/>, same passphrase.)
+
 ## Can a responder act on a single flagged building? No {#sec-flags}
 
-Every product performed poorly when scored per building. As delivered, precision across
+Building-level precision was low for every product. As delivered, precision across
 everything the expert reference mapped ran from 0.009 (UH) to 0.081 (Microsoft). Even
 in the core region, where every product scores best, precision reached only 0.045–0.093
 against recall of 0.31–0.69: ten to twenty misses for every hit, in the products' best
-case. The products do find damage; what they also produce is an enormous number of
-flags with nothing recorded underneath them. A simple model of building density and
-terrain does about as well ([the geography benchmark](#app-null-brief)), which is the
-measure of how little building-level information the flags add.
+case. The products do find damage; what they also produce is a large number of flags
+with no reference record underneath them. At this task a simple model of building
+density and terrain performs in the same range ([the geography
+benchmark](#app-null-brief)), so single-product flags should be treated as weak
+evidence on their own.
 
 The expert reference is itself incomplete, and this was measured rather than assumed.
 ChatMap, the one reference collected on the ground independently of any satellite
@@ -131,7 +134,7 @@ but only 49% of those significantly damaged (@fig-gradeslope). The individual pr
 share the same slope: everything sees destruction better than damage. Some damage
 escaped everything: about 11% of field-reported damage points, mostly in inland hill
 communities, had no flag from any product within 20 m despite lying inside analysed
-extents. Recall was never the products' weakness; precision is where they fail.
+extents. Recall was never the products' weakness; precision is the limiting factor.
 
 ![**Region: within the CEMS-analysed extents; reference: field reports (20 m GPS tolerance).** Recall by damage grade. Each line is one dataset's recall against
 field-reported damage, at "complete" destruction versus "significant" damage. Every
@@ -184,7 +187,7 @@ value).](artefacts/RQ3-prioritization-error-structure/figs/rq3h_agreement_rankin
 
 ## How should the products be used? Count agreement {#sec-dial}
 
-The products fail in different places, so the number of them agreeing on a building
+The products' errors fall in different places, so the number of them agreeing on a building
 works as a dial a responder can set. Flag every building any product marked and 97% of
 known damage is covered, but a field team following those flags would make 26 site
 visits for each damaged building it reached; require all six to agree and 93% of flags
@@ -262,13 +265,13 @@ gt
 ```
 
 Weight the count toward *independent methods*: products that share a sensing method
-fail together, and their agreement carried the least information in our tests, while
-products with nothing in common but the event cover for each other's failure zones
+err together, and their agreement carried the least information in our tests, while
+products with nothing in common but the event cover for each other's blind spots
 (@fig-frontier).
 
 ![**Region: core (61 km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
-the pair sharing its entire method is the weakest of
-all.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){#fig-frontier}
+the pair sharing its entire method adds the
+least.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){#fig-frontier}
 
 Counting agreement is also close to the ceiling of what any combination can achieve. A
 statistically fitted combination of the six products scores about 18% higher on F1, but
@@ -302,9 +305,9 @@ flagging individual buildings, where the count roughly doubled the F1 of any pro
 alone. **So do not spend time choosing a product; spend it counting agreement between
 products.** Unlike a fitted model, counting requires no weights, no training data
 and no reference, so it can be done the hour the second product arrives. Weight the
-count toward *independent methods*: products that share a sensing method fail together
+count toward *independent methods*: products that share a sensing method err together
 and their agreement carried the least information in our tests, while products with
-nothing in common but the event cover for each other's failure zones.
+nothing in common but the event cover for each other's blind spots.
 
 That combination is also the promising route toward a derived product usable at
 building level. Which agreement threshold to act on depends on the precision-recall
@@ -315,13 +318,14 @@ assessments accordingly.
 :::
 
 ::: {.callout-tip title="For providers"}
-Publish an analysed extent; without one, a product cannot be evaluated or safely used.
+Publish an analysed extent; without one, a user cannot tell "no flag" from "not
+analysed", so the product cannot be fairly evaluated or confidently used.
 Publish per-building acquisition metadata (scene count and dates); those fields are what
 allowed one failure in this event to be traced to a single satellite scene. Where a
 second scene confirms a flag, present that as an explicit confidence level. For the one
 product whose metadata allowed the check, two-scene flags were 2.5 times more precise
 than single-scene ones. Products should be validated in the kinds of places they are
-deployed; the failing scene here was the one absent from the provider's validation
+deployed; the scene at issue here was the one absent from the provider's validation
 set. And accept feedback during the activation: a crowd campaign
 rejected 71% of one zone's flags within days, and no channel existed to carry that
 signal back while reprocessing could still help.
@@ -366,7 +370,10 @@ the geography benchmark are in the frozen technical record (manuscript v3).
 
 ## Appendix {.unnumbered}
 
-**The record.** The full technical version of this study, frozen manuscript v3, is the citable record behind this brief; the appendix sections below are imported from it verbatim.
+**The record.** The full technical version of this study, frozen manuscript v3
+(<https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/>), is the
+citable record behind this brief; the appendix sections below are imported from it
+verbatim.
 
 ### The two reporting regions {#app-regions .unnumbered}
 
@@ -892,7 +899,7 @@ almost exactly. Second, outside Caraballeda every product keeps flagging at scal
 in Santa Cruz) while measured precision collapses to 0.00–0.02 everywhere. We state
 plainly what those zeros can and cannot mean. They are lower bounds against a reference that
 recorded almost nothing in those AOIs, so two explanations are confounded: the products
-false-alarming at scale where damage is sparse (the same low-damage-zone mechanism as
+over-flagging at scale where damage is sparse (the same low-damage-zone mechanism as
 the UH agricultural case and the Microsoft west strip), and CEMS under-recording damage
 in AOIs it mapped thinly. The crowd cannot arbitrate here: the MapSwipe campaign
 concentrated on the coastal strip, and at most 12% of these out-of-Caraballeda flags
@@ -1025,7 +1032,7 @@ independently on the ~24,700 buildings both scenes covered, the "better" scene's
 advantage turns out to be restraint, not accuracy: it flags 4.9% of buildings against the
 other's 27.8%, but its flags are crowd-confirmed at a lower rate (7% versus 14%).
 Microsoft's merge rule, which resolved conflicts in favour of that scene, was
-directionally right (68% of the overruled flags were crowd-rejected) but silently
+directionally right (68% of the overruled flags were crowd-rejected) but in doing so
 discarded roughly 845 flags on buildings the crowd judged damaged. And buildings flagged
 by both scenes were still 72% crowd-rejected in this low-damage zone. The failure unit is
 the calibration of each per-scene model, not the satellite, the provider, or the product
@@ -1041,14 +1048,14 @@ than scene-level evidence.)
 
 Three things about this case study generalize. First, a single product-level metric
 averaged over a 4× internal quality split, and the split was only detectable because
-per-building provenance was published. Second, the provider's own validation missed the
-failure: the failing scene was exactly the one absent from their labeled validation set,
+per-building provenance was published. Second, the failure was not predictable from the provider's own validation:
+the affected scene was exactly the one absent from their labeled validation set,
 and the platform's previous external evaluation (Turkey) showed the opposite bias,
 conservative under-flagging. Per-scene behaviour in a new event was not predictable from
 the track record. Third, the diagnosis was available during the response: the crowd
 campaign that rejected 71% of the strip's flags finished within days of the flags being
 published, but no channel existed to carry that signal to the provider. For the five
-products that publish no per-building provenance, we can show that they fail but never
+products that publish no per-building provenance, we can see where they err, but never
 why.
 
 ### A version postscript: what a product revision changes {#app-osu-v1 .unnumbered}
