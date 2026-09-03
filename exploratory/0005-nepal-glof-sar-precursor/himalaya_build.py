@@ -19,7 +19,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from himalaya_extract import DOMAIN
+from himalaya_batch import DOMAIN  # the batch pipeline's full-arc domain
 from himalaya_tier2 import tier1_z
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -46,6 +46,15 @@ def main() -> None:
             t2[r.facet_id] = r.t2_2026 if pd.notna(r.t2_2026) else None
 
     facets = gpd.read_file(os.path.join(DATA, "facets_himalaya_final.geojson"))
+    chain = {}
+    hc_path = os.path.join(DATA, "hazard_chain_himalaya.csv")
+    if os.path.exists(hc_path):
+        hc = pd.read_csv(hc_path).set_index("facet_id")
+        ranks = hc.rank(pct=True) * 100
+        for fid in hc.index:
+            chain[fid] = {"drop": int(hc.drop_m[fid]), "lake": int(hc.lake_pct[fid]),
+                          "pop": int(hc.pop_50k[fid]),
+                          "chain": round(float(ranks.loc[fid].mean()), 1)}
     years_by_facet = {fid: {int(y): round(v, 2) for y, v in g.set_index("year").z1_adj.items()}
                       for fid, g in z.groupby("facet_id")}
     out, tiers_count = [], {"critical": 0, "elevated": 0, "watch": 0, "quiet": 0, "nodata": 0}
@@ -66,6 +75,10 @@ def main() -> None:
                "poly": poly}
         if fid in t2:
             rec["t2"] = t2[fid]
+        if fid in chain:
+            rec.update(chain[fid])
+            if pct is not None:
+                rec["attn"] = round((100 - pct) * rec["chain"] / 100, 1)
         out.append(rec)
     print("tiers:", tiers_count)
 
