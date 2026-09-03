@@ -19,11 +19,17 @@ HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "figs")
 args = sys.argv[1:]
 SLIDES = "--slides" in args  # deck variant: no reading-notes footnote (spoken instead)
+# --summary: the technical-brief variant (ADR-0029) — no geography nulls, so the figure
+# carries products + flat voting + weighted fusion only. Writes *_summary.png beside the
+# unchanged default output; the v3 figure is never overwritten.
+SUMMARY = "--summary" in args
 nums = [a for a in args if a.isdigit()]
 R = int(nums[0]) if nums else 10
 SUF = f"_r{R}"  # CSVs always carry an explicit radius suffix (renamed 2026-08-06)
 
 df = pd.read_csv(os.path.join(HERE, "..", f"rq8_best_f1{SUF}.csv"))
+if SUMMARY:
+    df = df[~df.predictor.str.startswith("geography null")]
 prod = df[df.kind.str.startswith("product")].sort_values("f1")
 ours = df[~df.kind.str.startswith("product")].sort_values("f1")
 
@@ -48,6 +54,11 @@ ax.set_title("Like-for-like: each product at the ONE point it shipped,\n"
              "against our scores at their best single cut", fontsize=13)
 if SLIDES:
     fig.tight_layout()
+elif SUMMARY:
+    fig.text(0.99, 0.015,
+             "grey = provider's own threshold  ·  coloured = best single cut of the combined score",
+             ha="right", fontsize=9, style="italic", color="#5a6570")
+    fig.tight_layout(rect=(0, 0.045, 1, 1))
 else:
     # footnote below the axes, so it cannot collide with the bar annotations
     fig.text(0.99, 0.015,
@@ -55,6 +66,6 @@ else:
              "primary null = logistic; the paler forest null is the weaker learner, kept for robustness",
              ha="right", fontsize=9, style="italic", color="#5a6570")
     fig.tight_layout(rect=(0, 0.045, 1, 1))
-out = os.path.join(FIGS, f"rq8_best_f1{SUF}{'_slides' if SLIDES else ''}.png")
+out = os.path.join(FIGS, f"rq8_best_f1{SUF}{'_slides' if SLIDES else '_summary' if SUMMARY else ''}.png")
 fig.savefig(out, dpi=150)
 print(f"wrote {os.path.relpath(out, HERE)}")

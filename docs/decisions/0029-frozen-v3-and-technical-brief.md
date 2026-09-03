@@ -43,10 +43,12 @@ Option 3, with these rules:
 - **Figures never fork**: variants come from `--summary` flags on the existing figure
   scripts writing new suffixed PNGs (precedent: `--slides`); the v3 figures are never
   edited or overwritten, so reverting is a no-op.
-- **Slim appendix**: the brief carries only matching rules, reporting regions, and
-  crowd mechanics, and points to frozen v3 for everything else. It is therefore not
-  journal-self-contained by design; converting it later is mechanical (import the
-  appendix sections).
+- **Appendix imported whole** (amended 2026-09-02, same day): the brief carries v3's
+  full appendix verbatim rather than a slim pointer set. Because v3 is frozen, the
+  import is a one-time copy with no ongoing sync cost, and it makes the brief
+  self-contained (journal-viable without a later import step). The brief-specific
+  "geography benchmark" appendix section, with a TBD marker for reframing the
+  benchmark comparison, fronts the imported material.
 
 ## Consequences
 
