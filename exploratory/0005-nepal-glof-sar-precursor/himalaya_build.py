@@ -45,6 +45,12 @@ def main() -> None:
         for _, r in pd.read_csv(t2p).iterrows():
             t2[r.facet_id] = r.t2_2026 if pd.notna(r.t2_2026) else None
 
+    basins, facet_basin = {}, {}
+    bp = os.path.join(DATA, "basins_himalaya.json")
+    if os.path.exists(bp):
+        bj = json.load(open(bp))
+        basins, facet_basin = bj["basins"], bj["facet_basin"]
+
     facets = gpd.read_file(os.path.join(DATA, "facets_himalaya_final.geojson"))
     chain = {}
     hc_path = os.path.join(DATA, "hazard_chain_himalaya.csv")
@@ -79,6 +85,8 @@ def main() -> None:
             rec.update(chain[fid])
             if pct is not None:
                 rec["attn"] = round((100 - pct) * rec["chain"] / 100, 1)
+        if fid in facet_basin:
+            rec["basin"] = facet_basin[fid]
         out.append(rec)
     print("tiers:", tiers_count)
 
@@ -98,6 +106,7 @@ def main() -> None:
         "tiers": tiers_count,
         "null_n": int(len(null)),
         "facets": out,
+        "basins": basins,
     }
     with open(os.path.join(HERE, "reports", "live_dashboard_template.html")) as f:
         html = f.read()
