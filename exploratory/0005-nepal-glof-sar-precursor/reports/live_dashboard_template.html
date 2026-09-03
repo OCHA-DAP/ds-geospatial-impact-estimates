@@ -1,0 +1,254 @@
+<title>Langtang Facet Watch</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#f7f9fb; --panel:#ffffff; --ink:#16232b; --ink-2:#576873; --ink-3:#8698a3;
+  --accent:#2a78d6; --rule:#dbe4ea;
+  --critical:#e34948; --elevated:#eb6834; --watch:#eda100; --quiet:#7f96a4; --nodata:#c9d2d8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#131b21; --panel:#1a242c; --ink:#e6edf2; --ink-2:#9fb0bb; --ink-3:#6e8093;
+    --accent:#5c9be8; --rule:#26333c;
+    --critical:#e66767; --elevated:#e07039; --watch:#d3a112; --quiet:#5c6f7c; --nodata:#37444e;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#131b21; --panel:#1a242c; --ink:#e6edf2; --ink-2:#9fb0bb; --ink-3:#6e8093;
+  --accent:#5c9be8; --rule:#26333c;
+  --critical:#e66767; --elevated:#e07039; --watch:#d3a112; --quiet:#5c6f7c; --nodata:#37444e;
+}
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--ink); margin:0;
+  font:14px/1.5 "IBM Plex Sans", system-ui, sans-serif;}
+.wrap{max-width:1200px; margin:0 auto; padding:22px 18px 40px;}
+header{display:flex; flex-wrap:wrap; gap:14px; align-items:baseline; margin-bottom:6px;}
+h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:26px; margin:0;}
+.meta{font:400 12px/1.4 "IBM Plex Mono",monospace; color:var(--ink-3);}
+.tiles{display:flex; flex-wrap:wrap; gap:1px; background:var(--rule);
+  border:1px solid var(--rule); margin:12px 0 14px;}
+.tile{background:var(--panel); padding:10px 16px; flex:1 1 110px; min-width:110px;}
+.tile .k{font:500 10px/1.4 "IBM Plex Mono",monospace; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3); display:flex; align-items:center; gap:6px;}
+.tile .k i{width:9px; height:9px; border-radius:2px; display:inline-block;}
+.tile .v{font:600 22px/1.3 "IBM Plex Sans Condensed",sans-serif;
+  font-variant-numeric:tabular-nums;}
+.layout{display:flex; gap:14px; align-items:stretch;}
+#mapbox{position:relative; flex:1 1 640px; min-width:320px; background:var(--panel);
+  border:1px solid var(--rule); border-radius:4px; overflow:hidden;}
+#map{display:block; width:100%; cursor:grab;}
+#tip{position:absolute; pointer-events:none; background:var(--panel); color:var(--ink);
+  border:1px solid var(--rule); border-radius:4px; padding:6px 10px;
+  font:400 12px/1.5 "IBM Plex Mono",monospace; display:none; z-index:5;
+  box-shadow:0 2px 8px rgba(0,0,0,.18);}
+.side{flex:0 0 280px; display:flex; flex-direction:column; gap:14px;}
+.card{background:var(--panel); border:1px solid var(--rule); border-radius:4px; padding:14px 16px;}
+.card h2{font-family:"IBM Plex Sans Condensed",sans-serif; font-size:15px; font-weight:600;
+  margin:0 0 8px; letter-spacing:.02em;}
+.legend div{display:flex; align-items:center; gap:8px; margin:5px 0;
+  font-size:12.5px; color:var(--ink-2);}
+.legend i{width:12px; height:12px; border-radius:3px; flex:none;}
+#detail .row{display:flex; justify-content:space-between; font-size:13px; margin:3px 0;
+  font-variant-numeric:tabular-nums;}
+#detail .row span:first-child{color:var(--ink-2);}
+.bars{margin-top:10px;}
+.bar{display:flex; align-items:center; gap:8px; margin:3px 0;
+  font:400 11.5px/1.4 "IBM Plex Mono",monospace; color:var(--ink-2);}
+.bar .track{flex:1; height:9px; background:var(--ground); border-radius:2px; overflow:hidden;
+  position:relative;}
+.bar .fill{position:absolute; top:0; bottom:0; border-radius:2px;}
+.bar .val{width:44px; text-align:right; font-variant-numeric:tabular-nums; color:var(--ink);}
+.note{font-size:12px; color:var(--ink-2); margin-top:14px; line-height:1.55;}
+.note a{color:var(--accent);}
+@media (max-width:760px){.layout{flex-direction:column}.side{flex:1 1 auto}}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>Langtang Facet Watch</h1>
+  <span class="meta" id="meta"></span>
+</header>
+<div class="tiles" id="tiles"></div>
+<div class="layout">
+  <div id="mapbox">
+    <canvas id="map"></canvas>
+    <div id="tip"></div>
+  </div>
+  <div class="side">
+    <div class="card legend" id="legend">
+      <h2>Tier · percentile of the last 90 days vs 2020–25 history</h2>
+    </div>
+    <div class="card" id="detail"><h2>Facet detail</h2>
+      <div class="row"><span>Click a facet on the map.</span></div>
+    </div>
+  </div>
+</div>
+<p class="note">Each polygon is one computed monitoring unit (steep glacier
+face) from the exploratory 0005 enumeration. Color places the face's worst
+recent 3-pass morning-radar anomaly as a percentile within the region's own
+2020–25 history of the same statistic; it is a rank against the past, not a
+prediction. Snapshot dashboard, refreshed by rerunning
+<code>live_extract.py</code> + <code>live_build.py</code>. Evidence base for the
+method: two historical case studies, jointly p ≈ 0.02 — details in the
+<a href="https://ocha-dap.github.io/ds-geospatial-impact-estimates/langtang-sar-precursors/">companion report</a>.
+Exploratory analysis, not an operational OCHA product or warning.</p>
+</div>
+
+<script>
+const DATA = {{DATA}};
+const TIER_LABEL = {critical:"critical (<1st pctile)", elevated:"elevated (<5th)",
+  watch:"watch (<15th)", quiet:"quiet", nodata:"no recent data"};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue("--"+n).trim();
+const tierColor = t => css(t);
+const MARKS = [
+  {lon:85.5228, lat:28.2865, label:"collapse 26 Aug 2026"},
+  {lon:85.489, lat:28.568, label:"strongest 2026 anomaly (uncollapsed)"},
+];
+
+document.getElementById("meta").textContent =
+  `${DATA.facets.length} faces · last image ${DATA.last_acq} · built ${DATA.generated} · Langtang pilot region`;
+
+const tilesEl = document.getElementById("tiles");
+for (const t of ["critical","elevated","watch","quiet","nodata"]) {
+  const d = document.createElement("div"); d.className = "tile";
+  d.innerHTML = `<div class="k"><i style="background:${tierColor(t)}"></i>${t}</div>
+    <div class="v">${DATA.tiers[t] ?? 0}</div>`;
+  tilesEl.appendChild(d);
+}
+const leg = document.getElementById("legend");
+for (const t of ["critical","elevated","watch","quiet","nodata"]) {
+  const d = document.createElement("div");
+  d.innerHTML = `<i style="background:${tierColor(t)}"></i>${TIER_LABEL[t]}`;
+  leg.appendChild(d);
+}
+
+const [W0, S0, E0, N0] = DATA.region;
+const cv = document.getElementById("map"), ctx = cv.getContext("2d");
+const box = document.getElementById("mapbox"), tip = document.getElementById("tip");
+const hill = new Image();
+hill.src = "data:image/png;base64,{{HILLSHADE}}";
+const kmx = 111 * Math.cos((S0 + N0) / 2 * Math.PI / 180), kmy = 111;
+let view = {k: 1, tx: 0, ty: 0}, sel = null, hover = null;
+
+function size() {
+  const w = box.clientWidth;
+  const h = Math.round(w * ((N0 - S0) * kmy) / ((E0 - W0) * kmx));
+  cv.width = w * devicePixelRatio; cv.height = h * devicePixelRatio;
+  cv.style.height = h + "px";
+  draw();
+}
+const px = (lon, lat) => [
+  ((lon - W0) / (E0 - W0) * cv.width) * view.k + view.tx,
+  ((N0 - lat) / (N0 - S0) * cv.height) * view.k + view.ty,
+];
+function draw() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  const [x0, y0] = px(W0, N0), [x1, y1] = px(E0, S0);
+  if (hill.complete) { ctx.globalAlpha = 0.9; ctx.drawImage(hill, x0, y0, x1 - x0, y1 - y0); ctx.globalAlpha = 1; }
+  for (const f of DATA.facets) {
+    ctx.beginPath();
+    for (let i = 0; i < f.poly.length; i++) {
+      const [x, y] = px(f.poly[i][0], f.poly[i][1]);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = tierColor(f.tier);
+    ctx.globalAlpha = f.tier === "quiet" || f.tier === "nodata" ? 0.55 : 0.85;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    if (f === sel || f === hover) {
+      ctx.strokeStyle = css("ink"); ctx.lineWidth = 2 * devicePixelRatio; ctx.stroke();
+    }
+  }
+  ctx.font = `${11 * devicePixelRatio}px IBM Plex Mono, monospace`;
+  for (const m of MARKS) {
+    const [x, y] = px(m.lon, m.lat);
+    ctx.beginPath(); ctx.arc(x, y, 5 * devicePixelRatio, 0, 7);
+    ctx.fillStyle = css("ink"); ctx.fill();
+    ctx.strokeStyle = css("ground"); ctx.lineWidth = 2 * devicePixelRatio; ctx.stroke();
+    ctx.fillStyle = css("ink");
+    ctx.fillText(m.label, x + 9 * devicePixelRatio, y + 4 * devicePixelRatio);
+  }
+}
+function invert(mx, my) {
+  const x = (mx * devicePixelRatio - view.tx) / view.k, y = (my * devicePixelRatio - view.ty) / view.k;
+  return [W0 + x / cv.width * (E0 - W0), N0 - y / cv.height * (N0 - S0)];
+}
+function inPoly(lon, lat, poly) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+const hit = (lon, lat) => DATA.facets.find(f => inPoly(lon, lat, f.poly));
+
+let drag = null;
+cv.addEventListener("pointerdown", e => { drag = {x: e.clientX, y: e.clientY, moved: false}; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener("pointermove", e => {
+  if (drag) {
+    view.tx += (e.clientX - drag.x) * devicePixelRatio; view.ty += (e.clientY - drag.y) * devicePixelRatio;
+    if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 3) drag.moved = true;
+    drag.x = e.clientX; drag.y = e.clientY; draw(); return;
+  }
+  const r = cv.getBoundingClientRect();
+  const f = hit(...invert(e.clientX - r.left, e.clientY - r.top));
+  if (f !== hover) { hover = f; draw(); }
+  if (f) {
+    tip.style.display = "block";
+    tip.style.left = (e.clientX - r.left + 14) + "px"; tip.style.top = (e.clientY - r.top + 10) + "px";
+    tip.textContent = `${f.id} · ${f.tier}` + (f.live != null ? ` · last90d ${f.live > 0 ? "+" : ""}${f.live}` : "");
+  } else tip.style.display = "none";
+});
+cv.addEventListener("pointerup", e => {
+  if (drag && !drag.moved) {
+    const r = cv.getBoundingClientRect();
+    sel = hit(...invert(e.clientX - r.left, e.clientY - r.top)) || null;
+    detail(); draw();
+  }
+  drag = null;
+});
+cv.addEventListener("wheel", e => {
+  e.preventDefault();
+  const r = cv.getBoundingClientRect();
+  const mx = (e.clientX - r.left) * devicePixelRatio, my = (e.clientY - r.top) * devicePixelRatio;
+  const k = Math.min(20, Math.max(1, view.k * (e.deltaY < 0 ? 1.18 : 1 / 1.18)));
+  view.tx = mx - (mx - view.tx) * k / view.k; view.ty = my - (my - view.ty) * k / view.k;
+  view.k = k;
+  if (k === 1) { view.tx = 0; view.ty = 0; }
+  draw();
+}, {passive: false});
+
+function detail() {
+  const d = document.getElementById("detail");
+  if (!sel) { d.innerHTML = '<h2>Facet detail</h2><div class="row"><span>Click a facet on the map.</span></div>'; return; }
+  const rows = [
+    ["Facet", sel.id], ["Tier", sel.tier], ["Aspect", sel.aspect],
+    ["Area", sel.km2 + " km²"],
+    ["Last-90d stat", sel.live == null ? "no data" : sel.live],
+    ["Pctile vs history", sel.pct == null ? "·" : sel.pct + "%"],
+  ];
+  let h = "<h2>Facet detail</h2>" + rows.map(r =>
+    `<div class="row"><span>${r[0]}</span><span>${r[1]}</span></div>`).join("");
+  h += '<div class="bars">';
+  const years = Object.keys(sel.years).sort();
+  const maxAbs = Math.max(2.5, ...years.map(y => Math.abs(sel.years[y])));
+  for (const y of years) {
+    const v = sel.years[y];
+    const wpc = Math.min(50, Math.abs(v) / maxAbs * 50);
+    const col = v <= 0 ? css("accent") : css("ink-3");
+    const left = v <= 0 ? (50 - wpc) : 50;
+    h += `<div class="bar"><span>${y}</span><div class="track">
+      <div class="fill" style="left:${left}%;width:${wpc}%;background:${col}"></div>
+      <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--rule)"></div>
+      </div><span class="val">${v > 0 ? "+" : ""}${v.toFixed(1)}</span></div>`;
+  }
+  h += '</div><div class="note" style="margin-top:8px">Bars: the season detector statistic per year (left of the centre line = darker than its own history on morning passes).</div>';
+  d.innerHTML = h;
+}
+
+hill.onload = draw;
+addEventListener("resize", size);
+size();
+</script>
