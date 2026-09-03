@@ -131,7 +131,8 @@ def main() -> None:
     import re as _re
 
     html = (html
-            .replace("Langtang Facet Watch", "Himalaya Facet Watch")
+            .replace("Langtang Facet Watch",
+                     "Central Himalaya - Experimental Facet Watch Analyses")
             .replace("Langtang pilot region", "central Himalaya 82–89°E")
             .replace("last image ${DATA.last_acq}", "coverage ${DATA.last_acq}")
             .replace("Tier · percentile of the last 90 days vs 2020–25 history",
@@ -150,13 +151,13 @@ def main() -> None:
     os.makedirs(PAGES, exist_ok=True)
     page = ('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-            "<title>Himalaya Facet Watch</title>\n</head>\n<body>\n"
+            "<title>Central Himalaya - Experimental Facet Watch Analyses</title>\n</head>\n<body>\n"
             "<style>.home-link{display:inline-block;margin:10px 12px;padding:6px 12px;"
             "font:500 13px/1 'IBM Plex Mono',monospace;color:#2a78d6;background:#eaf2fb;"
             "border:1px solid #c9ddf3;border-radius:4px;text-decoration:none}"
             ".home-link:hover{background:#dcebf9}</style>\n"
             '<a class="home-link" href="../">← All analysis &amp; tools</a>\n'
-            + html.replace("<title>Himalaya Facet Watch</title>", "", 1)
+            + html.replace("<title>Central Himalaya - Experimental Facet Watch Analyses</title>", "", 1)
             + "\n</body>\n</html>\n")
     with open(os.path.join(PAGES, "index.html"), "w") as f:
         f.write(page)
