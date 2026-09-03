@@ -118,8 +118,10 @@ h1{font-family:"IBM Plex Sans Condensed",sans-serif; font-weight:700; font-size:
       <p style="margin:0"><strong>Click any face</strong> for its year-by-year
       history and its consequence factors. Where basin data is loaded, clicking
       also lights up the face's <strong>downstream watershed chain</strong>
-      (HydroBASINS, pre-linked, no flow modelling) with the population living in
-      each basin, so the route from face to people is visible. Consequence never
+      (HydroBASINS, pre-linked, no flow modelling), labelled with the population
+      living within ~1 km of the river channel in each basin (GHSL masked to a
+      MERIT-Hydro channel corridor), so the route from face to people is
+      visible. Consequence never
       changes a face's color; it only decides which anomalies deserve a human
       first.</p>
   </div>
@@ -244,11 +246,12 @@ function draw() {
   ctx.font = `${10 * devicePixelRatio}px IBM Plex Mono, monospace`;
   ctx.textAlign = "center";
   for (const b of chain) {
-    if (b.pop < 500) continue;
+    const pv = b.popc != null ? b.popc : b.pop;  // prefer near-channel exposure
+    if (pv < 500) continue;
     const c = b.poly.reduce((a, p) => [a[0] + p[0], a[1] + p[1]], [0, 0])
       .map(v => v / b.poly.length);
     const [x, y] = px(c[0], c[1]);
-    const label = b.pop >= 1000 ? (b.pop / 1000).toFixed(0) + "k" : String(b.pop);
+    const label = pv >= 1000 ? (pv / 1000).toFixed(0) + "k" : String(pv);
     ctx.lineWidth = 3 * devicePixelRatio; ctx.strokeStyle = css("ground");
     ctx.strokeText(label, x, y); ctx.fillStyle = css("ink"); ctx.fillText(label, x, y);
   }
@@ -391,10 +394,14 @@ function detail() {
     ["Attention score", sel.attn == null ? "·" : sel.attn.toFixed(0)],
   );
   const dchain = chainOf(sel);
-  if (dchain.length) rows.push(
-    ["Downstream chain", `${dchain.length} basins · ` +
-      `${dchain.reduce((s, b) => s + b.pop, 0).toLocaleString()} people`],
-  );
+  if (dchain.length) {
+    const tot = dchain.reduce((s, b) => s + b.pop, 0);
+    const ch = dchain.reduce((s, b) => s + (b.popc ?? 0), 0);
+    rows.push(["Downstream chain", `${dchain.length} basins`]);
+    if (dchain.some(b => b.popc != null))
+      rows.push(["· near channel", ch.toLocaleString() + " people"]);
+    rows.push(["· whole basins", tot.toLocaleString() + " people"]);
+  }
   let h = "<h2>Facet detail</h2>" + rows.map(r =>
     `<div class="row"><span>${r[0]}</span><span>${r[1]}</span></div>`).join("");
   h += '<div class="bars">';
