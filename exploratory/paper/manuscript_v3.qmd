@@ -515,9 +515,9 @@ LIST's 0.74 at ~0.74 km² cells, 0.66 against 0.56 at ~0.11 km²), and it beats 
 fitted fusion score as well, which was trained to score buildings, not to order cells.
 The two ranking questions reward different dial settings. For a full priority ordering
 of every cell, mid-agreement (3 or 4 of 6) is best. For a shortlist, "which 20 sectors
-first", high agreement is decisively better: 5-of-6 puts 16 of the 20 worst-hit cells
-on its list where the best single product manages 13, and at the finer scale the
-contrast hardens, 10 of 20 against 4 of 20 for the best single, while the geography
+first", high agreement is clearly better: 5-of-6 shortlists 16 of the 20 worst-hit
+cells against the best single product's 13, and 10 against 4 at the finer scale, while
+the geography
 model shortlists none. That last number is the sharpest statement of the division of
 labour in this paper: geography names the right neighbourhoods (it ranks the true
 worst cells consistently in its top fifth) but cannot tell the worst block from the
@@ -582,20 +582,20 @@ misses lesser damage.
 
 ## Recommendations
 
-The results imply changes in practice for three audiences. We collect them here, once.
+The results imply changes in practice for three audiences.
 
 ::: {.callout-tip title="For responders"}
 These recommendations feed an ongoing dialogue with responders about what is
 operationally most useful, and the clearest signal so far concerns the first 72 hours,
-when the pressing need is to narrow down the worst-hit areas. Start from what a single
-product can and cannot carry. No single product supports acting on individual flagged
+when the pressing need is to narrow down the worst-hit areas. No single
+product supports acting on individual flagged
 buildings. The neighbourhood ranking can be trusted, but only *within* a damage zone
 that is already identified: scored across everything a product delivered, its ranking
 adds little to what coarse geography already encodes, while within the known damage
 zone the products carry real information about where to go first (@sec-ranking).
 
-The promise is in combining them. Counting agreement between products outperformed
-every single product on both tasks: at ranking neighbourhoods (@fig-agreerank) and at
+Combining them works better. Counting agreement between products outperformed
+every single product both at ranking neighbourhoods (@fig-agreerank) and at
 flagging individual buildings, where the count roughly doubled the F1 of any product
 alone. **So do not spend time choosing a product; spend it counting agreement between
 products.** Unlike a fitted model, counting requires no weights, no training data
@@ -616,11 +616,11 @@ assessments accordingly.
 Publish an analysed extent; without one, a product cannot be evaluated or safely used.
 Publish per-building acquisition metadata (scene count and dates); those fields are what
 allowed this paper to trace a failure to a single satellite scene. Where a second scene
-confirms a flag, present that as an explicit confidence level: for Microsoft, the one
+confirms a flag, present that as an explicit confidence level. For Microsoft, the one
 product whose metadata allowed the check, two-scene flags were 2.5 times more precise
-than single-scene flags ([Appendix](#app-ceiling)), a distinction a user currently has
-to reconstruct from the per-building metadata. Validate where
-the product is deployed, not where validation data happens to exist; the failing scene
+than single-scene ones ([Appendix](#app-ceiling)), a distinction a user currently has
+to reconstruct from the per-building metadata. Products should be validated in the
+kinds of places they are deployed; the failing scene
 here was the unvalidated one. Check new products against a geography-only baseline, which
 every single product in this event merely tied. And accept feedback during the
 activation: a crowd campaign rejected 71% of one zone's flags within days, and no channel

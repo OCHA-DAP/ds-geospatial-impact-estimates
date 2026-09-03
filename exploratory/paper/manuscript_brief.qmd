@@ -31,15 +31,14 @@ that published an analysed extent against three references with complementary bl
 spots: expert damage points (Copernicus EMS), a crowd review of AI-flagged locations
 (MapSwipe), and 415 field reports (ChatMap).
 
-Three findings, one per question a coordinator would ask. First, no product supports
-acting on a single flagged building: precision ran 0.05–0.09 even in each product's most
-favourable region, and although the expert reference misses lesser damage, the most
-generous defensible reading still leaves every product below 0.28. Second, the products
-do rank neighbourhoods well enough to triage, within a damage zone that is already
-identified. Third, the practical way to use them is to count agreement between
-independent products: the count roughly doubles the building-level performance (F1) of
-any single product and out-ranks every single product at sector scale, and it needs no
-weights, no training data and no reference, so it can be computed the hour the second
+No product supports acting on a single flagged building: precision ran 0.05–0.09 even
+in each product's most favourable region, and although the expert reference misses
+lesser damage, the most generous defensible reading still leaves every product below
+0.28. The products do rank neighbourhoods well enough to triage, within a damage zone
+that is already identified. The practical way to use them is to count agreement between
+independent products. The count roughly doubles the building-level performance (F1) of
+any single product, out-ranks every single product at sector scale, and needs no
+weights, training data or reference, so it can be computed the hour the second
 product arrives.
 
 This brief carries the results and the numbers; the full technical record, including
@@ -91,8 +90,8 @@ under a stated coverage
 assumption.](artefacts/RQ0-matching-basis/figs/fig_extents_map.png){#fig-extents}
 
 **Two reporting regions, used throughout.** *As delivered* scores each product across
-everything it shipped, wherever the expert reference mapped: the view that matches what
-responders actually received. The *core region* is the ~61 km² where all six products
+everything it shipped, wherever the expert reference mapped. This is the view that
+matches what responders actually received. The *core region* is the ~61 km² where all six products
 and the reference overlap: one shared area that puts every predictor on identical
 footing, and each product's favourable case (it holds 96% of the expert-recorded
 damage). Sections and captions state which region they use.
@@ -101,10 +100,10 @@ damage). Sections and captions state which region they use.
 damage points and is the primary reference: every headline precision and recall is
 computed against it, under one matching rule (a building counts as damaged if a CEMS
 point lies within 10 m). MapSwipe is a crowd campaign in which more than 400 volunteers
-reviewed ~50 m cells at locations AI products had flagged: it can refute false alarms
-but can never reveal a miss, so it is used to adjudicate disputed flags, never as
+reviewed ~50 m cells at locations AI products had flagged. It can refute a false alarm
+but can never reveal a miss, so it adjudicates disputed flags and is never used as
 ground truth. ChatMap is 415 building-level damage reports from field teams,
-positives-only with no survey frame: it can reveal misses but says nothing about false
+positives-only with no survey frame. It can reveal misses but says nothing about false
 alarms (@fig-refarch). Because their blind spots do not overlap, the three check one
 another. One consequence governs every number here: **against an incomplete reference,
 measured precision is a lower bound and measured recall an upper bound.**
@@ -122,8 +121,8 @@ in the core region, where every product scores best, precision reached only 0.04
 against recall of 0.31–0.69: ten to twenty misses for every hit, in the products' best
 case. The products do find damage; what they also produce is an enormous number of
 flags with nothing recorded underneath them. A simple model of building density and
-terrain performs comparably at this task, which is part of how we know the flags carry
-little building-level information ([the geography benchmark](#app-null-brief)).
+terrain does about as well ([the geography benchmark](#app-null-brief)), which is the
+measure of how little building-level information the flags add.
 
 The expert reference is itself incomplete, and this was measured rather than assumed.
 ChatMap, the one reference collected on the ground independently of any satellite
@@ -173,9 +172,9 @@ almost by definition; the products' real ranking information is about where to g
 Counting agreement between products sharpens that ranking (@fig-agreerank). Ranking
 cells by their count of buildings with three or four products agreeing beats every
 single product's ordering (ρ 0.78 against the best single's 0.74 at ~0.74 km² cells),
-and for a shortlist, "which 20 sectors first", high agreement is decisively better:
-five-of-six agreement puts 16 of the 20 worst-hit cells on its list where the best
-single product manages 13, and at finer scale the contrast hardens to 10 against 4.
+and for a shortlist, "which 20 sectors first", high agreement is clearly better:
+five-of-six agreement shortlists 16 of the 20 worst-hit cells against the best single
+product's 13, and 10 against 4 at the finer scale.
 
 ![**Region: core (61 km²), both cell scales.** The k-of-6 agreement dial at the
 area-ranking task, against each single product (grey). Top row: rank correlation with
@@ -191,8 +190,9 @@ known damage is covered, but a field team following those flags would make 26 si
 visits for each damaged building it reached; require all six to agree and 93% of flags
 are correct but only 18% of the damage is covered. Between the extremes, each added
 agreeing product raises the odds that a flag is real, and setting the threshold fixes
-the size of the field job the same day (@tbl-dial). The choice is a workload, not a
-guaranteed hit rate.
+the size of the field job the same day (@tbl-dial). Setting the threshold fixes how
+many buildings field teams will visit; it does not fix how many of them will turn out
+damaged.
 
 ```{python}
 #| label: tbl-dial
@@ -284,20 +284,20 @@ fit.](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10_summary.png){#fig-bestf1
 
 ## Recommendations
 
-The results imply changes in practice for three audiences. We collect them here, once.
+The results imply changes in practice for three audiences.
 
 ::: {.callout-tip title="For responders"}
 These recommendations feed an ongoing dialogue with responders about what is
 operationally most useful, and the clearest signal so far concerns the first 72 hours,
-when the pressing need is to narrow down the worst-hit areas. Start from what a single
-product can and cannot carry. No single product supports acting on individual flagged
+when the pressing need is to narrow down the worst-hit areas. No single
+product supports acting on individual flagged
 buildings. The neighbourhood ranking can be trusted, but only *within* a damage zone
 that is already identified: scored across everything a product delivered, its ranking
 adds little to what coarse geography already encodes, while within the known damage
 zone the products carry real information about where to go first (@sec-ranking).
 
-The promise is in combining them. Counting agreement between products outperformed
-every single product on both tasks: at ranking neighbourhoods (@fig-agreerank) and at
+Combining them works better. Counting agreement between products outperformed
+every single product both at ranking neighbourhoods (@fig-agreerank) and at
 flagging individual buildings, where the count roughly doubled the F1 of any product
 alone. **So do not spend time choosing a product; spend it counting agreement between
 products.** Unlike a fitted model, counting requires no weights, no training data
@@ -318,10 +318,11 @@ assessments accordingly.
 Publish an analysed extent; without one, a product cannot be evaluated or safely used.
 Publish per-building acquisition metadata (scene count and dates); those fields are what
 allowed one failure in this event to be traced to a single satellite scene. Where a
-second scene confirms a flag, present that as an explicit confidence level: for the one
+second scene confirms a flag, present that as an explicit confidence level. For the one
 product whose metadata allowed the check, two-scene flags were 2.5 times more precise
-than single-scene flags. Validate where the product is deployed, not where validation
-data happens to exist. And accept feedback during the activation: a crowd campaign
+than single-scene ones. Products should be validated in the kinds of places they are
+deployed; the failing scene here was the one absent from the provider's validation
+set. And accept feedback during the activation: a crowd campaign
 rejected 71% of one zone's flags within days, and no channel existed to carry that
 signal back while reprocessing could still help.
 :::
