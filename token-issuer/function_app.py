@@ -44,11 +44,13 @@ ALLOWLIST = {
         "project_prefix": "ds-regional-forecasts",
         "dirs": {"assets": "processed/site-assets", "raw": "raw"},
     },
-    # CEMS flood label corpus: viewer (GitHub Pages, pages/labels/) + academic
-    # partner access. Scoped to the PUBLISHED platinum layer only (a versioned
-    # Portolan catalog: labels GeoParquet + PMTiles + index); the canonical
-    # gold/silver/bronze layers stay internal. Same account as the other apps,
-    # so the existing MI grant covers it.
+    # CEMS flood label corpus viewer (GitHub Pages, pages/labels/) ONLY — the
+    # academic partner gets files directly, not via tokens. Scoped to the
+    # published platinum layer (a versioned Portolan catalog: labels
+    # GeoParquet + PMTiles + index); gold/silver/bronze stay internal. Same
+    # account as the other apps, so the existing MI grant covers it.
+    # NB: platinum/versions.json is a RECORD (semver+checksums) — update via
+    # `portolan sync`, never hand-delete the directory.
     "cems-flood-labels": {
         "account": "imb0chd0dev",
         "container": "global",
