@@ -121,11 +121,15 @@ async function attempt(passphrase, { silent = false } = {}) {
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
-  if (!input.value) {
+  // Trim: a pasted passphrase routinely carries a trailing newline or space from the
+  // clipboard, which would fail key derivation invisibly. No page passphrase here has
+  // deliberate edge whitespace.
+  const pass = input.value.trim();
+  if (!pass) {
     say("Enter the passphrase.", "error");
     return;
   }
-  attempt(input.value);
+  attempt(pass);
 });
 
 const cached = sessionStorage.getItem(CACHE_KEY);
