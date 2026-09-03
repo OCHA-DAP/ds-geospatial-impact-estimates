@@ -113,7 +113,8 @@ misses.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refa
 
 (A side note on sources: this brief condenses a longer technical write-up. The full
 record, including the geography benchmark and all sensitivity analyses, is the frozen
-manuscript v3 at <https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/>, same passphrase.)
+manuscript v3 at <https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/>;
+its passphrase is shared separately.)
 
 ## Can a responder act on a single flagged building? No {#sec-flags}
 
@@ -121,8 +122,8 @@ Building-level precision was low for every product. As delivered, precision acro
 everything the expert reference mapped ran from 0.009 (UH) to 0.081 (Microsoft). Even
 in the core region, where every product scores best, precision reached only 0.045–0.093
 against recall of 0.31–0.69: ten to twenty misses for every hit, in the products' best
-case. The products do find damage; what they also produce is a large number of flags
-with no reference record underneath them. At this task a simple model of building
+case. The products do find damage; what they also produce is an enormous number of
+flags with no reference record of damage underneath them. At this task a simple model of building
 density and terrain performs in the same range ([the geography
 benchmark](#app-null-brief)), so single-product flags should be treated as weak
 evidence on their own.
@@ -1048,8 +1049,9 @@ than scene-level evidence.)
 
 Three things about this case study generalize. First, a single product-level metric
 averaged over a 4× internal quality split, and the split was only detectable because
-per-building provenance was published. Second, the failure was not predictable from the provider's own validation:
-the affected scene was exactly the one absent from their labeled validation set,
+per-building provenance was published. Second, the failure was not predictable from the provider's own validation: by the
+per-scene precision figures in their published report, the affected scene was exactly
+the one absent from their labeled validation set,
 and the platform's previous external evaluation (Turkey) showed the opposite bias,
 conservative under-flagging. Per-scene behaviour in a new event was not predictable from
 the track record. Third, the diagnosis was available during the response: the crowd
