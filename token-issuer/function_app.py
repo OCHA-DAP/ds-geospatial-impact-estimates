@@ -44,14 +44,16 @@ ALLOWLIST = {
         "project_prefix": "ds-regional-forecasts",
         "dirs": {"assets": "processed/site-assets", "raw": "raw"},
     },
-    # CEMS flood label corpus viewer (GitHub Pages, pages/labels/) + academic
-    # partner read access to the gold label tables. Read-only, gold dir only;
-    # same account as the other apps so the existing MI grant covers it.
+    # CEMS flood label corpus: viewer (GitHub Pages, pages/labels/) + academic
+    # partner access. Scoped to the PUBLISHED platinum layer only (a versioned
+    # Portolan catalog: labels GeoParquet + PMTiles + index); the canonical
+    # gold/silver/bronze layers stay internal. Same account as the other apps,
+    # so the existing MI grant covers it.
     "cems-flood-labels": {
         "account": "imb0chd0dev",
         "container": "global",
         "project_prefix": "copernicus_ems/flood",
-        "dirs": {"gold": "gold"},
+        "dirs": {"platinum": "platinum"},
     },
 }
 
