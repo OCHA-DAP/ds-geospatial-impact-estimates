@@ -52,6 +52,20 @@ def main() -> None:
         basins, facet_basin = bj["basins"], bj["facet_basin"]
 
     facets = gpd.read_file(os.path.join(DATA, "facets_himalaya_final.geojson"))
+    # background band for the context chart: per-year quantiles of the statistic
+    bg = {str(int(y)): [round(float(np.percentile(g.z1_adj, q)), 2) for q in (10, 50, 90)]
+          for y, g in z.groupby("year")}
+    from shapely.geometry import Point
+
+    scar = Point(85.52284, 28.28648)  # Langtang detachment centroid
+    collapse_ids = set(facets[facets.geometry.contains(scar)].facet_id)
+    if not collapse_ids:
+        # the containing fragment fell below the arc layer's 0.5 km2 cut —
+        # take the nearest facet within 2 km instead
+        d = facets.to_crs(32645).distance(
+            gpd.GeoSeries([scar], crs=4326).to_crs(32645).iloc[0])
+        if d.min() <= 2000:
+            collapse_ids = {facets.iloc[int(d.idxmin())].facet_id}
     chain = {}
     hc_path = os.path.join(DATA, "hazard_chain_himalaya.csv")
     if os.path.exists(hc_path):
@@ -87,7 +101,10 @@ def main() -> None:
                 rec["attn"] = round((100 - pct) * rec["chain"] / 100, 1)
         if fid in facet_basin:
             rec["basin"] = facet_basin[fid]
+        if fid in collapse_ids:
+            rec["collapse"] = True
         out.append(rec)
+    print("collapse facet(s):", collapse_ids or "none found")
     print("tiers:", tiers_count)
 
     with rasterio.open(os.path.join(DATA, "himalaya_hillshade.tif")) as src:
@@ -107,6 +124,7 @@ def main() -> None:
         "null_n": int(len(null)),
         "facets": out,
         "basins": basins,
+        "bg": bg,
     }
     with open(os.path.join(HERE, "reports", "live_dashboard_template.html")) as f:
         html = f.read()
