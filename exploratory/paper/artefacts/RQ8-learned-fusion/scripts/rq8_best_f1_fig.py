@@ -29,7 +29,61 @@ SUF = f"_r{R}"  # CSVs always carry an explicit radius suffix (renamed 2026-08-0
 
 df = pd.read_csv(os.path.join(HERE, "..", f"rq8_best_f1{SUF}.csv"))
 if SUMMARY:
+    # The brief's figure: two panels, core (products + the two combined constructions,
+    # no nulls) beside as-delivered (products only — the combinations are defined on the
+    # shared footprint base and exist only in the core region). Reads the frozen rq8 and
+    # rq8b CSVs; writes its own *_summary.png and exits before the single-panel path.
     df = df[~df.predictor.str.startswith("geography null")]
+    prod = df[df.kind.str.startswith("product")].sort_values("f1")
+    ours = df[~df.kind.str.startswith("product")].sort_values("f1")
+    asd = pd.read_csv(os.path.join(HERE, "..", f"rq8b_asdelivered_baseline{SUF}.csv"))
+    asd["f1"] = 2 * asd.P_product * asd.R_product / (asd.P_product + asd.R_product)
+    asd = asd.sort_values("f1")
+    NAMES = {"MS": "MS", "IMPACT": "IMPACT", "OSU": "OSU", "UH": "UH",
+             "LIST": "LIST", "UNEP": "UNEP"}
+
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(15, 6.6))
+    # left: core
+    labL = [*prod.predictor, *ours.predictor]
+    valL = [*prod.f1, *ours.f1]
+    COLS = {"flat k-of-6 voting": "#51ac92", "weighted fusion": "#18614c"}
+    colL = ["#9db1b3"] * len(prod) + [COLS[n] for n in ours.predictor]
+    ypL = np.arange(len(labL), dtype=float)
+    ypL[len(prod):] += 0.6
+    axL.barh(ypL, valL, color=colL, zorder=2)
+    for yy, (_, row) in zip(ypL, pd.concat([prod, ours]).iterrows()):
+        axL.text(row.f1 + 0.004, yy, f"{row.f1:.3f}  (P {row.precision:.3f} / R {row.recall:.3f})",
+                 va="center", fontsize=9.5)
+    axL.set_yticks(ypL, labL, fontsize=11)
+    axL.set_title("core region (61 km²)", fontsize=12, weight="bold")
+    # right: as delivered, products only
+    ypR = np.arange(len(asd), dtype=float)
+    axR.barh(ypR, asd.f1, color="#9db1b3", zorder=2)
+    for yy, (_, row) in zip(ypR, asd.iterrows()):
+        axR.text(row.f1 + 0.004, yy,
+                 f"{row.f1:.3f}  (P {row.P_product:.3f} / R {row.R_product:.3f})",
+                 va="center", fontsize=9.5)
+    axR.set_yticks(ypR, [NAMES[p_] for p_ in asd["product"]], fontsize=11)
+    axR.set_title("as delivered (products only)", fontsize=12, weight="bold")
+    xmax = max(max(valL), float(asd.f1.max())) * 1.55
+    for ax in (axL, axR):
+        ax.set_xlim(0, xmax)
+        ax.set_xlabel(f"F1 at the operating point (CEMS damaged/destroyed within {R} m)",
+                      fontsize=11)
+        ax.spines[["top", "right"]].set_visible(False)
+    axL.set_ylim(-0.8, max(ypL) + 0.8)
+    axR.set_ylim(-0.8, max(ypL) + 0.8)  # same vertical scale so the panels read together
+    fig.suptitle("Product & combined product performance (F1/P/R)", fontsize=14)
+    fig.text(0.99, 0.015,
+             "grey = provider's own threshold  ·  green = combined products at their best single cut "
+             "(defined on the shared footprint base: core region only)",
+             ha="right", fontsize=9, style="italic", color="#5a6570")
+    fig.tight_layout(rect=(0, 0.045, 1, 0.95))
+    out = os.path.join(FIGS, f"rq8_best_f1{SUF}_summary.png")
+    fig.savefig(out, dpi=150)
+    print(f"wrote {os.path.relpath(out, HERE)}")
+    raise SystemExit(0)
+
 prod = df[df.kind.str.startswith("product")].sort_values("f1")
 ours = df[~df.kind.str.startswith("product")].sort_values("f1")
 

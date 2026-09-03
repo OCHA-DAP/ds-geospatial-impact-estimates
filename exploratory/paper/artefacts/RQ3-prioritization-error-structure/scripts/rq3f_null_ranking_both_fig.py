@@ -22,6 +22,10 @@ import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(__file__)
 SLIDES = "--slides" in sys.argv  # deck variant: core panel LEFT, no Test-N prefixes
+# --summary: the technical-brief variant (ADR-0029) — products only, no geography-null
+# bars or line, since the brief demotes the null to its appendix. Writes *_summary.png
+# beside the unchanged default output.
+SUMMARY = "--summary" in sys.argv
 FIGS = os.path.join(HERE, "..", "figs")
 os.makedirs(FIGS, exist_ok=True)
 
@@ -37,22 +41,31 @@ axA, axB = (axes[1], axes[0]) if SLIDES else (axes[0], axes[1])
 sA = pooled[pooled.res == 7].sort_values("rho_product", ascending=False).reset_index(drop=True)
 ax = axA
 yA = np.arange(len(sA)); h = 0.37
-ax.barh(yA - h / 2, sA.rho_product, height=h, color=PROD, zorder=3)
-ax.barh(yA + h / 2, sA.rho_null, height=h, color=NULL, zorder=3)
-for i, r in sA.iterrows():
-    ax.text(max(r.rho_product, 0) + 0.012, i - h / 2, f"{r.rho_product:.2f}",
-            va="center", fontsize=10.5, color=PROD, weight="bold")
-    ax.text(r.rho_null + 0.012, i + h / 2, f"{r.rho_null:.2f}",
-            va="center", fontsize=10.5, color=NULL, weight="bold")
-    ax.text(0.99, i, "product" if r.rho_product > r.rho_null else "null",
-            transform=ax.get_yaxis_transform(), ha="right", va="center",
-            fontsize=9.5, style="italic",
-            color=PROD if r.rho_product > r.rho_null else NULL, zorder=5)
-n_null = int((sA.rho_null > sA.rho_product).sum())
-ax.set_yticks(yA, sA["product"], fontsize=11.5)
-ax.set_title(("As delivered" if SLIDES else "Test 1 · as delivered") + ": each product's own footprint, ~5 km² sectors\n"
-             "(geography re-scored on each product's cells; ahead for "
-             f"{n_null} of {len(sA)})", fontsize=11.5, loc="left", color="#1f2324")
+if SUMMARY:
+    ax.barh(yA, sA.rho_product, height=0.55, color=PROD, zorder=3)
+    for i, r in sA.iterrows():
+        ax.text(max(r.rho_product, 0) + 0.012, i, f"{r.rho_product:.2f}",
+                va="center", fontsize=10.5, color=PROD, weight="bold")
+    ax.set_yticks(yA, sA["product"], fontsize=11.5)
+    ax.set_title("As delivered: each product's own footprint, ~5 km² sectors",
+                 fontsize=11.5, loc="left", color="#1f2324")
+else:
+    ax.barh(yA - h / 2, sA.rho_product, height=h, color=PROD, zorder=3)
+    ax.barh(yA + h / 2, sA.rho_null, height=h, color=NULL, zorder=3)
+    for i, r in sA.iterrows():
+        ax.text(max(r.rho_product, 0) + 0.012, i - h / 2, f"{r.rho_product:.2f}",
+                va="center", fontsize=10.5, color=PROD, weight="bold")
+        ax.text(r.rho_null + 0.012, i + h / 2, f"{r.rho_null:.2f}",
+                va="center", fontsize=10.5, color=NULL, weight="bold")
+        ax.text(0.99, i, "product" if r.rho_product > r.rho_null else "null",
+                transform=ax.get_yaxis_transform(), ha="right", va="center",
+                fontsize=9.5, style="italic",
+                color=PROD if r.rho_product > r.rho_null else NULL, zorder=5)
+    n_null = int((sA.rho_null > sA.rho_product).sum())
+    ax.set_yticks(yA, sA["product"], fontsize=11.5)
+    ax.set_title(("As delivered" if SLIDES else "Test 1 · as delivered") + ": each product's own footprint, ~5 km² sectors\n"
+                 "(geography re-scored on each product's cells; ahead for "
+                 f"{n_null} of {len(sA)})", fontsize=11.5, loc="left", color="#1f2324")
 
 # Panel B — core lens: one shared cell set, so geography has a single score.
 sB = core[core.res == 8].sort_values("rho_product", ascending=False).reset_index(drop=True)
@@ -65,14 +78,19 @@ ax.barh(yB, sB.rho_product, height=0.55, color=PROD, zorder=3)
 for i, r in sB.iterrows():
     ax.text(max(r.rho_product, 0) + 0.012, i, f"{r.rho_product:.2f}",
             va="center", fontsize=10.5, color=PROD, weight="bold")
-ax.axvline(null_v, color=NULL, lw=2.5, zorder=4)
-ax.text(null_v + 0.015, len(sB) - 0.55, f"geography null {null_v:.2f}", color=NULL,
-        fontsize=11, weight="bold", ha="left", va="center")
-n_above = int((sB.rho_product > null_v).sum())
-ax.set_yticks(yB, sB["product"], fontsize=11.5)
-ax.set_title(("Core region" if SLIDES else "Test 2 · core region") + ": one shared cell set, ~0.7 km² cells\n"
-             f"(geography has a single score; products above it: {n_above} of {len(sB)})",
-             fontsize=11.5, loc="left", color="#1f2324")
+if SUMMARY:
+    ax.set_yticks(yB, sB["product"], fontsize=11.5)
+    ax.set_title("Core region (known damage zone): one shared cell set, ~0.7 km² cells",
+                 fontsize=11.5, loc="left", color="#1f2324")
+else:
+    ax.axvline(null_v, color=NULL, lw=2.5, zorder=4)
+    ax.text(null_v + 0.015, len(sB) - 0.55, f"geography null {null_v:.2f}", color=NULL,
+            fontsize=11, weight="bold", ha="left", va="center")
+    n_above = int((sB.rho_product > null_v).sum())
+    ax.set_yticks(yB, sB["product"], fontsize=11.5)
+    ax.set_title(("Core region" if SLIDES else "Test 2 · core region") + ": one shared cell set, ~0.7 km² cells\n"
+                 f"(geography has a single score; products above it: {n_above} of {len(sB)})",
+                 fontsize=11.5, loc="left", color="#1f2324")
 
 for ax in axes:
     ax.axvline(0, color="#5e6a6b", lw=1, zorder=4)
@@ -83,15 +101,17 @@ for ax in axes:
 
 fig.supxlabel("Spearman rank correlation with the expert damage count per cell  "
               "(higher = ranks the worst-hit areas better)", fontsize=11.5)
-h1 = plt.Rectangle((0, 0), 1, 1, color=PROD)
-h2 = plt.Rectangle((0, 0), 1, 1, color=NULL)
-fig.legend([h1, h2], ["satellite product",
-                      "geography null (coast distance + building density + shaking)"],
-           loc="lower center", ncol=2, fontsize=11, frameon=False,
-           bbox_to_anchor=(0.5, -0.04))
-fig.suptitle("Ranking which areas were worst hit: the two tests", fontsize=14,
-             weight="bold", color="#1f2324")
+if not SUMMARY:
+    h1 = plt.Rectangle((0, 0), 1, 1, color=PROD)
+    h2 = plt.Rectangle((0, 0), 1, 1, color=NULL)
+    fig.legend([h1, h2], ["satellite product",
+                          "geography null (coast distance + building density + shaking)"],
+               loc="lower center", ncol=2, fontsize=11, frameon=False,
+               bbox_to_anchor=(0.5, -0.04))
+fig.suptitle("Ranking which areas were worst hit: as delivered vs the known damage zone"
+             if SUMMARY else "Ranking which areas were worst hit: the two tests",
+             fontsize=14, weight="bold", color="#1f2324")
 fig.tight_layout(rect=(0, 0.03, 1, 0.97))
-out = os.path.join(FIGS, f"rq3f_null_ranking_both{'_slides' if SLIDES else ''}.png")
+out = os.path.join(FIGS, f"rq3f_null_ranking_both{'_slides' if SLIDES else '_summary' if SUMMARY else ''}.png")
 fig.savefig(out, dpi=150, bbox_inches="tight")
 print("wrote", out)
