@@ -44,6 +44,15 @@ ALLOWLIST = {
         "project_prefix": "ds-regional-forecasts",
         "dirs": {"assets": "processed/site-assets", "raw": "raw"},
     },
+    # CEMS flood label corpus viewer (GitHub Pages, pages/labels/) + academic
+    # partner read access to the gold label tables. Read-only, gold dir only;
+    # same account as the other apps so the existing MI grant covers it.
+    "cems-flood-labels": {
+        "account": "imb0chd0dev",
+        "container": "global",
+        "project_prefix": "copernicus_ems/flood",
+        "dirs": {"gold": "gold"},
+    },
 }
 
 _SAS_HOURS = 24
