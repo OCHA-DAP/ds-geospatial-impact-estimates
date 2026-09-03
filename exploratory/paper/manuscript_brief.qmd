@@ -706,7 +706,7 @@ logistic regression (a standard statistical model that weighs the three variable
 random forest (a more flexible model built from many decision trees, able to capture
 interactions between the variables). Whichever scores higher in a given analysis is the
 one reported, and both are disclosed. Which of the two wins differs across the paper's
-analysis layers; the full comparison and the reasons are in the Appendix (@tbl-learners).
+analysis layers; the full comparison and the reasons are in the longer-form draft.
 Nothing about the fusion results depends on that choice.
 
 We call it a *null model* rather than a baseline, and deliberately avoid naming it after
@@ -943,8 +943,8 @@ damage, precision there is essentially zero, and the pooled figure is a flag-wei
 average, so a product's as-delivered precision falls by almost exactly the share of its
 flags that land outside Caraballeda: Microsoft 0% of flags and 0% lost, OSU 17% and 16%,
 IMPACT and LIST 52% and 52%, UNEP 68% and 68%, UH 90% and 90% (every product lands on the
-diagonal *precision lost = share of flags in the dead zones*; plotted in @fig-deadzone,
-in the Appendix). Precision is not *resisting* the false alarms; it collapses in direct
+diagonal *precision lost = share of flags in the dead zones*; plotted in the
+longer-form draft). Precision is not *resisting* the false alarms; it collapses in direct
 proportion to where each product chose to flag. The second mechanism means even this understates the problem: the
 as-delivered frame can only score flags that fall inside a CEMS extent, and most products
 flag far beyond one. Of each product's total flags, the share landing outside every CEMS
@@ -1181,114 +1181,6 @@ visibility field. Scored against it, the effect is negligible in this event: 3.6
 buildings are mostly obscured, precision is unchanged under any visibility filter, and
 exactly one missed reference point falls on an obscured building. The model abstains
 under cloud rather than flagging into it.
-
-### Was the model-versus-product comparison fair? {#app-fair .unnumbered}
-
-This section carries the machinery behind the [geography benchmark](#app-null-brief)'s fairness claims, for the reader
-who wants to check them.
-
-**Is coast distance a fair covariate?** A reviewer asked whether the null's
-distance-to-coast feature is an event-specific choice that flatters the model. An
-ablation on the same frozen pipeline answers it. Density alone, with nothing
-event-specific at all, already lands inside the product band (best F1 0.086 against the
-products' 0.085–0.148) and ranks cells at ρ 0.54; coast adds about +0.04 F1 on top.
-ShakeMap intensity adds nothing, because the entire core region sits inside a single
-MMI band, and globally available soil data adds nothing either (SoilGrids masks
-built-up land; 86% of core buildings sample no value). The strongest replacement is
-also the most generalizable: elevation from the open Copernicus GLO-30 terrain model
-beats the published coast-based null outright (F1 0.143 against 0.127; ranking ρ 0.71
-against 0.65), and once elevation and slope are included, coast contributes almost
-nothing further. Elevation is not a coastal accident here: the low-lying surfaces of
-the core region are the debris-flow fans mapped by USGS after the 1999 Vargas disaster
-(Wieczorek et al., OFR 01-0144; Larsen et al., I-2772), so it functions as a substrate
-covariate with named physics. The conclusion is two-sided: the paper's findings never
-depended on the coast feature, and if anything the published null was slightly
-undertuned, so no product was flattered by it. The full ablation is RQ8d in the
-analysis archive.
-
-**Which learner represents geography best.** Every feature set is fitted with both a
-class-balanced logistic regression and a random forest (400 trees, minimum leaf 20), and
-the stronger one is reported:
-
-| feature set | random forest | logistic |
-|---|---|---|
-| all inputs (weighted fusion) | 0.283 | 0.284 |
-| context only, core region | 0.045 | **0.060** |
-| context only, full delivered footprints | **stronger for 5 of 6** | stronger for MS only |
-| products only | 0.258 | 0.271 |
-
-: Average precision by learner and feature set, under spatially blocked validation. Where
-products are involved the learner is irrelevant; for the geography null it is not, and
-which learner wins depends on the analysis layer. {#tbl-learners}
-
-Wherever products enter, the two learners are indistinguishable, so no fusion result
-depends on the choice. The null is a different matter, and the two analysis layers
-disagree about which model represents geography better. In the compact core region the
-logistic wins (0.060 against 0.045): shaking is near-constant there and the remaining
-relationship is smooth, so the forest mostly fits block-specific structure that does not
-generalise. Across the full delivered footprints the ranking reverses for five of six
-products, because those regions span real variation in shaking that interacts
-non-linearly with coast distance and density. The paper therefore uses the logistic null
-in the core region and the forest null in the as-delivered analysis: the
-report-the-stronger rule applied twice. One further reporting detail: the headline fusion
-number comes from the logistic regression, which scores identically to the forest (AP
-0.28 either way), while the null and its products-only mirror are both fitted with the
-forest so that those two are directly comparable to each other.
-
-**How much event information the null uses, by analysis layer.** Within the compact
-core region the ShakeMap estimate barely varies and its measured importance is exactly
-0.000: there the null runs on coastline distance and building density alone, and its
-skill is a hindsight description of where damage happened to fall. Across the full
-delivered footprints, shaking varies for real and carries 0.25–0.31 of the model's
-weight, so the null does use event information there. Microsoft is the exception
-that proves the mechanism: it shipped only the coastal strip, and over that
-near-identical ground the shaking term again drops to zero.
-
-**Buffered validation.** Spatial blocking leaves block edges: a training building just
-across a block boundary resembles its test-side neighbours, which could flatter a
-smooth model. Checked directly by re-running the validation with training buildings
-excluded within 300 m and then 500 m of any test building: the null's F1 moves 0.128 to
-0.126 at both buffers (AP 0.060 to 0.059/0.058) and the fusion's F1 0.343 to 0.345/0.340,
-so no conclusion rests on the unbuffered design. The building-density feature is
-computed over all buildings including test rows; it uses only pre-event footprint
-locations, never labels, so it carries no label information across folds.
-
-**Coefficients and thresholds are protected separately.** The model's coefficients are
-estimated strictly out-of-fold: each building's score comes from a model that never saw
-its block. The decision threshold (the cut that turns the continuous risk into a flag
-list) is a second, separate choice that blocked validation does nothing to protect, so
-where a single operating point is reported the cut is selected inside the training folds
-and applied blind to the held-out data. The difference this makes here is nil (F1 0.129
-with the cut chosen out-of-sample against 0.128 chosen in hindsight), but that is a fact
-about this sample size (a single scalar estimated from hundreds of thousands of
-buildings is pinned down closely either way), not a general licence: on a small reference
-the same shortcut could flatter a model materially.
-
-**Why a single product's average precision is degenerate.** Average precision is a
-recall-weighted sum over the steps of a precision–recall curve, and a binary flag list
-has only two steps: the flagged set itself, and the trivial "flag everything" endpoint.
-It therefore evaluates to
-$$\mathrm{AP}_{\text{binary}} = P\cdot R + (1-R)\cdot \pi$$
-where $\pi$ is the prevalence of damage. The second term is free credit that any
-predictor whatsoever collects for the flag-everything endpoint. Because $\pi$ (0.023
-here) is far below every product's precision, the term drags each product's AP down
-toward prevalence, hardest for the products with the lowest recall. The effect is to
-compress very different products into a narrow band (0.042–0.055 across our six,
-whose precisions actually range from 0.045 to 0.093), sitting right where a mediocre
-continuous score also lands (the forest null's AP is 0.045). Two products can share an
-AP because one has high precision and low recall while the other has the reverse; the
-number conceals exactly the trade-off an operational reader cares about. This is why the
-paper reports AP only among the continuous scores and places the products as points,
-never as AP bars beside them.
-
-![Why as-delivered precision falls the way it does. Each product's as-delivered precision
-(y) is plotted against the share of its flags that land outside Caraballeda (x), where the
-reference records essentially no damage. Every product lies on the diagonal (precision
-lost equals the share of flags in the dead zones), so the as-delivered precision is
-governed almost entirely by *where* a product chose to flag, not by any resistance to false
-alarms. Microsoft is spared only because it flagged nowhere else. This is the arithmetic
-behind the first mechanism in
-@sec-flags.](artefacts/RQ2-cems-footprint-points/figs/rq2m_deadzone_dilution.png){#fig-deadzone}
 
 ### Confidence intervals for the headline numbers {#app-ci .unnumbered}
 
