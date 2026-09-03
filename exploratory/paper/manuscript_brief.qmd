@@ -111,10 +111,10 @@ MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false al
 ChatMap is field teams reporting building-level points from the ground, used to reveal
 misses.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refarch}
 
-(A side note on sources: this brief condenses a longer technical write-up. The full
-record, including the geography benchmark and all sensitivity analyses, is the frozen
-manuscript v3 at <https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/>;
-its passphrase is shared separately.)
+(A side note on sources: this brief condenses a longer-form draft technical write-up,
+available [here](https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/)
+with a passphrase shared separately; it carries the geography benchmark and all
+sensitivity analyses in full.)
 
 ## Can a responder act on a single flagged building? No {#sec-flags}
 
@@ -371,10 +371,9 @@ the geography benchmark are in the frozen technical record (manuscript v3).
 
 ## Appendix {.unnumbered}
 
-**The record.** The full technical version of this study, frozen manuscript v3
-(<https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/>), is the
-citable record behind this brief; the appendix sections below are imported from it
-verbatim.
+**The record.** A longer-form draft technical version of this study is available
+[here](https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/); the
+appendix sections below are imported from it verbatim.
 
 ### The two reporting regions {#app-regions .unnumbered}
 
