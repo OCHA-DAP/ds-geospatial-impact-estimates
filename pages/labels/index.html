@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CEMS Flood Labels</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+  html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  :root { --ink: #1c2430; --accent: #2563cd; --sub: #5d6b7a; --line: #cfd6de; }
+  #map { position: absolute; inset: 0; }
+  #panel {
+    position: absolute; top: 12px; left: 12px; z-index: 5; width: 300px;
+    background: rgba(255,255,255,.96); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(20,30,40,.12); padding: 12px 14px;
+    max-height: calc(100% - 48px); overflow-y: auto;
+  }
+  #panel h1 { font-size: 15px; margin: 0; }
+  #panel .sub { font-size: 11px; color: var(--sub); margin: 2px 0 10px; }
+  .label { font-size: 10.5px; color: #8b95a1; margin: 8px 0 3px; text-transform: uppercase; letter-spacing: .04em; }
+  select, input[type=number] {
+    width: 100%; font: inherit; font-size: 12px; padding: 4px 6px;
+    border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+  }
+  .row2 { display: flex; gap: 8px; } .row2 > * { flex: 1; }
+  .count { font-size: 11px; color: var(--sub); margin-top: 10px; }
+  button {
+    font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 6px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { color: #aeb6bf; background: #f1f3f6; cursor: not-allowed; }
+  #eventcard h2 { font-size: 13px; margin: 0 0 2px; }
+  #eventcard .sub { margin-bottom: 8px; }
+  #steps { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+  .step {
+    text-align: left; font-size: 11.5px; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--line); background: #fff; cursor: pointer; line-height: 1.35;
+  }
+  .step.active { border-color: var(--accent); background: #eef4fd; }
+  .step b { font-variant-numeric: tabular-nums; }
+  .nav { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+  label.chk { display: flex; gap: 6px; font-size: 11.5px; color: var(--ink); align-items: center; margin: 4px 0; cursor: pointer; }
+  .legend { font-size: 10.5px; color: var(--sub); margin-top: 10px; line-height: 1.5; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+  #err { color: #b8272d; font-size: 11.5px; margin-top: 8px; white-space: pre-wrap; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="panel">
+  <h1>CEMS Flood Labels</h1>
+  <p class="sub">Observed flood extents from every Copernicus EMS Rapid Mapping flood
+  activation, 2012–present, with per-image acquisition times.
+  <a href="../">Home</a></p>
+
+  <div id="filters">
+    <div class="label">Years</div>
+    <div class="row2"><input type="number" id="y0" value="2012" min="2012" max="2026">
+                      <input type="number" id="y1" value="2026" min="2012" max="2026"></div>
+    <div class="label">Sensor</div><select id="sensor"><option value="">all</option></select>
+    <div class="label">Determination</div><select id="method"><option value="">all</option></select>
+    <div class="label">Time precision</div>
+    <select id="precision"><option value="">all</option><option>minute</option><option>date</option><option>window</option></select>
+    <div class="count" id="count"></div>
+    <div class="legend">
+      <span class="swatch" style="background:#2563cd"></span>observed flood extent —
+      click any polygon to open its event.<br>
+      Viewer shows display-simplified geometry; analysis uses the
+      GeoParquet in the catalog.
+    </div>
+  </div>
+
+  <div id="eventcard" style="display:none">
+    <button id="back">&#8592; all events</button>
+    <h2 id="evtitle"></h2><div class="sub" id="evsub"></div>
+    <div class="nav"><button id="prev">&#9664;</button><span id="pos" style="font-size:11.5px"></span><button id="next">&#9654;</button></div>
+    <label class="chk"><input type="checkbox" id="ghost" checked> ghost previous (same AOI)</label>
+    <label class="chk"><input type="checkbox" id="mask"> valid (analysed) mask</label>
+    <div id="steps"></div>
+  </div>
+  <div id="err"></div>
+</div>
+
+<script type="module">
+import maplibregl from "https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/+esm";
+import { Protocol, PMTiles } from "https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/+esm";
+import { asyncBufferFromUrl, parquetReadObjects } from "https://cdn.jsdelivr.net/npm/hyparquet@1.8.0/+esm";
+
+const TOKEN_URL = "https://chd-ds-token-issuer.azurewebsites.net/api/token?app=cems-flood-labels&tier=platinum";
+const qs = new URLSearchParams(location.search);
+const err = (m) => { document.getElementById("err").textContent = m; };
+
+async function getAccess() {
+  if (qs.get("base") && qs.get("sas"))  // local-dev override before issuer redeploy
+    return { base: qs.get("base"), sas: qs.get("sas") };
+  const t = await fetch(TOKEN_URL).then(r => r.json());
+  return { base: `${t.base_url}/${t.platinum_dir}`, sas: t.sas };
+}
+
+const protocol = new Protocol();
+maplibregl.addProtocol("pmtiles", protocol.tile);
+const map = new maplibregl.Map({
+  container: "map",
+  style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  center: [10, 20], zoom: 1.6, attributionControl: { compact: true },
+});
+map.addControl(new maplibregl.NavigationControl(), "top-right");
+
+let IDX = [], BY_EVENT = new Map(), current = null, stepIdx = 0;
+
+function isoYearFilter() {
+  const y0 = document.getElementById("y0").value, y1 = document.getElementById("y1").value;
+  return ["all", [">=", ["get", "acq_start"], `${y0}-00`], ["<=", ["get", "acq_start"], `${y1}-99`]];
+}
+function overviewFilter() {
+  const f = [isoYearFilter()];
+  for (const [id, attr] of [["sensor", "sensor"], ["method", "acq_method"], ["precision", "acq_precision"]]) {
+    const v = document.getElementById(id).value;
+    if (v) f.push(["==", ["get", attr], v]);
+  }
+  return ["all", ...f];
+}
+function applyOverview() {
+  map.setFilter("labels-fill", overviewFilter());
+  map.setFilter("labels-line", overviewFilter());
+  const y0 = +document.getElementById("y0").value, y1 = +document.getElementById("y1").value;
+  const sel = { sensor: document.getElementById("sensor").value,
+                acq_method: document.getElementById("method").value,
+                acq_precision: document.getElementById("precision").value };
+  const n = IDX.filter(r => {
+    const y = +String(r.acq_start).slice(0, 4);
+    return y >= y0 && y <= y1 &&
+      (!sel.sensor || r.sensor === sel.sensor) &&
+      (!sel.acq_method || r.acq_method === sel.acq_method) &&
+      (!sel.acq_precision || r.acq_precision === sel.acq_precision);
+  }).length;
+  document.getElementById("count").textContent = `${n.toLocaleString()} label sets shown`;
+}
+
+function setFilterForStep() {
+  const s = current.steps[stepIdx];
+  const f = ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]];
+  map.setFilter("labels-fill", f);
+  map.setFilter("labels-line", f);
+  const prev = [...current.steps].slice(0, stepIdx).reverse().find(p => p.aoi === s.aoi);
+  const ghostOn = document.getElementById("ghost").checked && prev;
+  map.setFilter("ghost-line", ghostOn
+    ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], prev.acq_start]]
+    : ["==", ["get", "code"], "__none__"]);
+  const maskOn = document.getElementById("mask").checked;
+  map.setFilter("mask-line", maskOn
+    ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]]
+    : ["==", ["get", "code"], "__none__"]);
+  document.getElementById("pos").textContent = `${stepIdx + 1} / ${current.steps.length}`;
+  document.querySelectorAll(".step").forEach((el, i) => el.classList.toggle("active", i === stepIdx));
+  map.fitBounds([[s.minx, s.miny], [s.maxx, s.maxy]], { padding: 60, maxZoom: 12 });
+}
+
+function openEvent(code) {
+  current = { code, steps: BY_EVENT.get(code) };
+  stepIdx = 0;
+  document.getElementById("filters").style.display = "none";
+  document.getElementById("eventcard").style.display = "";
+  document.getElementById("evtitle").textContent = code;
+  document.getElementById("evsub").textContent =
+    `${current.steps[0].name || ""} — ${current.steps.length} label sets`;
+  const list = document.getElementById("steps");
+  list.innerHTML = "";
+  current.steps.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "step";
+    b.innerHTML = `<b>${String(s.acq_start).slice(0, 16)}</b> · ${s.aoi}<br>` +
+      `${s.sensor || "sensor ?"} · ${s.acq_method} · ${(+s.area_km2).toFixed(1)} km²`;
+    b.onclick = () => { stepIdx = i; setFilterForStep(); };
+    list.appendChild(b);
+  });
+  setFilterForStep();
+}
+function closeEvent() {
+  current = null;
+  document.getElementById("filters").style.display = "";
+  document.getElementById("eventcard").style.display = "none";
+  map.setFilter("ghost-line", ["==", ["get", "code"], "__none__"]);
+  map.setFilter("mask-line", ["==", ["get", "code"], "__none__"]);
+  applyOverview();
+}
+
+try {
+  const { base, sas } = await getAccess();
+  const url = (p) => `${base}/${p}?${sas}`;
+
+  // label index -> catalog for the panel + event steps
+  IDX = await parquetReadObjects({
+    file: await asyncBufferFromUrl({ url: url("label-index/label_index.parquet") }),
+    columns: ["code", "name", "aoi", "acq_start", "label_day", "sensor", "acq_method",
+              "acq_precision", "area_km2", "minx", "miny", "maxx", "maxy"],
+  });
+  IDX.forEach(r => { r.acq_start = String(r.acq_start); });
+  IDX.sort((a, b) => a.acq_start.localeCompare(b.acq_start));
+  for (const r of IDX) {
+    if (!BY_EVENT.has(r.code)) BY_EVENT.set(r.code, []);
+    BY_EVENT.get(r.code).push(r);
+  }
+  for (const el of ["sensor", "method"]) {
+    const attr = el === "sensor" ? "sensor" : "acq_method";
+    const vals = [...new Set(IDX.map(r => r[attr]).filter(Boolean))].sort();
+    const sel = document.getElementById(el);
+    vals.forEach(v => sel.add(new Option(v, v)));
+  }
+
+  // vector layers: source-layer ids read from the PMTiles metadata
+  const labelsPm = new PMTiles(url("labels/labels.pmtiles"));
+  const masksPm = new PMTiles(url("valid-masks/valid_masks.pmtiles"));
+  protocol.add(labelsPm); protocol.add(masksPm);
+  const lMeta = await labelsPm.getMetadata();
+  const mMeta = await masksPm.getMetadata();
+  const lLayer = lMeta.vector_layers[0].id, mLayer = mMeta.vector_layers[0].id;
+
+  map.on("load", () => {
+    map.addSource("labels", { type: "vector", url: `pmtiles://${url("labels/labels.pmtiles")}` });
+    map.addSource("masks", { type: "vector", url: `pmtiles://${url("valid-masks/valid_masks.pmtiles")}` });
+    map.addLayer({ id: "labels-fill", type: "fill", source: "labels", "source-layer": lLayer,
+      paint: { "fill-color": "#2563cd", "fill-opacity": 0.42 } });
+    map.addLayer({ id: "labels-line", type: "line", source: "labels", "source-layer": lLayer,
+      paint: { "line-color": "#1d4ea8", "line-width": 0.7 } });
+    map.addLayer({ id: "ghost-line", type: "line", source: "labels", "source-layer": lLayer,
+      filter: ["==", ["get", "code"], "__none__"],
+      paint: { "line-color": "#d97706", "line-width": 1.6, "line-dasharray": [2, 2] } });
+    map.addLayer({ id: "mask-line", type: "line", source: "masks", "source-layer": mLayer,
+      filter: ["==", ["get", "code"], "__none__"],
+      paint: { "line-color": "#5d6b7a", "line-width": 1, "line-dasharray": [4, 3] } });
+    applyOverview();
+
+    map.on("click", "labels-fill", (e) => {
+      const p = e.features[0].properties;
+      if (!current) openEvent(p.code);
+    });
+    map.on("mousemove", "labels-fill", (e) => {
+      map.getCanvas().style.cursor = "pointer";
+      const p = e.features[0].properties;
+      popup.setLngLat(e.lngLat)
+        .setHTML(`<b>${p.code}</b> ${p.aoi || ""}<br>${String(p.acq_start).slice(0, 16)} · ${p.sensor || "?"}<br>${(+p.area_km2 || 0).toFixed(1)} km²`)
+        .addTo(map);
+    });
+    map.on("mouseleave", "labels-fill", () => { map.getCanvas().style.cursor = ""; popup.remove(); });
+  });
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, maxWidth: "260px" });
+
+  for (const id of ["y0", "y1", "sensor", "method", "precision"])
+    document.getElementById(id).onchange = () => { if (!current) applyOverview(); };
+  document.getElementById("back").onclick = closeEvent;
+  document.getElementById("prev").onclick = () => { if (current && stepIdx > 0) { stepIdx--; setFilterForStep(); } };
+  document.getElementById("next").onclick = () => { if (current && stepIdx < current.steps.length - 1) { stepIdx++; setFilterForStep(); } };
+  document.getElementById("ghost").onchange = () => current && setFilterForStep();
+  document.getElementById("mask").onchange = () => current && setFilterForStep();
+  document.addEventListener("keydown", (e) => {
+    if (!current) return;
+    if (e.key === "ArrowLeft" && stepIdx > 0) { stepIdx--; setFilterForStep(); }
+    if (e.key === "ArrowRight" && stepIdx < current.steps.length - 1) { stepIdx++; setFilterForStep(); }
+    if (e.key === "Escape") closeEvent();
+  });
+} catch (e) {
+  err("Could not load the label catalog.\n" + e.message +
+      "\n(The token scope requires the issuer redeploy; for local testing pass ?base=&sas=)");
+}
+</script>
+</body>
+</html>
