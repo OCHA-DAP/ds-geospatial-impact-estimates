@@ -39,11 +39,11 @@ for i, r in o.iterrows():
             fontsize=8.5, color="#c98a1e")
     ax.text(r.P_upper + 0.006, i, f"{r.P_upper:.3f}  ({r.P_upper/r.P_floor:.1f}×)",
             ha="left", va="center", fontsize=9.5, color="#1b4f8a", weight="bold")
-    cov = r.crowd_cov_of_fps
-    warn = cov < 0.3
-    ax.text(0.405, i, f"{cov:.0%}" + ("  (upper bound understated)" if warn else ""),
-            ha="left", va="center", fontsize=10,
-            color="#c62828" if warn else "#5a6570", weight="bold" if warn else "normal")
+    # coverage stays (it is what makes the upper bounds comparable across rows); the
+    # per-row "understated" tag was removed 2026-09-03 — the footnote and the caption
+    # already carry that mechanism once, calmly, for every row.
+    ax.text(0.405, i, f"{r.crowd_cov_of_fps:.0%}", ha="left", va="center",
+            fontsize=10, color="#5a6570")
 
 ax.set_yticks([])
 ax.set_xlim(0, 0.46)
