@@ -14,7 +14,10 @@
     position: absolute; inset: 0; z-index: 0; overflow: hidden;
     background: radial-gradient(ellipse at 50% 115%, #1a2b47 0%, #0c1526 48%, #05080f 100%);
   }
-  #map { position: absolute; inset: 0; z-index: 1; background: transparent; }
+  /* opacity 0 until the style has loaded: hides the washed-out first paint,
+     the globe fades in over the starfield instead */
+  #map { position: absolute; inset: 0; z-index: 1; background: transparent;
+         opacity: 0; transition: opacity .7s ease; }
   .star { position: absolute; border-radius: 50%; background: #fff; }
   .star.tw { animation: twinkle 4s ease-in-out infinite; }
   @keyframes twinkle { 0%,100% { opacity: .25; } 50% { opacity: .95; } }
@@ -172,6 +175,7 @@ const map = new maplibregl.Map({
 map.addControl(new maplibregl.NavigationControl(), "top-right");
 map.once("style.load", () => map.setProjection({ type: "globe" }));  // survive style overriding it
 const mapReady = new Promise((res) => map.once("load", res));
+mapReady.then(() => { $("map").style.opacity = 1; });
 
 let IDX = [], EVENTS = new Map(), current = null, stepIdx = 0;
 let scopeCodes = null;                 // null = global; else Set of codes
@@ -193,8 +197,11 @@ function mapFilter() {
   return f;
 }
 function applyScope(fit) {
-  map.setFilter("labels-fill", mapFilter());
-  map.setFilter("labels-line", mapFilter());
+  // layers arrive late in boot; the timeline and counts don't wait for them
+  if (map.getLayer("labels-fill")) {
+    map.setFilter("labels-fill", mapFilter());
+    map.setFilter("labels-line", mapFilter());
+  }
   const rows = IDX.filter(r => inScope(r) && inTime(r));
   $("count").textContent = `${rows.length.toLocaleString()} label sets · ${new Set(rows.map(r => r.code)).size} activations`;
   if (fit && rows.length) {
@@ -223,6 +230,18 @@ function drawTimeline() {
       el("text", { x: sx(y), y: H - 5, "font-size": 9, fill: "#8b95a1", "text-anchor": "middle" }).textContent = y;
   }
   el("line", { x1: mL, x2: W - mR, y1: axisY, y2: axisY, stroke: "#cfd6de" });
+  const px = (e) => e.clientX - svg.getBoundingClientRect().left;
+
+  // brush window + shades go UNDER the dots so the dots stay hoverable;
+  // drag the window to slide it, drag a handle (drawn last, on top) to resize,
+  // double-click resets
+  el("rect", { x: mL, y: 6, width: Math.max(0, sx(t0) - mL), height: axisY - 6, fill: "rgba(140,150,160,.16)" });
+  el("rect", { x: sx(t1), y: 6, width: Math.max(0, W - mR - sx(t1)), height: axisY - 6, fill: "rgba(140,150,160,.16)" });
+  const win = el("rect", { x: sx(t0), y: 6, width: Math.max(0, sx(t1) - sx(t0)), height: axisY - 6,
+    fill: "rgba(37,99,205,.10)", stroke: "rgba(37,99,205,.35)", cursor: "grab" });
+  win.addEventListener("mousedown", (e) => {
+    dragging = { kind: "win", grab: xy(px(e)) - t0, width: t1 - t0 }; e.preventDefault();
+  });
 
   const rows = IDX.filter(inScope);
   const evs = new Map();
@@ -233,15 +252,11 @@ function drawTimeline() {
   $("tlrange").textContent = `${yearToStr(t0)} → ${yearToStr(t1)}`;
 
   if (evs.size <= DOT_THRESHOLD) {
-    const labelled = evs.size <= 40;  // country scale: name every activation
     let i = 0;
     for (const [code, r] of evs) {
       const x = sx(frac(r.acq_start));
       const y = 14 + ((i * 37) % 5) * 11;  // deterministic jitter rows
       const active = frac(r.acq_start) >= t0 && frac(r.acq_start) <= t1;
-      if (labelled)
-        el("text", { x: x + 7, y: y + 3, "font-size": 8.5,
-          fill: active ? "#40506a" : "#b3bac2" }).textContent = code;
       const c = el("circle", { cx: x, cy: y, r: 4.5, fill: active ? "#2563cd" : "#c6cdd6", cursor: "pointer" });
       c.addEventListener("mousemove", (e) => {
         tip.style.opacity = 1;
@@ -268,15 +283,6 @@ function drawTimeline() {
     }
   }
 
-  // brush: a draggable selected window + chunky pill handles.
-  // Drag the window to slide it, drag a handle to resize, double-click resets.
-  el("rect", { x: mL, y: 6, width: Math.max(0, sx(t0) - mL), height: axisY - 6, fill: "rgba(140,150,160,.16)" });
-  el("rect", { x: sx(t1), y: 6, width: Math.max(0, W - mR - sx(t1)), height: axisY - 6, fill: "rgba(140,150,160,.16)" });
-  const win = el("rect", { x: sx(t0), y: 6, width: Math.max(0, sx(t1) - sx(t0)), height: axisY - 6,
-    fill: "rgba(37,99,205,.10)", stroke: "rgba(37,99,205,.35)", cursor: "grab" });
-  win.addEventListener("mousedown", (e) => {
-    dragging = { kind: "win", grab: xy(e.offsetX) - t0, width: t1 - t0 }; e.preventDefault();
-  });
   for (const [which, y] of [["t0", t0], ["t1", t1]]) {
     const hx = sx(y);
     el("line", { x1: hx, x2: hx, y1: 4, y2: axisY, stroke: "#2563cd", "stroke-width": 2 });
@@ -290,7 +296,7 @@ function drawTimeline() {
   }
   svg.onmousemove = (e) => {
     if (!dragging) return;
-    const y = Math.max(Y_MIN, Math.min(Y_MAX, xy(e.offsetX)));
+    const y = Math.max(Y_MIN, Math.min(Y_MAX, xy(px(e))));
     if (dragging.kind === "t0") t0 = Math.min(y, t1);
     else if (dragging.kind === "t1") t1 = Math.max(y, t0);
     else {
@@ -307,16 +313,18 @@ addEventListener("resize", drawTimeline);
 // ---------- event mode ----------
 function setFilterForStep() {
   const s = current.steps[stepIdx];
-  const f = ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]];
-  map.setFilter("labels-fill", f);
-  map.setFilter("labels-line", f);
-  const prev = [...current.steps].slice(0, stepIdx).reverse().find(p => p.aoi === s.aoi);
-  map.setFilter("ghost-line", ($("ghost").checked && prev)
-    ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], prev.acq_start]]
-    : ["==", ["get", "code"], "__none__"]);
-  map.setFilter("mask-line", $("mask").checked
-    ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]]
-    : ["==", ["get", "code"], "__none__"]);
+  if (map.getLayer("labels-fill")) {
+    const f = ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]];
+    map.setFilter("labels-fill", f);
+    map.setFilter("labels-line", f);
+    const prev = [...current.steps].slice(0, stepIdx).reverse().find(p => p.aoi === s.aoi);
+    map.setFilter("ghost-line", ($("ghost").checked && prev)
+      ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], prev.acq_start]]
+      : ["==", ["get", "code"], "__none__"]);
+    map.setFilter("mask-line", $("mask").checked
+      ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]]
+      : ["==", ["get", "code"], "__none__"]);
+  }
   $("pos").textContent = `${stepIdx + 1} / ${current.steps.length}`;
   document.querySelectorAll(".step").forEach((n, i) => n.classList.toggle("active", i === stepIdx));
   map.fitBounds([[s.minx, s.miny], [s.maxx, s.maxy]], { padding: 60, maxZoom: 12 });
@@ -344,8 +352,10 @@ function closeEvent() {
   current = null;
   $("filters").style.display = "";
   $("eventcard").style.display = "none";
-  map.setFilter("ghost-line", ["==", ["get", "code"], "__none__"]);
-  map.setFilter("mask-line", ["==", ["get", "code"], "__none__"]);
+  if (map.getLayer("ghost-line")) {
+    map.setFilter("ghost-line", ["==", ["get", "code"], "__none__"]);
+    map.setFilter("mask-line", ["==", ["get", "code"], "__none__"]);
+  }
   applyScope(false);
 }
 
@@ -399,11 +409,16 @@ try {
   $("region").onchange = () => { fillCountries(); $("country").value = ""; if (!current) updateScope(); };
   $("country").onchange = () => { if (!current) updateScope(); };
 
+  // the timeline, counts and selectors are live from here — everything below
+  // (tiles, basemap) streams in behind them
+  applyScope(false);
+
   const labelsPm = new PMTiles(url("labels/labels.pmtiles"));
   const masksPm = new PMTiles(url("valid-masks/valid_masks.pmtiles"));
   protocol.add(labelsPm); protocol.add(masksPm);
-  const lLayer = (await labelsPm.getMetadata()).vector_layers[0].id;
-  const mLayer = (await masksPm.getMetadata()).vector_layers[0].id;
+  const [lMeta, mMeta] = await Promise.all([labelsPm.getMetadata(), masksPm.getMetadata()]);
+  const lLayer = lMeta.vector_layers[0].id;
+  const mLayer = mMeta.vector_layers[0].id;
 
   const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, maxWidth: "270px" });
   await mapReady;
@@ -443,7 +458,9 @@ try {
     if (e.key === "Escape") closeEvent();
   });
 
-  applyScope(false);
+  // apply filters to the now-real layers; if the user already opened an
+  // event from the timeline while tiles loaded, honour that instead
+  if (current) setFilterForStep(); else applyScope(false);
 } catch (e) {
   err("Could not load the label catalog.\n" + e.message +
       "\n(Needs the issuer redeploy; for local testing pass ?base=&sas=)");
