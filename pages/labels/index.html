@@ -8,19 +8,17 @@
 <style>
   html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
   :root { --ink: #1c2430; --accent: #2563cd; --sub: #5d6b7a; --line: #cfd6de; }
-  /* space backdrop for the globe: deep gradient + a sprinkle of stars */
-  #map {
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(1px 1px at 12% 24%, #fff8, transparent 60%),
-      radial-gradient(1px 1px at 78% 12%, #fff6, transparent 60%),
-      radial-gradient(1.5px 1.5px at 33% 71%, #fff7, transparent 60%),
-      radial-gradient(1px 1px at 61% 47%, #fff5, transparent 60%),
-      radial-gradient(1px 1px at 89% 82%, #fff6, transparent 60%),
-      radial-gradient(1.5px 1.5px at 45% 9%, #fff5, transparent 60%),
-      radial-gradient(1px 1px at 7% 88%, #fff6, transparent 60%),
-      radial-gradient(ellipse at 50% 120%, #16233a 0%, #0a1120 55%, #05080f 100%);
+  /* space backdrop: deep gradient div behind the (transparent) map canvas,
+     with a JS-generated star field and slow twinkle */
+  #space {
+    position: absolute; inset: 0; z-index: 0; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 115%, #1a2b47 0%, #0c1526 48%, #05080f 100%);
   }
+  #map { position: absolute; inset: 0; z-index: 1; background: transparent; }
+  .star { position: absolute; border-radius: 50%; background: #fff; }
+  .star.tw { animation: twinkle 4s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100% { opacity: .25; } 50% { opacity: .95; } }
+  @media (prefers-reduced-motion: reduce) { .star.tw { animation: none; } }
   #panel {
     position: absolute; top: 12px; left: 12px; z-index: 5; width: 290px;
     background: rgba(255,255,255,.96); color: var(--ink);
@@ -84,6 +82,7 @@
 </style>
 </head>
 <body>
+<div id="space"></div>
 <div id="map"></div>
 <div class="shoot s1"></div><div class="shoot s2"></div><div class="shoot s3"></div>
 <div id="panel">
@@ -149,9 +148,24 @@ async function getAccess() {
 
 const protocol = new Protocol();
 maplibregl.addProtocol("pmtiles", protocol.tile);
+// star field (deterministic so reloads look identical)
+{
+  const space = document.getElementById("space");
+  let seed = 42;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 220; i++) {
+    const s = document.createElement("span");
+    const px = 0.6 + rnd() * 1.7;
+    s.className = "star" + (rnd() < 0.28 ? " tw" : "");
+    s.style.cssText = `left:${rnd() * 100}%; top:${rnd() * 100}%; width:${px}px; height:${px}px;` +
+      `opacity:${0.25 + rnd() * 0.65}; animation-delay:${(rnd() * 4).toFixed(2)}s;`;
+    space.appendChild(s);
+  }
+}
+
 const map = new maplibregl.Map({
   container: "map",
-  style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+  style: "https://tiles.openfreemap.org/styles/liberty",
   center: [16, 24], zoom: 2.7, attributionControl: { compact: true },
   projection: { type: "globe" },
 });
