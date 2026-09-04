@@ -62,11 +62,11 @@ what purpose, and at what spatial scale.
 We evaluate the six products that published a defined or defensible analysed extent,
 the area the product actually examined (@tbl-products): without one, "no flag" cannot
 be distinguished from "never looked", so neither misses nor false alarms can be counted
-fairly.
+fairly. Throughout, a *flag* is a building a product marked as damaged to any extent.
 
 | Product | Provider | Sensing basis | Analysed buildings | Damage flags* |
 |---|---|---|---|---|
-| Microsoft AI4G | Microsoft | VHR optical + AI classifier | 72,162 (own footprints) | 8,410 |
+| Microsoft AI4G | Microsoft | VHR optical + AI classifier | 72,162 (Overture footprints) | 8,410 |
 | IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar coherence change | swath (~372 km²) | 22,954 |
 | OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~471 km²) | 31,259 |
 | UH QuakeDamage | Univ. of Houston | VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint | 447,263 incl. intact | ~91k dmg/destroyed |
@@ -112,7 +112,7 @@ misses.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refa
 available [here](https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/)
 with a passphrase shared separately; it contains the geography benchmark and all sensitivity analyses in full.)
 
-## Can a responder act on a single flagged building? No {#sec-flags}
+## No product supports acting on a single flagged building {#sec-flags}
 
 Building-level precision was low for every product. As delivered, precision across
 everything the expert reference mapped ran from 0.009 (UH) to 0.081 (Microsoft). Even
@@ -172,7 +172,7 @@ additions, the upper bound. A flag is credited only where volunteers actually re
 products the crowd barely saw (UH: 27%) have understated upper
 bounds.](artefacts/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png){#fig-bounds}
 
-## Do they rank neighbourhoods well enough to triage? Yes, within the damage zone {#sec-ranking}
+## The products rank neighbourhoods well enough to triage, within the damage zone {#sec-ranking}
 
 Asked which *neighbourhoods* to go to first, rather than which buildings, the products
 do much better. In the core region, zoomed to the area already known to be damaged,
@@ -204,7 +204,7 @@ the expert ordering over all cells. Bottom row: share of the 20 worst-hit cells 
 make the predictor's own top-20 shortlist (tie-aware expected
 value).](artefacts/RQ3-prioritization-error-structure/figs/rq3h_agreement_ranking_summary.png){#fig-agreerank}
 
-## How should the products be used? Count agreement {#sec-dial}
+## Count agreement between products {#sec-dial}
 
 The products' errors fall in different places, so the number of them agreeing on a building
 works as a threshold a responder can set. Flag every building any product marked and 97% of
