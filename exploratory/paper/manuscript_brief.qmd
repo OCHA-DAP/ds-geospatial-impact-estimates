@@ -177,9 +177,7 @@ bounds.](artefacts/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png){#fig-b
 Asked which *neighbourhoods* to go to first, rather than which buildings, the products
 do much better. In the core region, zoomed to the area already known to be damaged,
 every product orders ~0.74 km² cells against the expert ordering at rank correlations
-of 0.48–0.74, and the best products correctly identify most of the twenty worst-hit
-sectors. The qualifier matters: scored across everything each product delivered, the
-correlations spread from −0.09 to 0.59 at the ~5 km² sector scale (@fig-ranktests), and
+of 0.48–0.74, and the best products correctly identify most of the twenty worst-hit cells. The qualifier matters: scored across everything each product delivered, the correlations spread from −0.09 to 0.59 at the ~5 km² cell scale (@fig-ranktests), and
 the ranking
 task largely reduces to "find the damage zone", which coarse geography solves
 almost by definition; the products' real ranking information is about where to go first
@@ -197,7 +195,7 @@ one.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both_s
 Counting agreement between products improves that ranking (@fig-agreerank). Ranking
 cells by their count of buildings with three or four products agreeing beats every
 single product's ordering (ρ 0.78 against the best single's 0.74 at ~0.74 km² cells),
-and for a shortlist, "which 20 sectors first", high agreement is clearly better:
+and for a shortlist, "which 20 cells first", high agreement is clearly better:
 five-of-six agreement shortlists 16 of the 20 worst-hit cells against the best single
 product's 13, and 10 against 4 at the finer scale.
 
@@ -587,8 +585,7 @@ definitions of what counts as a hit.
 ### Area ranking and error structure: method {#app-ranking-method .unnumbered}
 
 For questions about where damage is concentrated, we aggregate per-building flags to
-hexagonal grid cells at two sizes, roughly 0.74 km² and 5.2 km² (the larger approximates
-a triage sector), and compare each product's ranking of cells against the ranking implied
+hexagonal grid cells at two sizes, roughly 0.74 km² and 5.2 km² (the larger is roughly the size of an operational triage area), and compare each product's ranking of cells against the ranking implied
 by CEMS, using rank correlation and top-k overlap.
 
 Whether a ranking survives noisy per-building labels depends on how the noise is arranged
@@ -777,10 +774,8 @@ product's shared region. The two scales are hexagonal grid cells of roughly 5 km
 {#tbl-nullrank}
 
 The result is uncomfortable: geography alone ranks these areas better than the
-products do, beating five of the six at the sector scale and five of six again at the finer
-scale. The margins are large (IMPACT 0.673 against 0.433, UNEP 0.501 against 0.220),
-and UH's rank correlation is *negative* (−0.085), meaning its sector ordering is slightly worse
-than no information at all. Only OSU is ahead of the null, and only narrowly (0.540 against
+products do, beating five of the six at the ~5 km² scale and five of six again at the finer scale. The margins are large (IMPACT 0.673 against 0.433, UNEP 0.501 against 0.220),
+and UH's rank correlation is *negative* (−0.085), meaning its ordering of the ~5 km² cells is slightly worse than no information at all. Only OSU is ahead of the null, and only narrowly (0.540 against
 0.485).
 
 That comparison spans all five mapped areas, however, and 96% of the reference damage sits in
