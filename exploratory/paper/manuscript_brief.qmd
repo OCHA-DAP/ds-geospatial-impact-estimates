@@ -514,23 +514,28 @@ with the buffer. Interpretively, 30 m also works as a *finding distance*: not li
 sight of the damage, but close enough that a responder standing at the flag could
 plausibly find the damaged building. That reading is what makes the 30 m column a visits-per-find workload metric; the sweep is valid without that reading.
 
-Not every CEMS grade counts as damage. The delivery's text grades collapse to two
-classes (destroyed, completely destroyed and highly damaged → *Destroyed*;
-moderately damaged and damaged → *Damaged*), and the reference set for every score in
-this paper is the points graded Damaged or Destroyed (784 and 683 respectively in the
-core region). Points graded *possibly damaged* are excluded entirely: they appear in
-neither the numerator nor the denominator of any score. Including them was checked as a
-sensitivity on the frozen data (RQ2q in the analysis archive): the reference roughly
-doubles, every precision rises mechanically by 1.6–2× (singles and voting rules alike),
-recall shifts along the grade slope (grade-neutral products gain, destruction-biased
-products lose), and no comparison in this paper changes direction. @fig-basis extends
-the check to every predictor in @fig-bestf1 across three bases (*Destroyed* only, the
-paper's *Damaged or Destroyed*, and including *possibly damaged*), with every flag
-list and operating point frozen, so only the reference changes. Levels
-roughly double per step; the orderings the paper depends on do not change: the fused
-score keeps its precision margin over the best single product (~3–4×) at every basis,
-and the geography null stays inside the product band at every basis. Excluding class 1
-is the more demanding choice, and we keep it.
+Not every CEMS grade counts as damage. CEMS labels each damage point with a text
+grade. The paper's reference merges these into two classes: *Destroyed* (destroyed,
+completely destroyed, or highly damaged; 683 points in the core region) and *Damaged*
+(moderately damaged or damaged; 784 points). Points graded *possibly damaged* are not
+in the reference. A flag near one still counts as a false alarm, and a product that
+misses one loses no recall.
+
+Two analyses relax that choice. In the main text, @fig-bounds counts the *possibly
+damaged* points as damage, among other loosenings, to bound each product's precision
+from above. Here, @fig-basis re-scores every predictor of @fig-bestf1 under three
+definitions of the reference: *Destroyed* only, the paper's *Damaged or Destroyed*, and
+also counting *possibly damaged*. Every flag list and operating point is frozen, so
+only the reference changes. RQ2q in the analysis archive re-runs the scorecard the same
+way.
+
+The grade choice moves levels, not conclusions. Counting *possibly damaged* roughly
+doubles the reference and lifts every precision by 1.6–2×, singles and voting rules
+alike. Recall shifts along the grade slope: grade-neutral products gain,
+destruction-biased products lose. No comparison reverses. The fused score keeps its
+~3–4× precision margin over the best single product, and the geography null stays
+inside the product band, under every definition. Excluding *possibly damaged* is the
+more demanding choice, and we keep it.
 
 ![**Region: core (61 km²).** Precision of every @fig-bestf1 predictor under three
 definitions of the CEMS reference, with flags and operating points frozen, so only the
