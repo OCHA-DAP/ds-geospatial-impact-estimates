@@ -213,14 +213,14 @@ let dragging = null;
 
 function drawTimeline() {
   svg.innerHTML = "";
-  const W = svg.clientWidth || 800, H = 92, mL = 8, mR = 8, axisY = H - 16;
+  const W = svg.clientWidth || 800, H = svg.clientHeight || 88, mL = 14, mR = 14, axisY = H - 18;
   const sx = (y) => mL + (y - Y_MIN) / (Y_MAX - Y_MIN) * (W - mL - mR);
   const xy = (px) => Y_MIN + (px - mL) / (W - mL - mR) * (Y_MAX - Y_MIN);
 
   for (let y = Y_MIN; y <= Y_MAX; y++) {
     el("line", { x1: sx(y), x2: sx(y), y1: axisY, y2: axisY + 4, stroke: "#aeb6bf" });
     if (y % 2 === 0 && y < Y_MAX)
-      el("text", { x: sx(y), y: H - 2, "font-size": 9, fill: "#8b95a1", "text-anchor": "middle" }).textContent = y;
+      el("text", { x: sx(y), y: H - 5, "font-size": 9, fill: "#8b95a1", "text-anchor": "middle" }).textContent = y;
   }
   el("line", { x1: mL, x2: W - mR, y1: axisY, y2: axisY, stroke: "#cfd6de" });
 
