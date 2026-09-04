@@ -137,6 +137,67 @@ def sample_rows_html(led: pd.DataFrame) -> str:
 
 CRUMB = '<p class="crumb"><a href="../">← Geospatial Impact Estimates</a></p>'
 
+DROP_REASONS = {
+    # per-code explanation when an activation never reaches the label corpus
+    "excluded_ref": "only pre-event Reference maps were produced — no delineation to harvest",
+    "unavailable_not_migrated": "products never migrated to the archive portal",
+    "unavailable_status_N": "activation closed without delivering products",
+    "unavailable_no_products": "activation delivered nothing",
+    "unavailable_no_url": "products not (yet) delivered",
+    "failed_download": "download fails permanently upstream",
+}
+
+
+def funnel_html(work: Path, led: pd.DataFrame, n_act: int) -> str:
+    """Activations -> archived -> labelled, with every drop-out accounted for.
+
+    Only renders once gold exists (label_index.parquet in the work dir);
+    before that the harvest sections above tell the whole story.
+    """
+    idx_path = work / "label_index.parquet"
+    if not idx_path.exists() or not n_act:
+        return ""
+    idx = pd.read_parquet(idx_path)
+    uploaded = set(led.loc[led.status == "uploaded", "code"])
+    labelled = set(idx.code)
+
+    drop_rows = []
+    for code, sub in led.groupby("code"):
+        if code in labelled:
+            continue
+        if code in uploaded:
+            why = (
+                "zips archived, but no product contains a flood extent layer "
+                "(flood receded / hydrography-only delineation)"
+            )
+        else:
+            why = DROP_REASONS.get(sub.status.mode()[0], sub.status.mode()[0])
+        drop_rows.append(
+            f'<tr><td class="mono">{esc(code)}</td><td class="wrap">{esc(why)}</td></tr>'
+        )
+
+    return f"""
+<section>
+<h2>From activations to labels</h2>
+<p>Every EMSR flood activation either contributes label sets or is listed below with
+the reason it can't. Nothing is silently dropped.</p>
+<div class="stats">
+  <div class="stat"><div class="n">{n(n_act)}</div>
+    <div class="l">flood activations found</div></div>
+  <div class="stat"><div class="n">{n(len(uploaded))}</div>
+    <div class="l">with zips archived</div></div>
+  <div class="stat"><div class="n">{n(len(labelled))}</div>
+    <div class="l">with flood labels</div></div>
+  <div class="stat"><div class="n">{n(len(idx))}</div>
+    <div class="l">label sets in gold</div></div>
+</div>
+<div class="tblwrap"><table>
+<thead><tr><th>code</th><th>why it has no labels ({n(len(drop_rows))} activations)</th></tr></thead>
+<tbody>{"".join(drop_rows)}</tbody>
+</table></div>
+</section>
+"""
+
 
 def build(work: Path, dest: Path | None = None, crumb: bool = False) -> Path:
     led = pd.read_parquet(work / "products.parquet")
@@ -240,6 +301,7 @@ def build(work: Path, dest: Path | None = None, crumb: bool = False) -> Path:
     failed_n = int(led.status.str.startswith("failed").sum())
     tpl = Template((Path(__file__).parent / "report_template.html").read_text())
     out = tpl.substitute(
+        funnel_section=funnel_html(work, led, n_act),
         generated=datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
         n_activations=n(n_act),
         n_rows=n(len(led)),

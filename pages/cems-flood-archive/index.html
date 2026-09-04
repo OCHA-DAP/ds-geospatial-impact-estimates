@@ -97,7 +97,7 @@ a{color:var(--accent-ink)}
 
 <main>
 <p class="crumb"><a href="../">← Geospatial Impact Estimates</a></p>
-<div class="eyebrow">Copernicus EMS · Rapid Mapping · container <code>global</code> (dev) · generated 2026-09-01 03:16 UTC</div>
+<div class="eyebrow">Copernicus EMS · Rapid Mapping · container <code>global</code> (dev) · generated 2026-09-04 04:45 UTC</div>
 <h1>CEMS Flood Archive Ledger</h1>
 <p class="lede">Rendered directly from <code>_meta/products.parquet</code> and friends — regenerate at any point (<code>report.py</code>) for the true current state of the harvest. Every row below is real.</p>
 
@@ -113,15 +113,39 @@ a{color:var(--accent-ink)}
 <h2>Blob layout</h2>
 <pre class="tree"><code>global/
 └─ copernicus_ems/flood/
-   └─ bronze/
-      ├─ code=EMSR009/ … code=EMSR927/     <span class="dim">← one folder per activation, original zip basenames</span>
-      ├─ <span class="dim">(silver/ and gold/ land beside bronze/ when we harmonize)</span>
-      └─ _meta/
-         ├─ <span class="hl">products.parquet</span>      <span class="dim">the ledger — one row per target, incl. what we can't get</span>
-         ├─ <span class="hl">zip_contents.parquet</span>  <span class="dim">one row per file inside every uploaded zip</span>
-         ├─ <span class="hl">transfers.jsonl</span>       <span class="dim">append-only journal of every attempt</span>
-         └─ <span class="hl">activations.parquet</span>   <span class="dim">all flood activations, both portals</span></code></pre>
+   ├─ bronze/
+   │  ├─ code=EMSR009/ … code=EMSR927/     <span class="dim">← one folder per activation, original zip basenames</span>
+   │  └─ _meta/
+   │     ├─ <span class="hl">products.parquet</span>      <span class="dim">the ledger — one row per target, incl. what we can't get</span>
+   │     ├─ <span class="hl">zip_contents.parquet</span>  <span class="dim">one row per file inside every uploaded zip</span>
+   │     ├─ <span class="hl">transfers.jsonl</span>       <span class="dim">append-only journal of every attempt</span>
+   │     └─ <span class="hl">activations.parquet</span>   <span class="dim">all flood activations, both portals</span>
+   ├─ silver/    <span class="dim">harmonized GeoParquet — every polygon + acquisition datetimes</span>
+   ├─ gold/      <span class="dim">label_index + labels (dissolved flood + valid mask per label set)</span>
+   └─ platinum/  <span class="dim">Portolan catalog serving the labels viewer (PMTiles + index)</span></code></pre>
 </section>
+
+
+<section>
+<h2>From activations to labels</h2>
+<p>Every EMSR flood activation either contributes label sets or is listed below with
+the reason it can't. Nothing is silently dropped.</p>
+<div class="stats">
+  <div class="stat"><div class="n">302</div>
+    <div class="l">flood activations found</div></div>
+  <div class="stat"><div class="n">284</div>
+    <div class="l">with zips archived</div></div>
+  <div class="stat"><div class="n">283</div>
+    <div class="l">with flood labels</div></div>
+  <div class="stat"><div class="n">2,715</div>
+    <div class="l">label sets in gold</div></div>
+</div>
+<div class="tblwrap"><table>
+<thead><tr><th>code</th><th>why it has no labels (19 activations)</th></tr></thead>
+<tbody><tr><td class="mono">EMSR040</td><td class="wrap">only pre-event Reference maps were produced — no delineation to harvest</td></tr><tr><td class="mono">EMSR049</td><td class="wrap">only pre-event Reference maps were produced — no delineation to harvest</td></tr><tr><td class="mono">EMSR060</td><td class="wrap">only pre-event Reference maps were produced — no delineation to harvest</td></tr><tr><td class="mono">EMSR085</td><td class="wrap">only pre-event Reference maps were produced — no delineation to harvest</td></tr><tr><td class="mono">EMSR129</td><td class="wrap">products never migrated to the archive portal</td></tr><tr><td class="mono">EMSR188</td><td class="wrap">zips archived, but no product contains a flood extent layer (flood receded / hydrography-only delineation)</td></tr><tr><td class="mono">EMSR321</td><td class="wrap">products never migrated to the archive portal</td></tr><tr><td class="mono">EMSR364</td><td class="wrap">activation delivered nothing</td></tr><tr><td class="mono">EMSR384</td><td class="wrap">products never migrated to the archive portal</td></tr><tr><td class="mono">EMSR451</td><td class="wrap">products never migrated to the archive portal</td></tr><tr><td class="mono">EMSR473</td><td class="wrap">products never migrated to the archive portal</td></tr><tr><td class="mono">EMSR474</td><td class="wrap">products never migrated to the archive portal</td></tr><tr><td class="mono">EMSR519</td><td class="wrap">products never migrated to the archive portal</td></tr><tr><td class="mono">EMSR693</td><td class="wrap">activation closed without delivering products</td></tr><tr><td class="mono">EMSR701</td><td class="wrap">activation closed without delivering products</td></tr><tr><td class="mono">EMSR710</td><td class="wrap">activation closed without delivering products</td></tr><tr><td class="mono">EMSR792</td><td class="wrap">activation closed without delivering products</td></tr><tr><td class="mono">EMSR846</td><td class="wrap">activation closed without delivering products</td></tr><tr><td class="mono">EMSR926</td><td class="wrap">activation closed without delivering products</td></tr></tbody>
+</table></div>
+</section>
+
 
 <section>
 <h2>The status model</h2>
