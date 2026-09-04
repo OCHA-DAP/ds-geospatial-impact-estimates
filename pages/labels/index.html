@@ -4,33 +4,42 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CEMS Flood Labels</title>
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
 <style>
   html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
   :root { --ink: #1c2430; --accent: #2563cd; --sub: #5d6b7a; --line: #cfd6de; }
-  #map { position: absolute; inset: 0; }
+  /* space backdrop for the globe: deep gradient + a sprinkle of stars */
+  #map {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(1px 1px at 12% 24%, #fff8, transparent 60%),
+      radial-gradient(1px 1px at 78% 12%, #fff6, transparent 60%),
+      radial-gradient(1.5px 1.5px at 33% 71%, #fff7, transparent 60%),
+      radial-gradient(1px 1px at 61% 47%, #fff5, transparent 60%),
+      radial-gradient(1px 1px at 89% 82%, #fff6, transparent 60%),
+      radial-gradient(1.5px 1.5px at 45% 9%, #fff5, transparent 60%),
+      radial-gradient(1px 1px at 7% 88%, #fff6, transparent 60%),
+      radial-gradient(ellipse at 50% 120%, #16233a 0%, #0a1120 55%, #05080f 100%);
+  }
   #panel {
-    position: absolute; top: 12px; left: 12px; z-index: 5; width: 300px;
+    position: absolute; top: 12px; left: 12px; z-index: 5; width: 290px;
     background: rgba(255,255,255,.96); color: var(--ink);
     border: 1px solid var(--line); border-radius: 10px;
     box-shadow: 0 2px 10px rgba(20,30,40,.12); padding: 12px 14px;
-    max-height: calc(100% - 48px); overflow-y: auto;
+    max-height: calc(100% - 170px); overflow-y: auto;
   }
   #panel h1 { font-size: 15px; margin: 0; }
   #panel .sub { font-size: 11px; color: var(--sub); margin: 2px 0 10px; }
   .label { font-size: 10.5px; color: #8b95a1; margin: 8px 0 3px; text-transform: uppercase; letter-spacing: .04em; }
-  select, input[type=number] {
+  select {
     width: 100%; font: inherit; font-size: 12px; padding: 4px 6px;
     border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
   }
-  .row2 { display: flex; gap: 8px; } .row2 > * { flex: 1; }
   .count { font-size: 11px; color: var(--sub); margin-top: 10px; }
   button {
     font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 6px;
     border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer;
   }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  button:disabled { color: #aeb6bf; background: #f1f3f6; cursor: not-allowed; }
   #eventcard h2 { font-size: 13px; margin: 0 0 2px; }
   #eventcard .sub { margin-bottom: 8px; }
   #steps { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
@@ -41,11 +50,23 @@
   .step.active { border-color: var(--accent); background: #eef4fd; }
   .step b { font-variant-numeric: tabular-nums; }
   .nav { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
-  label.chk { display: flex; gap: 6px; font-size: 11.5px; color: var(--ink); align-items: center; margin: 4px 0; cursor: pointer; }
+  label.chk { display: flex; gap: 6px; font-size: 11.5px; align-items: center; margin: 4px 0; cursor: pointer; }
   .legend { font-size: 10.5px; color: var(--sub); margin-top: 10px; line-height: 1.5; }
   .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
   #err { color: #b8272d; font-size: 11.5px; margin-top: 8px; white-space: pre-wrap; }
   a { color: var(--accent); }
+  #timeline {
+    position: absolute; left: 50%; transform: translateX(-50%); bottom: 12px; z-index: 5;
+    width: min(860px, calc(100% - 40px)); height: 128px;
+    background: rgba(255,255,255,.96); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(20,30,40,.12); padding: 8px 12px 4px; box-sizing: border-box;
+  }
+  #timeline .tl-head { font-size: 10.5px; color: var(--sub); display: flex; justify-content: space-between; }
+  #tlsvg { width: 100%; height: 92px; display: block; cursor: crosshair; }
+  #tltip {
+    position: absolute; pointer-events: none; background: var(--ink); color: #fff;
+    font-size: 11px; padding: 4px 8px; border-radius: 5px; opacity: 0; max-width: 240px; z-index: 9;
+  }
 </style>
 </head>
 <body>
@@ -53,28 +74,22 @@
 <div id="panel">
   <h1>CEMS Flood Labels</h1>
   <p class="sub">Observed flood extents from every Copernicus EMS Rapid Mapping flood
-  activation, 2012–present, with per-image acquisition times.
-  <a href="../">Home</a></p>
+  activation, 2012–present, with per-image acquisition times. <a href="../">Home</a></p>
 
   <div id="filters">
-    <div class="label">Years</div>
-    <div class="row2"><input type="number" id="y0" value="2012" min="2012" max="2026">
-                      <input type="number" id="y1" value="2026" min="2012" max="2026"></div>
-    <div class="label">Sensor</div><select id="sensor"><option value="">all</option></select>
-    <div class="label">Determination</div><select id="method"><option value="">all</option></select>
-    <div class="label">Time precision</div>
-    <select id="precision"><option value="">all</option><option>minute</option><option>date</option><option>window</option></select>
+    <div class="label">Region</div><select id="region"><option value="">Global</option></select>
+    <div class="label">Country</div><select id="country"><option value="">All</option></select>
     <div class="count" id="count"></div>
     <div class="legend">
-      <span class="swatch" style="background:#2563cd"></span>observed flood extent —
-      click any polygon to open its event.<br>
-      Viewer shows display-simplified geometry; analysis uses the
-      GeoParquet in the catalog.
+      <span class="swatch" style="background:#2563cd"></span>observed flood extent — hover for
+      sensor, method and time precision; click to open the event.<br>
+      Drag the timeline handles to set the period. Display-simplified geometry;
+      analysis uses the GeoParquet in the catalog.
     </div>
   </div>
 
   <div id="eventcard" style="display:none">
-    <button id="back">&#8592; all events</button>
+    <button id="back">&#8592; back</button>
     <h2 id="evtitle"></h2><div class="sub" id="evsub"></div>
     <div class="nav"><button id="prev">&#9664;</button><span id="pos" style="font-size:11.5px"></span><button id="next">&#9654;</button></div>
     <label class="chk"><input type="checkbox" id="ghost" checked> ghost previous (same AOI)</label>
@@ -83,19 +98,35 @@
   </div>
   <div id="err"></div>
 </div>
+<div id="timeline">
+  <div class="tl-head"><span id="tlmode"></span><span id="tlrange"></span></div>
+  <svg id="tlsvg"></svg>
+</div>
+<div id="tltip"></div>
 
 <script type="module">
-import maplibregl from "https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/+esm";
+import maplibregl from "https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.0/+esm";
 import { Protocol, PMTiles } from "https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/+esm";
 import { asyncBufferFromUrl, parquetReadObjects } from "https://cdn.jsdelivr.net/npm/hyparquet@1.8.0/+esm";
 import { compressors } from "https://cdn.jsdelivr.net/npm/hyparquet-compressors@1.1.1/+esm";
 
 const TOKEN_URL = "https://chd-ds-token-issuer.azurewebsites.net/api/token?app=cems-flood-labels&tier=platinum";
+const REGION = {
+  Africa: ["Cameroon","Djibouti","Libya","Madagascar","Malawi","Mozambique","Niger","Nigeria","Somalia","South Africa","Sudan","Togo","Tunisia","Uganda","Zimbabwe"],
+  Americas: ["Belize","Bolivia","Brazil","Colombia","Ecuador","Guyana","Mexico","Nicaragua","Panama","Peru","Suriname","United States"],
+  Asia: ["Afghanistan","Bangladesh","Cambodia","India","Iran","Iraq","Jordan","Myanmar/Burma","Nepal","Pakistan","Philippines","Sri Lanka","Tajikistan","Timor-Leste","Viet Nam"],
+  Europe: ["Albania","Austria","Belgium","Bosnia and Herzegovina","Bulgaria","Croatia","Czechia","Finland","France","Germany","Greece","Hungary","Ireland","Italy","Kosovo","Latvia","Lithuania","Moldova","Montenegro","Netherlands","North Macedonia","Norway","Poland","Portugal","Romania","Serbia","Slovakia","Slovenia","Spain","Sweden","Ukraine","United Kingdom"],
+  Oceania: ["Australia"],
+};
+const DOT_THRESHOLD = 110;   // <= this many activations in scope -> dots, else histogram
+const Y_MIN = 2012, Y_MAX = 2027;
+
 const qs = new URLSearchParams(location.search);
-const err = (m) => { document.getElementById("err").textContent = m; };
+const $ = (id) => document.getElementById(id);
+const err = (m) => { $("err").textContent = m; };
 
 async function getAccess() {
-  if (qs.get("base") && qs.get("sas"))  // local-dev override before issuer redeploy
+  if (qs.get("base") && qs.get("sas"))
     return { base: qs.get("base"), sas: qs.get("sas") };
   const t = await fetch(TOKEN_URL).then(r => r.json());
   return { base: `${t.base_url}/${t.platinum_dir}`, sas: t.sas };
@@ -106,78 +137,153 @@ maplibregl.addProtocol("pmtiles", protocol.tile);
 const map = new maplibregl.Map({
   container: "map",
   style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-  center: [10, 20], zoom: 1.6, attributionControl: { compact: true },
+  center: [10, 18], zoom: 1.5, attributionControl: { compact: true },
+  projection: { type: "globe" },
 });
 map.addControl(new maplibregl.NavigationControl(), "top-right");
-// capture the one-shot load event NOW: by the time the async data fetches
-// finish, it has usually already fired and a late .on("load") never runs
+map.once("style.load", () => map.setProjection({ type: "globe" }));  // survive style overriding it
 const mapReady = new Promise((res) => map.once("load", res));
 
-let IDX = [], BY_EVENT = new Map(), current = null, stepIdx = 0;
+let IDX = [], EVENTS = new Map(), current = null, stepIdx = 0;
+let scopeCodes = null;                 // null = global; else Set of codes
+let t0 = Y_MIN, t1 = Y_MAX;           // fractional years from the brush
 
-function isoYearFilter() {
-  const y0 = document.getElementById("y0").value, y1 = document.getElementById("y1").value;
-  return ["all", [">=", ["get", "acq_start"], `${y0}-00`], ["<=", ["get", "acq_start"], `${y1}-99`]];
+const yearToStr = (y) => {
+  const yr = Math.floor(y), m = Math.min(12, Math.max(1, Math.round((y - yr) * 12) + 1));
+  return `${yr}-${String(m).padStart(2, "0")}`;
+};
+const inScope = (r) => !scopeCodes || scopeCodes.has(r.code);
+const inTime = (r) => r.acq_start >= yearToStr(t0) && r.acq_start <= yearToStr(t1) + "-99";
+const frac = (s) => +s.slice(0, 4) + (Math.max(1, +s.slice(5, 7)) - 1) / 12;
+
+function mapFilter() {
+  const f = ["all",
+    [">=", ["get", "acq_start"], yearToStr(t0)],
+    ["<=", ["get", "acq_start"], yearToStr(t1) + "-99"]];
+  if (scopeCodes) f.push(["in", ["get", "code"], ["literal", [...scopeCodes]]]);
+  return f;
 }
-function overviewFilter() {
-  const f = [isoYearFilter()];
-  for (const [id, attr] of [["sensor", "sensor"], ["method", "acq_method"], ["precision", "acq_precision"]]) {
-    const v = document.getElementById(id).value;
-    if (v) f.push(["==", ["get", attr], v]);
+function applyScope(fit) {
+  map.setFilter("labels-fill", mapFilter());
+  map.setFilter("labels-line", mapFilter());
+  const rows = IDX.filter(r => inScope(r) && inTime(r));
+  $("count").textContent = `${rows.length.toLocaleString()} label sets · ${new Set(rows.map(r => r.code)).size} activations`;
+  if (fit && rows.length) {
+    const minx = Math.min(...rows.map(r => r.minx)), miny = Math.min(...rows.map(r => r.miny));
+    const maxx = Math.max(...rows.map(r => r.maxx)), maxy = Math.max(...rows.map(r => r.maxy));
+    map.fitBounds([[minx, miny], [maxx, maxy]], { padding: 70, maxZoom: 7 });
   }
-  return ["all", ...f];
-}
-function applyOverview() {
-  map.setFilter("labels-fill", overviewFilter());
-  map.setFilter("labels-line", overviewFilter());
-  const y0 = +document.getElementById("y0").value, y1 = +document.getElementById("y1").value;
-  const sel = { sensor: document.getElementById("sensor").value,
-                acq_method: document.getElementById("method").value,
-                acq_precision: document.getElementById("precision").value };
-  const n = IDX.filter(r => {
-    const y = +String(r.acq_start).slice(0, 4);
-    return y >= y0 && y <= y1 &&
-      (!sel.sensor || r.sensor === sel.sensor) &&
-      (!sel.acq_method || r.acq_method === sel.acq_method) &&
-      (!sel.acq_precision || r.acq_precision === sel.acq_precision);
-  }).length;
-  document.getElementById("count").textContent = `${n.toLocaleString()} label sets shown`;
+  drawTimeline();
 }
 
+// ---------- timeline (SVG): brush + histogram/dots ----------
+const svg = $("tlsvg"), tip = $("tltip");
+const NS = "http://www.w3.org/2000/svg";
+function el(n, a, p) { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; }
+let dragging = null;
+
+function drawTimeline() {
+  svg.innerHTML = "";
+  const W = svg.clientWidth || 800, H = 92, mL = 8, mR = 8, axisY = H - 16;
+  const sx = (y) => mL + (y - Y_MIN) / (Y_MAX - Y_MIN) * (W - mL - mR);
+  const xy = (px) => Y_MIN + (px - mL) / (W - mL - mR) * (Y_MAX - Y_MIN);
+
+  for (let y = Y_MIN; y <= Y_MAX; y++) {
+    el("line", { x1: sx(y), x2: sx(y), y1: axisY, y2: axisY + 4, stroke: "#aeb6bf" });
+    if (y % 2 === 0 && y < Y_MAX)
+      el("text", { x: sx(y), y: H - 2, "font-size": 9, fill: "#8b95a1", "text-anchor": "middle" }).textContent = y;
+  }
+  el("line", { x1: mL, x2: W - mR, y1: axisY, y2: axisY, stroke: "#cfd6de" });
+
+  const rows = IDX.filter(inScope);
+  const evs = new Map();
+  for (const r of rows) if (!evs.has(r.code)) evs.set(r.code, r);
+  $("tlmode").textContent = evs.size <= DOT_THRESHOLD
+    ? `${evs.size} activations — hover a dot, click to open`
+    : `label sets per quarter (${evs.size} activations — pick a country for dots)`;
+  $("tlrange").textContent = `${yearToStr(t0)} → ${yearToStr(t1)}`;
+
+  if (evs.size <= DOT_THRESHOLD) {
+    let i = 0;
+    for (const [code, r] of evs) {
+      const x = sx(frac(r.acq_start));
+      const y = 14 + ((i * 37) % 5) * 11;  // deterministic jitter rows
+      const active = frac(r.acq_start) >= t0 && frac(r.acq_start) <= t1;
+      const c = el("circle", { cx: x, cy: y, r: 4.5, fill: active ? "#2563cd" : "#c6cdd6", cursor: "pointer" });
+      c.addEventListener("mousemove", (e) => {
+        tip.style.opacity = 1;
+        tip.style.left = Math.min(e.clientX + 10, innerWidth - 250) + "px";
+        tip.style.top = (e.clientY - 40) + "px";
+        tip.innerHTML = `<b>${code}</b> ${r.name || ""}<br>${r.countries || ""} · ${r.acq_start.slice(0, 10)}`;
+      });
+      c.addEventListener("mouseleave", () => tip.style.opacity = 0);
+      c.addEventListener("click", () => openEvent(code));
+      i++;
+    }
+  } else {
+    const bins = new Map();
+    for (const r of rows) {
+      const q = Math.floor(frac(r.acq_start) * 4) / 4;
+      bins.set(q, (bins.get(q) || 0) + 1);
+    }
+    const max = Math.max(...bins.values(), 1);
+    for (const [q, n] of bins) {
+      const h = Math.max(2, n / max * (axisY - 12));
+      const active = q >= t0 - 0.25 && q <= t1;
+      el("rect", { x: sx(q), y: axisY - h, width: Math.max(2, sx(q + 0.25) - sx(q) - 1),
+                   height: h, fill: active ? "#2563cd" : "#c6cdd6", rx: 1 });
+    }
+  }
+
+  // brush: shaded outside + handles
+  el("rect", { x: mL, y: 6, width: Math.max(0, sx(t0) - mL), height: axisY - 6, fill: "rgba(140,150,160,.14)" });
+  el("rect", { x: sx(t1), y: 6, width: Math.max(0, W - mR - sx(t1)), height: axisY - 6, fill: "rgba(140,150,160,.14)" });
+  for (const [which, y] of [["t0", t0], ["t1", t1]]) {
+    el("line", { x1: sx(y), x2: sx(y), y1: 4, y2: axisY, stroke: "#2563cd", "stroke-width": 2 });
+    const g = el("rect", { x: sx(y) - 6, y: 4, width: 12, height: axisY - 4, fill: "transparent", cursor: "ew-resize" });
+    g.addEventListener("mousedown", (e) => { dragging = which; e.preventDefault(); });
+  }
+  svg.onmousemove = (e) => {
+    if (!dragging) return;
+    const y = Math.max(Y_MIN, Math.min(Y_MAX, xy(e.offsetX)));
+    if (dragging === "t0") t0 = Math.min(y, t1); else t1 = Math.max(y, t0);
+    applyScope(false);
+  };
+  svg.onmouseup = svg.onmouseleave = () => { dragging = null; };
+}
+addEventListener("resize", drawTimeline);
+
+// ---------- event mode ----------
 function setFilterForStep() {
   const s = current.steps[stepIdx];
   const f = ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]];
   map.setFilter("labels-fill", f);
   map.setFilter("labels-line", f);
   const prev = [...current.steps].slice(0, stepIdx).reverse().find(p => p.aoi === s.aoi);
-  const ghostOn = document.getElementById("ghost").checked && prev;
-  map.setFilter("ghost-line", ghostOn
+  map.setFilter("ghost-line", ($("ghost").checked && prev)
     ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], prev.acq_start]]
     : ["==", ["get", "code"], "__none__"]);
-  const maskOn = document.getElementById("mask").checked;
-  map.setFilter("mask-line", maskOn
+  map.setFilter("mask-line", $("mask").checked
     ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]]
     : ["==", ["get", "code"], "__none__"]);
-  document.getElementById("pos").textContent = `${stepIdx + 1} / ${current.steps.length}`;
-  document.querySelectorAll(".step").forEach((el, i) => el.classList.toggle("active", i === stepIdx));
+  $("pos").textContent = `${stepIdx + 1} / ${current.steps.length}`;
+  document.querySelectorAll(".step").forEach((n, i) => n.classList.toggle("active", i === stepIdx));
   map.fitBounds([[s.minx, s.miny], [s.maxx, s.maxy]], { padding: 60, maxZoom: 12 });
 }
-
 function openEvent(code) {
-  current = { code, steps: BY_EVENT.get(code) };
+  current = { code, steps: EVENTS.get(code) };
   stepIdx = 0;
-  document.getElementById("filters").style.display = "none";
-  document.getElementById("eventcard").style.display = "";
-  document.getElementById("evtitle").textContent = code;
-  document.getElementById("evsub").textContent =
-    `${current.steps[0].name || ""} — ${current.steps.length} label sets`;
-  const list = document.getElementById("steps");
+  $("filters").style.display = "none";
+  $("eventcard").style.display = "";
+  $("evtitle").textContent = code;
+  $("evsub").textContent = `${current.steps[0].name || ""} — ${current.steps.length} label sets`;
+  const list = $("steps");
   list.innerHTML = "";
   current.steps.forEach((s, i) => {
     const b = document.createElement("button");
     b.className = "step";
-    b.innerHTML = `<b>${String(s.acq_start).slice(0, 16)}</b> · ${s.aoi}<br>` +
-      `${s.sensor || "sensor ?"} · ${s.acq_method} · ${(+s.area_km2).toFixed(1)} km²`;
+    b.innerHTML = `<b>${s.acq_start.slice(0, 16)}</b> · ${s.aoi}<br>` +
+      `${s.sensor || "sensor ?"} · ${s.acq_method}/${s.acq_precision} · ${(+s.area_km2).toFixed(1)} km²`;
     b.onclick = () => { stepIdx = i; setFilterForStep(); };
     list.appendChild(b);
   });
@@ -185,98 +291,111 @@ function openEvent(code) {
 }
 function closeEvent() {
   current = null;
-  document.getElementById("filters").style.display = "";
-  document.getElementById("eventcard").style.display = "none";
+  $("filters").style.display = "";
+  $("eventcard").style.display = "none";
   map.setFilter("ghost-line", ["==", ["get", "code"], "__none__"]);
   map.setFilter("mask-line", ["==", ["get", "code"], "__none__"]);
-  applyOverview();
+  applyScope(false);
 }
 
+// ---------- boot ----------
 try {
   const { base, sas } = await getAccess();
   const url = (p) => `${base}/${p}?${sas}`;
 
-  // label index -> catalog for the panel + event steps
   IDX = await parquetReadObjects({
     file: await asyncBufferFromUrl({ url: url("label-index/label_index.parquet") }),
     compressors,
-    columns: ["code", "name", "aoi", "acq_start", "label_day", "sensor", "acq_method",
-              "acq_precision", "area_km2", "minx", "miny", "maxx", "maxy"],
+    columns: ["code", "name", "countries", "aoi", "acq_start", "label_day", "sensor",
+              "acq_method", "acq_precision", "area_km2", "minx", "miny", "maxx", "maxy"],
   });
-  // hyparquet yields timestamps as JS Dates; normalize to the exact string
-  // format the tile attributes carry ("YYYY-MM-DD HH:MM:SS", from python str())
   IDX.forEach(r => {
     const d = r.acq_start instanceof Date ? r.acq_start : new Date(r.acq_start);
-    r.acq_start = isNaN(d) ? String(r.acq_start)
-      : d.toISOString().slice(0, 19).replace("T", " ");
+    r.acq_start = isNaN(d) ? String(r.acq_start) : d.toISOString().slice(0, 19).replace("T", " ");
   });
   IDX.sort((a, b) => a.acq_start.localeCompare(b.acq_start));
   for (const r of IDX) {
-    if (!BY_EVENT.has(r.code)) BY_EVENT.set(r.code, []);
-    BY_EVENT.get(r.code).push(r);
-  }
-  for (const el of ["sensor", "method"]) {
-    const attr = el === "sensor" ? "sensor" : "acq_method";
-    const vals = [...new Set(IDX.map(r => r[attr]).filter(Boolean))].sort();
-    const sel = document.getElementById(el);
-    vals.forEach(v => sel.add(new Option(v, v)));
+    if (!EVENTS.has(r.code)) EVENTS.set(r.code, []);
+    EVENTS.get(r.code).push(r);
   }
 
-  // vector layers: source-layer ids read from the PMTiles metadata
+  // place selectors
+  const regions = Object.keys(REGION);
+  regions.forEach(x => $("region").add(new Option(x, x)));
+  const countryCodes = new Map();  // country -> Set(codes)
+  for (const r of IDX) for (const c of String(r.countries || "").split(";")) {
+    const k = c.trim(); if (!k) continue;
+    if (!countryCodes.has(k)) countryCodes.set(k, new Set());
+    countryCodes.get(k).add(r.code);
+  }
+  function fillCountries() {
+    const reg = $("region").value;
+    const opts = [...countryCodes.keys()].filter(c => !reg || (REGION[reg] || []).includes(c)).sort();
+    $("country").innerHTML = "<option value=''>All</option>";
+    opts.forEach(c => $("country").add(new Option(`${c} (${countryCodes.get(c).size})`, c)));
+  }
+  function updateScope() {
+    const reg = $("region").value, ctry = $("country").value;
+    if (ctry) scopeCodes = countryCodes.get(ctry);
+    else if (reg) {
+      scopeCodes = new Set();
+      for (const c of REGION[reg] || [])
+        for (const code of countryCodes.get(c) || []) scopeCodes.add(code);
+    } else scopeCodes = null;
+    applyScope(true);
+  }
+  fillCountries();
+  $("region").onchange = () => { fillCountries(); $("country").value = ""; if (!current) updateScope(); };
+  $("country").onchange = () => { if (!current) updateScope(); };
+
   const labelsPm = new PMTiles(url("labels/labels.pmtiles"));
   const masksPm = new PMTiles(url("valid-masks/valid_masks.pmtiles"));
   protocol.add(labelsPm); protocol.add(masksPm);
-  const lMeta = await labelsPm.getMetadata();
-  const mMeta = await masksPm.getMetadata();
-  const lLayer = lMeta.vector_layers[0].id, mLayer = mMeta.vector_layers[0].id;
+  const lLayer = (await labelsPm.getMetadata()).vector_layers[0].id;
+  const mLayer = (await masksPm.getMetadata()).vector_layers[0].id;
 
-  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, maxWidth: "260px" });
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, maxWidth: "270px" });
   await mapReady;
-  {
-    map.addSource("labels", { type: "vector", url: `pmtiles://${url("labels/labels.pmtiles")}` });
-    map.addSource("masks", { type: "vector", url: `pmtiles://${url("valid-masks/valid_masks.pmtiles")}` });
-    map.addLayer({ id: "labels-fill", type: "fill", source: "labels", "source-layer": lLayer,
-      paint: { "fill-color": "#2563cd", "fill-opacity": 0.42 } });
-    map.addLayer({ id: "labels-line", type: "line", source: "labels", "source-layer": lLayer,
-      paint: { "line-color": "#1d4ea8", "line-width": 0.7 } });
-    map.addLayer({ id: "ghost-line", type: "line", source: "labels", "source-layer": lLayer,
-      filter: ["==", ["get", "code"], "__none__"],
-      paint: { "line-color": "#d97706", "line-width": 1.6, "line-dasharray": [2, 2] } });
-    map.addLayer({ id: "mask-line", type: "line", source: "masks", "source-layer": mLayer,
-      filter: ["==", ["get", "code"], "__none__"],
-      paint: { "line-color": "#5d6b7a", "line-width": 1, "line-dasharray": [4, 3] } });
-    applyOverview();
+  map.addSource("labels", { type: "vector", url: `pmtiles://${url("labels/labels.pmtiles")}` });
+  map.addSource("masks", { type: "vector", url: `pmtiles://${url("valid-masks/valid_masks.pmtiles")}` });
+  map.addLayer({ id: "labels-fill", type: "fill", source: "labels", "source-layer": lLayer,
+    paint: { "fill-color": "#2563cd", "fill-opacity": 0.42 } });
+  map.addLayer({ id: "labels-line", type: "line", source: "labels", "source-layer": lLayer,
+    paint: { "line-color": "#1d4ea8", "line-width": 0.7 } });
+  map.addLayer({ id: "ghost-line", type: "line", source: "labels", "source-layer": lLayer,
+    filter: ["==", ["get", "code"], "__none__"],
+    paint: { "line-color": "#d97706", "line-width": 1.6, "line-dasharray": [2, 2] } });
+  map.addLayer({ id: "mask-line", type: "line", source: "masks", "source-layer": mLayer,
+    filter: ["==", ["get", "code"], "__none__"],
+    paint: { "line-color": "#5d6b7a", "line-width": 1, "line-dasharray": [4, 3] } });
 
-    map.on("click", "labels-fill", (e) => {
-      const p = e.features[0].properties;
-      if (!current) openEvent(p.code);
-    });
-    map.on("mousemove", "labels-fill", (e) => {
-      map.getCanvas().style.cursor = "pointer";
-      const p = e.features[0].properties;
-      popup.setLngLat(e.lngLat)
-        .setHTML(`<b>${p.code}</b> ${p.aoi || ""}<br>${String(p.acq_start).slice(0, 16)} · ${p.sensor || "?"}<br>${(+p.area_km2 || 0).toFixed(1)} km²`)
-        .addTo(map);
-    });
-    map.on("mouseleave", "labels-fill", () => { map.getCanvas().style.cursor = ""; popup.remove(); });
-  }
+  map.on("click", "labels-fill", (e) => { if (!current) openEvent(e.features[0].properties.code); });
+  map.on("mousemove", "labels-fill", (e) => {
+    map.getCanvas().style.cursor = "pointer";
+    const p = e.features[0].properties;
+    popup.setLngLat(e.lngLat)
+      .setHTML(`<b>${p.code}</b> ${p.aoi || ""}<br>${String(p.acq_start).slice(0, 16)}<br>` +
+               `${p.sensor || "sensor ?"} · ${p.acq_method || ""}/${p.acq_precision || ""} · ${(+p.area_km2 || 0).toFixed(1)} km²`)
+      .addTo(map);
+  });
+  map.on("mouseleave", "labels-fill", () => { map.getCanvas().style.cursor = ""; popup.remove(); });
 
-  for (const id of ["y0", "y1", "sensor", "method", "precision"])
-    document.getElementById(id).onchange = () => { if (!current) applyOverview(); };
-  document.getElementById("back").onclick = closeEvent;
-  document.getElementById("prev").onclick = () => { if (current && stepIdx > 0) { stepIdx--; setFilterForStep(); } };
-  document.getElementById("next").onclick = () => { if (current && stepIdx < current.steps.length - 1) { stepIdx++; setFilterForStep(); } };
-  document.getElementById("ghost").onchange = () => current && setFilterForStep();
-  document.getElementById("mask").onchange = () => current && setFilterForStep();
+  $("back").onclick = closeEvent;
+  $("prev").onclick = () => { if (current && stepIdx > 0) { stepIdx--; setFilterForStep(); } };
+  $("next").onclick = () => { if (current && stepIdx < current.steps.length - 1) { stepIdx++; setFilterForStep(); } };
+  $("ghost").onchange = () => current && setFilterForStep();
+  $("mask").onchange = () => current && setFilterForStep();
   document.addEventListener("keydown", (e) => {
     if (!current) return;
     if (e.key === "ArrowLeft" && stepIdx > 0) { stepIdx--; setFilterForStep(); }
     if (e.key === "ArrowRight" && stepIdx < current.steps.length - 1) { stepIdx++; setFilterForStep(); }
     if (e.key === "Escape") closeEvent();
   });
+
+  applyScope(false);
 } catch (e) {
   err("Could not load the label catalog.\n" + e.message +
-      "\n(The token scope requires the issuer redeploy; for local testing pass ?base=&sas=)");
+      "\n(Needs the issuer redeploy; for local testing pass ?base=&sas=)");
 }
 </script>
 </body>
