@@ -88,6 +88,7 @@
 import maplibregl from "https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/+esm";
 import { Protocol, PMTiles } from "https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/+esm";
 import { asyncBufferFromUrl, parquetReadObjects } from "https://cdn.jsdelivr.net/npm/hyparquet@1.8.0/+esm";
+import { compressors } from "https://cdn.jsdelivr.net/npm/hyparquet-compressors@1.1.1/+esm";
 
 const TOKEN_URL = "https://chd-ds-token-issuer.azurewebsites.net/api/token?app=cems-flood-labels&tier=platinum";
 const qs = new URLSearchParams(location.search);
@@ -195,6 +196,7 @@ try {
   // label index -> catalog for the panel + event steps
   IDX = await parquetReadObjects({
     file: await asyncBufferFromUrl({ url: url("label-index/label_index.parquet") }),
+    compressors,
     columns: ["code", "name", "aoi", "acq_start", "label_day", "sensor", "acq_method",
               "acq_precision", "area_km2", "minx", "miny", "maxx", "maxy"],
   });
