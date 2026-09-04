@@ -109,6 +109,9 @@ const map = new maplibregl.Map({
   center: [10, 20], zoom: 1.6, attributionControl: { compact: true },
 });
 map.addControl(new maplibregl.NavigationControl(), "top-right");
+// capture the one-shot load event NOW: by the time the async data fetches
+// finish, it has usually already fired and a late .on("load") never runs
+const mapReady = new Promise((res) => map.once("load", res));
 
 let IDX = [], BY_EVENT = new Map(), current = null, stepIdx = 0;
 
@@ -227,7 +230,9 @@ try {
   const mMeta = await masksPm.getMetadata();
   const lLayer = lMeta.vector_layers[0].id, mLayer = mMeta.vector_layers[0].id;
 
-  map.on("load", () => {
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, maxWidth: "260px" });
+  await mapReady;
+  {
     map.addSource("labels", { type: "vector", url: `pmtiles://${url("labels/labels.pmtiles")}` });
     map.addSource("masks", { type: "vector", url: `pmtiles://${url("valid-masks/valid_masks.pmtiles")}` });
     map.addLayer({ id: "labels-fill", type: "fill", source: "labels", "source-layer": lLayer,
@@ -254,8 +259,7 @@ try {
         .addTo(map);
     });
     map.on("mouseleave", "labels-fill", () => { map.getCanvas().style.cursor = ""; popup.remove(); });
-  });
-  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, maxWidth: "260px" });
+  }
 
   for (const id of ["y0", "y1", "sensor", "method", "precision"])
     document.getElementById(id).onchange = () => { if (!current) applyOverview(); };
