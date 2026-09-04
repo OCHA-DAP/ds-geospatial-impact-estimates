@@ -37,11 +37,7 @@ in each product's most favourable region, and although the expert reference miss
 lesser damage, the most generous defensible reading still leaves every product below
 0.28. The products do rank neighbourhoods well enough to triage, within a damage zone
 that is already identified. The practical way to use them is to count agreement between
-independent products. The count roughly doubles the building-level performance (F1) of
-any single product, out-ranks every single product at ranking neighbourhoods (at both
-cell sizes tested), and needs no
-weights, training data or reference, so it can be computed the hour the second
-product arrives.
+independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, the count out-ranks every single product at ranking neighbourhoods (at both cell sizes tested), and it needs no weights, training data or reference, so it can be computed the hour the second product arrives.
 
 
 ## The event, the products, and the references
@@ -325,8 +321,7 @@ zone the products contain real information about where to go first (@sec-ranking
 
 Combining them works better. Counting agreement between products outperformed
 every single product both at ranking neighbourhoods (@fig-agreerank) and at
-flagging individual buildings, where the count roughly doubled the F1 of any product
-alone. So do not spend time choosing a product; spend it counting agreement between
+flagging individual buildings, where the better agreement thresholds roughly doubled the F1 of any product alone (0.26–0.28 against the best single product's 0.15; @tbl-dial). So do not spend time choosing a product; spend it counting agreement between
 products. Unlike a fitted model, counting requires no weights, no training data
 and no reference, so it can be done the hour the second product arrives. Weight the
 count toward products with independent sensing methods, for the reason given in
