@@ -1,6 +1,6 @@
 """Platinum: the published serving layer for the flood label corpus — a
 versioned Portolan catalog (STAC + GeoParquet + PMTiles) consumed by the
-pages/labels viewer via the token issuer.
+pages/cems-flood-labels viewer via the token issuer.
 
 Collections:
   labels        one row per label set; flood extent geometry SIMPLIFIED for
