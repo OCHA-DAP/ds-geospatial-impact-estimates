@@ -1,0 +1,79 @@
+<!-- Appendix fold behavior: sections render as collapsed callouts. Following any
+     internal link (cross-ref, TOC) into a folded section expands it, scrolling to
+     the exact target once open; a section that was auto-expanded this way quietly
+     re-collapses after the reader scrolls back up past it. Sections the reader
+     opened by hand are never auto-collapsed. -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (typeof bootstrap === "undefined") return;
+  var autoOpened = new Set();
+
+  function calloutFor(target) {
+    // target is either an element inside a callout, or a <section> containing one
+    var c = target.closest(".callout");
+    if (!c && target.querySelector) c = target.querySelector(".callout");
+    return c;
+  }
+  function bodyOf(c) { return c && c.querySelector(".callout-collapse"); }
+
+  function expand(c) {
+    var b = bodyOf(c);
+    if (!b || b.classList.contains("show")) return false;
+    bootstrap.Collapse.getOrCreateInstance(b, { toggle: false }).show();
+    autoOpened.add(c);
+    return true;
+  }
+  function collapse(c) {
+    var b = bodyOf(c);
+    if (b && b.classList.contains("show"))
+      bootstrap.Collapse.getOrCreateInstance(b, { toggle: false }).hide();
+    autoOpened.delete(c);
+  }
+
+  function handleHash(id) {
+    if (!id) return;
+    var target = document.getElementById(id);
+    if (!target) return;
+    var c = calloutFor(target);
+    if (!c) return;
+    var inside = target.closest(".callout") === c;
+    if (expand(c) && inside) {
+      // the target was hidden when the browser tried to jump; scroll once visible
+      bodyOf(c).addEventListener("shown.bs.collapse", function () {
+        target.scrollIntoView({ block: "start" });
+      }, { once: true });
+    } else if (inside) {
+      target.scrollIntoView({ block: "start" });
+    }
+  }
+
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a) handleHash(decodeURIComponent(a.getAttribute("href").slice(1)));
+  });
+  window.addEventListener("hashchange", function () {
+    handleHash(decodeURIComponent(location.hash.slice(1)));
+  });
+  if (location.hash) handleHash(decodeURIComponent(location.hash.slice(1)));
+
+  // a manual click on a fold's header takes it out of auto management
+  document.querySelectorAll(".callout-header").forEach(function (h) {
+    h.addEventListener("click", function () {
+      autoOpened.delete(h.closest(".callout"));
+    });
+  });
+
+  // re-fold auto-opened sections once they sit fully below the viewport
+  var pending = false;
+  window.addEventListener("scroll", function () {
+    if (pending || autoOpened.size === 0) return;
+    pending = true;
+    requestAnimationFrame(function () {
+      pending = false;
+      autoOpened.forEach(function (c) {
+        if (c.getBoundingClientRect().top > window.innerHeight + 200) collapse(c);
+      });
+    });
+  }, { passive: true });
+});
+</script>
