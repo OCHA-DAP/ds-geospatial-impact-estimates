@@ -200,7 +200,13 @@ try {
     columns: ["code", "name", "aoi", "acq_start", "label_day", "sensor", "acq_method",
               "acq_precision", "area_km2", "minx", "miny", "maxx", "maxy"],
   });
-  IDX.forEach(r => { r.acq_start = String(r.acq_start); });
+  // hyparquet yields timestamps as JS Dates; normalize to the exact string
+  // format the tile attributes carry ("YYYY-MM-DD HH:MM:SS", from python str())
+  IDX.forEach(r => {
+    const d = r.acq_start instanceof Date ? r.acq_start : new Date(r.acq_start);
+    r.acq_start = isNaN(d) ? String(r.acq_start)
+      : d.toISOString().slice(0, 19).replace("T", " ");
+  });
   IDX.sort((a, b) => a.acq_start.localeCompare(b.acq_start));
   for (const r of IDX) {
     if (!BY_EVENT.has(r.code)) BY_EVENT.set(r.code, []);
