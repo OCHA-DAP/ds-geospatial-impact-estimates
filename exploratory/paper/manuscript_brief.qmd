@@ -37,7 +37,7 @@ in each product's most favourable region, and although the expert reference miss
 lesser damage, the most generous defensible reading still leaves every product below
 0.28. The products do rank neighbourhoods well enough to triage, within a damage zone
 that is already identified. The practical way to use them is to count agreement between
-independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, the count out-ranks every single product at ranking neighbourhoods (at both cell sizes tested), and it needs no weights, training data or reference, so it can be computed as soon as the second product arrives.
+independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, ranking neighbourhoods by agreement beats every single product's ranking (at both cell sizes tested), and the method needs no weights, training data or reference, so it can be run as soon as the second product arrives.
 
 
 ## The event, the products, and the references
