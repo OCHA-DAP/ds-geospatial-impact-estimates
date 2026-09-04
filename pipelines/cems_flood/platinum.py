@@ -96,7 +96,16 @@ def build_collections(src: Path, cat: Path) -> None:
     masks = gpd.GeoDataFrame(mask_rows, geometry="geometry", crs="EPSG:4326")
     masks.geometry = masks.geometry.make_valid()
     masks.to_parquet(cat / "valid-masks" / "valid_masks.parquet", compression="zstd")
-    idx.to_parquet(cat / "label-index" / "label_index.parquet", compression="zstd")
+    # Portolan tracks only geospatial files; the index's bboxes are honest
+    # geometry anyway (hyparquet consumers simply skip the geometry column)
+    from shapely.geometry import box
+
+    idx_geo = gpd.GeoDataFrame(
+        idx,
+        geometry=[box(r.minx, r.miny, r.maxx, r.maxy) for r in idx.itertuples()],
+        crs="EPSG:4326",
+    )
+    idx_geo.to_parquet(cat / "label-index" / "label_index.parquet", compression="zstd")
     print(
         f"labels: {len(labels)} rows "
         f"({(cat / 'labels' / 'labels.parquet').stat().st_size / 1e6:.0f} MB simplified); "
