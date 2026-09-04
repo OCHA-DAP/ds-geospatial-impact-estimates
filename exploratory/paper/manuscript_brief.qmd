@@ -104,8 +104,8 @@ but can never reveal a miss, so it adjudicates disputed flags and is never used 
 ground truth. ChatMap is 415 building-level damage reports from field teams,
 positives-only with no survey frame. It can reveal misses but says nothing about false
 alarms (@fig-refarch). Because their blind spots do not overlap, the three check one
-another. One consequence applies to every number here: **against an incomplete reference,
-measured precision is a lower bound and measured recall an upper bound.**
+another. One consequence applies to every number here: against an incomplete reference,
+measured precision is a lower bound and measured recall an upper bound.
 
 ![The three reference datasets at a glance. Two are HOT-run and easily confused:
 MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
@@ -326,8 +326,8 @@ zone the products contain real information about where to go first (@sec-ranking
 Combining them works better. Counting agreement between products outperformed
 every single product both at ranking neighbourhoods (@fig-agreerank) and at
 flagging individual buildings, where the count roughly doubled the F1 of any product
-alone. **So do not spend time choosing a product; spend it counting agreement between
-products.** Unlike a fitted model, counting requires no weights, no training data
+alone. So do not spend time choosing a product; spend it counting agreement between
+products. Unlike a fitted model, counting requires no weights, no training data
 and no reference, so it can be done the hour the second product arrives. Weight the
 count toward products with independent sensing methods, for the reason given in
 @sec-dial.
@@ -647,8 +647,8 @@ saw only AI-flagged places, and the field reports are positives-only with no sur
 frame, so the full denominator is unknowable. Because the reference over-represents
 destruction, which is the damage class every product detects best, recall measured
 against it is overstated rather than understated. The rule of thumb for this whole paper:
-**against an incomplete reference, measured precision is a lower bound and measured
-recall an upper bound.** The grade-stratified field-frame measurements in @sec-flags
+against an incomplete reference, measured precision is a lower bound and measured
+recall an upper bound. The grade-stratified field-frame measurements in @sec-flags
 quantify how much the recall upper bound overstates.
 
 
@@ -781,8 +781,8 @@ product's shared region. The two scales are hexagonal grid cells of roughly 5 km
 7") and 0.7 km² ("res 8"). Only OSU exceeds the geography model, at either scale.
 {#tbl-nullrank}
 
-The result is uncomfortable: **geography alone ranks these areas better than the
-products do**, beating five of the six at the sector scale and five of six again at the finer
+The result is uncomfortable: geography alone ranks these areas better than the
+products do, beating five of the six at the sector scale and five of six again at the finer
 scale. The margins are large (IMPACT 0.673 against 0.433, UNEP 0.501 against 0.220),
 and UH's rank correlation is *negative* (−0.085), meaning its sector ordering is slightly worse
 than no information at all. Only OSU is ahead of the null, and only narrowly (0.540 against
@@ -795,8 +795,8 @@ sharper question is whether the products can out-rank geography *within* the dam
 there the result is different. Restricting every region to Caraballeda and re-running at
 ~0.7 km² cells, the six split evenly (@tbl-nullrank-cara): LIST, OSU and IMPACT beat the
 null; Microsoft, UNEP and UH fall below it; and at ~0.1 km² the same three–three split
-holds. **So the products do contain real information about where within a damaged area to
-go first: what they do not add is knowledge of which area that is**, which is the part
+holds. So the products do contain real information about where within a damaged area to
+go first: what they do not add is knowledge of which area that is, which is the part
 geography already encodes. The headline five-of-six should be read as a statement about the
 coarse task, not as evidence that the products are uninformative at every scale.
 
@@ -937,8 +937,8 @@ geography null model (coast distance, building density, and ShakeMap intensity,
 constructed as described in the [geography benchmark](#app-null-brief)) on each product's full delivered footprint
 under the same spatially blocked validation, then had it flag exactly as many buildings
 as that product shipped, taking its highest-risk buildings first. Compared this way,
-list against list at each product's own delivered size, **four of the six products are
-matched or beaten by the geography model on both precision and recall** (pairs below
+list against list at each product's own delivered size, four of the six products are
+matched or beaten by the geography model on both precision and recall (pairs below
 read precision / recall): IMPACT 0.032 / 0.55 against the model's 0.040 / 0.68; UH
 0.009 / 0.37 against 0.022 / 0.92; LIST 0.026 / 0.65 against 0.032 / 0.78; and UNEP
 0.027 / 0.35 against 0.045 / 0.57. At UH's own list size the geography rule reaches 92%
