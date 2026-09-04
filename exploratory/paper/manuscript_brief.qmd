@@ -8,6 +8,7 @@ format:
     toc-depth: 2
     embed-resources: true
     number-sections: true
+    include-after-body: appendix-fold.html
     comments:
       hypothesis:
         showHighlights: whenSidebarOpen
@@ -393,6 +394,8 @@ The main text states each result with a summary of how it was measured; this app
 contains the more in-depth detail, inherited from the [longer-form draft technical
 version](https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/) of this
 study.
+
+::: {.callout-note collapse="true" appearance="simple" icon="false" title="Show the full appendix"}
 
 ### The two reporting regions {#app-regions .unnumbered}
 
@@ -1270,5 +1273,5 @@ the identical cells at ~16 votes each, with no "no damage" answer available (its
 sure" absorbs it): purple outlines mark cells whose verdict changed between rounds. Individual
 cells flip; the total the adjustment depends on barely moves (13.2% → 11.5% of the
 strip's unmatched Microsoft flags confirmed).](artefacts/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
-
+:::
 
