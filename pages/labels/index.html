@@ -56,13 +56,27 @@
   #err { color: #b8272d; font-size: 11.5px; margin-top: 8px; white-space: pre-wrap; }
   a { color: var(--accent); }
   #timeline {
-    position: absolute; left: 50%; transform: translateX(-50%); bottom: 12px; z-index: 5;
-    width: min(860px, calc(100% - 40px)); height: 128px;
-    background: rgba(255,255,255,.96); border: 1px solid var(--line); border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(20,30,40,.12); padding: 8px 12px 4px; box-sizing: border-box;
+    position: absolute; left: 50%; transform: translateX(-50%); top: 12px; z-index: 5;
+    width: min(760px, calc(100% - 660px)); min-width: 420px; height: 118px;
+    background: rgba(255,255,255,.72); backdrop-filter: blur(7px);
+    border: 1px solid rgba(207,214,222,.7); border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(20,30,40,.14); padding: 6px 12px 2px; box-sizing: border-box;
   }
   #timeline .tl-head { font-size: 10.5px; color: var(--sub); display: flex; justify-content: space-between; }
-  #tlsvg { width: 100%; height: 92px; display: block; cursor: crosshair; }
+  #tlsvg { width: 100%; height: 88px; display: block; }
+  /* shooting stars over the space backdrop */
+  .shoot { position: absolute; z-index: 1; pointer-events: none; width: 130px; height: 1.5px;
+    background: linear-gradient(90deg, #fff, transparent); opacity: 0;
+    transform: rotate(-28deg); animation: shoot 7s linear infinite; }
+  .shoot.s2 { animation-delay: 3.4s; animation-duration: 9s; top: 12%; left: 68%; }
+  .shoot.s1 { top: 22%; left: 12%; }
+  .shoot.s3 { animation-delay: 5.6s; animation-duration: 11s; top: 70%; left: 40%; width: 90px; }
+  @keyframes shoot {
+    0%, 88% { opacity: 0; transform: translate(0,0) rotate(-28deg); }
+    90% { opacity: .9; }
+    100% { opacity: 0; transform: translate(-340px, 180px) rotate(-28deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .shoot { display: none; } }
   #tltip {
     position: absolute; pointer-events: none; background: var(--ink); color: #fff;
     font-size: 11px; padding: 4px 8px; border-radius: 5px; opacity: 0; max-width: 240px; z-index: 9;
@@ -71,6 +85,7 @@
 </head>
 <body>
 <div id="map"></div>
+<div class="shoot s1"></div><div class="shoot s2"></div><div class="shoot s3"></div>
 <div id="panel">
   <h1>CEMS Flood Labels</h1>
   <p class="sub">Observed flood extents from every Copernicus EMS Rapid Mapping flood
@@ -137,7 +152,7 @@ maplibregl.addProtocol("pmtiles", protocol.tile);
 const map = new maplibregl.Map({
   container: "map",
   style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-  center: [10, 18], zoom: 1.5, attributionControl: { compact: true },
+  center: [16, 24], zoom: 2.7, attributionControl: { compact: true },
   projection: { type: "globe" },
 });
 map.addControl(new maplibregl.NavigationControl(), "top-right");
@@ -204,11 +219,15 @@ function drawTimeline() {
   $("tlrange").textContent = `${yearToStr(t0)} → ${yearToStr(t1)}`;
 
   if (evs.size <= DOT_THRESHOLD) {
+    const labelled = evs.size <= 40;  // country scale: name every activation
     let i = 0;
     for (const [code, r] of evs) {
       const x = sx(frac(r.acq_start));
       const y = 14 + ((i * 37) % 5) * 11;  // deterministic jitter rows
       const active = frac(r.acq_start) >= t0 && frac(r.acq_start) <= t1;
+      if (labelled)
+        el("text", { x: x + 7, y: y + 3, "font-size": 8.5,
+          fill: active ? "#40506a" : "#b3bac2" }).textContent = code;
       const c = el("circle", { cx: x, cy: y, r: 4.5, fill: active ? "#2563cd" : "#c6cdd6", cursor: "pointer" });
       c.addEventListener("mousemove", (e) => {
         tip.style.opacity = 1;
@@ -235,21 +254,39 @@ function drawTimeline() {
     }
   }
 
-  // brush: shaded outside + handles
-  el("rect", { x: mL, y: 6, width: Math.max(0, sx(t0) - mL), height: axisY - 6, fill: "rgba(140,150,160,.14)" });
-  el("rect", { x: sx(t1), y: 6, width: Math.max(0, W - mR - sx(t1)), height: axisY - 6, fill: "rgba(140,150,160,.14)" });
+  // brush: a draggable selected window + chunky pill handles.
+  // Drag the window to slide it, drag a handle to resize, double-click resets.
+  el("rect", { x: mL, y: 6, width: Math.max(0, sx(t0) - mL), height: axisY - 6, fill: "rgba(140,150,160,.16)" });
+  el("rect", { x: sx(t1), y: 6, width: Math.max(0, W - mR - sx(t1)), height: axisY - 6, fill: "rgba(140,150,160,.16)" });
+  const win = el("rect", { x: sx(t0), y: 6, width: Math.max(0, sx(t1) - sx(t0)), height: axisY - 6,
+    fill: "rgba(37,99,205,.10)", stroke: "rgba(37,99,205,.35)", cursor: "grab" });
+  win.addEventListener("mousedown", (e) => {
+    dragging = { kind: "win", grab: xy(e.offsetX) - t0, width: t1 - t0 }; e.preventDefault();
+  });
   for (const [which, y] of [["t0", t0], ["t1", t1]]) {
-    el("line", { x1: sx(y), x2: sx(y), y1: 4, y2: axisY, stroke: "#2563cd", "stroke-width": 2 });
-    const g = el("rect", { x: sx(y) - 6, y: 4, width: 12, height: axisY - 4, fill: "transparent", cursor: "ew-resize" });
-    g.addEventListener("mousedown", (e) => { dragging = which; e.preventDefault(); });
+    const hx = sx(y);
+    el("line", { x1: hx, x2: hx, y1: 4, y2: axisY, stroke: "#2563cd", "stroke-width": 2 });
+    const grip = el("rect", { x: hx - 5, y: axisY / 2 - 11, width: 10, height: 26, rx: 5,
+      fill: "#2563cd", cursor: "ew-resize" });
+    el("line", { x1: hx - 1.5, x2: hx - 1.5, y1: axisY / 2 - 5, y2: axisY / 2 + 9, stroke: "#fff", "stroke-width": 1 });
+    el("line", { x1: hx + 1.5, x2: hx + 1.5, y1: axisY / 2 - 5, y2: axisY / 2 + 9, stroke: "#fff", "stroke-width": 1 });
+    const hit = el("rect", { x: hx - 9, y: 4, width: 18, height: axisY - 4, fill: "transparent", cursor: "ew-resize" });
+    for (const h of [grip, hit])
+      h.addEventListener("mousedown", (e) => { dragging = { kind: which }; e.preventDefault(); });
   }
   svg.onmousemove = (e) => {
     if (!dragging) return;
     const y = Math.max(Y_MIN, Math.min(Y_MAX, xy(e.offsetX)));
-    if (dragging === "t0") t0 = Math.min(y, t1); else t1 = Math.max(y, t0);
+    if (dragging.kind === "t0") t0 = Math.min(y, t1);
+    else if (dragging.kind === "t1") t1 = Math.max(y, t0);
+    else {
+      t0 = Math.max(Y_MIN, Math.min(y - dragging.grab, Y_MAX - dragging.width));
+      t1 = t0 + dragging.width;
+    }
     applyScope(false);
   };
   svg.onmouseup = svg.onmouseleave = () => { dragging = null; };
+  svg.ondblclick = () => { t0 = Y_MIN; t1 = Y_MAX; applyScope(false); };
 }
 addEventListener("resize", drawTimeline);
 
