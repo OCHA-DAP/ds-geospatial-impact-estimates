@@ -48,7 +48,7 @@ etl = [
 default-groups = ["dev"]
 
 [tool.uv.sources]
-ocha-lens = { git = "https://github.com/OCHA-DAP/ocha-lens.git", rev = "160a92a167b427e519fa21b69bbac330367a8a5b" }
+ocha-lens = { git = "https://github.com/OCHA-DAP/ocha-lens.git", tag = "0.6.0" }
 
 [build-system]
 requires = ["hatchling"]
