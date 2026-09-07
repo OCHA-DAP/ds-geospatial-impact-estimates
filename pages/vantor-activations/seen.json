@@ -451,6 +451,10 @@
   "seen": "2026-08-27",
   "source": "metadata"
  },
+ "Nepal-Flooding-Aug-2026/B0500011006DC010": {
+  "seen": "2026-09-07",
+  "source": "observed"
+ },
  "Nepal-Flooding-Aug-2026/B110001101165110": {
   "seen": "2026-08-28",
   "source": "metadata"
@@ -461,6 +465,14 @@
  },
  "Nepal-Flooding-Aug-2026/B130001101153A10": {
   "seen": "2026-09-01",
+  "source": "observed"
+ },
+ "Nepal-Flooding-Aug-2026/B1300011011E5610": {
+  "seen": "2026-09-07",
+  "source": "observed"
+ },
+ "Nepal-Flooding-Aug-2026/B1300011011E5810": {
+  "seen": "2026-09-07",
   "source": "observed"
  },
  "Nepal-Flooding-Aug-2026/B1400011010A2910": {
