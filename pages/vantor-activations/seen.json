@@ -463,6 +463,10 @@
   "seen": "2026-09-06",
   "source": "observed"
  },
+ "Nepal-Flooding-Aug-2026/B120001101250A10": {
+  "seen": "2026-09-08",
+  "source": "observed"
+ },
  "Nepal-Flooding-Aug-2026/B130001101153A10": {
   "seen": "2026-09-01",
   "source": "observed"
@@ -475,6 +479,10 @@
   "seen": "2026-09-07",
   "source": "observed"
  },
+ "Nepal-Flooding-Aug-2026/B1300011011F4F10": {
+  "seen": "2026-09-08",
+  "source": "observed"
+ },
  "Nepal-Flooding-Aug-2026/B1400011010A2910": {
   "seen": "2026-09-01",
   "source": "observed"
@@ -483,9 +491,17 @@
   "seen": "2026-09-01",
   "source": "observed"
  },
+ "Nepal-Flooding-Aug-2026/B14000110114DC10": {
+  "seen": "2026-09-08",
+  "source": "observed"
+ },
  "Nepal-Flooding-Aug-2026/B160001100CDB210": {
   "seen": "2026-08-28",
   "source": "metadata"
+ },
+ "Nepal-Flooding-Aug-2026/B160001101DA4B10": {
+  "seen": "2026-09-08",
+  "source": "observed"
  },
  "Spain-Portugal-Flooding-Feb-2026/103001012263FC00": {
   "seen": "2026-02-17",
