@@ -48,9 +48,6 @@ assert not bld_m.geometry.isna().any()
 ref = pd.read_csv(os.path.join(HERE, "..", "rq8_best_f1_r10.csv"))
 nfl = ref.set_index("predictor").n_flags
 
-bld = gpd.GeoDataFrame(d, geometry=gpd.points_from_xy(d.lon, d.lat), crs=4326)
-bld = bld.to_crs(gp.METRIC_CRS)
-bxy = np.c_[bld.geometry.x, bld.geometry.y]
 cems = gp.to_metric(gp.cems_points())
 
 
@@ -64,7 +61,10 @@ predictors["geography null (logistic)"] = at_nflags(d.null_logit.to_numpy(),
                                                     nfl["geography null (logistic)"])
 predictors["geography null (rand. forest)"] = at_nflags(d.null_rf.to_numpy(),
                                                         nfl["geography null (rand. forest)"])
-predictors["flat k-of-6 voting"] = votes >= 5  # integer score, no rounding issue
+_k = [k for k in range(1, 7) if int((votes >= k).sum()) == int(nfl["flat k-of-6 voting"])]
+if len(_k) != 1:
+    raise RuntimeError(f"no unique k reproduces the frozen voting operating point ({nfl['flat k-of-6 voting']} flags): {_k}")
+predictors["flat k-of-6 voting"] = votes >= _k[0]  # integer score, no rounding issue
 predictors["weighted fusion"] = at_nflags(d.fusion_logit.to_numpy(), nfl["weighted fusion"])
 
 rows = []
