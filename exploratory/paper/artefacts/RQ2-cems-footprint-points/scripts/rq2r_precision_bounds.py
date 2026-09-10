@@ -69,14 +69,17 @@ def mapswipe_tasks():  # verbatim rq2i logic (frozen blobs, >=4 votes, majority 
 
 def main():
     d = pd.read_parquet(os.path.join(RQ8, "rq8_oof_scores_r10.parquet"))
-    bld = gpd.GeoDataFrame(d, geometry=gpd.points_from_xy(d.lon, d.lat), crs=4326)
-    bld_m = bld.to_crs(gp.METRIC_CRS)
-    bxy = np.c_[bld_m.geometry.x, bld_m.geometry.y]
+    if "id" not in d.columns:
+        raise RuntimeError("rq8_oof_scores_r10.parquet has no id column — re-run rq8 (ADR-0030 dump)")
+    geo = gp.buildings(columns=[])[["id", "geometry"]]  # geometry per gp.PAPER_FRAME
+    bld_m = gpd.GeoDataFrame(d.merge(geo, on="id", how="left"), geometry="geometry", crs=gp.METRIC_CRS)
+    if bld_m.geometry.isna().any():
+        raise RuntimeError("some rq8 buildings have no base geometry")
     cems = gp.to_metric(gp.cems_points())
 
     def near(classes):
         cp = cems[cems.damage_class.isin(classes)]
-        return cKDTree(np.c_[cp.geometry.x, cp.geometry.y]).query(bxy, k=1)[0] <= R
+        return gp.within_r(bld_m, cp, R)
 
     hit23, hit123, hit1 = near((2, 3)), near((1, 2, 3)), near((1,))
 

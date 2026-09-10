@@ -56,7 +56,7 @@ POS = (2, 3)
 
 def _blob(name_contains: str, project: str) -> bytes:
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={project}")
+    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={project}", event=None)
     names = [b.name for b in cc.list_blobs(name_starts_with=pref) if name_contains in b.name]
     if len(names) != 1:
         raise RuntimeError(f"expected exactly one '{name_contains}' blob for "

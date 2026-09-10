@@ -51,7 +51,7 @@ def uh_aoi():
 def mapswipe_tasks():
     import ocha_stratus as stratus
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE")
+    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", event=None)
     frames = []
     for b in cc.list_blobs(name_starts_with=pref):
         if not gp.mapswipe_is_frozen(b.name):
@@ -68,9 +68,8 @@ def mapswipe_tasks():
 
 
 def main():
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])  # OSU v0-pinned
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=list(MEMBERS.values()))  # OSU v0-pinned; geometry per gp.PAPER_FRAME (ADR-0030)
+    bld_rp = bld.geometry.representative_point()
 
     ext = gp.to_metric(gp.cems_extent().query("is_latest"))
     cems = gp.to_metric(gp.cems_points())
@@ -86,7 +85,7 @@ def main():
 
     def crowd_verdicts(sub4326):
         out = []
-        for p in sub4326.geometry:
+        for p in sub4326.geometry.representative_point():
             v = np.nan
             for res in (11, 12):
                 c = h3.latlng_to_cell(p.y, p.x, res)
@@ -109,7 +108,7 @@ def main():
             reg = region if prod_aois[nm] is None else region.intersection(prod_aois[nm])
             if reg.is_empty:
                 continue
-            inb = bld[bld.geometry.within(reg)]
+            inb = bld[bld_rp.within(reg)]
             if len(inb) < 50:
                 continue
             fl = inb[inb[col].to_numpy(dtype="float64", na_value=0.0) == 1]
@@ -117,11 +116,17 @@ def main():
             row = dict(aoi=aoi, product=nm, n_bld=len(inb), n_flags=len(fl),
                        flag_share=round(len(fl) / len(inb), 3), n_cems=len(ca))
             if len(fl) and len(ca):
-                ct = cKDTree(np.c_[ca.geometry.x, ca.geometry.y])
-                hit = ct.query(np.c_[fl.geometry.x, fl.geometry.y], k=1)[0] <= R
+                # geometry-aware: distance from the flagged building's geometry (polygon under
+                # PAPER_FRAME="polygon") to the nearest CEMS point, and vice versa
+                j = gpd.sjoin_nearest(fl[["geometry"]], ca[["geometry"]], max_distance=R,
+                                      how="left", distance_col="_d")
+                j = j[~j.index.duplicated()]
+                hit = j["_d"].notna().to_numpy()
                 row["P_cems"] = round(float(hit.mean()), 3)
-                ft = cKDTree(np.c_[fl.geometry.x, fl.geometry.y])
-                rd = ft.query(np.c_[ca.geometry.x, ca.geometry.y], k=1)[0] <= R
+                jr = gpd.sjoin_nearest(ca[["geometry"]], fl[["geometry"]], max_distance=R,
+                                       how="left", distance_col="_d")
+                jr = jr[~jr.index.duplicated()]
+                rd = jr["_d"].notna().to_numpy()
                 row["R_cems"] = round(float(rd.mean()), 3) if len(ca) >= MIN_CEMS_FOR_RECALL else np.nan
             elif len(fl):
                 # Zero CEMS points in this product x AOI overlap: precision is UNMEASURABLE

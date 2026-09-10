@@ -50,9 +50,8 @@ def hexpoly(c):
 
 
 def main():
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])  # OSU v0-pinned
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=[*MEMBERS.values()])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
     ext = gp.cems_extent().query("is_latest")
     car = gp.to_metric(ext[ext.aoi_name == "Caraballeda"]).geometry.make_valid().union_all()
     prod_aois = {"MS": gp.dissolve_union(gp.microsoft_aoi()),
@@ -73,11 +72,11 @@ def main():
     ylim = (cll.geometry.y.min() - 0.012, cll.geometry.y.max() + 0.012)
 
     def prec_cells(col, reg):
-        inb = bld[bld.geometry.within(reg)]
+        inb = bld[bld.geometry.representative_point().within(reg)]
         fl = inb[inb[col].to_numpy(dtype="float64", na_value=0.0) == 1]
         fll = fl.to_crs(4326)
-        cell = [h3.latlng_to_cell(p.y, p.x, RES) for p in fll.geometry]
-        hit = ct.query(np.c_[fl.geometry.x, fl.geometry.y], k=1)[0] <= 10
+        cell = [h3.latlng_to_cell(p.y, p.x, RES) for p in fll.geometry.representative_point()]
+        hit = gp.within_r(fl, cems, 10)
         g = pd.DataFrame({"cell": cell, "hit": hit}).groupby("cell").agg(
             n=("hit", "size"), tp=("hit", "sum"))
         return {c: (r.tp / r.n if r.n >= MIN_FLAGS else np.nan) for c, r in g.iterrows()}

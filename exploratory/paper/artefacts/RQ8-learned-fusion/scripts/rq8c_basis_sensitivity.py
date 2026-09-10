@@ -40,6 +40,11 @@ BASES = {"destroyed": (3,), "dmg+destroyed": (2, 3), "incl_possibly": (1, 2, 3)}
 PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 
 d = pd.read_parquet(os.path.join(HERE, "..", "rq8_oof_scores_r10.parquet"))
+if "id" not in d.columns:
+    raise RuntimeError("rq8_oof_scores_r10.parquet lacks id — re-run rq8 with GIE_DUMP_OOF=1 (ADR-0030)")
+_geo = gp.buildings(columns=[])[["id", "geometry"]]  # geometry per gp.PAPER_FRAME
+bld_m = gpd.GeoDataFrame(d.merge(_geo, on="id", how="left"), geometry="geometry", crs=gp.METRIC_CRS)
+assert not bld_m.geometry.isna().any()
 ref = pd.read_csv(os.path.join(HERE, "..", "rq8_best_f1_r10.csv"))
 nfl = ref.set_index("predictor").n_flags
 
@@ -65,8 +70,7 @@ predictors["weighted fusion"] = at_nflags(d.fusion_logit.to_numpy(), nfl["weight
 rows = []
 for bname, classes in BASES.items():
     cp = cems[cems.damage_class.isin(classes)]
-    dist, _ = cKDTree(np.c_[cp.geometry.x, cp.geometry.y]).query(bxy, k=1)
-    y = (dist <= R).astype(int)
+    y = gp.within_r(bld_m, cp, R).astype(int)
     npos = int(y.sum())
     print(f"[{bname}] classes {classes}: {len(cp):,} CEMS points -> {npos:,} positive buildings")
     for nm, mask in predictors.items():

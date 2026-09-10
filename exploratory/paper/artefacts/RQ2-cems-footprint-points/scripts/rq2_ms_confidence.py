@@ -40,7 +40,7 @@ def chatmap():
     import ocha_stratus as stratus
     b = stratus.load_blob_data(
         gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", "hdx",
-                       "chatmap_field_validated_damage_points.geojson"),
+                       "chatmap_field_validated_damage_points.geojson", event=None),
         stage="dev", container_name=gp.S.container)
     return gpd.GeoDataFrame.from_features(json.loads(b)["features"], crs=4326).to_crs(gp.METRIC_CRS)
 

@@ -65,7 +65,7 @@ def real():
     region = ext_latest.intersection(aoi)
 
     b = stratus.load_blob_data(
-        gp.S.blob_path("gold", "model=common", "adm0=VE", "building_flags.parquet"),
+        gp.S.blob_path("gold", "model=common", "adm0=VE", "building_flags.parquet", event=None),
         stage="dev", container_name=gp.S.container)
     df = pd.read_parquet(io.BytesIO(b), columns=["lon", "lat"])
     base = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),

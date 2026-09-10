@@ -38,8 +38,8 @@ GAP_R = 20  # consensus-gap: no CEMS point within this many metres
 
 def building_flags():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["id", "lon", "lat", "ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg"])  # OSU pinned to v0 (paper basis)
-    g = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat), crs=4326)
+    g = gp.buildings(columns=["ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg"]).to_crs(4326)  # geometry per gp.PAPER_FRAME (ADR-0030)
+    df = g
     return g.to_crs(gp.METRIC_CRS).rename(
         columns={"ms_dmg": "dmg_ms", "sar_dmg": "dmg_impact", "osu_dmg": "dmg_osu",
                  "uh_dmg": "dmg_uh"})
@@ -79,7 +79,7 @@ def main():
 
     # per-building AOI membership (point-in-poly per member, computed once)
     for m, a in aois.items():
-        bld[f"in_{m}"] = bld.geometry.within(a)
+        bld[f"in_{m}"] = bld.geometry.representative_point().within(a)
         print(f"  {m}: {bld[f'in_{m}'].sum():,} buildings in AOI")
     bld["in_cems"] = bld.geometry.within(ext_latest)
 
@@ -166,9 +166,9 @@ def main():
         ll = gaps.to_crs(4326)
         near = cons.loc[j[j["_d"].notna()].index].to_crs(4326)
         fig, ax = plt.subplots(figsize=(9, 5))
-        ax.scatter(near.geometry.x, near.geometry.y, s=6, c="tab:green",
+        ax.scatter(near.geometry.representative_point().x, near.geometry.representative_point().y, s=6, c="tab:green",
                    label=f"consensus, CEMS-corroborated (n={len(near):,})")
-        ax.scatter(ll.geometry.x, ll.geometry.y, s=6, c="tab:red",
+        ax.scatter(ll.geometry.representative_point().x, ll.geometry.representative_point().y, s=6, c="tab:red",
                    label=f"consensus, NO CEMS point ≤{GAP_R} m (n={len(gaps):,})")
         ax.set_aspect("equal")
         ax.legend()

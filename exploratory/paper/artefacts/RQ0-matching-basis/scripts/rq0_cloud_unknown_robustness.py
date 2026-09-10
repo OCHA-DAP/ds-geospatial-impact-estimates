@@ -40,7 +40,7 @@ R = 10
 def _bronze(name):
     import ocha_stratus as stratus
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    blob = gp.S.blob_path("bronze", "source=microsoft", "adm0=VE", "merged", name)
+    blob = gp.S.blob_path("bronze", "source=microsoft", "adm0=VE", "merged", name, event=None)
     return gpd.read_file(io.BytesIO(cc.download_blob(blob).readall()))
 
 

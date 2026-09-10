@@ -53,7 +53,7 @@ def load_tasks():
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
     out = {}
     for label, pid in (("r1", "3179"), ("r2", "3248")):
-        pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={pid}")
+        pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={pid}", event=None)
         names = [b.name for b in cc.list_blobs(name_starts_with=pref)
                  if "agg_results_by_task" in b.name and b.name.endswith(".geojson.gz")]
         if len(names) != 1:
@@ -74,10 +74,8 @@ def load_tasks():
 
 
 def load_flags_and_cems():
-    df = gp.building_flags(columns=["lon", "lat", "ms_dmg"])
-    ms = df[df["ms_dmg"].to_numpy(dtype="float64", na_value=0.0) == 1.0]
-    flags = gpd.GeoDataFrame(ms[["id"]],
-                             geometry=gpd.points_from_xy(ms.lon, ms.lat), crs=4326)
+    bld = gp.buildings(columns=["ms_dmg"])  # geometry per gp.PAPER_FRAME (ADR-0030)
+    flags = bld[bld["ms_dmg"].to_numpy(dtype="float64", na_value=0.0) == 1.0][["id", "geometry"]].to_crs(4326)
     cems = gp.cems_points()
     cems = cems[cems.damage_class.isin((2, 3))].copy()
     return flags, cems

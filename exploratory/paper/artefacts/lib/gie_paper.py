@@ -253,6 +253,24 @@ def match_rate(left, right, r):
     return m["_lid"].nunique(), len(lft)
 
 
+def within_r(left, right, r):
+    """Boolean array, one per row of `left`: is any `right` geometry within r metres
+    (containment => True). Geometry-aware replacement for the frozen scripts'
+    `cKDTree(centroids).query(...) <= r` idiom, so the PAPER_FRAME geometry is honoured.
+    Inputs in METRIC_CRS."""
+    import numpy as _np
+    import geopandas as _gpd
+    if len(left) == 0:
+        return _np.zeros(0, dtype=bool)
+    if len(right) == 0:
+        return _np.zeros(len(left), dtype=bool)
+    lft = left[["geometry"]].reset_index(drop=True)
+    j = _gpd.sjoin_nearest(lft, right[["geometry"]].reset_index(drop=True),
+                           max_distance=r, how="left", distance_col="_d")
+    j = j[~j.index.duplicated()]
+    return j["_d"].notna().to_numpy()
+
+
 # --- geometry helpers ----------------------------------------------------------
 def to_metric(gdf):
     return gdf.to_crs(METRIC_CRS)

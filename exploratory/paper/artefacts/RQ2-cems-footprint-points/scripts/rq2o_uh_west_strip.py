@@ -45,9 +45,8 @@ def uh_aoi():
 
 
 def main() -> None:
-    df = gp.building_flags(columns=["lon", "lat", "uh_dmg", "ms_dmg"])  # OSU pin irrelevant here
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=["uh_dmg", "ms_dmg"])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
 
     ext = gp.to_metric(gp.cems_extent().query("is_latest"))
     cara = ext[ext.aoi_name == "Caraballeda"].geometry.make_valid().union_all()
@@ -59,8 +58,8 @@ def main() -> None:
     for nm, aoi in aois.items():
         col = {"UH": "uh_dmg", "MS": "ms_dmg"}[nm]
         reg = cara.intersection(aoi)
-        inb = bld[bld.geometry.within(reg)].copy()
-        lon = inb.geometry.to_crs(4326).x
+        inb = bld[bld.geometry.representative_point().within(reg)].copy()
+        lon = inb.geometry.representative_point().to_crs(4326).x
         for side, mask in (("west", lon < SPLIT_LON), ("east", lon >= SPLIT_LON)):
             sub = inb[mask]
             if not len(sub):
@@ -70,8 +69,7 @@ def main() -> None:
             ca = ca[(ca.geometry.to_crs(4326).x < SPLIT_LON) == (side == "west")]
             p = np.nan
             if len(fl) and len(ca):
-                ct = cKDTree(np.c_[ca.geometry.x, ca.geometry.y])
-                p = float((ct.query(np.c_[fl.geometry.x, fl.geometry.y], k=1)[0] <= R).mean())
+                p = float(gp.within_r(fl, ca, R).mean())
             rows.append(dict(product=nm, side=side, n_bld=len(sub), n_flags=len(fl),
                              flag_share=round(len(fl) / len(sub), 3), n_cems=len(ca),
                              P_cems=round(p, 3) if p == p else np.nan))

@@ -55,23 +55,21 @@ def uh_aoi():
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])  # OSU v0-pinned
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=list(MEMBERS.values()))  # OSU v0-pinned; geometry per gp.PAPER_FRAME (ADR-0030)
 
     all_ext = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
-    d = bld[bld.geometry.within(all_ext)].copy().reset_index(drop=True)
+    d = bld[bld.geometry.representative_point().within(all_ext)].copy().reset_index(drop=True)
+    d_rp = d.geometry.representative_point()
     print(f"buildings in union of CEMS extents: {len(d):,}")
 
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)]
-    ct = cKDTree(np.c_[cems.geometry.x, cems.geometry.y])
-    d["y"] = (ct.query(np.c_[d.geometry.x, d.geometry.y], k=1)[0] <= LABEL_R).astype(int)
+    d["y"] = gp.within_r(d, cems, LABEL_R).astype(int)
 
     # day-zero features, built once on the superset
-    ll = d.to_crs(4326)
-    d["cell7"] = [h3.latlng_to_cell(p.y, p.x, 7) for p in ll.geometry]
-    cell9 = pd.Series([h3.latlng_to_cell(p.y, p.x, 9) for p in ll.geometry])
+    ll = gpd.GeoSeries(d_rp, crs=gp.METRIC_CRS).to_crs(4326)
+    d["cell7"] = [h3.latlng_to_cell(p.y, p.x, 7) for p in ll]
+    cell9 = pd.Series([h3.latlng_to_cell(p.y, p.x, 9) for p in ll])
     d["density9"] = cell9.map(cell9.value_counts())
     coast = gp.to_metric(gp.codab(0)).geometry.make_valid().union_all().boundary
     d["dist_coast"] = d.geometry.distance(coast) / 1000.0
@@ -101,7 +99,7 @@ def main():
     rows = []
     for nm, col in MEMBERS.items():
         sel = (np.ones(len(d), bool) if prod_aois[nm] is None
-               else d.geometry.within(prod_aois[nm]).to_numpy())
+               else d_rp.within(prod_aois[nm]).to_numpy())
         sub = d[sel]
         y = sub.y.to_numpy()
         flags = sub[col].to_numpy(dtype="float64", na_value=0.0)
