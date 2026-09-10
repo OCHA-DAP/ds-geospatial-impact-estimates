@@ -1,11 +1,11 @@
 predictor,kind,precision,recall,f1,n_flags,threshold
-MS,product (as shipped),0.138,0.461,0.212,9138,
-IMPACT,product (as shipped),0.133,0.523,0.212,10788,
-OSU,product (as shipped),0.087,0.826,0.158,25882,
-UH,product (as shipped),0.148,0.291,0.196,5362,
-LIST,product (as shipped),0.111,0.646,0.19,15904,
-UNEP,product (as shipped),0.143,0.293,0.193,5605,
-geography null (logistic),our score @ its best single cut,0.125,0.575,0.206,12527,0.626
-geography null (rand. forest),our score @ its best single cut,0.096,0.458,0.158,13112,0.3442
-flat k-of-6 voting,our score @ its best single cut,0.311,0.38,0.342,3347,4.0
-weighted fusion,our score @ its best single cut,0.396,0.377,0.386,2604,0.8519
+MS,product (as shipped),0.175,0.371,0.238,7872,
+IMPACT,product (as shipped),0.179,0.518,0.266,10787,
+OSU,product (as shipped),0.118,0.821,0.207,25882,
+UH,product (as shipped),0.182,0.262,0.215,5362,
+LIST,product (as shipped),0.149,0.637,0.242,15906,
+UNEP,product (as shipped),0.17,0.256,0.205,5604,
+geography null (logistic),our score @ its best single cut,0.165,0.586,0.257,13246,0.6185
+geography null (rand. forest),our score @ its best single cut,0.146,0.431,0.218,10982,0.4557
+flat k-of-6 voting,our score @ its best single cut,0.385,0.321,0.35,3114,4.0
+weighted fusion,our score @ its best single cut,0.41,0.413,0.411,3757,0.819
