@@ -37,6 +37,26 @@ def _read_gpkg(layer, *parts):
         os.unlink(tmp)
 
 
+# --- paper frame switches (ADR-0030) -------------------------------------------
+# PAPER_FRAME: how a flagged building is matched to a CEMS point on the shared Overture base.
+#   "centroid" — distance from the building's centroid (lon/lat in gold). The frozen-v3 frame
+#               (git tag paper-frozen-v3-centroid). Harsher: shrinks the catch zone for large
+#               footprints; ~-0.03 precision, ~-0.15 recall per product vs delivered geometry.
+#   "polygon"  — distance from the Overture footprint polygon. Requires the local Overture base
+#               cache (/tmp/gie_base_local) or blob; recovers delivered-geometry scores (within
+#               ~0.01 F1) while keeping one shared building list for combination rules.
+# MS_MAP_RULE: how Microsoft's own footprints were mapped onto Overture ids in gold.
+#   "intersects"  — gold as built (harmonize_common.py): any Overture footprint touching a damaged
+#                   MS polygon is flagged; one-to-many, bleeds ~16% extra buildings in the core.
+#   "max_overlap" — paper-side 1:1 override: each MS polygon flags only the Overture footprint with
+#                   the largest overlap (ties -> nearest centroid, then id; orphans keep no base
+#                   building and are recorded), id set frozen in lib/ms_1to1_ids.csv.
+# Both switches are module constants on purpose: the frame is a property of the branch, not of the
+# environment, so a script cannot silently run in a mixed frame.
+PAPER_FRAME = "polygon"
+MS_MAP_RULE = "max_overlap"
+BASE_CACHE = "/tmp/gie_base_local"
+
 # --- gold building flags, paper-pinned -----------------------------------------
 OSU_PAPER_VERSION = "v0"
 
@@ -80,7 +100,52 @@ def building_flags(columns=None):
         df["osu_dmg"] = df["id"].isin(ids).astype("int64")
         if "osu_class" in df.columns:
             df["osu_class"] = df["osu_dmg"] * 2
+    if "ms_dmg" in df.columns and MS_MAP_RULE == "max_overlap":
+        f = os.path.join(os.path.dirname(__file__), "ms_1to1_ids.csv")
+        if not os.path.exists(f):
+            raise FileNotFoundError(f"MS_MAP_RULE='max_overlap' needs {f}; build it with "
+                                    "lib/build_ms_1to1_ids.py")
+        ids = set(pd.read_csv(f)["id"])
+        df["ms_dmg"] = df["id"].isin(ids).astype("int64")
+    elif MS_MAP_RULE not in ("intersects", "max_overlap"):
+        raise ValueError(f"unknown MS_MAP_RULE {MS_MAP_RULE!r}")
     return df
+
+
+def buildings(columns=None):
+    """Shared-base buildings as a GeoDataFrame in METRIC_CRS, geometry per PAPER_FRAME.
+
+    Replaces the per-script `GeoDataFrame(df, geometry=points_from_xy(lon, lat))` idiom so the
+    frame is chosen in one place. lon/lat columns are always present (cell assignment and
+    representative-point needs); `geometry` is the Overture polygon under "polygon" and the
+    centroid point under "centroid". Fails loudly if any gold id lacks a base polygon.
+    """
+    import glob as _glob
+    import pandas as _pd
+    cols = None if columns is None else list(dict.fromkeys([*columns, "lon", "lat", "id"]))
+    df = building_flags(columns=cols)
+    if PAPER_FRAME == "centroid":
+        return gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat), crs=4326).to_crs(METRIC_CRS)
+    if PAPER_FRAME != "polygon":
+        raise ValueError(f"unknown PAPER_FRAME {PAPER_FRAME!r}")
+    parts = sorted(_glob.glob(os.path.join(BASE_CACHE, "region=*", "*.parquet")))
+    if not parts:
+        raise FileNotFoundError(f"PAPER_FRAME='polygon' needs the Overture base cache at {BASE_CACHE} "
+                                "(see docs: pipelines base cache) — refusing to fall back silently")
+    want = set(df["id"])
+    frames = []
+    for pth in parts:
+        g = gpd.read_parquet(pth, columns=["id", "geometry"])
+        g = g[g["id"].isin(want)]
+        if len(g):
+            frames.append(g.set_crs(4326) if g.crs is None else g.to_crs(4326))
+    geo = gpd.GeoDataFrame(_pd.concat(frames, ignore_index=True), crs=4326).drop_duplicates("id")
+    missing = want - set(geo["id"])
+    if missing:
+        raise RuntimeError(f"{len(missing):,} gold ids have no Overture polygon in the base cache "
+                           f"(e.g. {sorted(missing)[:3]}); cannot build the polygon frame")
+    out = geo.merge(df, on="id", how="inner")
+    return gpd.GeoDataFrame(out, geometry="geometry", crs=4326).to_crs(METRIC_CRS)
 
 
 # --- CEMS ground truth ---------------------------------------------------------
