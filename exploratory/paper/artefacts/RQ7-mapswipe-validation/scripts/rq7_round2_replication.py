@@ -90,9 +90,9 @@ FLAGS = {"MS": "ms_dmg", "IMPACT": "sar_dmg", "OSU": "osu_dmg",
 def flag_level(cells: pd.DataFrame) -> pd.DataFrame:
     """The rq2i-mechanism quantity per product: confirmed share of the product's
     CEMS-unmatched flags that fall in the strip's cells, under each round's verdicts."""
-    df = gp.building_flags(columns=["lon", "lat", *FLAGS.values()])
-    df = df.assign(cell11=[h3.latlng_to_cell(la, lo, 11)
-                           for la, lo in zip(df.lat, df.lon)])
+    df = gp.buildings(columns=list(FLAGS.values()))  # geometry per gp.PAPER_FRAME (ADR-0030)
+    _rp = df.geometry.representative_point().to_crs(4326)
+    df = df.assign(cell11=[h3.latlng_to_cell(la, lo, 11) for la, lo in zip(_rp.y, _rp.x)])
     df = df[df["cell11"].isin(cells.index)]
 
     cems = gp.cems_points()
@@ -103,9 +103,7 @@ def flag_level(cells: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for prod, col in FLAGS.items():
         sub = df[df[col].to_numpy(dtype="float64", na_value=0.0) == 1.0]
-        fl = gpd.GeoDataFrame(sub[["cell11"]],
-                              geometry=gpd.points_from_xy(sub.lon, sub.lat),
-                              crs=4326).to_crs(gp.METRIC_CRS)
+        fl = sub[["cell11", "geometry"]]
         near = gpd.sjoin_nearest(fl, cm[["geometry"]], how="left", distance_col="d")
         hit = (near.groupby(near.index)["d"].min() <= R_MATCH).values
         un = fl[~hit]

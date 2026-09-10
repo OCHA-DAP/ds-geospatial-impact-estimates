@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p _refreeze_logs
-PY="uv run --group etl --with scipy --with scikit-learn --with matplotlib --with h3 python"
+PY="uv run --group etl --with scipy --with scikit-learn --with matplotlib --with h3 --with statsmodels python"
 run() { local name=$1; shift; echo "== $(date +%H:%M:%S) $name"; $PY "$@" > "_refreeze_logs/$name.log" 2>&1 || { echo "FAILED: $name (see _refreeze_logs/$name.log)"; exit 1; }; }
 run fig_rq2e   RQ2-cems-footprint-points/scripts/rq2e_grade_slope_fig.py
 run fig_rq2r   RQ2-cems-footprint-points/scripts/rq2r_bounds_fig.py
