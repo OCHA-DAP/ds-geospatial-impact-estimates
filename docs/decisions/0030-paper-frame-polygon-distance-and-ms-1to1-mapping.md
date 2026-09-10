@@ -66,7 +66,10 @@ per-script `points_from_xy(lon, lat)` idiom and returns Overture polygons (from 
 cache) under the polygon frame; `gp.building_flags()` overrides `ms_dmg` with the frozen id set
 `lib/ms_1to1_ids.csv` (built by `lib/build_ms_1to1_ids.py`: largest-overlap building per
 Microsoft footprint; ties broken by centroid distance then id; orphans listed in
-`ms_1to1_orphans.csv`). Cell assignment (H3) keeps using lon/lat — it is geometry-neutral.
+`ms_1to1_orphans.csv`). A building's *location* for cell assignment (H3) and region
+membership is the representative point of its frame geometry — identical to the gold lon/lat
+under the centroid frame, an interior point of the footprint under the polygon frame — so every
+script uses one convention (`gp.buildings(...).geometry.representative_point()`).
 
 Path back: the frozen-v3 state is tagged `paper-frozen-v3-centroid`; setting the two constants
 to `"centroid"` / `"intersects"` reproduces it from the same code. The refreeze runs on branch

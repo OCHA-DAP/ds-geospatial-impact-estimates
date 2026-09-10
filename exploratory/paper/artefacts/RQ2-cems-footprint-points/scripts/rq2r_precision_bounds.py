@@ -86,7 +86,8 @@ def main():
     tasks = mapswipe_tasks()
     print(f"MapSwipe task cells (frozen, >=4 votes): {len(tasks):,}")
     cv = np.full(len(d), np.nan)  # NaN = crowd never voted this building's cell
-    for i, (lon, lat) in enumerate(zip(d.lon.to_numpy(), d.lat.to_numpy())):
+    _rp = bld_m.geometry.representative_point().to_crs(4326)  # frame location, as rq5b/rq8
+    for i, (lon, lat) in enumerate(zip(_rp.x.to_numpy(), _rp.y.to_numpy())):
         for res in (11, 12):
             c = h3.latlng_to_cell(lat, lon, res)
             if c in tasks.index:
