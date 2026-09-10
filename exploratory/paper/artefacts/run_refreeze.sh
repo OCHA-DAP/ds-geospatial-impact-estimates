@@ -4,7 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p _refreeze_logs
 PY="uv run --group etl --with scipy --with scikit-learn --with matplotlib --with h3 python"
-run() { local name=$1; shift; echo "== $(date +%H:%M:%S) $name"; $PY "$@" > "_refreeze_logs/$name.log" 2>&1 || { echo "FAILED: $name (see _refreeze_logs/$name.log)"; exit 1; }; }
+START=${START:-}
+run() { local name=$1; shift; if [[ -n "$START" && "$name" != "$START" ]]; then echo "-- skip $name"; return; fi; START=""; echo "== $(date +%H:%M:%S) $name"; $PY "$@" > "_refreeze_logs/$name.log" 2>&1 || { echo "FAILED: $name (see _refreeze_logs/$name.log)"; exit 1; }; }
 run rq2q            RQ2-cems-footprint-points/scripts/rq2q_incl_possibly.py
 GIE_DUMP_OOF=1 GIE_LABEL_R=10 run rq8_r10  RQ8-learned-fusion/scripts/rq8_learned_fusion.py
 GIE_LABEL_R=20 run rq8_r20  RQ8-learned-fusion/scripts/rq8_learned_fusion.py

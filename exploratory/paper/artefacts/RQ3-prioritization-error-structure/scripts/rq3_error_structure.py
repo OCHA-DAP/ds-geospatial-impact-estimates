@@ -66,7 +66,7 @@ def mmi_contours():
     frames = []
     for ev in USGS_EVENTS:
         d = json.loads(stratus.load_blob_data(
-            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json"),
+            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json", event=None),
             stage="dev", container_name=gp.S.container))
         g = gpd.GeoDataFrame.from_features(d["features"], crs=4326)
         g["event"] = ev

@@ -76,7 +76,7 @@ def main():
     frames = []
     for ev in ("us6000t7zp", "us6000t7zc"):
         raw = json.loads(stratus.load_blob_data(
-            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json"),
+            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json", event=None),
             stage="dev", container_name=gp.S.container))
         g = gpd.GeoDataFrame.from_features(raw["features"], crs=4326).to_crs(gp.METRIC_CRS)
         frames.append(g[["value", "geometry"]])
