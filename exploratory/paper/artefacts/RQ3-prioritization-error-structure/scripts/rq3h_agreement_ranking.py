@@ -63,9 +63,7 @@ def uh_aoi():
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *FLAGS.values()])
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=list(FLAGS.values()))  # geometry per gp.PAPER_FRAME (ADR-0030)
 
     ext = gp.cems_extent()
     ext_latest = gp.to_metric(ext[ext.is_latest == True]  # noqa: E712
@@ -79,10 +77,9 @@ def main():
               gp.dissolve_union(gp._read_pq("silver", "source=list", "adm0=VE",
                                             "analysed_extent.parquet"))):
         core = core.intersection(a)
-    d = bld[bld.geometry.within(core)].copy().reset_index(drop=True)
+    d = bld[bld.geometry.representative_point().within(core)].copy().reset_index(drop=True)
 
-    ct = cKDTree(np.c_[cems.geometry.x, cems.geometry.y])
-    d["y"] = (ct.query(np.c_[d.geometry.x, d.geometry.y], k=1)[0] <= LABEL_R).astype(int)
+    d["y"] = gp.within_r(d, cems, LABEL_R).astype(int)
 
     # ---- join the frozen rq8 OOF scores (fusion) and flags by coordinates ----
     pq = pd.read_parquet(os.path.join(RQ8, "rq8_oof_scores_r10.parquet"))
@@ -102,9 +99,8 @@ def main():
     votes = d[list(PARQ_COL.values())].sum(axis=1).to_numpy()
 
     # ---- context features + spatially blocked logistic null (rq3f verbatim) ----
-    ll = d.geometry.to_crs(4326) if hasattr(d, "geometry") else None
-    d = gpd.GeoDataFrame(d, geometry=gpd.points_from_xy(d.lon, d.lat), crs=4326).to_crs(gp.METRIC_CRS)
-    ll = d.to_crs(4326)
+    d = gpd.GeoDataFrame(d, geometry="geometry", crs=gp.METRIC_CRS)  # merge() returned a plain frame
+    ll = gpd.GeoDataFrame(geometry=d.geometry.representative_point(), crs=d.crs).to_crs(4326)
     d["cell7"] = [h3.latlng_to_cell(p.y, p.x, 7) for p in ll.geometry]
     for _r in RESOS:
         d[f"cell{_r}"] = [h3.latlng_to_cell(p.y, p.x, _r) for p in ll.geometry]

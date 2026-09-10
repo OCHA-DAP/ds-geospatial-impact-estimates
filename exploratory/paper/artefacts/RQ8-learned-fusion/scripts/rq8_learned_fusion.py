@@ -298,7 +298,7 @@ def main():
     axm = fig.add_subplot(gs[0])
     axbar = fig.add_subplot(gs[1])
     axb = fig.add_subplot(gs[2])
-    ll4 = d.to_crs(4326)
+    ll4 = gpd.GeoDataFrame(geometry=d.geometry.representative_point(), crs=d.crs).to_crs(4326)  # plot positions
     land = gp.codab(0).geometry.make_valid().union_all()
     axm.set_facecolor("#e7f0f6")
     for g in getattr(land, "geoms", [land]):

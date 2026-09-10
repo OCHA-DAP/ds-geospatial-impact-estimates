@@ -81,7 +81,7 @@ def main():
     for m, a in aois.items():
         bld[f"in_{m}"] = bld.geometry.representative_point().within(a)
         print(f"  {m}: {bld[f'in_{m}'].sum():,} buildings in AOI")
-    bld["in_cems"] = bld.geometry.within(ext_latest)
+    bld["in_cems"] = bld.geometry.representative_point().within(ext_latest)
 
     # rules: (name, members, flag-predicate over the member dmg columns)
     rules = [(m.upper(), (m,), lambda d, m=m: d[f"dmg_{m}"] == 1) for m in MEMBERS]

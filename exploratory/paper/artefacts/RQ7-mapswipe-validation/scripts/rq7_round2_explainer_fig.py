@@ -85,7 +85,7 @@ def main():
     maj1, maj2 = load_tasks()
     flags, cems = load_flags_and_cems()
 
-    ll = flags.geometry
+    ll = flags.geometry.representative_point()
     flags["cell11"] = [h3.latlng_to_cell(p.y, p.x, 11) for p in ll]
     flags["m1"] = flags["cell11"].map(maj1)   # NaN = cell not crowd-voted
     flags["m2"] = flags["cell11"].map(maj2)
@@ -95,6 +95,7 @@ def main():
     cm["geometry"] = cm.geometry.representative_point()
     near = gpd.sjoin_nearest(fm, cm[["geometry"]], how="left", distance_col="d")
     flags["hit"] = (near.groupby(near.index)["d"].min() <= R_MATCH).values
+    fm = fm.set_geometry(fm.geometry.representative_point())  # plot positions from here on
 
     strip = flags[flags["m1"].notna()].copy()      # flags inside the two campaigns' cells
     un = strip[~strip["hit"]]
