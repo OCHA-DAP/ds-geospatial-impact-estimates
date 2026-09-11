@@ -775,7 +775,7 @@ Markdown(N["_tbl_nullrank"])
 
 The result is uncomfortable: geography alone ranks these areas better than the
 products do, beating `{python} N["null_beats_n_asd7"]` of the six at the ~5 km² scale and `{python} N["null_beats_n_asd8"]` of six at the finer scale. The margins are large (IMPACT `{python} N["rhonull_asd7_IMPACT"]` against `{python} N["rho_asd7_IMPACT"]`, UNEP `{python} N["rhonull_asd7_UNEP"]` against `{python} N["rho_asd7_UNEP"]`),
-and a negative rank correlation (`{python} N["asd_neg_7"]`) means an ordering of the ~5 km² cells slightly worse than no information at all. The products ahead of the null at the ~5 km² scale: `{python} N["asd_above_null_7"]` (OSU `{python} N["rho_asd7_OSU"]` against
+and a negative rank correlation for `{python} N["asd_neg_7"]` means an ordering of the ~5 km² cells slightly worse than no information at all. Only `{python} N["asd_above_null_7"]` is ahead of the null at the ~5 km² scale, and only narrowly (`{python} N["rho_asd7_OSU"]` against
 `{python} N["rhonull_asd7_OSU"]`).
 
 That comparison spans all five mapped areas, however, and 96% of the reference damage sits in
@@ -924,7 +924,7 @@ beaten by the geography model on precision (pairs below
 read precision / recall): IMPACT `{python} N["asd8_P_IMPACT"]` / `{python} N["asd8_R_IMPACT"]` against the model's `{python} N["dz_P_IMPACT"]` / `{python} N["dz_R_IMPACT"]`; UH
 `{python} N["asd8_P_UH"]` / `{python} N["asd8_R_UH"]` against `{python} N["dz_P_UH"]` / `{python} N["dz_R_UH"]`; LIST `{python} N["asd8_P_LIST"]` / `{python} N["asd8_R_LIST"]` against `{python} N["dz_P_LIST"]` / `{python} N["dz_R_LIST"]`; and UNEP
 `{python} N["asd8_P_UNEP"]` / `{python} N["asd8_R_UNEP"]` against `{python} N["dz_P_UNEP"]` / `{python} N["dz_R_UNEP"]`. At UH's own list size the geography rule reaches `{python} N["dz_R_pct_UH"]`
-of the reference damage at more than UH's precision. Microsoft (`{python} N["asd8_P_MS"]` / `{python} N["asd8_R_MS"]` against
+of the reference damage at `{python} N["dz_UH_P_ratio"]` times UH's precision. Microsoft (`{python} N["asd8_P_MS"]` / `{python} N["asd8_R_MS"]` against
 `{python} N["dz_P_MS"]` / `{python} N["dz_R_MS"]`), which shipped only its carefully analysed strip, and OSU (`{python} N["asd8_P_OSU"]` / `{python} N["asd8_R_OSU"]` against
 `{python} N["dz_P_OSU"]` / `{python} N["dz_R_OSU"]`), which flagged so widely it reached recall the null could not match at that list length, are the products the comparison favours. This result is unchanged by the matching radius: repeated at 20 m it is the same four
 products, in the same direction (Appendix). One caveat applies to all

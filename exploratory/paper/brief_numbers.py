@@ -216,6 +216,7 @@ for p in PRODUCTS:
     N[f"dz_P_{p}"] = f3(rq8b.loc[p, "P_dayzero_matched"]); N[f"dz_R_{p}"] = f2(rq8b.loc[p, "R_dayzero_matched"])
     N[f"dz_R_pct_{p}"] = pct(rq8b.loc[p, "R_dayzero_matched"])
 N["dz_beats_n"] = words((rq8b.P_dayzero_matched > rq8b.P_product).sum())
+N["dz_UH_P_ratio"] = f"{rq8b.loc['UH', 'P_dayzero_matched'] / rq8b.loc['UH', 'P_product']:.1f}"
 N["core_pos_r10"] = com(rq8b.loc["MS", "n_pos"])  # Microsoft's AOI ∩ CEMS is the core-region label set
 rq8b20 = csv("RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv").set_index("product")
 N["core_pos_r20"] = com(rq8b20.loc["MS", "n_pos"])
