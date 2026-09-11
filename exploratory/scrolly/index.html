@@ -84,6 +84,8 @@
             border:1px solid rgba(250,251,251,.09); border-radius:8px; padding:12px 16px;
             font:13px Roboto, sans-serif; color:var(--mut); opacity:0; transition:opacity .6s; }
   .legend.on { opacity:1; } .legend div { margin:3px 0; } .legend span { font-size:15px; margin-right:7px; }
+  .legend .ltitle { color:var(--ink); font-weight:600; margin:0 0 7px; padding-bottom:6px;
+                    border-bottom:1px solid rgba(250,251,251,.12); }
   footer { position:relative; z-index:2; padding:6vh 7vw 12vh;
            font:15px/1.6 Merriweather, Georgia, serif; color:var(--mut);
            background:rgba(5,20,43,.82); border-top:1px solid rgba(250,251,251,.08); }
@@ -194,10 +196,11 @@
 </div>
 
 <div class="legend" id="legend-verdict">
-  <div><span style="color:#3b4f66">●</span>no assessment flags it</div>
-  <div><span style="color:#d48f2a">●</span>one lone assessment</div>
-  <div><span style="color:#c44536">●</span>2–3 assessments, split verdict</div>
-  <div><span style="color:#fafbfb">●</span>4+ assessments agree</div>
+  <div class="ltitle">Assessments flagging the building</div>
+  <div><span style="color:#3b4f66">●</span>none</div>
+  <div><span style="color:#d48f2a">●</span>one</div>
+  <div><span style="color:#c44536">●</span>two or three</div>
+  <div><span style="color:#fafbfb">●</span>four or more</div>
 </div>
 <div class="legend" id="legend-test">
   <div><span style="color:#51ac92">●</span>Copernicus EMS recorded damage</div>
@@ -404,8 +407,7 @@
     <div class="kicker">Using the assessments together</div>
     In real time, as products arrive during a crisis, there is no definitive answer on
     which one to use or how accurate it will be. So rather than choosing, we count: for
-    every building, how many of the six assessments flag it. Amber buildings were flagged
-    by one assessment alone, red by two or three, white by four or more.
+    every building, how many of the six assessments flag it.
   </div></section>
 
   <section class="step qstep" data-step="16"><div class="spacer"></div></section>
