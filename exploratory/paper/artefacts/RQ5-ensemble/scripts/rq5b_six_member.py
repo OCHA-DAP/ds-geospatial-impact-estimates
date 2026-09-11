@@ -96,12 +96,14 @@ def main():
     def crowd_verdicts(sub4326):
         out = []
         for p in sub4326.geometry.representative_point():
+            v = np.nan  # NaN = the crowd never voted this building's cell
             for res in (11, 12):
                 c = h3.latlng_to_cell(p.y, p.x, res)
                 if c in tasks.index:
-                    out.append(int(tasks.loc[c, "majority"]))
+                    v = int(tasks.loc[c, "majority"])
                     break
-        return pd.Series(out)
+            out.append(v)
+        return pd.Series(out, dtype="float64")
 
     rules = [(nm, bld[in_reg & (df[col] == 1)]) for nm, col in MEMBERS.items()]
     rules += [(f"{a}∧{b_}", bld[in_reg & (df[MEMBERS[a]] == 1) & (df[MEMBERS[b_]] == 1)])
@@ -122,7 +124,7 @@ def main():
         j = j[~j.index.duplicated()]
         fp_idx = j[j["_d"].isna()].index
         v = crowd_verdicts(bld.loc[fp_idx].to_crs(4326)) if len(fp_idx) else pd.Series(dtype=int)
-        conf = (v == 1).mean() if len(v) else np.nan
+        conf = (v == 1).sum() / v.notna().sum() if v.notna().any() else np.nan  # confirmed share among REVIEWED unmatched flags
         # measured convention (ADR-0031): only reviewed-and-confirmed unmatched flags earn credit
         n_conf = int((v == 1).sum())
         cov = float(v.notna().mean()) if len(v) else np.nan
