@@ -1,6 +1,6 @@
 product,area,cells,n_cems,flag_pct,moran_I,p
-MS,Caraballeda,140,1467,15.7,0.54,0.001
-MS,ALL,140,1467,15.7,0.54,0.001
+MS,Caraballeda,140,1467,13.5,0.54,0.001
+MS,ALL,140,1467,13.5,0.54,0.001
 IMPACT,Caraballeda,187,1468,17.8,0.263,0.001
 IMPACT,Caracas,178,3,8.5,0.279,0.001
 IMPACT,Moron,49,26,6.7,0.0,0.999
