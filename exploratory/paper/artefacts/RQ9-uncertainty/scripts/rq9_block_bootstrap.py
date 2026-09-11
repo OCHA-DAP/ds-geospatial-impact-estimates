@@ -197,15 +197,13 @@ def main():
         fp_c = agg(f_cells[~hit10], np.ones(int((~hit10).sum())), nc)
         jud_c = agg(f_cells[~hit10], ~np.isnan(v), nc)
         dmg_c = agg(f_cells[~hit10], v == 1, nc)
+        # measured convention (ADR-0031): credit only reviewed-and-confirmed unmatched flags
         with np.errstate(divide="ignore", invalid="ignore"):
-            conf = (W @ dmg_c) / (W @ jud_c)
-            padj = (W @ agg(f_cells, hit10, nc) + (W @ fp_c) * conf) / (W @ flags_c)
-        conf0 = float((v == 1).sum() / max((~np.isnan(v)).sum(), 1))
-        p0 = float(hit10.mean())
-        padj0 = (hit10.sum() + (~hit10).sum() * conf0) / len(fl)
-        check(f"core {nm} Padj", padj0, frozen5[10].loc[nm]["P_crowd_adj"])
+            padj = (W @ agg(f_cells, hit10, nc) + (W @ dmg_c)) / (W @ flags_c)
+        padj0 = (hit10.sum() + int((v == 1).sum())) / len(fl)
+        check(f"core {nm} P_crowd", padj0, frozen5[10].loc[nm]["P_crowd"])
         lo, hi = pct(padj)
-        rows.append(dict(lens="core", rule=nm, radius=10, metric="P_crowd_adj",
+        rows.append(dict(lens="core", rule=nm, radius=10, metric="P_crowd",
                          point=round(float(padj0), 3), lo=round(lo, 3), hi=round(hi, 3)))
         print(f"  core {nm}: done ({len(fl):,} flags)")
     pd.DataFrame(rows).to_csv(os.path.join(OUT, "rq9_ci_core.csv"), index=False)

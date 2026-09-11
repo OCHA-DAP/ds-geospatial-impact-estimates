@@ -16,7 +16,7 @@ What it computes (all deterministic; nothing here touches any frozen number):
      exports (binomial sampling noise vs real between-cell signal), the implied per-round
      reliabilities, and the noise-corrected (errors-in-variables) cross-round correlation
      of the underlying cell propensities;
-  4. sensitivity — the implied movement of rq2i's as-delivered P_crowd_adj if round-2
+  4. sensitivity — the implied movement of rq2i's as-delivered P_crowd if round-2
      verdicts replaced round-1 in the strip. Computed FROM rq2i's frozen CSV row via the
      mechanism identity P_adj = (tp + U*conf)/N (never re-scoring anything): only the
      strip portion of conf changes, so conf' = conf + w*(conf2-conf1) with w = the
@@ -117,7 +117,7 @@ def flag_level(cells: pd.DataFrame) -> pd.DataFrame:
 
 
 def padj_sensitivity(fl: pd.DataFrame) -> pd.DataFrame:
-    """Implied as-delivered P_crowd_adj under a round-2 swap, from rq2i's frozen CSV."""
+    """Implied as-delivered P_crowd under a round-2 swap, from rq2i's frozen CSV."""
     rq2i = pd.read_csv(os.path.join(OUT, "..", "RQ2-cems-footprint-points",
                                     "rq2i_per_aoi_scorecard.csv"))
     rq2i = (rq2i[rq2i.aoi == "ALL (as delivered)"]
@@ -135,12 +135,16 @@ def padj_sensitivity(fl: pd.DataFrame) -> pd.DataFrame:
         w = min(strip_cov / covered, 1.0)
         d_conf = (fl.loc[prod, "unmatched_conf_share_r2"]
                   - fl.loc[prod, "unmatched_conf_share_r1"])
+        # measured convention (ADR-0031): credit = reviewed unmatched flags x confirmed share
+        p_r1 = (tp + covered * r.fp_crowd_damaged) / r.n_flags
+        if abs(p_r1 - r.P_crowd) > 0.006:  # rounded inputs (cov, conf to 2 dp)
+            raise RuntimeError(f"{prod}: recomputed P_crowd {p_r1:.3f} != rq2i {r.P_crowd}")
         conf_new = r.fp_crowd_damaged + w * d_conf
-        p_new = (tp + unmatched * conf_new) / r.n_flags
-        rows.append({"product": prod, "P_crowd_adj_r1": r.P_crowd_adj,
+        p_new = (tp + covered * conf_new) / r.n_flags
+        rows.append({"product": prod, "P_crowd_r1": r.P_crowd,
                      "strip_share_of_covered_fps": round(w, 3),
-                     "P_crowd_adj_r2swap": round(p_new, 3),
-                     "delta": round(p_new - r.P_crowd_adj, 3)})
+                     "P_crowd_r2swap": round(p_new, 3),
+                     "delta": round(p_new - r.P_crowd, 3)})
     return pd.DataFrame(rows).set_index("product")
 
 
@@ -202,7 +206,7 @@ def main() -> None:
         fl[["unmatched", "unmatched_conf_share_r1", "unmatched_conf_share_r2"]]
         .rename(columns={"unmatched": "strip_unmatched_flags"}))
     sens.to_csv(os.path.join(OUT, "rq7_round2_padj_sensitivity.csv"))
-    print("\nP_crowd_adj sensitivity (as-delivered, round-2 verdicts swapped into strip):")
+    print("\nP_crowd sensitivity (as-delivered, round-2 verdicts swapped into strip):")
     print(sens.to_string())
     print("\nwrote rq7_round2_replication.csv, rq7_round2_crosstab.csv, "
           "rq7_round2_padj_sensitivity.csv")

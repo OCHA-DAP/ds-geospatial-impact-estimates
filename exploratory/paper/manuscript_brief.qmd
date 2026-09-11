@@ -225,7 +225,7 @@ damaged.
 
 ```{python}
 #| label: tbl-dial
-#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m); flags in cells the crowd never reviewed are assumed to contain damage at the same rate as the reviewed ones. Visits/find is field visits per damage point reached at 30 m, the finding distance; computed as flags ÷ R₃₀ × 1,467 reference points. Shading ranks values within each column (darker = higher; for visits/find, fewer)."
+#| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. At 10 m, product cells also show the as-delivered value in parentheses; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m): a flag is credited only where volunteers reviewed its cell and judged it damaged, and unreviewed flags earn nothing; the share of each product's unmatched flags the crowd reviewed is in parentheses. Visits/find is field visits per damage point reached at 30 m, the finding distance; computed as flags ÷ R₃₀ × 1,467 reference points. Shading ranks values within each column (darker = higher; for visits/find, fewer)."
 import pandas as pd
 from great_tables import GT, style, loc
 from matplotlib import colormaps
@@ -256,8 +256,9 @@ for key in products + rules:
                 d[col] = f"{row[m]:.3f} ({float(asd.loc[key][m]):.3f})"
             else:
                 d[col] = f"{row[m]:.3f}"
-    n["Padj"] = float(five[10].loc[key]["P_crowd_adj"])
-    d["Padj"] = f"{n['Padj']:.3f}"
+    n["Padj"] = float(five[10].loc[key]["P_crowd"])
+    _cov = five[10].loc[key]["crowd_cov_of_fps"]
+    d["Padj"] = f"{n['Padj']:.3f} ({100 * _cov:.0f}%)" if key in products else f"{n['Padj']:.3f}"
     visits = five[10].loc[key]["flagged"] / (five[30].loc[key]["R_cems"] * N_CEMS)
     n["visits"] = -visits
     d["visits"] = f"{visits:.1f}"
@@ -1141,7 +1142,7 @@ order = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"] + [f"{k}-of-6" for k in ra
 labels = {"MS": "Microsoft", "IMPACT": "IMPACT v2"}
 rows = [{"rule": labels.get(k, k),
          "P10": cell(k, 10, "P"), "R10": cell(k, 10, "R"), "F110": cell(k, 10, "F1"),
-         "Padj": cell(k, 10, "P_crowd_adj"), "F130": cell(k, 30, "F1"),
+         "Padj": cell(k, 10, "P_crowd"), "F130": cell(k, 30, "F1"),
          "visits": cell(k, 30, "visits_per_find", dp=1)} for k in order]
 (GT(pd.DataFrame(rows), rowname_col="rule")
  .tab_spanner("10 m", ["P10", "R10", "F110", "Padj"])
@@ -1189,12 +1190,15 @@ an expert damage point within 10 m counts as a hit outright; the crowd plays no 
 that. Every other flag sits inside one of the ~50 m cells that MapSwipe volunteers voted
 on, and the rule is: if most volunteers who saw that cell said *yes, damaged*, the flag is
 counted as confirmed damage and improves the adjusted precision; if they said *no* or *not
-sure*, it stays a false alarm. The one point of divergence is the flags in cells the
-volunteers never saw. @tbl-dial's crowd-adjusted column assumes they contain damage at
-the same rate as the flags the volunteers did see; @fig-bounds and the re-vote deltas
-below credit nothing for them. The two conventions agree where the crowd reviewed most
-of a product's flags (Microsoft: `{python} N["crowdcov_MS"]`) and diverge where it saw few (UH: `{python} N["crowdcov_UH"]`), which is
-why each is stated where it is used.
+sure*, it stays a false alarm. Flags in cells the volunteers never saw earn nothing:
+the adjustment is a measurement, not an estimate, so it understates the true precision
+of products the crowd barely reviewed. The MapSwipe campaign was seeded on the coastal
+strip's Microsoft flags, so it reviewed `{python} N["crowdcov_MS"]` of Microsoft's unmatched flags but only
+`{python} N["crowdcov_UH"]` of UH's, and @tbl-dial states that coverage beside each crowd-adjusted value.
+An earlier draft instead assumed the unreviewed flags contained damage at the same rate as
+the reviewed ones; that assumption is not defensible where the reviewed flags are the ones
+that happened to fall in another product's zone, and it is dropped throughout
+(decision record ADR-0031).
 
 The upper bound in @fig-bounds combines the crowd credit with the *possibly damaged*
 points as a union: a flag that qualifies under both is counted once. The two additions mostly affect different flags anyway; only `{python} N["crowd_fp_near_class1_range"]` of the crowd-confirmed flags sit

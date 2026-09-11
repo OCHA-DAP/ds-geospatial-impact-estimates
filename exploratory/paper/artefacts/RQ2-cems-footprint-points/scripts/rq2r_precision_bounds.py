@@ -8,14 +8,9 @@ Four references, same flags (gold building flags via the RQ8 OOF parquet = core 
 Products only: MapSwipe voted exclusively on AI-flagged locations, so crediting the crowd
 cannot fairly score the geography null or the composites (rq2n's circularity guard).
 
-TWO crowd conventions exist in this paper's artefacts, and this CSV carries BOTH:
-  * measured (rq2i's rule, and the paper's bounds figure): a flag earns credit only where
-    the crowd actually reviewed its location and judged it damaged; unreviewed locations
-    earn nothing. Columns P_crowd / P_upper.
-  * extrapolated (rq5b's rule, @tbl-dial's crowd-adj column): the damage rate among the
-    REVIEWED unmatched flags is assumed to hold for the unreviewed ones too. Columns
-    P_crowd_extrap / P_upper_extrap.
-They agree where crowd coverage is high (MS 98%) and diverge where it is thin (UH 27%).
+Crowd credit follows one convention (ADR-0031): a flag is credited only if the crowd
+actually reviewed its location and judged it damaged; unreviewed locations earn nothing.
+Columns P_crowd / P_upper.
 
 Diagnostic `crowd_fp_near_class1`: of the crowd-confirmed CEMS-{2,3}-false flags, the
 share within 10 m of a CEMS class-1 point — i.e. how much the two corrections are the
@@ -24,7 +19,7 @@ bound is nearly the additive stack and does not double-count.
 
 ANCHORS (script raises on any miss):
   * P_floor / P_grade reproduce rq2q_incl_possibly.csv's product rows exactly;
-  * P_crowd_extrap reproduces rq5b_six_member.csv's P_crowd_adj exactly.
+  * P_crowd reproduces rq5b_six_member.csv's P_crowd exactly.
 
 Run: uv run --group etl --with scipy --with h3 python \
        exploratory/paper/artefacts/RQ2-cems-footprint-points/scripts/rq2r_precision_bounds.py
@@ -108,31 +103,24 @@ def main():
         # measured: unreviewed flags earn nothing
         P_crowd = round(float((hit23 | crowd_dmg)[fl].mean()), 3)
         P_upper = round(float((hit123 | crowd_dmg)[fl].mean()), 3)
-        # extrapolated (rq5b's rule): reviewed-FP damage rate assumed for unreviewed FPs
         fp23 = fl & ~hit23
-        conf23 = float(crowd_dmg[fp23 & voted].mean())  # among REVIEWED unmatched flags
-        P_crowd_x = round((hit23[fl].sum() + fp23.sum() * conf23) / n, 3)
-        fp123 = fl & ~hit123
-        conf123 = float(crowd_dmg[fp123 & voted].mean())
-        P_upper_x = round((hit123[fl].sum() + fp123.sum() * conf123) / n, 3)
         cov = float(voted[fp23].mean())
         cc_fp = fp23 & crowd_dmg
         overlap = float(hit1[cc_fp].mean()) if cc_fp.any() else np.nan
 
         for got, want, what in ((P_floor, rq2q.loc[("dmg+destroyed", p), "P"], "rq2q floor"),
                                 (P_grade, rq2q.loc[("incl_possibly", p), "P"], "rq2q grade"),
-                                (P_crowd_x, rq5b.loc[p, "P_crowd_adj"], "rq5b crowd-adj")):
+                                (P_crowd, rq5b.loc[p, "P_crowd"], "rq5b crowd (measured)")):
             if got != want:
                 bad.append(f"{p} {what}: got {got}, frozen {want}")
         rows.append(dict(product=p, n_flags=n, P_floor=P_floor, P_grade=P_grade,
                          P_crowd=P_crowd, P_upper=P_upper,
-                         P_crowd_extrap=P_crowd_x, P_upper_extrap=P_upper_x,
                          crowd_cov_of_fps=round(cov, 2),
                          crowd_fp_near_class1=round(overlap, 2) if overlap == overlap else np.nan))
 
     if bad:
         raise SystemExit("ANCHOR FAILED:\n  " + "\n  ".join(bad))
-    print("anchors OK: floor/grade reproduce rq2q; extrapolated crowd reproduces rq5b (6 products)")
+    print("anchors OK: floor/grade reproduce rq2q; measured crowd reproduces rq5b (6 products)")
 
     out = pd.DataFrame(rows)
     out.to_csv(os.path.join(HERE, "..", "rq2r_precision_bounds.csv"), index=False)

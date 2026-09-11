@@ -32,9 +32,9 @@ fig, ax = plt.subplots(figsize=(10, 7.5))
 # precision intervals: CEMS floor -> crowd-adjusted (singles + voting rules)
 first = True
 for _, r in pd.concat([singles, kof]).iterrows():
-    ax.plot([r.R_cems, r.R_cems], [r.P_cems, r.P_crowd_adj], c="#c9ced4", lw=1.4,
+    ax.plot([r.R_cems, r.R_cems], [r.P_cems, r.P_crowd], c="#c9ced4", lw=1.4,
             zorder=1, label="crowd-adjusted precision (top of interval)" if first else None)
-    ax.plot(r.R_cems, r.P_crowd_adj, marker="_", ms=9, c="#9aa5b1", zorder=1)
+    ax.plot(r.R_cems, r.P_crowd, marker="_", ms=9, c="#9aa5b1", zorder=1)
     first = False
 
 ax.scatter(singles.R_cems, singles.P_cems, c="#4a5560", s=80, zorder=4,

@@ -31,7 +31,7 @@ y = np.arange(len(order))
 h = 0.36
 fig, ax = plt.subplots(figsize=(12.5, 6.8))
 for yi, p in zip(y, order):
-    pc, pa, cov = a.loc[p, "P_cems"], a.loc[p, "P_crowd_adj"], a.loc[p, "crowd_cov_of_fps"]
+    pc, pa, cov = a.loc[p, "P_cems"], a.loc[p, "P_crowd"], a.loc[p, "crowd_cov_of_fps"]
     ax.barh(yi + h/2, pc, height=h, color="#8a5a00",
             label="strict — Copernicus expert only" if p == order[0] else None)
     ax.barh(yi - h/2, pa, height=h, color="#2a78d6",

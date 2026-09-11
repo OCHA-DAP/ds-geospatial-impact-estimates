@@ -10,7 +10,7 @@ Every rule scored against ALL THREE references in one table:
   - CEMS: dual-anchor precision(floor)/recall/F1, r=10 m
   - ChatMap field points: recall r=20 m (miss-side)
   - MapSwipe crowd: share of CEMS-unmatched flags in majority-DAMAGED hexes (>=4 votes)
-    -> crowd-adjusted precision (as RQ7b)
+    -> crowd-adjusted precision, measured convention: unreviewed flags earn nothing (ADR-0031)
 
 Run: uv run --group etl --with scipy python \
        exploratory/paper/artefacts/RQ5-ensemble/scripts/rq5b_six_member.py
@@ -123,12 +123,16 @@ def main():
         fp_idx = j[j["_d"].isna()].index
         v = crowd_verdicts(bld.loc[fp_idx].to_crs(4326)) if len(fp_idx) else pd.Series(dtype=int)
         conf = (v == 1).mean() if len(v) else np.nan
-        p_adj = (np_ + len(fp_idx) * (conf if conf == conf else 0)) / dp if dp else np.nan
+        # measured convention (ADR-0031): only reviewed-and-confirmed unmatched flags earn credit
+        n_conf = int((v == 1).sum())
+        cov = float(v.notna().mean()) if len(v) else np.nan
+        p_crowd = (np_ + n_conf) / dp if dp else np.nan
         rows.append(dict(rule=nm, flagged=len(flagged),
                          P_cems=round(prec, 3), R_cems=round(rec, 3), F1_cems=round(f1, 3),
                          R_field_r20=round(nf / dfld, 2) if dfld else np.nan,
                          FP_crowd_damaged=round(conf, 2) if conf == conf else np.nan,
-                         P_crowd_adj=round(p_adj, 3) if p_adj == p_adj else np.nan))
+                         crowd_cov_of_fps=round(cov, 2) if cov == cov else np.nan,
+                         P_crowd=round(p_crowd, 3) if p_crowd == p_crowd else np.nan))
         print(rows[-1], flush=True)
 
     out = pd.DataFrame(rows)

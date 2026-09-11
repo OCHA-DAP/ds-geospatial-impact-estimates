@@ -147,7 +147,7 @@ def main():
                 row["fp_crowd_damaged"] = round(conf, 2) if conf == conf else np.nan
                 if conf == conf and len(fl):
                     tp = int(hit.sum()) if len(ca) else 0
-                    row["P_crowd_adj"] = round((tp + len(fpm) * conf) / len(fl), 3)
+                    row["P_crowd"] = round((tp + int((cv == 1).sum())) / len(fl), 3)  # measured (ADR-0031)
             rows.append(row)
             print(row)
 

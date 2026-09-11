@@ -141,7 +141,7 @@ for pair in ("IMPACT∧OSU", "MS∧UH", "MS∧LIST", "LIST∧UH", "UNEP∧OSU", 
     N[f"pair_P_{pair}"] = f3(core.loc[pair, "P_cems"])
     N[f"pair_F1_{pair}"] = f3(core.loc[pair, "F1_cems"])
 N["pair_P_best"] = f3(core.loc[[r for r in core.index if "∧" in r], "P_cems"].max())
-N["crowd_adj_P_range"] = rng(prod.P_crowd_adj.min(), prod.P_crowd_adj.max(), f2)
+N["crowd_adj_P_range"] = rng(prod.P_crowd.min(), prod.P_crowd.max(), f2)
 
 # ---------------------------------------------------------------- as delivered (rq2i)
 rq2i = csv("RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv")
@@ -168,7 +168,7 @@ for p in ("IMPACT", "LIST"):  # coherence products in Santa Cruz
 # ---------------------------------------------------------------- precision bounds (rq2r)
 rq2r = csv("RQ2-cems-footprint-points/rq2r_precision_bounds.csv").set_index("product")
 for p in PRODUCTS:
-    for c in ("P_floor", "P_grade", "P_crowd", "P_upper", "P_crowd_extrap", "P_upper_extrap"):
+    for c in ("P_floor", "P_grade", "P_crowd", "P_upper"):
         N[f"{c}_{p}"] = f3(rq2r.loc[p, c])
     N[f"crowdcov_{p}"] = pct(rq2r.loc[p, "crowd_cov_of_fps"])
 N["P_upper_max"] = f2(rq2r.P_upper.max()); N["P_upper_max3"] = f3(rq2r.P_upper.max())
@@ -353,7 +353,7 @@ def _rq7():
     N["r2_MS_conf_r1"] = pct(s.loc["MS", "unmatched_conf_share_r1"], 1); N["r2_MS_conf_r2"] = pct(s.loc["MS", "unmatched_conf_share_r2"], 1)
     N["r2_MS_one_in"] = words(round(1 / s.loc["MS", ["unmatched_conf_share_r1", "unmatched_conf_share_r2"]].mean()))
     for p in ("MS", "UNEP", "IMPACT"):
-        N[f"r2_padj_r1_{p}"] = f3(s.loc[p, "P_crowd_adj_r1"]); N[f"r2_padj_r2_{p}"] = f3(s.loc[p, "P_crowd_adj_r2swap"])
+        N[f"r2_padj_r1_{p}"] = f3(s.loc[p, "P_crowd_r1"]); N[f"r2_padj_r2_{p}"] = f3(s.loc[p, "P_crowd_r2swap"])
     N["r2_padj_maxdelta"] = f2(s.delta.abs().max())
     rep = csv("RQ7-mapswipe-validation/rq7_round2_replication.csv").set_index("metric").value
     N["r2_cells"] = com(rep["paired_task_cells"])
