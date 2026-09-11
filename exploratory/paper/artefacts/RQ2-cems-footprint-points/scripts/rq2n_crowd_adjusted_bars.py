@@ -40,7 +40,7 @@ for yi, p in zip(y, order):
     ax.text(pa + 0.003, yi - h/2, f"{pa:.3f}  ({pa/pc:.1f}×)", va="center", fontsize=10.5,
             color="#1b4f8a", weight="bold")
     ax.text(-0.004, yi, p, va="center", ha="right", fontsize=14, weight="bold")
-    tag = "well-supported" if cov > 0.6 else ("partial" if cov > 0.15 else "THIN — extrapolated")
+    tag = "well-supported" if cov > 0.6 else ("partial" if cov > 0.15 else "THIN — little credit possible")
     ax.text(0.30, yi, f"crowd saw {cov:.0%} of its flags · {tag}", va="center",
             fontsize=9, color="#666" if cov > 0.15 else "#c62828", style="italic")
 
