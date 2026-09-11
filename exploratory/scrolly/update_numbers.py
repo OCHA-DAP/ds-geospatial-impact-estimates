@@ -36,6 +36,8 @@ singles = {"Microsoft": "Microsoft", "IMPACT v2": "IMPACT", "OSU": "OSU", "UH": 
 rows = [f'["{best} agreement",{h8.loc[best, "rho"]:.3f},true]']
 rows += [f'["{short}",{h8.loc[lab, "rho"]:.3f},false]' for lab, short in sorted(singles.items(), key=lambda kv: -h8.loc[kv[0], "rho"])]
 sub1(r"const RANKDATA = \[.*?\];", "const RANKDATA = [" + ",".join(rows) + "];")
+n07 = int((h8.loc[list(singles), "rho"] >= 0.7).sum())
+sub1(r"\(\w+ of the six reach a Spearman ρ of 0\.7 or more", f"({words(n07)} of the six reach a Spearman ρ of 0.7 or more")
 # --- precision bounds (rq2r): floor and upper bound, per cent, sorted by floor
 b = rq2r.loc[PRODUCTS].sort_values("P_floor", ascending=False)
 bounds = ",".join(f'["{LONG[p]}",{100 * r.P_floor:.1f},{100 * r.P_upper:.1f}]' for p, r in b.iterrows())
