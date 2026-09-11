@@ -260,13 +260,14 @@ def _rq3():
     N["core8_n_above"] = words((c8.rho_product > c8.rho_null).sum())
     h = csv("RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv")
     h8 = h[h.res == 8].set_index("predictor")
-    singles = [p for p in h8.index if "-of-" not in p and "fusion" not in p.lower() and "null" not in p.lower()]
+    SINGLE = {"Microsoft", "IMPACT v2", "OSU", "UH", "LIST", "UNEP"}
+    singles = [p for p in h8.index if p in SINGLE]
     N["rank_best_single_rho"] = f2(h8.loc[singles, "rho"].max()); N["rank_best_single"] = h8.loc[singles, "rho"].idxmax()
     votes = [p for p in h8.index if "-of-" in p]
     N["rank_best_vote_rho"] = f2(h8.loc[votes, "rho"].max()); N["rank_best_vote"] = h8.loc[votes, "rho"].idxmax()
     for res in (8, 9):
         hr = h[h.res == res].set_index("predictor")
-        sg = [p for p in hr.index if "-of-" not in p and "fusion" not in p.lower() and "null" not in p.lower()]
+        sg = [p for p in hr.index if p in SINGLE]
         vt = [p for p in hr.index if "-of-" in p]
         N[f"top20_single_{res}"] = str(int(round(20 * hr.loc[sg, "top20"].max())))
         N[f"top20_vote_{res}"] = str(int(round(20 * hr.loc[vt, "top20"].max())))

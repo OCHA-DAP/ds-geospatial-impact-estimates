@@ -664,7 +664,7 @@ for (const [lab,v,pct] of BARDATA){ barsEl.insertAdjacentHTML("beforeend",
   `<div class="row"><div class="lab">${lab}</div><div class="bar" data-v="${v}"></div>
    <div class="val" style="opacity:0">${v.toLocaleString()}
    <span style="color:#51ac92; font-weight:700; margin-left:8px">${pct}% confirmed</span></div></div>`); }
-const RANKDATA = [["3-of-6 agreement",0.781,true],["LIST",0.737,false],["IMPACT",0.718,false],["OSU",0.703,false],["Microsoft",0.613,false],["UNEP",0.577,false],["UH",0.480,false]];
+const RANKDATA = [["3-of-6 agreement",0.783,true],["LIST",0.737,false],["IMPACT",0.718,false],["OSU",0.703,false],["Microsoft",0.616,false],["UNEP",0.577,false],["UH",0.480,false]];
 const rankEl = document.getElementById("rank");
 for (const [lab,v,hot] of RANKDATA){ rankEl.insertAdjacentHTML("beforeend",
   `<div class="row${hot?" agree":""}"><div class="lab" style="width:150px">${lab}</div>
