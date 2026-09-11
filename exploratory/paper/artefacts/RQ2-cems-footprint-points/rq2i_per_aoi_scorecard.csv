@@ -1,4 +1,4 @@
-aoi,product,n_bld,n_flags,flag_share,n_cems,P_cems,R_cems,crowd_cov_of_fps,fp_crowd_damaged,P_crowd_adj
+aoi,product,n_bld,n_flags,flag_share,n_cems,P_cems,R_cems,crowd_cov_of_fps,fp_crowd_damaged,P_crowd
 ALL (as delivered),MS,58705,7944,0.135,1467,0.121,0.611,0.99,0.17,0.268
 ALL (as delivered),IMPACT,339700,23490,0.069,1500,0.048,0.619,0.21,0.04,0.087
 ALL (as delivered),OSU,412637,32643,0.079,1488,0.054,0.856,0.34,0.06,0.115
