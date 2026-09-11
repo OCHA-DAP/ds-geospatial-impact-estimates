@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-09-10
 deciders: zackarno
 amends: 0029-frozen-v3-and-technical-brief
@@ -73,7 +73,9 @@ script uses one convention (`gp.buildings(...).geometry.representative_point()`)
 
 Path back: the frozen-v3 state is tagged `paper-frozen-v3-centroid`; setting the two constants
 to `"centroid"` / `"intersects"` reproduces it from the same code. The refreeze runs on branch
-`paper-polygon-frame`, one script per commit, so every artefact's change is diffable.
+`paper-polygon-frame`, one script per commit, so every artefact's change is diffable
+(`exploratory/paper/artefacts/run_refreeze.sh` and `run_refreeze_figs.sh` are the chain;
+`number_ledger.py` lists, per changed CSV cell, the brief lines that quoted the old value).
 
 ### Consequences
 
@@ -87,6 +89,17 @@ to `"centroid"` / `"intersects"` reproduces it from the same code. The refreeze 
   numbers.
 * Bad: the polygon frame needs the ~640 MB Overture base cache locally; scripts fail loudly
   without it rather than falling back to centroids.
+* Neutral: in the building-label lens used by the fusion and null models (a building is
+  positive if a CEMS point lies within r of it), the positive set grows by about half
+  (2,064 core buildings at 10 m against 1,350), because one point within 10 m of several
+  footprints now labels all of them; recall in that lens falls slightly while precision rises.
+* Neutral: the rq8 out-of-fold parquet and every figure are gitignored, so the centroid
+  frame's copies of those come back only by re-running the tagged scripts. The scene
+  head-to-head experiment (`rq2g`) reads per-scene layers from a session scratchpad that no
+  longer exists; its frozen CSV is kept and the brief says so.
+* Good: the brief now reads every number from the artefact CSVs through
+  `exploratory/paper/brief_numbers.py` (inline `{python}` expressions), so the next refreeze
+  re-points the prose on render instead of by hand.
 * Neutral: the two ADRs numbered 0029 (this repo has a numbering collision) are both left as
   is; this ADR amends the frozen-v3 one.
 

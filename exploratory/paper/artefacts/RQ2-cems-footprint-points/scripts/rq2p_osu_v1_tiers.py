@@ -52,7 +52,7 @@ def _silver(version, name):
 
 def main():
     bld = gp.buildings(columns=["osu_dmg"])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
-    base = bld.set_index("id")
+    bld = bld.set_index("id")
 
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)][["geometry"]]
