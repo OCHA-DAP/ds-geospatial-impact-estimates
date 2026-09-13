@@ -59,7 +59,7 @@ def uh_aoi():
 def mapswipe_tasks():
     import ocha_stratus as stratus
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE")
+    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", event=None)
     frames = []
     for b in cc.list_blobs(name_starts_with=pref):
         if not gp.mapswipe_is_frozen(b.name):
@@ -111,9 +111,9 @@ def check(name, got, frozen):
 def main():
     import ocha_stratus as stratus
     rng = np.random.default_rng(SEED)
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])  # OSU v0-pinned
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=list(MEMBERS.values()))  # OSU v0-pinned; geometry per gp.PAPER_FRAME (ADR-0030)
+    df = bld
+    bld_rp = gpd.GeoDataFrame(geometry=bld.geometry.representative_point(), crs=gp.METRIC_CRS)
     votes = df[list(MEMBERS.values())].sum(axis=1)
 
     ext = gp.to_metric(gp.cems_extent().query("is_latest"))
@@ -131,7 +131,7 @@ def main():
 
     def verdicts(sub4326):
         out = np.full(len(sub4326), np.nan)
-        for i, p in enumerate(sub4326.geometry):
+        for i, p in enumerate(sub4326.geometry.representative_point()):
             for res in (11, 12):
                 c = h3.latlng_to_cell(p.y, p.x, res)
                 if c in tasks.index:
@@ -144,7 +144,7 @@ def main():
     for a in prod_aois.values():
         if a is not None:
             region = region.intersection(a)
-    in_reg = bld.geometry.within(region)
+    in_reg = bld_rp.geometry.within(region)
     cpts = cems[cems.geometry.within(region)]
     frozen5 = {r: pd.read_csv(os.path.join(
         OUT, "..", "RQ5-ensemble", f"rq5b_six_member{'' if r == 10 else f'_r{r}'}.csv"))
@@ -152,29 +152,25 @@ def main():
 
     cem_cells = h3_cells(cpts.to_crs(4326).geometry, RES_CORE)
     bld_core = bld[in_reg]
-    bld_cells_all = h3_cells(bld_core.to_crs(4326).geometry, RES_CORE)
+    bld_cells_all = h3_cells(bld_rp[in_reg].to_crs(4326).geometry, RES_CORE)
     lut, nc = cell_index(cem_cells, bld_cells_all)
     cem_idx = np.array([lut[c] for c in cem_cells])
     print(f"core lens: {int(in_reg.sum()):,} buildings, {len(cpts):,} CEMS pts, "
           f"{nc} res-{RES_CORE} blocks")
     W = draw_weights(rng, nc)
-    cxy = np.c_[cpts.geometry.x, cpts.geometry.y]
-    ct = cKDTree(cxy)
 
     rules = [(nm, in_reg & (df[col] == 1)) for nm, col in MEMBERS.items()]
     rules += [(f"{k}-of-6", in_reg & (votes >= k)) for k in range(1, 7)]
     rows = []
     for nm, sel in rules:
         fl = bld[sel]
-        fxy = np.c_[fl.geometry.x, fl.geometry.y]
-        f_cells = np.array([lut[c] for c in h3_cells(fl.to_crs(4326).geometry, RES_CORE)])
-        ftree = cKDTree(fxy)
+        f_cells = np.array([lut[c] for c in h3_cells(bld_rp[sel].to_crs(4326).geometry, RES_CORE)])
         flags_c = agg(f_cells, np.ones(len(fl)), nc)
         den_c = agg(cem_idx, np.ones(len(cpts)), nc)
         hit10 = None
         for r in (10, 20, 30):
-            hit = ct.query(fxy, k=1)[0] <= r          # precision side, per flag
-            rec = ftree.query(cxy, k=1)[0] <= r        # recall side, per CEMS point
+            hit = gp.within_r(fl, cpts, r)             # precision side, per flag (geometry-aware)
+            rec = gp.within_r(cpts, fl, r)             # recall side, per CEMS point
             if r == 10:
                 hit10 = hit
             P = W @ agg(f_cells, hit, nc) / (W @ flags_c)
@@ -201,15 +197,13 @@ def main():
         fp_c = agg(f_cells[~hit10], np.ones(int((~hit10).sum())), nc)
         jud_c = agg(f_cells[~hit10], ~np.isnan(v), nc)
         dmg_c = agg(f_cells[~hit10], v == 1, nc)
+        # measured convention (ADR-0031): credit only reviewed-and-confirmed unmatched flags
         with np.errstate(divide="ignore", invalid="ignore"):
-            conf = (W @ dmg_c) / (W @ jud_c)
-            padj = (W @ agg(f_cells, hit10, nc) + (W @ fp_c) * conf) / (W @ flags_c)
-        conf0 = float((v == 1).sum() / max((~np.isnan(v)).sum(), 1))
-        p0 = float(hit10.mean())
-        padj0 = (hit10.sum() + (~hit10).sum() * conf0) / len(fl)
-        check(f"core {nm} Padj", padj0, frozen5[10].loc[nm]["P_crowd_adj"])
+            padj = (W @ agg(f_cells, hit10, nc) + (W @ dmg_c)) / (W @ flags_c)
+        padj0 = (hit10.sum() + int((v == 1).sum())) / len(fl)
+        check(f"core {nm} P_crowd", padj0, frozen5[10].loc[nm]["P_crowd"])
         lo, hi = pct(padj)
-        rows.append(dict(lens="core", rule=nm, radius=10, metric="P_crowd_adj",
+        rows.append(dict(lens="core", rule=nm, radius=10, metric="P_crowd",
                          point=round(float(padj0), 3), lo=round(lo, 3), hi=round(hi, 3)))
         print(f"  core {nm}: done ({len(fl):,} flags)")
     pd.DataFrame(rows).to_csv(os.path.join(OUT, "rq9_ci_core.csv"), index=False)
@@ -221,19 +215,19 @@ def main():
     frozen_i = (frozen_i[frozen_i.aoi == "ALL (as delivered)"]
                 .drop_duplicates("product").set_index("product"))
     cem_cells7 = h3_cells(cems[cems.geometry.within(all_ext)].to_crs(4326).geometry, RES_ASD)
-    bld_ext = bld[bld.geometry.within(all_ext)]
-    lut7, nc7 = cell_index(cem_cells7, h3_cells(bld_ext.to_crs(4326).geometry, RES_ASD))
+    in_ext = bld_rp.geometry.within(all_ext)
+    lut7, nc7 = cell_index(cem_cells7, h3_cells(bld_rp[in_ext].to_crs(4326).geometry, RES_ASD))
     print(f"as-delivered lens: {nc7} res-{RES_ASD} blocks")
     W7 = draw_weights(rng, nc7)
     rows = []
     for nm, col in MEMBERS.items():
         reg = all_ext if prod_aois[nm] is None else all_ext.intersection(prod_aois[nm])
-        fl = bld[bld.geometry.within(reg) & (df[col] == 1)]
+        sel = bld_rp.geometry.within(reg) & (df[col] == 1)
+        fl = bld[sel]
         ca = cems[cems.geometry.within(reg)]
-        fxy, caxy = np.c_[fl.geometry.x, fl.geometry.y], np.c_[ca.geometry.x, ca.geometry.y]
-        hit = cKDTree(caxy).query(fxy, k=1)[0] <= 10
-        rec = cKDTree(fxy).query(caxy, k=1)[0] <= 10
-        f_cells = np.array([lut7[c] for c in h3_cells(fl.to_crs(4326).geometry, RES_ASD)])
+        hit = gp.within_r(fl, ca, 10)
+        rec = gp.within_r(ca, fl, 10)
+        f_cells = np.array([lut7[c] for c in h3_cells(bld_rp[sel].to_crs(4326).geometry, RES_ASD)])
         c_cells = np.array([lut7[c] for c in h3_cells(ca.to_crs(4326).geometry, RES_ASD)])
         P = W7 @ agg(f_cells, hit, nc7) / (W7 @ agg(f_cells, np.ones(len(fl)), nc7))
         R = W7 @ agg(c_cells, rec, nc7) / (W7 @ agg(c_cells, np.ones(len(ca)), nc7))

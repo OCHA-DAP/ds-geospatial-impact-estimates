@@ -34,7 +34,7 @@ R = 10
 def crowd_lookup():
     import ocha_stratus as stratus
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE")
+    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", event=None)
     frames = []
     for b in cc.list_blobs(name_starts_with=pref):
         if not gp.mapswipe_is_frozen(b.name):

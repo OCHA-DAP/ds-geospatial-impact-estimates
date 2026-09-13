@@ -59,9 +59,7 @@ def uh_aoi():
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *FLAGS.values()])
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=list(FLAGS.values()))  # geometry per gp.PAPER_FRAME (ADR-0030)
 
     ext = gp.cems_extent()
     ext_latest = gp.to_metric(ext[ext.is_latest == True]  # noqa: E712
@@ -69,11 +67,10 @@ def main():
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)]
 
-    d = bld[bld.geometry.within(ext_latest)].copy().reset_index(drop=True)
-    ct = cKDTree(np.c_[cems.geometry.x, cems.geometry.y])
-    d["y"] = (ct.query(np.c_[d.geometry.x, d.geometry.y], k=1)[0] <= LABEL_R).astype(int)
+    d = bld[bld.geometry.representative_point().within(ext_latest)].copy().reset_index(drop=True)
+    d["y"] = gp.within_r(d, cems, LABEL_R).astype(int)
 
-    ll = d.to_crs(4326)
+    ll = gpd.GeoDataFrame(geometry=d.geometry.representative_point(), crs=d.crs).to_crs(4326)
     for _r in {7, *RESOS}:
         d[f"cell{_r}"] = [h3.latlng_to_cell(p.y, p.x, _r) for p in ll.geometry]
     cell9 = pd.Series([h3.latlng_to_cell(p.y, p.x, 9) for p in ll.geometry])
@@ -107,7 +104,7 @@ def main():
     rows, scat = [], {}
     for name, col in FLAGS.items():
         region = ext_latest if aois[name] is None else ext_latest.intersection(aois[name])
-        sub = d[d.geometry.within(region).to_numpy()].copy()
+        sub = d[d.geometry.representative_point().within(region).to_numpy()].copy()
         X = sub[CONTEXT].astype(float).to_numpy()
         y = sub.y.to_numpy()
         groups = sub.cell7.to_numpy()

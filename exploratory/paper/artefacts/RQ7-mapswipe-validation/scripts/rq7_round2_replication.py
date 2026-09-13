@@ -16,7 +16,7 @@ What it computes (all deterministic; nothing here touches any frozen number):
      exports (binomial sampling noise vs real between-cell signal), the implied per-round
      reliabilities, and the noise-corrected (errors-in-variables) cross-round correlation
      of the underlying cell propensities;
-  4. sensitivity — the implied movement of rq2i's as-delivered P_crowd_adj if round-2
+  4. sensitivity — the implied movement of rq2i's as-delivered P_crowd if round-2
      verdicts replaced round-1 in the strip. Computed FROM rq2i's frozen CSV row via the
      mechanism identity P_adj = (tp + U*conf)/N (never re-scoring anything): only the
      strip portion of conf changes, so conf' = conf + w*(conf2-conf1) with w = the
@@ -56,7 +56,7 @@ POS = (2, 3)
 
 def _blob(name_contains: str, project: str) -> bytes:
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={project}")
+    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={project}", event=None)
     names = [b.name for b in cc.list_blobs(name_starts_with=pref) if name_contains in b.name]
     if len(names) != 1:
         raise RuntimeError(f"expected exactly one '{name_contains}' blob for "
@@ -90,9 +90,9 @@ FLAGS = {"MS": "ms_dmg", "IMPACT": "sar_dmg", "OSU": "osu_dmg",
 def flag_level(cells: pd.DataFrame) -> pd.DataFrame:
     """The rq2i-mechanism quantity per product: confirmed share of the product's
     CEMS-unmatched flags that fall in the strip's cells, under each round's verdicts."""
-    df = gp.building_flags(columns=["lon", "lat", *FLAGS.values()])
-    df = df.assign(cell11=[h3.latlng_to_cell(la, lo, 11)
-                           for la, lo in zip(df.lat, df.lon)])
+    df = gp.buildings(columns=list(FLAGS.values()))  # geometry per gp.PAPER_FRAME (ADR-0030)
+    _rp = df.geometry.representative_point().to_crs(4326)
+    df = df.assign(cell11=[h3.latlng_to_cell(la, lo, 11) for la, lo in zip(_rp.y, _rp.x)])
     df = df[df["cell11"].isin(cells.index)]
 
     cems = gp.cems_points()
@@ -103,9 +103,7 @@ def flag_level(cells: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for prod, col in FLAGS.items():
         sub = df[df[col].to_numpy(dtype="float64", na_value=0.0) == 1.0]
-        fl = gpd.GeoDataFrame(sub[["cell11"]],
-                              geometry=gpd.points_from_xy(sub.lon, sub.lat),
-                              crs=4326).to_crs(gp.METRIC_CRS)
+        fl = sub[["cell11", "geometry"]]
         near = gpd.sjoin_nearest(fl, cm[["geometry"]], how="left", distance_col="d")
         hit = (near.groupby(near.index)["d"].min() <= R_MATCH).values
         un = fl[~hit]
@@ -119,7 +117,7 @@ def flag_level(cells: pd.DataFrame) -> pd.DataFrame:
 
 
 def padj_sensitivity(fl: pd.DataFrame) -> pd.DataFrame:
-    """Implied as-delivered P_crowd_adj under a round-2 swap, from rq2i's frozen CSV."""
+    """Implied as-delivered P_crowd under a round-2 swap, from rq2i's frozen CSV."""
     rq2i = pd.read_csv(os.path.join(OUT, "..", "RQ2-cems-footprint-points",
                                     "rq2i_per_aoi_scorecard.csv"))
     rq2i = (rq2i[rq2i.aoi == "ALL (as delivered)"]
@@ -137,12 +135,18 @@ def padj_sensitivity(fl: pd.DataFrame) -> pd.DataFrame:
         w = min(strip_cov / covered, 1.0)
         d_conf = (fl.loc[prod, "unmatched_conf_share_r2"]
                   - fl.loc[prod, "unmatched_conf_share_r1"])
-        conf_new = r.fp_crowd_damaged + w * d_conf
-        p_new = (tp + unmatched * conf_new) / r.n_flags
-        rows.append({"product": prod, "P_crowd_adj_r1": r.P_crowd_adj,
+        # measured convention (ADR-0031). rq2i's fp_crowd_damaged is confirmed / ALL unmatched
+        # flags (unreviewed count as not confirmed), so credit = unmatched x that share.
+        p_r1 = (tp + unmatched * r.fp_crowd_damaged) / r.n_flags
+        if abs(p_r1 - r.P_crowd) > 0.006:  # rounded inputs (conf to 2 dp)
+            raise RuntimeError(f"{prod}: recomputed P_crowd {p_r1:.3f} != rq2i {r.P_crowd}")
+        # the strip's cells were all voted in both rounds, so swapping verdicts changes the
+        # confirmed count by strip_unmatched x (share_r2 - share_r1) and nothing else
+        p_new = p_r1 + strip_cov * d_conf / r.n_flags
+        rows.append({"product": prod, "P_crowd_r1": r.P_crowd,
                      "strip_share_of_covered_fps": round(w, 3),
-                     "P_crowd_adj_r2swap": round(p_new, 3),
-                     "delta": round(p_new - r.P_crowd_adj, 3)})
+                     "P_crowd_r2swap": round(p_new, 3),
+                     "delta": round(p_new - r.P_crowd, 3)})
     return pd.DataFrame(rows).set_index("product")
 
 
@@ -204,7 +208,7 @@ def main() -> None:
         fl[["unmatched", "unmatched_conf_share_r1", "unmatched_conf_share_r2"]]
         .rename(columns={"unmatched": "strip_unmatched_flags"}))
     sens.to_csv(os.path.join(OUT, "rq7_round2_padj_sensitivity.csv"))
-    print("\nP_crowd_adj sensitivity (as-delivered, round-2 verdicts swapped into strip):")
+    print("\nP_crowd sensitivity (as-delivered, round-2 verdicts swapped into strip):")
     print(sens.to_string())
     print("\nwrote rq7_round2_replication.csv, rq7_round2_crosstab.csv, "
           "rq7_round2_padj_sensitivity.csv")

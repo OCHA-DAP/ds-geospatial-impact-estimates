@@ -1,9 +1,8 @@
 """RQ2r companion figure — precision lower -> upper bound ladder per product.
 
 Draws the MEASURED convention (a flag earns credit only where the crowd actually
-reviewed its location; unreviewed locations earn nothing) — the conservative reading.
-@tbl-dial's crowd-adj column uses the extrapolated convention instead; both are in
-rq2r_precision_bounds.csv and the manuscript captions state which is which.
+reviewed its location; unreviewed locations earn nothing). Since ADR-0031 this is the only
+convention in the paper; @tbl-dial's crowd-adjusted column uses it too.
 
 Reads rq2r_precision_bounds.csv (no compute).
 

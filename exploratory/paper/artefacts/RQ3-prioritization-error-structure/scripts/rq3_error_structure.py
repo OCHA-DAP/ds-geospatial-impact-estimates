@@ -53,7 +53,7 @@ def base_buildings():
     """Overture base stock as metric points (id/lon/lat only — no damage labels)."""
     import ocha_stratus as stratus
     b = stratus.load_blob_data(
-        gp.S.blob_path("gold", "model=common", "adm0=VE", "building_flags.parquet"),
+        gp.S.blob_path("gold", "model=common", "adm0=VE", "building_flags.parquet", event=None),
         stage="dev", container_name=gp.S.container)
     df = pd.read_parquet(io.BytesIO(b), columns=["id", "lon", "lat"])
     g = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat), crs=4326)
@@ -66,7 +66,7 @@ def mmi_contours():
     frames = []
     for ev in USGS_EVENTS:
         d = json.loads(stratus.load_blob_data(
-            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json"),
+            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json", event=None),
             stage="dev", container_name=gp.S.container))
         g = gpd.GeoDataFrame.from_features(d["features"], crs=4326)
         g["event"] = ev

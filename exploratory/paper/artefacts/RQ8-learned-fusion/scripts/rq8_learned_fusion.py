@@ -60,7 +60,7 @@ def uh_aoi():
 def crowd_damaged_cells():
     import ocha_stratus as stratus
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE")
+    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", event=None)
     cells = set()
     for b in cc.list_blobs(name_starts_with=pref):
         if not gp.mapswipe_is_frozen(b.name):
@@ -78,9 +78,8 @@ def crowd_damaged_cells():
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *FLAGS.values(), *CLASSES])  # OSU pinned to v0 (paper basis)
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=[*FLAGS.values(), *CLASSES])  # OSU v0-pinned; geometry per gp.PAPER_FRAME (ADR-0030)
+    df = bld
 
     region = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
     for a in (gp.dissolve_union(gp.microsoft_aoi()), gp.dissolve_union(gp.impact_v2_aoi()),
@@ -88,14 +87,13 @@ def main():
               gp.dissolve_union(gp._read_pq("silver", "source=list", "adm0=VE",
                                             "analysed_extent.parquet"))):
         region = region.intersection(a)
-    d = bld[bld.geometry.within(region)].copy().reset_index(drop=True)
+    d = bld[bld.geometry.representative_point().within(region)].copy().reset_index(drop=True)
+    d_rp = d.geometry.representative_point()  # point stand-in for features, cells and CV buffers
 
-    # ---- label: CEMS {2,3} within LABEL_R ----
+    # ---- label: CEMS {2,3} within LABEL_R of the building geometry (ADR-0030) ----
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)]
-    ct = cKDTree(np.c_[cems.geometry.x, cems.geometry.y])
-    dist, _ = ct.query(np.c_[d.geometry.x, d.geometry.y], k=1)
-    d["y"] = (dist <= LABEL_R).astype(int)
+    d["y"] = gp.within_r(d, cems, LABEL_R).astype(int)
 
     # ---- MS continuous features (nearest MS footprint centroid <= 20 m) ----
     ms = gp.to_metric(gp.microsoft())  # damaged, non-superseded
@@ -103,15 +101,15 @@ def main():
     ms_all = gp.to_metric(ms_all[~ms_all.superseded.astype(bool)])
     mc = ms_all.geometry.representative_point()
     mt = cKDTree(np.c_[mc.x, mc.y])
-    md, mi = mt.query(np.c_[d.geometry.x, d.geometry.y], k=1)
+    md, mi = mt.query(np.c_[d_rp.x, d_rp.y], k=1)
     near = md <= 20
     d["ms_pct"] = np.where(near, ms_all.damage_pct_10m.to_numpy()[mi], 0.0)
     d["ms_nobs"] = np.where(near, ms_all.num_observations.to_numpy()[mi], 0)
 
     # ---- context features ----
-    ll = d.to_crs(4326)
-    d["cell7"] = [h3.latlng_to_cell(p.y, p.x, 7) for p in ll.geometry]
-    cell9 = pd.Series([h3.latlng_to_cell(p.y, p.x, 9) for p in ll.geometry])
+    ll = gpd.GeoSeries(d_rp, crs=gp.METRIC_CRS).to_crs(4326)
+    d["cell7"] = [h3.latlng_to_cell(p.y, p.x, 7) for p in ll]
+    cell9 = pd.Series([h3.latlng_to_cell(p.y, p.x, 9) for p in ll])
     d["density9"] = cell9.map(cell9.value_counts())
     adm0 = gp.codab(0)
     coast = gp.to_metric(adm0).geometry.make_valid().union_all().boundary
@@ -120,7 +118,7 @@ def main():
     frames = []
     for ev in ("us6000t7zp", "us6000t7zc"):
         raw = json.loads(stratus.load_blob_data(
-            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json"),
+            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json", event=None),
             stage="dev", container_name=gp.S.container))
         g = gpd.GeoDataFrame.from_features(raw["features"], crs=4326).to_crs(gp.METRIC_CRS)
         frames.append(g[["value", "geometry"]])
@@ -136,7 +134,7 @@ def main():
 
     # ---- crowd-gap mask: crowd says damaged, CEMS says nothing -> weight 0 ----
     cd = crowd_damaged_cells()
-    cell11 = pd.Series([h3.latlng_to_cell(p.y, p.x, 11) for p in ll.geometry])
+    cell11 = pd.Series([h3.latlng_to_cell(p.y, p.x, 11) for p in ll])
     crowd_gap = cell11.isin(cd).to_numpy() & (d.y.to_numpy() == 0)
     w = np.where(crowd_gap, 0.0, 1.0)
     print(f"region buildings {len(d):,} | positives {d.y.sum():,} ({d.y.mean():.1%}) | "
@@ -155,7 +153,7 @@ def main():
                                      random_state=884),
     }
     gkf = GroupKFold(n_splits=5)
-    _coords = np.c_[d.geometry.x, d.geometry.y]
+    _coords = np.c_[d_rp.x, d_rp.y]
 
     def _buffered(tr, te):
         if CV_BUFFER_M == 0:
@@ -204,7 +202,7 @@ def main():
     if os.environ.get("GIE_DUMP_OOF"):
         # per-building frozen OOF scores for the block-bootstrap CI script (RQ9):
         # it must resample these, never refit (OPEN-ITEMS item 2).
-        dump = d[["lon", "lat", "y"]].copy()
+        dump = d[["id", "lon", "lat", "y"]].copy()  # id lets downstream scripts rejoin polygons
         dump["w"] = w
         for nm_, col_ in FLAGS.items():
             dump[f"flag_{nm_}"] = d[col_].to_numpy(dtype="float64", na_value=0.0)
@@ -300,7 +298,7 @@ def main():
     axm = fig.add_subplot(gs[0])
     axbar = fig.add_subplot(gs[1])
     axb = fig.add_subplot(gs[2])
-    ll4 = d.to_crs(4326)
+    ll4 = gpd.GeoDataFrame(geometry=d.geometry.representative_point(), crs=d.crs).to_crs(4326)  # plot positions
     land = gp.codab(0).geometry.make_valid().union_all()
     axm.set_facecolor("#e7f0f6")
     for g in getattr(land, "geoms", [land]):

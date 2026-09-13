@@ -55,9 +55,8 @@ def uh_aoi():
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])  # OSU pinned to v0 (paper basis)
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=[*MEMBERS.values()])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
     votes = df[list(MEMBERS.values())].sum(axis=1)
 
     region = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
@@ -66,7 +65,7 @@ def main():
               gp.dissolve_union(gp._read_pq("silver", "source=list", "adm0=VE",
                                             "analysed_extent.parquet"))):
         region = region.intersection(a)
-    in_reg = bld.geometry.within(region)
+    in_reg = bld.geometry.representative_point().within(region)
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)][["geometry"]]
     cpts = cems[cems.geometry.within(region)]
@@ -89,7 +88,7 @@ def main():
             row[f"wasted_r{r}"] = round(1 - nw / dw, 2) if dw else np.nan
         # H3 res-11 cell agreement (the HOT/MapSwipe unit)
         fl = flagged.to_crs(4326)
-        fcells = {h3.latlng_to_cell(p.y, p.x, 11) for p in fl.geometry}
+        fcells = {h3.latlng_to_cell(p.y, p.x, 11) for p in fl.geometry.representative_point()}
         inter = len(fcells & cems_cells)
         row["h3_found"] = round(inter / len(cems_cells), 2)
         row["h3_wasted"] = round(1 - inter / len(fcells), 2) if fcells else np.nan

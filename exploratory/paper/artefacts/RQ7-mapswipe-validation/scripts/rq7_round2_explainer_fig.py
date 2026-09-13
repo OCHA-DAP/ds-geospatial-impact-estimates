@@ -4,8 +4,8 @@ Building-scale window in the Catia La Mar strip (MapSwipe rounds 1=3179 and 2=32
 identical res-11 task cells; round 2 is POST-FREEZE and opted into explicitly here).
 Mirrors the rq2i mechanism exactly: flags = gold centroids (ms_dmg), TP = CEMS grade-2/3
 point within 10 m, crowd verdict = majority (argmax of vote shares) of the flag's res-11
-cell, confirmation = majority "Yes"; flags in un-voted cells are outside the crowd sample
-(rq2i extrapolates the confirmed rate onto them).
+cell, confirmation = majority "Yes"; flags in un-voted cells earn no credit (measured
+convention, ADR-0031).
 
 Panel A: round-1 verdicts, annotated with the four flag fates. Panel B: round-2 verdicts,
 cells whose confirmation status flipped outlined. Footer: strip-wide flag-level rates for
@@ -53,7 +53,7 @@ def load_tasks():
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
     out = {}
     for label, pid in (("r1", "3179"), ("r2", "3248")):
-        pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={pid}")
+        pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={pid}", event=None)
         names = [b.name for b in cc.list_blobs(name_starts_with=pref)
                  if "agg_results_by_task" in b.name and b.name.endswith(".geojson.gz")]
         if len(names) != 1:
@@ -74,10 +74,8 @@ def load_tasks():
 
 
 def load_flags_and_cems():
-    df = gp.building_flags(columns=["lon", "lat", "ms_dmg"])
-    ms = df[df["ms_dmg"].to_numpy(dtype="float64", na_value=0.0) == 1.0]
-    flags = gpd.GeoDataFrame(ms[["id"]],
-                             geometry=gpd.points_from_xy(ms.lon, ms.lat), crs=4326)
+    bld = gp.buildings(columns=["ms_dmg"])  # geometry per gp.PAPER_FRAME (ADR-0030)
+    flags = bld[bld["ms_dmg"].to_numpy(dtype="float64", na_value=0.0) == 1.0][["id", "geometry"]].to_crs(4326)
     cems = gp.cems_points()
     cems = cems[cems.damage_class.isin((2, 3))].copy()
     return flags, cems
@@ -87,7 +85,7 @@ def main():
     maj1, maj2 = load_tasks()
     flags, cems = load_flags_and_cems()
 
-    ll = flags.geometry
+    ll = flags.geometry.representative_point()
     flags["cell11"] = [h3.latlng_to_cell(p.y, p.x, 11) for p in ll]
     flags["m1"] = flags["cell11"].map(maj1)   # NaN = cell not crowd-voted
     flags["m2"] = flags["cell11"].map(maj2)
@@ -97,6 +95,7 @@ def main():
     cm["geometry"] = cm.geometry.representative_point()
     near = gpd.sjoin_nearest(fm, cm[["geometry"]], how="left", distance_col="d")
     flags["hit"] = (near.groupby(near.index)["d"].min() <= R_MATCH).values
+    fm = fm.set_geometry(fm.geometry.representative_point())  # plot positions from here on
 
     strip = flags[flags["m1"].notna()].copy()      # flags inside the two campaigns' cells
     un = strip[~strip["hit"]]
@@ -214,7 +213,7 @@ def main():
                       (0.02, 0.10), "left", "bottom"),
                      ("hit", "expert point ≤10 m → true positive\n(crowd plays no role)",
                       (0.98, 0.975), "right", "top"),
-                     ("nocrowd", "no crowd votes → outside sample\n(confirmed rate extrapolated here)",
+                     ("nocrowd", "no crowd votes → no credit\n(stays a false positive)",
                       (0.98, 0.10), "right", "bottom")]
             for key, txt, (tx, ty), ha, va in notes:
                 if key in examples:
@@ -241,7 +240,7 @@ def main():
         Line2D([], [], marker="s", ls="", ms=9, mfc=C_FP, mec="white",
                label="unmatched flag, cell majority “No”/“Not sure” → stays false positive"),
         Line2D([], [], marker="s", ls="", ms=9, mfc="white", mec=C_FP,
-               label="unmatched flag, no crowd votes → outside sample, rate extrapolated\n"
+               label="unmatched flag, no crowd votes → no credit, stays a false positive\n"
                      "(none in this window — the crowd saw 98% of Microsoft's flags)"),
         Line2D([], [], marker="*", ls="", ms=13, mfc="black", mec="black",
                label="CEMS expert damage point (dashed = 10 m match radius)"),
@@ -259,7 +258,7 @@ def main():
              f"Whole strip: {stats['strip_flags']:,} Microsoft flags in crowd-voted cells, "
              f"{stats['strip_hits']} expert-matched; of the {stats['unmatched']:,} unmatched, "
              f"the crowd confirms {stats['conf_r1']:.1%} (round 1) → {stats['conf_r2']:.1%} "
-             f"(round 2). rq2i extrapolates this rate to un-voted flags.",
+             f"(round 2). Flags in cells the crowd never voted earn no credit.",
              ha="center", fontsize=9.5, style="italic")
     fig.tight_layout(rect=(0, 0.12, 1, 0.965))
     out = os.path.join(FIGS, "rq7_crowd_adjustment_explainer.png")

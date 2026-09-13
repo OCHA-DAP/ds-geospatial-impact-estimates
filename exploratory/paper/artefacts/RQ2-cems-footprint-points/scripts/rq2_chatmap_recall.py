@@ -37,7 +37,7 @@ POS = (2, 3)
 
 def blob_gdf(layer, *parts, columns=None):
     import ocha_stratus as stratus
-    b = stratus.load_blob_data(gp.S.blob_path(layer, *parts), stage="dev",
+    b = stratus.load_blob_data(gp.S.blob_path(layer, *parts, event=None), stage="dev",
                                container_name=gp.S.container)
     if parts[-1].endswith(".geojson"):
         return gpd.GeoDataFrame.from_features(json.loads(b)["features"], crs=4326)
@@ -67,11 +67,8 @@ def main():
                      "chatmap_field_validated_damage_points.geojson").to_crs(gp.METRIC_CRS)
     print(f"field points: {len(field)}  grades: {field.damaged.value_counts().to_dict()}")
 
-    df = gp.building_flags(columns=["lon", "lat", "ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg",
-                                    "list_dmg", "hot_dmg", "disha_dmg",
-                                    "debris_dmg"])  # OSU pinned to v0 (paper basis)
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=["ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg", "list_dmg", "hot_dmg", "disha_dmg", "debris_dmg"])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
     votes = bld[["ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg"]].sum(axis=1)
     votes6 = bld[["ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg",
                   "list_dmg", "debris_dmg"]].sum(axis=1)
