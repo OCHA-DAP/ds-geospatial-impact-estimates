@@ -37,6 +37,27 @@ def csv(rel: str) -> pd.DataFrame:
     return pd.read_csv(p)
 
 
+RESULTS = A / "results.csv"
+
+
+def results() -> pd.DataFrame:
+    if not RESULTS.exists():
+        raise FileNotFoundError("artefacts/results.csv missing — run `snakemake results` (consolidate.py)")
+    return pd.read_csv(RESULTS)
+
+
+_R = results()
+
+
+def tbl(region: str, lens: str, radius, index: str = "predictor") -> pd.DataFrame:
+    """Wide slice of results.csv: rows = predictor, columns = metric, for one region/lens/radius."""
+    m = (_R.region == region) & (_R.lens == lens) & (_R.radius == radius)
+    sub = _R[m]
+    if not len(sub):
+        raise KeyError(f"results.csv has no rows for {region}/{lens}/{radius}")
+    return sub.pivot(index=index, columns="metric", values="value")
+
+
 def one(df: pd.DataFrame, **eq) -> pd.Series:
     m = pd.Series(True, index=df.index)
     for k, v in eq.items():
@@ -105,7 +126,13 @@ def null_rank_rows(df: pd.DataFrame, scale_col: bool = True) -> list[list[str]]:
 
 
 # ---------------------------------------------------------------- core region: six products + rules (rq5b)
-rq5b = {r: csv(f"RQ5-ensemble/rq5b_six_member{'' if r == 10 else f'_r{r}'}.csv").set_index("rule") for r in (10, 20, 30)}
+def _rq5b(r):
+    t = tbl("core", "points", r).rename(columns={"P": "P_cems", "R": "R_cems", "F1": "F1_cems", "n_flags": "flagged", "R_field20": "R_field_r20"})
+    if r == 10:
+        c = tbl("core", "crowd", 10).rename(columns={"crowd_cov": "crowd_cov_of_fps", "fp_crowd_damaged": "FP_crowd_damaged"})
+        t = t.join(c)
+    return t
+rq5b = {r: _rq5b(r) for r in (10, 20, 30)}
 core = rq5b[10]
 prod = core.loc[PRODUCTS]
 for p in PRODUCTS:
@@ -144,7 +171,13 @@ N["pair_P_best"] = f3(core.loc[[r for r in core.index if "∧" in r], "P_cems"].
 N["crowd_adj_P_range"] = rng(prod.P_crowd.min(), prod.P_crowd.max(), f2)
 
 # ---------------------------------------------------------------- as delivered (rq2i)
-rq2i = csv("RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv")
+def _rq2i():
+    sub = _R[(_R.lens.isin(["points", "crowd"])) & (_R.radius == 10) & (_R.source.str.contains("rq2i_per_aoi_scorecard"))]
+    w = sub.pivot_table(index=["region", "predictor"], columns="metric", values="value").reset_index()
+    w = w.rename(columns={"region": "aoi", "predictor": "product", "P": "P_cems", "R": "R_cems", "crowd_cov": "crowd_cov_of_fps"})
+    w["aoi"] = w["aoi"].replace({"asd": "ALL (as delivered)"})
+    return w
+rq2i = _rq2i()
 asd = rq2i[rq2i.aoi == "ALL (as delivered)"].drop_duplicates("product").set_index("product")
 for p in PRODUCTS:
     N[f"asd_P_{p}"] = f3(asd.loc[p, "P_cems"]); N[f"asd_R_{p}"] = f2(asd.loc[p, "R_cems"])
