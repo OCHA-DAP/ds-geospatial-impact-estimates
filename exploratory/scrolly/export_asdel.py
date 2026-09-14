@@ -6,7 +6,8 @@ from pathlib import Path
 
 CAP = 12000
 COLS = [("ms_dmg","MS"), ("sar_dmg","IMPACT"), ("osu_dmg","OSU"),
-        ("debris_dmg","UNEP"), ("list_dmg","LIST"), ("uh_dmg","UH")]
+        ("debris_dmg","UNEP"), ("list_dmg","LIST"), ("uh_dmg","UH"),
+        ("hot_dmg","fAIr")]   # 7th group: index.html reads ASDEL[6] for the not-evaluated fAIr arrival
 df = gp.building_flags(columns=["lon","lat"] + [c for c,_ in COLS])
 out, counts = [], {}
 for col, name in COLS:

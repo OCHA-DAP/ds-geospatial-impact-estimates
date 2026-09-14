@@ -9,6 +9,11 @@ for name in ("data.js", "extents.js", "hexes.js", "asdel.js"):
     js = (HERE / name).read_text()
     if not js.strip():
         raise SystemExit(f"{name} is empty; run the exporter first")
+    if name == "asdel.js":
+        import json
+        groups = json.loads(js.split("=", 1)[1].strip().rstrip(";"))
+        if len(groups) != 7:
+            raise SystemExit(f"asdel.js has {len(groups)} product groups; index.html expects 7 (six evaluated + fAIr)")
     t = t.replace(tag, "<script>\n" + js + "\n</script>")
 (HERE / "bundle.html").write_text(t)
 print(f"bundle.html: {len(t) / 1e6:.1f} MB")
