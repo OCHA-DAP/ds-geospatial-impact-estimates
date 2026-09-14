@@ -16,9 +16,12 @@ def build_at(ref: str, tmp: str) -> pd.DataFrame:
     cons = importlib.util.module_from_spec(spec); spec.loader.exec_module(cons)
     # copy this consolidator, fetch every input from the ref
     shutil.copy(os.path.join(HERE, "consolidate.py"), tmp)
-    for fn in cons.SOURCES:   # run every source once here to learn exactly which CSVs it reads
+    # Old refs only have the per-RQ CSVs, so the table at <base> is built the oracle way
+    # (consolidate.py --oracle); learn which CSVs that reads by running those sources here.
+    cons.LOADED.clear()
+    for fn in cons.ORACLE_SOURCES:
         fn()
-    inputs = set(cons.LOADED)
+    inputs = {rel for rel in cons.LOADED if not rel.startswith("../pipeline/")}
     missing = []
     for rel in sorted(inputs):
         os.makedirs(os.path.join(tmp, os.path.dirname(rel)), exist_ok=True)
@@ -40,10 +43,10 @@ def build_at(ref: str, tmp: str) -> pd.DataFrame:
         ren = {k: v for k, v in COMPAT.items() if k in df.columns and v not in df.columns}
         if ren:
             df.rename(columns=ren).to_csv(f, index=False)
-    r = subprocess.run([sys.executable, "consolidate.py"], cwd=tmp, capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "consolidate.py", "--oracle"], cwd=tmp, capture_output=True, text=True)
     if r.returncode:
-        raise SystemExit(f"consolidate failed at {ref}:\n{r.stderr[-2000:]}")
-    return pd.read_csv(os.path.join(tmp, "results.csv"))
+        raise SystemExit(f"consolidate --oracle failed at {ref}:\n{r.stderr[-2000:]}")
+    return pd.read_csv(os.path.join(tmp, "results_oracle_frozen.csv"))
 
 def expectations(m: pd.DataFrame) -> list:
     """Declared expectations for the ADR-0030/0031 refreeze against the live (v1) numbers.
@@ -52,7 +55,10 @@ def expectations(m: pd.DataFrame) -> list:
     P6 = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
     def sel(region, lens, radius, metric, preds=None):
         q = m[(m.region == region) & (m.lens == lens) & (m.radius == radius) & (m.metric == metric) & (m._merge == "both")]
-        return q[q.predictor.isin(preds)] if preds else q
+        q = q[q.predictor.isin(preds)] if preds else q
+        if not len(q):
+            raise SystemExit(f"expectations: no rows for {region}/{lens}/{radius}/{metric} in both tables — is the base ref comparable?")
+        return q
     out = []
     d = sel("core", "points", 10, "P", P6); out.append(("core precision rises for all six products (footprint frame)", bool((d.value_now > d.value_base).all()), f"{len(d)} products"))
     d = sel("core", "points", 10, "R", P6); out.append(("core recall rises for all six products", bool((d.value_now > d.value_base).all()), f"{len(d)} products"))
