@@ -1,13 +1,50 @@
 {
  "catalog_url": "https://vantor-opendata.s3.amazonaws.com/events/catalog.json",
- "checked_at": "2026-09-13T04:45:41Z",
+ "checked_at": "2026-09-14T04:49:41Z",
  "totals": {
   "activations": 10,
-  "images": 199,
+  "images": 200,
   "pre": 60,
-  "post": 139
+  "post": 140
  },
  "activations": [
+  {
+   "id": "Colombia-Earthquake-Aug-2026",
+   "title": "Colombia-Earthquake-Aug-2026",
+   "event_date": "2026-08-10",
+   "event_date_raw": "2026-08-10T12:34:28Z",
+   "event_date_quality": "ok",
+   "n_items": 23,
+   "n_pre": 4,
+   "n_post": 19,
+   "n_phase_unknown": 0,
+   "first_published": "2026-08-11",
+   "last_published": "2026-09-13",
+   "first_post_acquired": "2026-08-10",
+   "first_post_published": "2026-08-11",
+   "acq_lag_days": 0,
+   "pub_lag_days": 1,
+   "first_post_seen": "2026-08-11",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": 1,
+   "satellites": [
+    "GE01",
+    "LG01",
+    "LG03",
+    "LG04",
+    "LG05",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    -76.71986229830237,
+    3.1350390457406383,
+    -75.38716427547386,
+    5.221007197662272
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Colombia-Earthquake-Aug-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Colombia-Earthquake-Aug-2026/collection.json"
+  },
   {
    "id": "Nepal-Flooding-Aug-2026",
    "title": "Nepal-Flooding-Aug-2026",
@@ -45,43 +82,6 @@
    ],
    "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Nepal-Flooding-Aug-2026/collection.json",
    "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Nepal-Flooding-Aug-2026/collection.json"
-  },
-  {
-   "id": "Colombia-Earthquake-Aug-2026",
-   "title": "Colombia-Earthquake-Aug-2026",
-   "event_date": "2026-08-10",
-   "event_date_raw": "2026-08-10T12:34:28Z",
-   "event_date_quality": "ok",
-   "n_items": 22,
-   "n_pre": 4,
-   "n_post": 18,
-   "n_phase_unknown": 0,
-   "first_published": "2026-08-11",
-   "last_published": "2026-09-04",
-   "first_post_acquired": "2026-08-10",
-   "first_post_published": "2026-08-11",
-   "acq_lag_days": 0,
-   "pub_lag_days": 1,
-   "first_post_seen": "2026-08-11",
-   "first_post_seen_source": "metadata",
-   "seen_lag_days": 1,
-   "satellites": [
-    "GE01",
-    "LG01",
-    "LG03",
-    "LG04",
-    "LG05",
-    "WV02",
-    "WV03"
-   ],
-   "bbox": [
-    -76.71986229830237,
-    3.1350390457406383,
-    -75.38716427547386,
-    5.221007197662272
-   ],
-   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Colombia-Earthquake-Aug-2026/collection.json",
-   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Colombia-Earthquake-Aug-2026/collection.json"
   },
   {
    "id": "Indonesia-Earthquakes-Aug-2026",
