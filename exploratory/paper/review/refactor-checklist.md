@@ -21,10 +21,11 @@ script migration; `snakemake -n` shows nothing stale after a full build.
 ## B. One results table (the oracle)
 - [x] B1 snapshot `N` from today's brief_numbers (baseline)
 - [x] B2 consolidate.py: rq5b (r10/20/30) + rq2i → results.csv; brief_numbers core/asd keys read results.csv; keys equal baseline
-- [ ] B3 add rq2q, rq2r, rq2_chatmap, rq2k, rq2s; keys equal
-- [ ] B4 add rq3f (3 scopes), rq3h, rq3g, rq3b, rq3d; keys equal
-- [ ] B5 add rq8, rq8b, rq9, rq7, rq0, rq2l/o/h/p, density null, ms-confidence, frame deltas; keys equal
-- [ ] B6 brief_numbers reads only results.csv (+ formatting); the two table chunks in the qmd read results.csv too
+- [x] B3 add rq2q, rq2r, rq2_chatmap, rq2k, rq2s; keys equal
+- [x] B4 add rq3f (3 scopes), rq3h, rq3g, rq3b, rq3d; keys equal
+- [x] B5 add rq8, rq8b, rq9, rq7, rq0, rq2l/o/h/p, density null, ms-confidence, frame deltas; keys equal
+- [x] B6 brief_numbers reads only results.csv (+ formatting)
+- [ ] B6b the three table chunks in the qmd (dial, CI core, CI models) read results.csv too
 - [ ] B7 `snakemake results brief` renders; rendered text identical to the pre-refactor render
 
 ## C. Guards

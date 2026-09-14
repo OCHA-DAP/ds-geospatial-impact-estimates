@@ -1,7 +1,7 @@
 """Single source for every number quoted in manuscript_brief.qmd (ADR-0030).
 
 The brief's prose reads values inline as `{python} N["key"]`; nothing numeric is typed by
-hand. Every key below names the artefact CSV it comes from, so a refreeze of the artefact
+hand. Every key below is a lookup on artefacts/results.csv (region, lens, radius, predictor, metric), so a refreeze of the artefact
 tree re-points the brief on the next render, and an auditor can trace any figure in the
 text to one CSV cell. Missing rows or files raise; there are no fallbacks.
 
@@ -18,6 +18,11 @@ import pandas as pd
 A = pathlib.Path(__file__).parent / "artefacts"
 PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 LONG = {"MS": "Microsoft", "IMPACT": "IMPACT", "OSU": "OSU", "UH": "UH", "LIST": "LIST", "UNEP": "UNEP"}
+ORDER = ["Microsoft", "IMPACT v2", "OSU", "UH", "LIST", "UNEP"]  # delivery order, used wherever products are listed
+
+
+def ordered(names) -> list:
+    return sorted(names, key=lambda n: ORDER.index(n) if n in ORDER else 99)
 N_CEMS_CORE = 1467  # core-region CEMS grade-2/3 points (rq2q cems_pts)
 
 
@@ -30,13 +35,6 @@ N = Numbers()
 
 
 # ---------------------------------------------------------------- helpers
-def csv(rel: str) -> pd.DataFrame:
-    p = A / rel
-    if not p.exists():
-        raise FileNotFoundError(f"artefact missing: {p}")
-    return pd.read_csv(p)
-
-
 RESULTS = A / "results.csv"
 
 
@@ -47,6 +45,34 @@ def results() -> pd.DataFrame:
 
 
 _R = results()
+
+
+def W(region=None, lens=None, radius="any", source=None, index="predictor") -> pd.DataFrame:
+    """Wide slice of results.csv (rows = predictor, columns = metric). radius=None selects rows
+    with no radius; radius="any" does not filter on it."""
+    m = pd.Series(True, index=_R.index)
+    if region is not None: m &= _R.region == region
+    if lens is not None: m &= _R.lens == lens
+    if radius is None: m &= _R.radius.isna()
+    elif radius != "any": m &= _R.radius == radius
+    if source is not None: m &= _R.source.str.contains(source, regex=False)
+    sub = _R[m]
+    if not len(sub):
+        raise KeyError(f"results.csv has no rows for region={region} lens={lens} radius={radius} source={source}")
+    idx = [index] if isinstance(index, str) else list(index)
+    return sub.pivot_table(index=idx, columns="metric", values="value", aggfunc="first", dropna=False)
+
+
+def L(region=None, lens=None, source=None) -> pd.DataFrame:
+    """Wide with region/radius/predictor kept as columns (per-resolution or per-region frames)."""
+    m = pd.Series(True, index=_R.index)
+    if region is not None: m &= _R.region == region
+    if lens is not None: m &= _R.lens == lens
+    if source is not None: m &= _R.source.str.contains(source, regex=False)
+    sub = _R[m]
+    if not len(sub):
+        raise KeyError(f"results.csv has no rows for region={region} lens={lens} source={source}")
+    return sub.pivot_table(index=["region", "radius", "predictor"], columns="metric", values="value", aggfunc="first", dropna=False).reset_index()
 
 
 def tbl(region: str, lens: str, radius, index: str = "predictor") -> pd.DataFrame:
@@ -199,7 +225,7 @@ for p in ("IMPACT", "LIST"):  # coherence products in Santa Cruz
     N[f"flagshare_SantaCruz_{p}"] = pct(one(rq2i, aoi="Santa Cruz", product=p).flag_share, 1)
 
 # ---------------------------------------------------------------- precision bounds (rq2r)
-rq2r = csv("RQ2-cems-footprint-points/rq2r_precision_bounds.csv").set_index("product")
+rq2r = W("core", "bounds", 10).rename(columns={"crowd_cov": "crowd_cov_of_fps"})
 for p in PRODUCTS:
     for c in ("P_floor", "P_grade", "P_crowd", "P_upper"):
         N[f"{c}_{p}"] = f3(rq2r.loc[p, c])
@@ -211,24 +237,26 @@ N["P_upper_range"] = rng(rq2r.P_upper.min(), rq2r.P_upper.max(), f2)
 N["crowd_fp_near_class1_range"] = rng(rq2r.crowd_fp_near_class1.min(), rq2r.crowd_fp_near_class1.max(), pct)  # was 10–17%
 
 # ---------------------------------------------------------------- field reference (rq2_chatmap, rq2k)
-cm = csv("RQ2-cems-footprint-points/rq2_chatmap_recall.csv").set_index("reference")
+_f = L("field", "field")
+cm = pd.DataFrame({"recall_r20": _f[_f.radius == 20].set_index("predictor")["R"], "recall_r10": _f[_f.radius == 10].set_index("predictor")["R"],
+                   "complete_r20": _f[_f.radius == 20].set_index("predictor")["R_complete"], "significant_r20": _f[_f.radius == 20].set_index("predictor")["R_significant"]})
 cems_row = cm.loc["CEMS {2,3}"]
 N["cems_field_complete_pct"] = pct(cems_row.complete_r20)          # was 94%
 N["cems_field_significant_pct"] = pct(cems_row.significant_r20)    # was 49%
 N["field_missed_by_all_pct"] = pct(1 - cm.loc["≥1-of-4 votes", "recall_r20"])   # was "about 11%"
 for p, lab in (("MS", "MS"), ("IMPACT", "IMPACT v2"), ("OSU", "OSU"), ("UH", "UH"), ("LIST", "LIST"), ("UNEP", "UNEP debris (core region)")):
     N[f"field_R20_{p}"] = f2(cm.loc[lab, "recall_r20"])
-rq2k = csv("RQ2-cems-footprint-points/rq2k_field_union_precision.csv").set_index("product")
-gain = rq2k.P_rel_gain.str.rstrip("%").str.lstrip("+").astype(float)
+rq2k = W("core", "field-union", 10)
+gain = rq2k.P_rel_gain
 N["field_union_gain_range"] = f"{int(gain.min())}–{int(gain.max())}%"       # was 5–9%
 
 # ---------------------------------------------------------------- learned fusion and geography null (rq8, rq8b)
-rq8 = {r: csv(f"RQ8-learned-fusion/rq8_best_f1_r{r}.csv").set_index("predictor") for r in (10, 20, 30)}
+rq8 = {r: W("core", "labels", r).rename(columns={"P": "precision", "R": "recall", "F1": "f1"}) for r in (10, 20, 30)}
 for r, d in rq8.items():
     N[f"null_F1_r{r}"] = f3(d.loc["geography null (logistic)", "f1"])
     N[f"vote_F1_r{r}"] = f3(d.loc["flat k-of-6 voting", "f1"])
     N[f"fusion_F1_r{r}"] = f3(d.loc["weighted fusion", "f1"])
-    pr = d[d.kind.str.startswith("product")]
+    pr = d.loc[PRODUCTS]
     N[f"prod_F1_range_r{r}"] = rng(pr.f1.min(), pr.f1.max(), f2)
 d10 = rq8[10]
 N["null_F1"] = N["null_F1_r10"]; N["null_F1_2"] = f2(d10.loc["geography null (logistic)", "f1"])
@@ -239,11 +267,12 @@ N["vote_over_null"] = signed(d10.loc["flat k-of-6 voting", "f1"] - d10.loc["geog
 N["fusion_over_null"] = signed(d10.loc["weighted fusion", "f1"] - d10.loc["geography null (logistic)", "f1"])      # was +0.21
 N["fusion_over_vote_pct"] = pct(d10.loc["weighted fusion", "f1"] / d10.loc["flat k-of-6 voting", "f1"] - 1)      # was 18%
 N["vote_best_cut"] = f"{int(round(d10.loc['flat k-of-6 voting', 'n_flags'] and next(k for k in range(1, 7) if int(core.loc[f'{k}-of-6', 'flagged']) == int(d10.loc['flat k-of-6 voting', 'n_flags']))))}-of-6"
-N["null_beats_n_products"] = words((pr := d10[d10.kind.str.startswith("product")]).f1.lt(d10.loc["geography null (logistic)", "f1"]).sum())
+N["null_beats_n_products"] = words(d10.loc[PRODUCTS].f1.lt(d10.loc["geography null (logistic)", "f1"]).sum())
 N["null_F1_by_radius"] = "/".join(N[f"null_F1_r{r}"] for r in (10, 20, 30))
 N["vote_F1_by_radius"] = "/".join(N[f"vote_F1_r{r}"] for r in (10, 20, 30))
 N["fusion_F1_by_radius"] = "/".join(N[f"fusion_F1_r{r}"] for r in (10, 20, 30))
-rq8b = csv("RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv").set_index("product")
+_rn8b = {"P": "P_product", "R": "R_product", "P_dayzero": "P_dayzero_matched", "R_dayzero": "R_dayzero_matched"}
+rq8b = W("asd", "labels", 10).rename(columns=_rn8b)
 for p in PRODUCTS:
     N[f"asd8_P_{p}"] = f3(rq8b.loc[p, "P_product"]); N[f"asd8_R_{p}"] = f2(rq8b.loc[p, "R_product"])
     N[f"dz_P_{p}"] = f3(rq8b.loc[p, "P_dayzero_matched"]); N[f"dz_R_{p}"] = f2(rq8b.loc[p, "R_dayzero_matched"])
@@ -251,12 +280,20 @@ for p in PRODUCTS:
 N["dz_beats_n"] = words((rq8b.P_dayzero_matched > rq8b.P_product).sum())
 N["dz_UH_P_ratio"] = f"{rq8b.loc['UH', 'P_dayzero_matched'] / rq8b.loc['UH', 'P_product']:.1f}"
 N["core_pos_r10"] = com(rq8b.loc["MS", "n_pos"])  # Microsoft's AOI ∩ CEMS is the core-region label set
-rq8b20 = csv("RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv").set_index("product")
+rq8b20 = W("asd", "labels", 20).rename(columns=_rn8b)
 N["core_pos_r20"] = com(rq8b20.loc["MS", "n_pos"])
 
 # ---------------------------------------------------------------- confidence intervals (rq9)
-ci = csv("RQ9-uncertainty/rq9_ci_core.csv")
-cia = csv("RQ9-uncertainty/rq9_ci_asdelivered_r10.csv")
+def _ci(region):
+    """rq9's long form again: rule, radius, metric, point, lo, hi."""
+    w = L(region, "ci"); out = []
+    for _, row in w.iterrows():
+        for m in [c for c in w.columns if c not in ("region", "radius", "predictor") and not c.endswith(("_lo", "_hi"))]:
+            if pd.notna(row[m]):
+                out.append(dict(rule=row.predictor, radius=int(row.radius), metric=m, point=row[m], lo=row.get(f"{m}_lo"), hi=row.get(f"{m}_hi")))
+    return pd.DataFrame(out)
+ci = _ci("core")
+cia = _ci("asd")
 r = one(cia, rule="UH", metric="P")
 N["asd_UH_P_lo"] = f3(r.lo); N["asd_UH_P_hi"] = f3(r.hi)
 v6 = one(ci, rule="6-of-6", radius=30, metric="visits_per_find")  # visits/find is defined at the 30 m finding distance
@@ -267,8 +304,12 @@ for p in PRODUCTS:
 
 # ---------------------------------------------------------------- ranking (rq3f, rq3g, rq3h, rq3b)
 def _rq3():
-    f_all = csv("RQ3-prioritization-error-structure/rq3f_null_ranking.csv")
-    f_core = csv("RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv")
+    def _f(region):
+        w = L(region, "cells").rename(columns={"radius": "res", "predictor": "product", "rho": "rho_product", "top20": "top20_product"})
+        w["res"] = w["res"].astype(int)
+        w["_o"] = w["product"].map(lambda n: ORDER.index(n) if n in ORDER else 99)
+        return w.sort_values(["res", "_o"], ascending=[False, True]).drop(columns="_o").reset_index(drop=True)
+    f_all, f_core = _f("asd"), _f("core")
     c8 = f_core[f_core.res == 8].set_index("product"); a7 = f_all[f_all.res == 7].set_index("product"); a8 = f_all[f_all.res == 8].set_index("product")
     N["rank_core8_range"] = rng(c8.rho_product.min(), c8.rho_product.max(), f2)        # was 0.48–0.74
     N["rank_asd7_range"] = f"{signed(a7.rho_product.min())} to {f2(a7.rho_product.max())}"  # was −0.09 to 0.59
@@ -278,21 +319,21 @@ def _rq3():
             if lab in d.index:
                 N[f"rho_{tag}_{key}"] = f3(d.loc[lab, "rho_product"]); N[f"rhonull_{tag}_{key}"] = f3(d.loc[lab, "rho_null"])
     N["null_beats_n_asd7"] = words((a7.rho_null > a7.rho_product).sum()); N["null_beats_n_asd8"] = words((a8.rho_null > a8.rho_product).sum())
-    N["asd_above_null_7"] = ", ".join(a7.index[a7.rho_product > a7.rho_null]) or "none"
-    N["asd_above_null_8"] = ", ".join(a8.index[a8.rho_product > a8.rho_null]) or "none"
+    N["asd_above_null_7"] = ", ".join(ordered(a7.index[a7.rho_product > a7.rho_null])) or "none"
+    N["asd_above_null_8"] = ", ".join(ordered(a8.index[a8.rho_product > a8.rho_null])) or "none"
     N["asd_neg_7"] = ", ".join(f"{p} ({signed(v, f3)})" for p, v in a7.rho_product.items() if v < 0) or "none"
     N["_tbl_nullrank"] = md_table(null_rank_rows(pd.concat([f_all[f_all.res == 7], f_all[f_all.res == 8]])),
                                   ["scale", "product", "ρ product", "ρ geography null", "difference"])
-    f_cara = csv("RQ3-prioritization-error-structure/rq3f_null_ranking_caraballeda.csv")
+    f_cara = _f("Caraballeda")
     c8c = f_cara[f_cara.res == 8].set_index("product"); c9c = f_cara[f_cara.res == 9].set_index("product")
     N["_tbl_nullrank_cara"] = md_table(null_rank_rows(f_cara[f_cara.res == 8].sort_values("delta", ascending=False), scale_col=False),
                                        ["product", "ρ product", "ρ geography null", "difference"])
-    N["cara8_above"] = ", ".join(c8c.index[c8c.rho_product > c8c.rho_null]) or "none"
-    N["cara8_below"] = ", ".join(c8c.index[c8c.rho_product <= c8c.rho_null]) or "none"
+    N["cara8_above"] = ", ".join(ordered(c8c.index[c8c.rho_product > c8c.rho_null])) or "none"
+    N["cara8_below"] = ", ".join(ordered(c8c.index[c8c.rho_product <= c8c.rho_null])) or "none"
     N["cara8_n_above"] = words((c8c.rho_product > c8c.rho_null).sum()); N["cara9_n_above"] = words((c9c.rho_product > c9c.rho_null).sum())
-    N["core8_above_null"] = ", ".join(c8.index[c8.rho_product > c8.rho_null]) or "none"
+    N["core8_above_null"] = ", ".join(ordered(c8.index[c8.rho_product > c8.rho_null])) or "none"
     N["core8_n_above"] = words((c8.rho_product > c8.rho_null).sum())
-    h = csv("RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv")
+    h = L("core", "cells-agreement").rename(columns={"radius": "res"}); h["res"] = h["res"].astype(int)
     h8 = h[h.res == 8].set_index("predictor")
     SINGLE = {"Microsoft", "IMPACT v2", "OSU", "UH", "LIST", "UNEP"}
     singles = [p for p in h8.index if p in SINGLE]
@@ -306,39 +347,38 @@ def _rq3():
         N[f"top20_single_{res}"] = str(int(round(20 * hr.loc[sg, "top20"].max())))
         N[f"top20_vote_{res}"] = str(int(round(20 * hr.loc[vt, "top20"].max())))
         N[f"top20_vote_rule_{res}"] = hr.loc[vt, "top20"].idxmax()
-    g = csv("RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv")
+    g = L("asd", "cells-fraction").rename(columns={"radius": "res", "predictor": "product"}); g["res"] = g["res"].astype(int)
     g8 = g[g.res == 8].set_index("product")
     N["frac_null_range8"] = rng(g8.rho_null_frac.min(), g8.rho_null_frac.max(), f2)   # was 0.43–0.65
-    N["frac8_above_null"] = ", ".join(g8.index[g8.rho_frac > g8.rho_null_frac]) or "none"
-    N["count8_above_null"] = ", ".join(g8.index[g8.rho_count > g8.rho_null_count]) or "none"
+    N["frac8_above_null"] = ", ".join(ordered(g8.index[g8.rho_frac > g8.rho_null_frac])) or "none"
+    N["count8_above_null"] = ", ".join(ordered(g8.index[g8.rho_count > g8.rho_null_count])) or "none"
     for lab, key in (("IMPACT v2", "IMPACT"), ("Microsoft", "MS"), ("UH", "UH")):
         N[f"frac_count_{key}"] = f2(g8.loc[lab, "rho_count"]); N[f"frac_frac_{key}"] = f2(g8.loc[lab, "rho_frac"])
-    b = csv("RQ3-prioritization-error-structure/rq3b_per_area_moran.csv")
+    b = L(lens="moran").rename(columns={"region": "area", "predictor": "product"})
     bc = b[(b.area == "Caraballeda") & b["product"].isin(["MS", "IMPACT", "OSU"])]
     N["moran_range"] = rng(bc.moran_I.min(), bc.moran_I.max(), f2)                 # was 0.45–0.60
     N["moran_p"] = f"{bc.p.max():.3f}"
-    li = csv("RQ3-prioritization-error-structure/rq3d_lisa_summary.csv").set_index("product")
+    li = W("asd", "lisa", 8)
     ns_share = li.ns / li.cells
     N["lisa_ns_range"] = rng(ns_share.min(), ns_share.max(), pct)                   # was 78–86%
 
 
 # ---------------------------------------------------------------- west strip, OSU versions, tiers (rq2o, rq2h, rq2p)
 def _rq2_rest():
-    o = csv("RQ2-cems-footprint-points/rq2o_uh_west_strip.csv")
+    o = L(lens="points", source="rq2o_uh_west_strip").rename(columns={"predictor": "product", "P": "P_cems"}); o["side"] = o.region.str.replace("strip-", "")
     for p in ("MS", "UH"):
         for side in ("west", "east"):
             r = one(o, product=p, side=side)
             N[f"strip_share_{p}_{side}"] = pct(r.flag_share, 1); N[f"strip_P_{p}_{side}"] = f3(r.P_cems); N[f"strip_P2_{p}_{side}"] = f2(r.P_cems)
-    h = csv("RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv").set_index("version")
+    h = W("osu-versions", "points", 10)
     N["osu_v0_P"] = f3(h.loc["v0 (common extent)", "P"]); N["osu_v1_P"] = f3(h.loc["v1 (common extent)", "P"])
     N["osu_v0_R"] = f2(h.loc["v0 (common extent)", "R"]); N["osu_v1_R"] = f2(h.loc["v1 (common extent)", "R"])
-    t = csv("RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv")
-    tc = t[t.region == "core region"].set_index("cut")
+    tc = W("osu-tiers:core region", "points", 10)
     N["osu_tier_high_P"] = f3(tc.loc["v1 high_confidence only", "P"]); N["osu_tier_prob_P"] = f3(tc.loc["v1 probable only", "P"])
     N["osu_tier_head_P"] = f3(tc.loc["v1 published headline (prob+high)", "P"])
     N["osu_tier_high_F1"] = f3(tc.loc["v1 high_confidence only", "F1"]); N["osu_tier_head_F1"] = f3(tc.loc["v1 published headline (prob+high)", "F1"])
     N["osu_tier_high_R"] = f2(tc.loc["v1 high_confidence only", "R"]); N["osu_tier_head_R"] = f2(tc.loc["v1 published headline (prob+high)", "R"])
-    dn = csv("RQ2-cems-footprint-points/rq2_density_null.csv")
+    dn = L(lens="density").rename(columns={"region": "area", "predictor": "product"})
     for area, p in (("Santa Cruz", "IMPACT"), ("Santa Cruz", "OSU"), ("Santa Cruz", "UH"), ("Caracas", "IMPACT")):
         r = one(dn, area=area, product=p)
         N[f"dn_share_{area.replace(' ', '')}_{p}"] = f"{r.flag_pct:.1f}%"; N[f"dn_flags_{area.replace(' ', '')}_{p}"] = com(r.n_flag)
@@ -346,14 +386,15 @@ def _rq2_rest():
 
 # ---------------------------------------------------------------- Microsoft confidence sweep (rq2_ms_confidence; native footprints)
 def _ms_conf():
-    c = csv("RQ2-cems-footprint-points/rq2_ms_confidence_curve.csv").sort_values("thresh")
+    c = W("ms-aoi", "confidence", 10).reset_index(); c["thresh"] = c.predictor.str.replace("thresh=", "").astype(float)
+    c = c.sort_values("thresh").rename(columns={"R": "recall", "P": "precision"})
     N["msconf_R_lo"] = f2(c.recall.iloc[-1]); N["msconf_R_hi"] = f2(c.recall.iloc[0])
     N["msconf_P_lo"] = f2(c.precision.iloc[0]); N["msconf_P_hi"] = f2(c.precision.iloc[-1])
 
 
 # ---------------------------------------------------------------- flag totals and geography of flags (rq2s, rq2i)
 def _flags():
-    t = csv("RQ2-cems-footprint-points/rq2s_flag_totals.csv").set_index("product")
+    t = W("all", "flags", None)
     for p in PRODUCTS:
         N[f"total_flags_{p}"] = com(t.loc[p, "total_flags"]); N[f"outside_cems_pct_{p}"] = pct(t.loc[p, "share_outside"])
     cara = rq2i[rq2i.aoi == "Caraballeda"].set_index("product")
@@ -373,22 +414,21 @@ def _ratio():
 
 # ---------------------------------------------------------------- centroid -> polygon frame deltas (RQ0 native_rerun)
 def _frame():
-    f = csv("RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv")
-    f = f[(f.radius_m == 10) & f.rule.isin(["Microsoft", "IMPACT", "OSU", "UH", "LIST", "UNEP"])]
+    f = W("core", "frame", 10).loc[["Microsoft", "IMPACT", "OSU", "UH", "LIST", "UNEP"]]
     dP = f.poly_P - f.centroid_P; dR = f.poly_R - f.centroid_R
     N["frame_dP_range"] = rng(dP.min(), dP.max(), f2); N["frame_dR_range"] = rng(dR.min(), dR.max(), f2)
 
 
 # ---------------------------------------------------------------- crowd round 2 (rq7)
 def _rq7():
-    s = csv("RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv").set_index("product")
+    s = W("asd", "crowd-round2", 10).rename(columns={"strip_unmatched": "strip_unmatched_flags", "conf_r1": "unmatched_conf_share_r1", "conf_r2": "unmatched_conf_share_r2", "strip_share": "strip_share_of_covered_fps"})
     N["r2_MS_unmatched"] = com(s.loc["MS", "strip_unmatched_flags"])
     N["r2_MS_conf_r1"] = pct(s.loc["MS", "unmatched_conf_share_r1"], 1); N["r2_MS_conf_r2"] = pct(s.loc["MS", "unmatched_conf_share_r2"], 1)
     N["r2_MS_one_in"] = words(round(1 / s.loc["MS", ["unmatched_conf_share_r1", "unmatched_conf_share_r2"]].mean()))
     for p in ("MS", "UNEP", "IMPACT"):
         N[f"r2_padj_r1_{p}"] = f3(s.loc[p, "P_crowd_r1"]); N[f"r2_padj_r2_{p}"] = f3(s.loc[p, "P_crowd_r2swap"])
     N["r2_padj_maxdelta"] = f2(s.delta.abs().max())
-    rep = csv("RQ7-mapswipe-validation/rq7_round2_replication.csv").set_index("metric").value
+    rep = W("strip", "crowd-round2", None).loc["MS"]
     N["r2_cells"] = com(rep["paired_task_cells"])
 
 
