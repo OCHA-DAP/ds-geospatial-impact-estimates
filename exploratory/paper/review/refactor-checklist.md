@@ -29,9 +29,9 @@ script migration; `snakemake -n` shows nothing stale after a full build.
 - [x] B7 `snakemake results brief` renders; rendered text identical to the pre-refactor render
 
 ## C. Guards
-- [ ] C1 audit_brief_numbers.py: numeric literals in prose vs allowlist; wired as a rule; passes
-- [ ] C2 diff_results.py --base <ref>: builds results at the ref from its CSVs and reports changed values with the brief keys affected; run vs origin/v1
-- [ ] C3 pytest: results invariants (bounds monotone, floor ≤ crowd ≤ upper, k-of-6 P↑ R↓, rq5b=rq2q=rq2r=rq9 on shared cells, coverage ≤ 1, every brief key present)
+- [x] C1 audit_brief_numbers.py written and wired as a rule (65 literals remain until section E)
+- [x] C2 diff_results.py --base <ref>: builds results at the ref from its CSVs and reports changed values with the brief keys affected; run vs origin/v1
+- [x] C3 pytest: results invariants (bounds monotone, floor ≤ crowd ≤ upper, k-of-6 P↑ R↓, rq5b=rq2q=rq2r=rq9 on shared cells, coverage ≤ 1, every brief key present)
 
 ## D. Library consolidation (main-section scripts only; heavy chain frozen)
 - [ ] D1 gie_paper gains: core_region(), product_aois(), uh_aoi(), cems(classes), field_points(), crowd_tasks(), crowd_verdicts(gdf), score(flags, ref, r), crowd_credit(...), cells(gdf, res); pytest on synthetic geometry

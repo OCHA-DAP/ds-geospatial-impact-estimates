@@ -16,10 +16,9 @@ def build_at(ref: str, tmp: str) -> pd.DataFrame:
     cons = importlib.util.module_from_spec(spec); spec.loader.exec_module(cons)
     # copy this consolidator, fetch every input from the ref
     shutil.copy(os.path.join(HERE, "consolidate.py"), tmp)
-    inputs = set()
-    src = open(os.path.join(HERE, "consolidate.py")).read()
-    import re
-    for rel in re.findall(r'"(RQ[^"]+\.csv)"', src): inputs.add(rel)
+    for fn in cons.SOURCES:   # run every source once here to learn exactly which CSVs it reads
+        fn()
+    inputs = set(cons.LOADED)
     missing = []
     for rel in sorted(inputs):
         os.makedirs(os.path.join(tmp, os.path.dirname(rel)), exist_ok=True)
@@ -33,10 +32,43 @@ def build_at(ref: str, tmp: str) -> pd.DataFrame:
         for rel in missing:  # write an empty frame with the current header so the source function raises a clear error
             hdr = open(os.path.join(HERE, rel)).readline()
             open(os.path.join(tmp, rel), "w").write(hdr)
+    # column names that changed between refs (ADR-0031 renamed the crowd column)
+    COMPAT = {"P_crowd_adj": "P_crowd", "P_crowd_adj_r1": "P_crowd_r1", "P_crowd_adj_r2swap": "P_crowd_r2swap"}
+    for rel in sorted(inputs):
+        f = os.path.join(tmp, rel)
+        df = pd.read_csv(f)
+        ren = {k: v for k, v in COMPAT.items() if k in df.columns and v not in df.columns}
+        if ren:
+            df.rename(columns=ren).to_csv(f, index=False)
     r = subprocess.run([sys.executable, "consolidate.py"], cwd=tmp, capture_output=True, text=True)
     if r.returncode:
         raise SystemExit(f"consolidate failed at {ref}:\n{r.stderr[-2000:]}")
     return pd.read_csv(os.path.join(tmp, "results.csv"))
+
+def expectations(m: pd.DataFrame) -> list:
+    """Declared expectations for the ADR-0030/0031 refreeze against the live (v1) numbers.
+    Each returns (name, passed, detail). Edit this list when the next change has different
+    expected directions; the report shows PASS/FAIL per expectation."""
+    P6 = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
+    def sel(region, lens, radius, metric, preds=None):
+        q = m[(m.region == region) & (m.lens == lens) & (m.radius == radius) & (m.metric == metric) & (m._merge == "both")]
+        return q[q.predictor.isin(preds)] if preds else q
+    out = []
+    d = sel("core", "points", 10, "P", P6); out.append(("core precision rises for all six products (footprint frame)", bool((d.value_now > d.value_base).all()), f"{len(d)} products"))
+    d = sel("core", "points", 10, "R", P6); out.append(("core recall rises for all six products", bool((d.value_now > d.value_base).all()), f"{len(d)} products"))
+    d = sel("core", "points", 10, "n_flags", ["MS"]); out.append(("Microsoft core flags fall (1:1 mapping removes neighbour bleed)", bool((d.value_now < d.value_base).all()), f"{d.value_base.iloc[0]:g} -> {d.value_now.iloc[0]:g}" if len(d) else "n/a"))
+    d = sel("core", "points", 10, "n_flags", [p for p in P6 if p != "MS"]); out.append(("other products' core flag counts move by <= 3", bool(((d.value_now - d.value_base).abs() <= 3).all()), f"max |Δ| {(d.value_now - d.value_base).abs().max():g}"))
+    d = sel("core", "points", 10, "F1", [f"{k}-of-6" for k in range(3, 7)]); out.append(("agreement-rule F1 rises for k >= 3", bool((d.value_now > d.value_base).all()), f"{len(d)} rules"))
+    d = m[(m.lens == "cells") & (m.metric == "rho") & (m._merge == "both") & (m.predictor != "Microsoft")]; out.append(("area-ranking correlations move by <= 0.011 for products whose flags did not change", bool(((d.value_now - d.value_base).abs() <= 0.011).all()), f"max |Δ| {(d.value_now - d.value_base).abs().max():.3f} over {len(d)} rows"))
+    d = m[(m.lens == "cells") & (m.metric == "rho") & (m._merge == "both") & (m.predictor == "Microsoft")]; out.append(("Microsoft's area-ranking correlations move by <= 0.02 (its flag set changed)", bool(((d.value_now - d.value_base).abs() <= 0.02).all()), f"max |Δ| {(d.value_now - d.value_base).abs().max():.3f} over {len(d)} rows"))
+    d = sel("core", "bounds", 10, "P_upper", P6); out.append(("upper-bound precision rises for all six", bool((d.value_now > d.value_base).all()), ""))
+    pc, pf = sel("core", "bounds", 10, "P_crowd", ["MS"]), sel("core", "bounds", 10, "P_floor", ["MS"])
+    inc_b, inc_n = float(pc.value_base.iloc[0] - pf.value_base.iloc[0]), float(pc.value_now.iloc[0] - pf.value_now.iloc[0])
+    out.append(("Microsoft's crowd increment (P_crowd − P_floor) moves by <= 0.015 (99% reviewed, so ADR-0031 changes nothing for it)", abs(inc_n - inc_b) <= 0.015, f"{inc_b:.3f} -> {inc_n:.3f}"))
+    d = m[(m.lens == "field") & (m.metric == "R") & (m._merge == "both") & m.predictor.isin(["MS", "IMPACT v2", "OSU", "UH", "LIST"])]; out.append(("field recall rises for every product at every radius", bool((d.value_now >= d.value_base).all()), f"{len(d)} rows"))
+    d = sel("asd", "crowd-round2", 10, "conf_r1", ["MS"]); out.append(("crowd confirmation share in the strip moves by <= 0.01", bool(((d.value_now - d.value_base).abs() <= 0.01).all()), f"Δ {float(d.value_now.iloc[0] - d.value_base.iloc[0]):+.3f}" if len(d) else "n/a"))
+    return out
+
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--base", default="origin/v1"); ap.add_argument("--out")
@@ -54,6 +86,10 @@ def main():
              "| region | lens | r | predictor | metric | base | now | Δ | source |", "|---|---|---|---|---|---|---|---|---|"]
     for _, r in changed.sort_values(["source_now", *key]).iterrows():
         lines.append(f"| {r.region} | {r.lens} | {r.radius} | {r.predictor} | {r.metric} | {r.value_base:g} | {r.value_now:g} | {r.value_now - r.value_base:+.3f} | {r.source_now} |")
+    exp = expectations(m)
+    lines += ["", "## expectations", "", "| expectation | result | detail |", "|---|---|---|"]
+    lines += [f"| {n} | {'PASS' if ok else '**FAIL**'} | {det} |" for n, ok, det in exp]
+    print(f"expectations: {sum(ok for _, ok, _ in exp)}/{len(exp)} pass")
     if len(added): lines += ["", "## added", ""] + [f"- {' / '.join(str(r[k]) for k in key)} = {r.value_now:g}" for _, r in added.iterrows()]
     if len(gone): lines += ["", "## removed", ""] + [f"- {' / '.join(str(r[k]) for k in key)} = {r.value_base:g}" for _, r in gone.iterrows()]
     open(out, "w").write("\n".join(lines) + "\n")
