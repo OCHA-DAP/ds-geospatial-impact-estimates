@@ -1,0 +1,397 @@
+region,lens,radius,predictor,metric,value,source
+asd,cells,8,Microsoft,rho,0.474,pipeline/ranking.py
+asd,cells,8,Microsoft,rho_null,0.56,pipeline/ranking.py
+asd,cells,8,Microsoft,delta,-0.086,pipeline/ranking.py
+asd,cells,8,Microsoft,top20,0.35,pipeline/ranking.py
+asd,cells,8,Microsoft,top20_null,0.45,pipeline/ranking.py
+asd,cells,8,Microsoft,cells,112.0,pipeline/ranking.py
+asd,cells,7,Microsoft,rho,0.602,pipeline/ranking.py
+asd,cells,7,Microsoft,rho_null,0.626,pipeline/ranking.py
+asd,cells,7,Microsoft,delta,-0.024,pipeline/ranking.py
+asd,cells,7,Microsoft,top20,0.85,pipeline/ranking.py
+asd,cells,7,Microsoft,top20_null,0.9,pipeline/ranking.py
+asd,cells,7,Microsoft,cells,31.0,pipeline/ranking.py
+asd,cells,8,IMPACT v2,rho,0.292,pipeline/ranking.py
+asd,cells,8,IMPACT v2,rho_null,0.599,pipeline/ranking.py
+asd,cells,8,IMPACT v2,delta,-0.307,pipeline/ranking.py
+asd,cells,8,IMPACT v2,top20,0.25,pipeline/ranking.py
+asd,cells,8,IMPACT v2,top20_null,0.15,pipeline/ranking.py
+asd,cells,8,IMPACT v2,cells,374.0,pipeline/ranking.py
+asd,cells,7,IMPACT v2,rho,0.433,pipeline/ranking.py
+asd,cells,7,IMPACT v2,rho_null,0.678,pipeline/ranking.py
+asd,cells,7,IMPACT v2,delta,-0.245,pipeline/ranking.py
+asd,cells,7,IMPACT v2,top20,0.45,pipeline/ranking.py
+asd,cells,7,IMPACT v2,top20_null,0.75,pipeline/ranking.py
+asd,cells,7,IMPACT v2,cells,114.0,pipeline/ranking.py
+asd,cells,8,OSU,rho,0.505,pipeline/ranking.py
+asd,cells,8,OSU,rho_null,0.48,pipeline/ranking.py
+asd,cells,8,OSU,delta,0.025,pipeline/ranking.py
+asd,cells,8,OSU,top20,0.45,pipeline/ranking.py
+asd,cells,8,OSU,top20_null,0.2,pipeline/ranking.py
+asd,cells,8,OSU,cells,454.0,pipeline/ranking.py
+asd,cells,7,OSU,rho,0.54,pipeline/ranking.py
+asd,cells,7,OSU,rho_null,0.48,pipeline/ranking.py
+asd,cells,7,OSU,delta,0.059,pipeline/ranking.py
+asd,cells,7,OSU,top20,0.8,pipeline/ranking.py
+asd,cells,7,OSU,top20_null,0.65,pipeline/ranking.py
+asd,cells,7,OSU,cells,152.0,pipeline/ranking.py
+asd,cells,8,UH,rho,-0.114,pipeline/ranking.py
+asd,cells,8,UH,rho_null,0.581,pipeline/ranking.py
+asd,cells,8,UH,delta,-0.695,pipeline/ranking.py
+asd,cells,8,UH,top20,0.0,pipeline/ranking.py
+asd,cells,8,UH,top20_null,0.35,pipeline/ranking.py
+asd,cells,8,UH,cells,453.0,pipeline/ranking.py
+asd,cells,7,UH,rho,-0.085,pipeline/ranking.py
+asd,cells,7,UH,rho_null,0.698,pipeline/ranking.py
+asd,cells,7,UH,delta,-0.783,pipeline/ranking.py
+asd,cells,7,UH,top20,0.05,pipeline/ranking.py
+asd,cells,7,UH,top20_null,0.8,pipeline/ranking.py
+asd,cells,7,UH,cells,106.0,pipeline/ranking.py
+asd,cells,8,LIST,rho,0.276,pipeline/ranking.py
+asd,cells,8,LIST,rho_null,0.442,pipeline/ranking.py
+asd,cells,8,LIST,delta,-0.166,pipeline/ranking.py
+asd,cells,8,LIST,top20,0.6,pipeline/ranking.py
+asd,cells,8,LIST,top20_null,0.1,pipeline/ranking.py
+asd,cells,8,LIST,cells,668.0,pipeline/ranking.py
+asd,cells,7,LIST,rho,0.404,pipeline/ranking.py
+asd,cells,7,LIST,rho_null,0.495,pipeline/ranking.py
+asd,cells,7,LIST,delta,-0.091,pipeline/ranking.py
+asd,cells,7,LIST,top20,0.6,pipeline/ranking.py
+asd,cells,7,LIST,top20_null,0.55,pipeline/ranking.py
+asd,cells,7,LIST,cells,178.0,pipeline/ranking.py
+asd,cells,8,UNEP,rho,0.068,pipeline/ranking.py
+asd,cells,8,UNEP,rho_null,0.45,pipeline/ranking.py
+asd,cells,8,UNEP,delta,-0.382,pipeline/ranking.py
+asd,cells,8,UNEP,top20,0.2,pipeline/ranking.py
+asd,cells,8,UNEP,top20_null,0.1,pipeline/ranking.py
+asd,cells,8,UNEP,cells,601.0,pipeline/ranking.py
+asd,cells,7,UNEP,rho,0.219,pipeline/ranking.py
+asd,cells,7,UNEP,rho_null,0.498,pipeline/ranking.py
+asd,cells,7,UNEP,delta,-0.279,pipeline/ranking.py
+asd,cells,7,UNEP,top20,0.2,pipeline/ranking.py
+asd,cells,7,UNEP,top20_null,0.55,pipeline/ranking.py
+asd,cells,7,UNEP,cells,165.0,pipeline/ranking.py
+core,cells,9,Microsoft,rho,0.481,pipeline/ranking.py
+core,cells,9,Microsoft,rho_null,0.471,pipeline/ranking.py
+core,cells,9,Microsoft,delta,0.01,pipeline/ranking.py
+core,cells,9,Microsoft,top20,0.15,pipeline/ranking.py
+core,cells,9,Microsoft,top20_null,0.0,pipeline/ranking.py
+core,cells,9,Microsoft,cells,594.0,pipeline/ranking.py
+core,cells,8,Microsoft,rho,0.616,pipeline/ranking.py
+core,cells,8,Microsoft,rho_null,0.644,pipeline/ranking.py
+core,cells,8,Microsoft,delta,-0.028,pipeline/ranking.py
+core,cells,8,Microsoft,top20,0.35,pipeline/ranking.py
+core,cells,8,Microsoft,top20_null,0.45,pipeline/ranking.py
+core,cells,8,Microsoft,cells,133.0,pipeline/ranking.py
+core,cells,9,IMPACT v2,rho,0.535,pipeline/ranking.py
+core,cells,9,IMPACT v2,rho_null,0.471,pipeline/ranking.py
+core,cells,9,IMPACT v2,delta,0.064,pipeline/ranking.py
+core,cells,9,IMPACT v2,top20,0.2,pipeline/ranking.py
+core,cells,9,IMPACT v2,top20_null,0.0,pipeline/ranking.py
+core,cells,9,IMPACT v2,cells,594.0,pipeline/ranking.py
+core,cells,8,IMPACT v2,rho,0.718,pipeline/ranking.py
+core,cells,8,IMPACT v2,rho_null,0.644,pipeline/ranking.py
+core,cells,8,IMPACT v2,delta,0.074,pipeline/ranking.py
+core,cells,8,IMPACT v2,top20,0.45,pipeline/ranking.py
+core,cells,8,IMPACT v2,top20_null,0.45,pipeline/ranking.py
+core,cells,8,IMPACT v2,cells,133.0,pipeline/ranking.py
+core,cells,9,OSU,rho,0.51,pipeline/ranking.py
+core,cells,9,OSU,rho_null,0.471,pipeline/ranking.py
+core,cells,9,OSU,delta,0.039,pipeline/ranking.py
+core,cells,9,OSU,top20,0.1,pipeline/ranking.py
+core,cells,9,OSU,top20_null,0.0,pipeline/ranking.py
+core,cells,9,OSU,cells,594.0,pipeline/ranking.py
+core,cells,8,OSU,rho,0.703,pipeline/ranking.py
+core,cells,8,OSU,rho_null,0.644,pipeline/ranking.py
+core,cells,8,OSU,delta,0.059,pipeline/ranking.py
+core,cells,8,OSU,top20,0.45,pipeline/ranking.py
+core,cells,8,OSU,top20_null,0.45,pipeline/ranking.py
+core,cells,8,OSU,cells,133.0,pipeline/ranking.py
+core,cells,9,UH,rho,0.304,pipeline/ranking.py
+core,cells,9,UH,rho_null,0.471,pipeline/ranking.py
+core,cells,9,UH,delta,-0.167,pipeline/ranking.py
+core,cells,9,UH,top20,0.05,pipeline/ranking.py
+core,cells,9,UH,top20_null,0.0,pipeline/ranking.py
+core,cells,9,UH,cells,594.0,pipeline/ranking.py
+core,cells,8,UH,rho,0.48,pipeline/ranking.py
+core,cells,8,UH,rho_null,0.644,pipeline/ranking.py
+core,cells,8,UH,delta,-0.164,pipeline/ranking.py
+core,cells,8,UH,top20,0.4,pipeline/ranking.py
+core,cells,8,UH,top20_null,0.45,pipeline/ranking.py
+core,cells,8,UH,cells,133.0,pipeline/ranking.py
+core,cells,9,LIST,rho,0.565,pipeline/ranking.py
+core,cells,9,LIST,rho_null,0.471,pipeline/ranking.py
+core,cells,9,LIST,delta,0.094,pipeline/ranking.py
+core,cells,9,LIST,top20,0.2,pipeline/ranking.py
+core,cells,9,LIST,top20_null,0.0,pipeline/ranking.py
+core,cells,9,LIST,cells,594.0,pipeline/ranking.py
+core,cells,8,LIST,rho,0.737,pipeline/ranking.py
+core,cells,8,LIST,rho_null,0.644,pipeline/ranking.py
+core,cells,8,LIST,delta,0.092,pipeline/ranking.py
+core,cells,8,LIST,top20,0.65,pipeline/ranking.py
+core,cells,8,LIST,top20_null,0.45,pipeline/ranking.py
+core,cells,8,LIST,cells,133.0,pipeline/ranking.py
+core,cells,9,UNEP,rho,0.443,pipeline/ranking.py
+core,cells,9,UNEP,rho_null,0.471,pipeline/ranking.py
+core,cells,9,UNEP,delta,-0.028,pipeline/ranking.py
+core,cells,9,UNEP,top20,0.1,pipeline/ranking.py
+core,cells,9,UNEP,top20_null,0.0,pipeline/ranking.py
+core,cells,9,UNEP,cells,594.0,pipeline/ranking.py
+core,cells,8,UNEP,rho,0.577,pipeline/ranking.py
+core,cells,8,UNEP,rho_null,0.644,pipeline/ranking.py
+core,cells,8,UNEP,delta,-0.067,pipeline/ranking.py
+core,cells,8,UNEP,top20,0.4,pipeline/ranking.py
+core,cells,8,UNEP,top20_null,0.45,pipeline/ranking.py
+core,cells,8,UNEP,cells,133.0,pipeline/ranking.py
+Caraballeda,cells,9,Microsoft,rho,0.306,pipeline/ranking.py
+Caraballeda,cells,9,Microsoft,rho_null,0.4,pipeline/ranking.py
+Caraballeda,cells,9,Microsoft,delta,-0.094,pipeline/ranking.py
+Caraballeda,cells,9,Microsoft,top20,0.15,pipeline/ranking.py
+Caraballeda,cells,9,Microsoft,top20_null,0.0,pipeline/ranking.py
+Caraballeda,cells,9,Microsoft,cells,429.0,pipeline/ranking.py
+Caraballeda,cells,8,Microsoft,rho,0.474,pipeline/ranking.py
+Caraballeda,cells,8,Microsoft,rho_null,0.56,pipeline/ranking.py
+Caraballeda,cells,8,Microsoft,delta,-0.086,pipeline/ranking.py
+Caraballeda,cells,8,Microsoft,top20,0.35,pipeline/ranking.py
+Caraballeda,cells,8,Microsoft,top20_null,0.45,pipeline/ranking.py
+Caraballeda,cells,8,Microsoft,cells,112.0,pipeline/ranking.py
+Caraballeda,cells,9,IMPACT v2,rho,0.285,pipeline/ranking.py
+Caraballeda,cells,9,IMPACT v2,rho_null,0.25,pipeline/ranking.py
+Caraballeda,cells,9,IMPACT v2,delta,0.035,pipeline/ranking.py
+Caraballeda,cells,9,IMPACT v2,top20,0.2,pipeline/ranking.py
+Caraballeda,cells,9,IMPACT v2,top20_null,0.0,pipeline/ranking.py
+Caraballeda,cells,9,IMPACT v2,cells,376.0,pipeline/ranking.py
+Caraballeda,cells,8,IMPACT v2,rho,0.548,pipeline/ranking.py
+Caraballeda,cells,8,IMPACT v2,rho_null,0.446,pipeline/ranking.py
+Caraballeda,cells,8,IMPACT v2,delta,0.102,pipeline/ranking.py
+Caraballeda,cells,8,IMPACT v2,top20,0.45,pipeline/ranking.py
+Caraballeda,cells,8,IMPACT v2,top20_null,0.4,pipeline/ranking.py
+Caraballeda,cells,8,IMPACT v2,cells,110.0,pipeline/ranking.py
+Caraballeda,cells,9,OSU,rho,0.385,pipeline/ranking.py
+Caraballeda,cells,9,OSU,rho_null,0.351,pipeline/ranking.py
+Caraballeda,cells,9,OSU,delta,0.034,pipeline/ranking.py
+Caraballeda,cells,9,OSU,top20,0.1,pipeline/ranking.py
+Caraballeda,cells,9,OSU,top20_null,0.0,pipeline/ranking.py
+Caraballeda,cells,9,OSU,cells,483.0,pipeline/ranking.py
+Caraballeda,cells,8,OSU,rho,0.642,pipeline/ranking.py
+Caraballeda,cells,8,OSU,rho_null,0.557,pipeline/ranking.py
+Caraballeda,cells,8,OSU,delta,0.085,pipeline/ranking.py
+Caraballeda,cells,8,OSU,top20,0.45,pipeline/ranking.py
+Caraballeda,cells,8,OSU,top20_null,0.4,pipeline/ranking.py
+Caraballeda,cells,8,OSU,cells,134.0,pipeline/ranking.py
+Caraballeda,cells,9,UH,rho,0.13,pipeline/ranking.py
+Caraballeda,cells,9,UH,rho_null,0.414,pipeline/ranking.py
+Caraballeda,cells,9,UH,delta,-0.284,pipeline/ranking.py
+Caraballeda,cells,9,UH,top20,0.05,pipeline/ranking.py
+Caraballeda,cells,9,UH,top20_null,0.0,pipeline/ranking.py
+Caraballeda,cells,9,UH,cells,450.0,pipeline/ranking.py
+Caraballeda,cells,8,UH,rho,0.388,pipeline/ranking.py
+Caraballeda,cells,8,UH,rho_null,0.591,pipeline/ranking.py
+Caraballeda,cells,8,UH,delta,-0.204,pipeline/ranking.py
+Caraballeda,cells,8,UH,top20,0.4,pipeline/ranking.py
+Caraballeda,cells,8,UH,top20_null,0.45,pipeline/ranking.py
+Caraballeda,cells,8,UH,cells,119.0,pipeline/ranking.py
+Caraballeda,cells,9,LIST,rho,0.465,pipeline/ranking.py
+Caraballeda,cells,9,LIST,rho_null,0.335,pipeline/ranking.py
+Caraballeda,cells,9,LIST,delta,0.131,pipeline/ranking.py
+Caraballeda,cells,9,LIST,top20,0.2,pipeline/ranking.py
+Caraballeda,cells,9,LIST,top20_null,0.0,pipeline/ranking.py
+Caraballeda,cells,9,LIST,cells,485.0,pipeline/ranking.py
+Caraballeda,cells,8,LIST,rho,0.668,pipeline/ranking.py
+Caraballeda,cells,8,LIST,rho_null,0.539,pipeline/ranking.py
+Caraballeda,cells,8,LIST,delta,0.13,pipeline/ranking.py
+Caraballeda,cells,8,LIST,top20,0.65,pipeline/ranking.py
+Caraballeda,cells,8,LIST,top20_null,0.4,pipeline/ranking.py
+Caraballeda,cells,8,LIST,cells,133.0,pipeline/ranking.py
+Caraballeda,cells,9,UNEP,rho,0.207,pipeline/ranking.py
+Caraballeda,cells,9,UNEP,rho_null,0.317,pipeline/ranking.py
+Caraballeda,cells,9,UNEP,delta,-0.11,pipeline/ranking.py
+Caraballeda,cells,9,UNEP,top20,0.1,pipeline/ranking.py
+Caraballeda,cells,9,UNEP,top20_null,0.0,pipeline/ranking.py
+Caraballeda,cells,9,UNEP,cells,414.0,pipeline/ranking.py
+Caraballeda,cells,8,UNEP,rho,0.451,pipeline/ranking.py
+Caraballeda,cells,8,UNEP,rho_null,0.516,pipeline/ranking.py
+Caraballeda,cells,8,UNEP,delta,-0.066,pipeline/ranking.py
+Caraballeda,cells,8,UNEP,top20,0.4,pipeline/ranking.py
+Caraballeda,cells,8,UNEP,top20_null,0.4,pipeline/ranking.py
+Caraballeda,cells,8,UNEP,cells,122.0,pipeline/ranking.py
+core,cells-agreement,9,Microsoft,rho,0.481,pipeline/ranking.py
+core,cells-agreement,9,Microsoft,top20,0.15,pipeline/ranking.py
+core,cells-agreement,9,Microsoft,top20_exp,0.15,pipeline/ranking.py
+core,cells-agreement,9,Microsoft,rho_frac,0.398,pipeline/ranking.py
+core,cells-agreement,9,Microsoft,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,Microsoft,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,IMPACT v2,rho,0.535,pipeline/ranking.py
+core,cells-agreement,9,IMPACT v2,top20,0.2,pipeline/ranking.py
+core,cells-agreement,9,IMPACT v2,top20_exp,0.2,pipeline/ranking.py
+core,cells-agreement,9,IMPACT v2,rho_frac,0.52,pipeline/ranking.py
+core,cells-agreement,9,IMPACT v2,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,IMPACT v2,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,OSU,rho,0.51,pipeline/ranking.py
+core,cells-agreement,9,OSU,top20,0.1,pipeline/ranking.py
+core,cells-agreement,9,OSU,top20_exp,0.1,pipeline/ranking.py
+core,cells-agreement,9,OSU,rho_frac,0.539,pipeline/ranking.py
+core,cells-agreement,9,OSU,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,OSU,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,UH,rho,0.304,pipeline/ranking.py
+core,cells-agreement,9,UH,top20,0.05,pipeline/ranking.py
+core,cells-agreement,9,UH,top20_exp,0.05,pipeline/ranking.py
+core,cells-agreement,9,UH,rho_frac,0.21,pipeline/ranking.py
+core,cells-agreement,9,UH,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,UH,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,LIST,rho,0.565,pipeline/ranking.py
+core,cells-agreement,9,LIST,top20,0.2,pipeline/ranking.py
+core,cells-agreement,9,LIST,top20_exp,0.2,pipeline/ranking.py
+core,cells-agreement,9,LIST,rho_frac,0.585,pipeline/ranking.py
+core,cells-agreement,9,LIST,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,LIST,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,UNEP,rho,0.443,pipeline/ranking.py
+core,cells-agreement,9,UNEP,top20,0.1,pipeline/ranking.py
+core,cells-agreement,9,UNEP,top20_exp,0.1,pipeline/ranking.py
+core,cells-agreement,9,UNEP,rho_frac,0.366,pipeline/ranking.py
+core,cells-agreement,9,UNEP,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,UNEP,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,geography null,rho,0.471,pipeline/ranking.py
+core,cells-agreement,9,geography null,top20,0.0,pipeline/ranking.py
+core,cells-agreement,9,geography null,top20_exp,0.0,pipeline/ranking.py
+core,cells-agreement,9,geography null,rho_frac,0.387,pipeline/ranking.py
+core,cells-agreement,9,geography null,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,geography null,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,vote sum,rho,0.543,pipeline/ranking.py
+core,cells-agreement,9,vote sum,top20,0.2,pipeline/ranking.py
+core,cells-agreement,9,vote sum,top20_exp,0.2,pipeline/ranking.py
+core,cells-agreement,9,vote sum,rho_frac,0.623,pipeline/ranking.py
+core,cells-agreement,9,vote sum,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,vote sum,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,1-of-6,rho,0.457,pipeline/ranking.py
+core,cells-agreement,9,1-of-6,top20,0.0,pipeline/ranking.py
+core,cells-agreement,9,1-of-6,top20_exp,0.0,pipeline/ranking.py
+core,cells-agreement,9,1-of-6,rho_frac,0.554,pipeline/ranking.py
+core,cells-agreement,9,1-of-6,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,1-of-6,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,2-of-6,rho,0.571,pipeline/ranking.py
+core,cells-agreement,9,2-of-6,top20,0.15,pipeline/ranking.py
+core,cells-agreement,9,2-of-6,top20_exp,0.15,pipeline/ranking.py
+core,cells-agreement,9,2-of-6,rho_frac,0.617,pipeline/ranking.py
+core,cells-agreement,9,2-of-6,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,2-of-6,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,3-of-6,rho,0.623,pipeline/ranking.py
+core,cells-agreement,9,3-of-6,top20,0.3,pipeline/ranking.py
+core,cells-agreement,9,3-of-6,top20_exp,0.3,pipeline/ranking.py
+core,cells-agreement,9,3-of-6,rho_frac,0.628,pipeline/ranking.py
+core,cells-agreement,9,3-of-6,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,3-of-6,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,4-of-6,rho,0.652,pipeline/ranking.py
+core,cells-agreement,9,4-of-6,top20,0.45,pipeline/ranking.py
+core,cells-agreement,9,4-of-6,top20_exp,0.45,pipeline/ranking.py
+core,cells-agreement,9,4-of-6,rho_frac,0.649,pipeline/ranking.py
+core,cells-agreement,9,4-of-6,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,4-of-6,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,5-of-6,rho,0.595,pipeline/ranking.py
+core,cells-agreement,9,5-of-6,top20,0.55,pipeline/ranking.py
+core,cells-agreement,9,5-of-6,top20_exp,0.55,pipeline/ranking.py
+core,cells-agreement,9,5-of-6,rho_frac,0.585,pipeline/ranking.py
+core,cells-agreement,9,5-of-6,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,5-of-6,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,6-of-6,rho,0.515,pipeline/ranking.py
+core,cells-agreement,9,6-of-6,top20,0.5,pipeline/ranking.py
+core,cells-agreement,9,6-of-6,top20_exp,0.5,pipeline/ranking.py
+core,cells-agreement,9,6-of-6,rho_frac,0.536,pipeline/ranking.py
+core,cells-agreement,9,6-of-6,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,6-of-6,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,9,weighted fusion,rho,0.566,pipeline/ranking.py
+core,cells-agreement,9,weighted fusion,top20,0.25,pipeline/ranking.py
+core,cells-agreement,9,weighted fusion,top20_exp,0.25,pipeline/ranking.py
+core,cells-agreement,9,weighted fusion,rho_frac,0.577,pipeline/ranking.py
+core,cells-agreement,9,weighted fusion,cells,594.0,pipeline/ranking.py
+core,cells-agreement,9,weighted fusion,cells_frac,426.0,pipeline/ranking.py
+core,cells-agreement,8,Microsoft,rho,0.616,pipeline/ranking.py
+core,cells-agreement,8,Microsoft,top20,0.35,pipeline/ranking.py
+core,cells-agreement,8,Microsoft,top20_exp,0.35,pipeline/ranking.py
+core,cells-agreement,8,Microsoft,rho_frac,0.444,pipeline/ranking.py
+core,cells-agreement,8,Microsoft,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,Microsoft,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,IMPACT v2,rho,0.718,pipeline/ranking.py
+core,cells-agreement,8,IMPACT v2,top20,0.45,pipeline/ranking.py
+core,cells-agreement,8,IMPACT v2,top20_exp,0.45,pipeline/ranking.py
+core,cells-agreement,8,IMPACT v2,rho_frac,0.687,pipeline/ranking.py
+core,cells-agreement,8,IMPACT v2,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,IMPACT v2,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,OSU,rho,0.703,pipeline/ranking.py
+core,cells-agreement,8,OSU,top20,0.45,pipeline/ranking.py
+core,cells-agreement,8,OSU,top20_exp,0.45,pipeline/ranking.py
+core,cells-agreement,8,OSU,rho_frac,0.707,pipeline/ranking.py
+core,cells-agreement,8,OSU,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,OSU,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,UH,rho,0.48,pipeline/ranking.py
+core,cells-agreement,8,UH,top20,0.4,pipeline/ranking.py
+core,cells-agreement,8,UH,top20_exp,0.4,pipeline/ranking.py
+core,cells-agreement,8,UH,rho_frac,0.241,pipeline/ranking.py
+core,cells-agreement,8,UH,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,UH,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,LIST,rho,0.737,pipeline/ranking.py
+core,cells-agreement,8,LIST,top20,0.65,pipeline/ranking.py
+core,cells-agreement,8,LIST,top20_exp,0.65,pipeline/ranking.py
+core,cells-agreement,8,LIST,rho_frac,0.69,pipeline/ranking.py
+core,cells-agreement,8,LIST,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,LIST,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,UNEP,rho,0.577,pipeline/ranking.py
+core,cells-agreement,8,UNEP,top20,0.4,pipeline/ranking.py
+core,cells-agreement,8,UNEP,top20_exp,0.4,pipeline/ranking.py
+core,cells-agreement,8,UNEP,rho_frac,0.389,pipeline/ranking.py
+core,cells-agreement,8,UNEP,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,UNEP,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,geography null,rho,0.644,pipeline/ranking.py
+core,cells-agreement,8,geography null,top20,0.45,pipeline/ranking.py
+core,cells-agreement,8,geography null,top20_exp,0.45,pipeline/ranking.py
+core,cells-agreement,8,geography null,rho_frac,0.493,pipeline/ranking.py
+core,cells-agreement,8,geography null,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,geography null,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,vote sum,rho,0.695,pipeline/ranking.py
+core,cells-agreement,8,vote sum,top20,0.45,pipeline/ranking.py
+core,cells-agreement,8,vote sum,top20_exp,0.45,pipeline/ranking.py
+core,cells-agreement,8,vote sum,rho_frac,0.727,pipeline/ranking.py
+core,cells-agreement,8,vote sum,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,vote sum,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,1-of-6,rho,0.627,pipeline/ranking.py
+core,cells-agreement,8,1-of-6,top20,0.45,pipeline/ranking.py
+core,cells-agreement,8,1-of-6,top20_exp,0.45,pipeline/ranking.py
+core,cells-agreement,8,1-of-6,rho_frac,0.659,pipeline/ranking.py
+core,cells-agreement,8,1-of-6,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,1-of-6,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,2-of-6,rho,0.724,pipeline/ranking.py
+core,cells-agreement,8,2-of-6,top20,0.5,pipeline/ranking.py
+core,cells-agreement,8,2-of-6,top20_exp,0.5,pipeline/ranking.py
+core,cells-agreement,8,2-of-6,rho_frac,0.742,pipeline/ranking.py
+core,cells-agreement,8,2-of-6,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,2-of-6,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,3-of-6,rho,0.783,pipeline/ranking.py
+core,cells-agreement,8,3-of-6,top20,0.6,pipeline/ranking.py
+core,cells-agreement,8,3-of-6,top20_exp,0.6,pipeline/ranking.py
+core,cells-agreement,8,3-of-6,rho_frac,0.735,pipeline/ranking.py
+core,cells-agreement,8,3-of-6,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,3-of-6,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,4-of-6,rho,0.781,pipeline/ranking.py
+core,cells-agreement,8,4-of-6,top20,0.65,pipeline/ranking.py
+core,cells-agreement,8,4-of-6,top20_exp,0.65,pipeline/ranking.py
+core,cells-agreement,8,4-of-6,rho_frac,0.73,pipeline/ranking.py
+core,cells-agreement,8,4-of-6,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,4-of-6,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,5-of-6,rho,0.687,pipeline/ranking.py
+core,cells-agreement,8,5-of-6,top20,0.75,pipeline/ranking.py
+core,cells-agreement,8,5-of-6,top20_exp,0.77,pipeline/ranking.py
+core,cells-agreement,8,5-of-6,rho_frac,0.638,pipeline/ranking.py
+core,cells-agreement,8,5-of-6,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,5-of-6,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,6-of-6,rho,0.616,pipeline/ranking.py
+core,cells-agreement,8,6-of-6,top20,0.65,pipeline/ranking.py
+core,cells-agreement,8,6-of-6,top20_exp,0.67,pipeline/ranking.py
+core,cells-agreement,8,6-of-6,rho_frac,0.608,pipeline/ranking.py
+core,cells-agreement,8,6-of-6,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,6-of-6,cells_frac,112.0,pipeline/ranking.py
+core,cells-agreement,8,weighted fusion,rho,0.711,pipeline/ranking.py
+core,cells-agreement,8,weighted fusion,top20,0.5,pipeline/ranking.py
+core,cells-agreement,8,weighted fusion,top20_exp,0.5,pipeline/ranking.py
+core,cells-agreement,8,weighted fusion,rho_frac,0.647,pipeline/ranking.py
+core,cells-agreement,8,weighted fusion,cells,133.0,pipeline/ranking.py
+core,cells-agreement,8,weighted fusion,cells_frac,112.0,pipeline/ranking.py

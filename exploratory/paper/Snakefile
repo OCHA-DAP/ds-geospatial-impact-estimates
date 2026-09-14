@@ -1,308 +1,187 @@
 # Paper analysis DAG (ADR-0032). Run from the repo root:
 #
-#   uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exploratory/paper -n     # what is stale
-#   uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exploratory/paper -c2    # build the brief
+#   uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exploratory/paper -n      # what is stale
+#   uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exploratory/paper -c2     # build the brief
+#   ... diff --config base=origin/v1                                                                        # every changed number vs a git ref
 #   ... --touch   after verifying a checked-out state whose mtimes are not trustworthy
 #
-# Every rule's outputs are the CSVs and figures its script writes. `LIB` is an input of every
-# migrated rule, so a change to a shared definition marks every dependent number stale.
-# HEAVY rules (fusion, bootstrap, ablation) feed the appendix only; they do not depend on LIB
-# and rerun only when named explicitly (`snakemake heavy`), so an edit to the library never
-# costs an hour of compute unless you ask for it. Their current outputs are in the ADR-0030/0031
-# frame (re-run 2026-09-10).
-
-import os
+# Shape: three compact modules (scorecards, ranking, facts) compute rows of ONE results table
+# from the shared library; a few adapters wrap the frozen heavy chain (fusion, bootstrap,
+# ablation, round-2 crowd) and the appendix-only diagnostics that were not migrated; the brief
+# reads only results.csv. Heavy rules do not depend on the library and rerun only when named.
 
 A = "artefacts"
-LIB = f"{A}/lib/gie_paper.py"
-PY = "python"  # the snakemake process already runs inside `uv run --group etl --group paper`
-CORE_FLAGS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
+P = "pipeline"
+LIB = [f"{P}/paperlib.py", f"{A}/lib/gie_paper.py"]
 
 
-def run(script, *args, env=""):
-    return f"cd {A} && {env} {PY} {script} {' '.join(args)}"
+def art(script, *args, env=""):
+    return f"cd {A} && {env} python {script} {' '.join(args)}"
 
 
 # ---------------------------------------------------------------- final targets
 rule all:
-    input: "manuscript_brief.html", f"{A}/_audit/brief_numbers_audit.txt"
+    input: "manuscript_brief.html", f"{A}/_audit/brief_numbers_audit.txt", f"{P}/.tests_passed"
 
 rule heavy:
     input:
         expand(f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", r=[10, 20, 30]),
-        expand(f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv", r=[10, 20, 30]),
-        f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv",
-        f"{A}/RQ8-learned-fusion/rq8d_null_ablation.csv",
+        expand(f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv", r=[10, 20]),
+        f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv", f"{A}/RQ8-learned-fusion/rq8d_null_ablation.csv",
         f"{A}/RQ9-uncertainty/rq9_ci_core.csv",
 
-# ---------------------------------------------------------------- main-section scorecards
-rule rq2q:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2q_incl_possibly.py"
-    output: f"{A}/RQ2-cems-footprint-points/rq2q_incl_possibly.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2q_incl_possibly.py")
+# ---------------------------------------------------------------- the compact pipeline
+rule scorecards:
+    input: LIB, f"{P}/scorecards.py"
+    output: f"{P}/results_scorecards.csv"
+    shell: f"python {P}/scorecards.py"
 
-rule rq2i:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2i_per_aoi_scorecard.py"
-    output: f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv", f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2i_per_aoi_scorecard.py")
+rule ranking:
+    input: LIB, f"{P}/ranking.py"
+    output: f"{P}/results_ranking.csv"
+    shell: f"python {P}/ranking.py --with-fusion"
 
-rule rq2s:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2s_flag_totals.py", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv"
-    output: f"{A}/RQ2-cems-footprint-points/rq2s_flag_totals.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2s_flag_totals.py")
+rule facts:
+    input: LIB, f"{P}/facts.py"
+    output: f"{P}/results_facts.csv"
+    shell: f"python {P}/facts.py"
 
-rule rq5b:
-    input: LIB, f"{A}/RQ5-ensemble/scripts/rq5b_six_member.py"
-    output: f"{A}/RQ5-ensemble/rq5b_six_member.csv"
-    shell: run("RQ5-ensemble/scripts/rq5b_six_member.py")
+rule pipeline_tests:
+    input: LIB, f"{P}/tests/test_paperlib.py", f"{P}/tests/test_results_invariants.py", f"{A}/results.csv"
+    output: touch(f"{P}/.tests_passed")
+    shell: f"pytest {P}/tests -q"
 
-rule rq5b_r:
-    input: LIB, f"{A}/RQ5-ensemble/scripts/rq5b_six_member.py"
-    output: f"{A}/RQ5-ensemble/rq5b_six_member_r{{r}}.csv"
-    wildcard_constraints: r="20|30"
-    shell: run("RQ5-ensemble/scripts/rq5b_six_member.py", env="GIE_LABEL_R={wildcards.r}")
+rule oracle_check:
+    # the compact modules must reproduce the frozen scripts' numbers (explained exceptions listed in the script)
+    input: f"{P}/check_against_oracle.py", f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv", f"{A}/results_oracle_frozen.csv"
+    output: touch(f"{P}/.oracle_checked")
+    shell: f"python {P}/check_against_oracle.py {P}/results_scorecards.csv {P}/results_ranking.csv"
 
-rule rq2r:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2r_precision_bounds.py", f"{A}/RQ2-cems-footprint-points/rq2q_incl_possibly.csv", f"{A}/RQ5-ensemble/rq5b_six_member.csv"
-    output: f"{A}/RQ2-cems-footprint-points/rq2r_precision_bounds.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2r_precision_bounds.py")
-
-rule rq2_chatmap:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2_chatmap_recall.py"
-    output: f"{A}/RQ2-cems-footprint-points/rq2_chatmap_recall.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2_chatmap_recall.py")
-
-rule rq3f:
-    input: LIB, f"{A}/RQ3-prioritization-error-structure/scripts/rq3f_null_ranking.py"
-    output: f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv"
-    shell: run("RQ3-prioritization-error-structure/scripts/rq3f_null_ranking.py")
-
-rule rq3f_scope:
-    input: LIB, f"{A}/RQ3-prioritization-error-structure/scripts/rq3f_null_ranking.py"
-    output: f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_{{scope}}.csv"
-    wildcard_constraints: scope="core|caraballeda"
-    shell: run("RQ3-prioritization-error-structure/scripts/rq3f_null_ranking.py", env="GIE_SCOPE={wildcards.scope}")
-
-rule rq3h:
-    input: LIB, f"{A}/RQ3-prioritization-error-structure/scripts/rq3h_agreement_ranking.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv"
-    output: f"{A}/RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv"
-    shell: run("RQ3-prioritization-error-structure/scripts/rq3h_agreement_ranking.py")
-
-# ---------------------------------------------------------------- appendix scorecards (light)
-rule rq2k:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2k_field_union_precision.py"
-    output: f"{A}/RQ2-cems-footprint-points/rq2k_field_union_precision.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2k_field_union_precision.py")
-
-rule rq2l:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2l_cems_grade_recall.py"
-    output: f"{A}/RQ2-cems-footprint-points/rq2l_cems_grade_recall.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2l_cems_grade_recall.py")
-
-rule rq2o:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2o_uh_west_strip.py"
-    output: f"{A}/RQ2-cems-footprint-points/rq2o_uh_west_strip.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2o_uh_west_strip.py")
-
-rule rq2h:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2h_osu_v0_v1.py"
-    output: f"{A}/RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2h_osu_v0_v1.py")
-
-rule rq2p:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2p_osu_v1_tiers.py"
-    output: f"{A}/RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2p_osu_v1_tiers.py")
-
-rule rq2_density_null:
-    input: LIB, f"{A}/RQ2-cems-footprint-points/scripts/rq2_density_null.py"
-    output: f"{A}/RQ2-cems-footprint-points/rq2_density_null.csv"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2_density_null.py")
-
-rule rq3g:
-    input: LIB, f"{A}/RQ3-prioritization-error-structure/scripts/rq3g_frac_ranking.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv"
-    output: f"{A}/RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv", f"{A}/RQ3-prioritization-error-structure/figs/rq3g_frac_vs_count_rho.png"
-    shell: run("RQ3-prioritization-error-structure/scripts/rq3g_frac_ranking.py")
-
-rule rq3b:
-    input: LIB, f"{A}/RQ3-prioritization-error-structure/scripts/rq3b_per_area_moran.py"
-    output: f"{A}/RQ3-prioritization-error-structure/rq3b_per_area_moran.csv"
-    shell: run("RQ3-prioritization-error-structure/scripts/rq3b_per_area_moran.py")
-
-rule rq3d:
-    input: LIB, f"{A}/RQ3-prioritization-error-structure/scripts/rq3d_lisa_reliability.py"
-    output: f"{A}/RQ3-prioritization-error-structure/rq3d_lisa_summary.csv"
-    shell: run("RQ3-prioritization-error-structure/scripts/rq3d_lisa_reliability.py")
-
-rule rq0_cloud:
-    input: LIB, f"{A}/RQ0-matching-basis/scripts/rq0_cloud_unknown_robustness.py"
-    output: f"{A}/RQ0-matching-basis/rq0_cloud_unknown_robustness.csv"
-    shell: run("RQ0-matching-basis/scripts/rq0_cloud_unknown_robustness.py")
-
-rule rq7_round2:
-    input: LIB, f"{A}/RQ7-mapswipe-validation/scripts/rq7_round2_replication.py", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv"
-    output: f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv", f"{A}/RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv"
-    shell: run("RQ7-mapswipe-validation/scripts/rq7_round2_replication.py")
-
-rule rq7_explainer_fig:
-    input: LIB, f"{A}/RQ7-mapswipe-validation/scripts/rq7_round2_explainer_fig.py", f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv"
-    output: f"{A}/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png"
-    shell: run("RQ7-mapswipe-validation/scripts/rq7_round2_explainer_fig.py")
-
-# ---------------------------------------------------------------- heavy (appendix; explicit reruns only)
+# ---------------------------------------------------------------- frozen heavy chain (appendix; explicit reruns only, no LIB dependency)
 rule rq8:
     input: f"{A}/RQ8-learned-fusion/scripts/rq8_learned_fusion.py"
     output: f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", f"{A}/RQ8-learned-fusion/rq8_summary_r{{r}}.csv"
     wildcard_constraints: r="10|20|30"
-    shell: run("RQ8-learned-fusion/scripts/rq8_learned_fusion.py", env="GIE_LABEL_R={wildcards.r} GIE_DUMP_OOF=1")
+    shell: art("RQ8-learned-fusion/scripts/rq8_learned_fusion.py", env="GIE_LABEL_R={wildcards.r} GIE_DUMP_OOF=1")
 
 rule rq8b:
     input: f"{A}/RQ8-learned-fusion/scripts/rq8b_asdelivered_baseline.py"
     output: f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv"
     wildcard_constraints: r="10|20|30"
-    shell: run("RQ8-learned-fusion/scripts/rq8b_asdelivered_baseline.py", env="GIE_LABEL_R={wildcards.r}")
+    shell: art("RQ8-learned-fusion/scripts/rq8b_asdelivered_baseline.py", env="GIE_LABEL_R={wildcards.r}")
 
 rule rq8c:
     input: f"{A}/RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py", f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv"
     output: f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv"
-    shell: run("RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py")
+    shell: art("RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py")
 
 rule rq8d:
     input: f"{A}/RQ8-learned-fusion/scripts/rq8d_null_ablation.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv"
     output: f"{A}/RQ8-learned-fusion/rq8d_null_ablation.csv"
-    shell: run("RQ8-learned-fusion/scripts/rq8d_null_ablation.py", "--with-soil")
+    shell: art("RQ8-learned-fusion/scripts/rq8d_null_ablation.py", "--with-soil")
 
 rule rq9:
     input: f"{A}/RQ9-uncertainty/scripts/rq9_block_bootstrap.py", f"{A}/RQ5-ensemble/rq5b_six_member.csv", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv"
     output: f"{A}/RQ9-uncertainty/rq9_ci_core.csv", f"{A}/RQ9-uncertainty/rq9_ci_asdelivered_r10.csv", f"{A}/RQ9-uncertainty/rq9_ci_models_r10.csv"
-    shell: run("RQ9-uncertainty/scripts/rq9_block_bootstrap.py")
+    shell: art("RQ9-uncertainty/scripts/rq9_block_bootstrap.py")
 
-# ---------------------------------------------------------------- figures drawn from CSVs
-rule fig_grade_slope:
-    input: f"{A}/RQ2-cems-footprint-points/scripts/rq2e_grade_slope_fig.py", f"{A}/RQ2-cems-footprint-points/rq2_chatmap_recall.csv"
-    output: f"{A}/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2e_grade_slope_fig.py")
+# ---------------------------------------------------------------- appendix-only diagnostics still produced by their frozen scripts
+rule rq7_round2:
+    input: LIB[1], f"{A}/RQ7-mapswipe-validation/scripts/rq7_round2_replication.py", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv"
+    output: f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv", f"{A}/RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv"
+    shell: art("RQ7-mapswipe-validation/scripts/rq7_round2_replication.py")
 
-rule fig_bounds:
-    input: f"{A}/RQ2-cems-footprint-points/scripts/rq2r_bounds_fig.py", f"{A}/RQ2-cems-footprint-points/rq2r_precision_bounds.csv"
-    output: f"{A}/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png"
-    shell: run("RQ2-cems-footprint-points/scripts/rq2r_bounds_fig.py")
+rule rq2h:
+    input: LIB[1], f"{A}/RQ2-cems-footprint-points/scripts/rq2h_osu_v0_v1.py"
+    output: f"{A}/RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv"
+    shell: art("RQ2-cems-footprint-points/scripts/rq2h_osu_v0_v1.py")
 
-rule fig_frontier:
-    input: f"{A}/RQ5-ensemble/scripts/rq5b_frontier_fig.py", f"{A}/RQ5-ensemble/rq5b_six_member.csv"
-    output: f"{A}/RQ5-ensemble/figs/rq5b_frontier_r10.png"
-    shell: run("RQ5-ensemble/scripts/rq5b_frontier_fig.py")
+rule rq2p:
+    input: LIB[1], f"{A}/RQ2-cems-footprint-points/scripts/rq2p_osu_v1_tiers.py"
+    output: f"{A}/RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv"
+    shell: art("RQ2-cems-footprint-points/scripts/rq2p_osu_v1_tiers.py")
 
-rule fig_ranktests:
-    input: f"{A}/RQ3-prioritization-error-structure/scripts/rq3f_null_ranking_both_fig.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv"
-    output: f"{A}/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both_summary.png"
-    shell: run("RQ3-prioritization-error-structure/scripts/rq3f_null_ranking_both_fig.py", "--summary")
+rule rq2_density_null:
+    input: LIB[1], f"{A}/RQ2-cems-footprint-points/scripts/rq2_density_null.py"
+    output: f"{A}/RQ2-cems-footprint-points/rq2_density_null.csv"
+    shell: art("RQ2-cems-footprint-points/scripts/rq2_density_null.py")
 
-rule fig_agreerank:
-    input: f"{A}/RQ3-prioritization-error-structure/scripts/rq3h_agreement_ranking_fig.py", f"{A}/RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv"
-    output: f"{A}/RQ3-prioritization-error-structure/figs/rq3h_agreement_ranking_summary.png"
-    shell: run("RQ3-prioritization-error-structure/scripts/rq3h_agreement_ranking_fig.py", "--summary")
+rule rq3g:
+    input: LIB[1], f"{A}/RQ3-prioritization-error-structure/scripts/rq3g_frac_ranking.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv"
+    output: f"{A}/RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv", f"{A}/RQ3-prioritization-error-structure/figs/rq3g_frac_vs_count_rho.png"
+    shell: art("RQ3-prioritization-error-structure/scripts/rq3g_frac_ranking.py")
 
-rule fig_bestf1:
-    input: f"{A}/RQ8-learned-fusion/scripts/rq8_best_f1_fig.py", f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv", f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv"
-    output: f"{A}/RQ8-learned-fusion/figs/rq8_best_f1_r10_summary.png"
-    shell: run("RQ8-learned-fusion/scripts/rq8_best_f1_fig.py", "--summary")
+rule rq3b:
+    input: LIB[1], f"{A}/RQ3-prioritization-error-structure/scripts/rq3b_per_area_moran.py"
+    output: f"{A}/RQ3-prioritization-error-structure/rq3b_per_area_moran.csv"
+    shell: art("RQ3-prioritization-error-structure/scripts/rq3b_per_area_moran.py")
 
-rule fig_basis:
-    input: f"{A}/RQ8-learned-fusion/scripts/rq8c_basis_fig.py", f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv"
-    output: f"{A}/RQ8-learned-fusion/figs/rq8c_basis_precision_r10.png"
-    shell: run("RQ8-learned-fusion/scripts/rq8c_basis_fig.py")
+rule rq3d:
+    input: LIB[1], f"{A}/RQ3-prioritization-error-structure/scripts/rq3d_lisa_reliability.py"
+    output: f"{A}/RQ3-prioritization-error-structure/rq3d_lisa_summary.csv"
+    shell: art("RQ3-prioritization-error-structure/scripts/rq3d_lisa_reliability.py")
 
-# static / native-geometry figures: no scored inputs, rerun only when their script changes
-rule fig_extents:
-    input: LIB, f"{A}/RQ0-matching-basis/scripts/fig_extents_map.py"
-    output: f"{A}/RQ0-matching-basis/figs/fig_extents_map.png"
-    shell: run("RQ0-matching-basis/scripts/fig_extents_map.py")
-
-rule fig_refarch:
-    input: f"{A}/RQ0-matching-basis/scripts/reference_architecture_fig.py"
-    output: f"{A}/RQ0-matching-basis/figs/reference_architecture.png"
-    shell: run("RQ0-matching-basis/scripts/reference_architecture_fig.py")
-
-rule fig_dayzero:
-    input: f"{A}/RQ8-learned-fusion/scripts/rq8_dayzero_schematic.py"
-    output: f"{A}/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png"
-    shell: run("RQ8-learned-fusion/scripts/rq8_dayzero_schematic.py")
-
-rule fig_residual_maps:
-    input: LIB, f"{A}/RQ3-prioritization-error-structure/scripts/rq3_error_structure.py"
-    output: f"{A}/RQ3-prioritization-error-structure/figs/rq3_residual_maps_res8.png", f"{A}/RQ3-prioritization-error-structure/rq3_error_structure_summary.csv"
-    shell: run("RQ3-prioritization-error-structure/scripts/rq3_error_structure.py")
-
-rule fig_weststrip:
-    input: f"{A}/RQ7-mapswipe-validation/scripts/rq7_west_cluster_fig.py", f"{A}/RQ7-mapswipe-validation/rq7_west_cluster_join.csv"
-    output: f"{A}/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png"
-    shell: run("RQ7-mapswipe-validation/scripts/rq7_west_cluster_fig.py")
-
-# ---------------------------------------------------------------- compact pipeline (ADR-0032): replaces the per-RQ scripts
-PAPERLIB = ["pipeline/paperlib.py", LIB]
-
-rule scorecards:
-    input: PAPERLIB, "pipeline/scorecards.py"
-    output: "pipeline/results_scorecards.csv"
-    shell: f"{PY} pipeline/scorecards.py"
-
-rule pipeline_tests:
-    input: PAPERLIB, "pipeline/tests/test_paperlib.py"
-    output: touch("pipeline/.tests_passed")
-    shell: "pytest pipeline/tests -q"
-
-# ---------------------------------------------------------------- one results table for the brief
-RESULT_INPUTS = [
-    f"{A}/RQ2-cems-footprint-points/rq2q_incl_possibly.csv", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv",
-    f"{A}/RQ2-cems-footprint-points/rq2s_flag_totals.csv", f"{A}/RQ2-cems-footprint-points/rq2r_precision_bounds.csv",
-    f"{A}/RQ2-cems-footprint-points/rq2_chatmap_recall.csv", f"{A}/RQ2-cems-footprint-points/rq2k_field_union_precision.csv",
-    f"{A}/RQ2-cems-footprint-points/rq2l_cems_grade_recall.csv", f"{A}/RQ2-cems-footprint-points/rq2o_uh_west_strip.csv",
+# ---------------------------------------------------------------- one results table
+FROZEN_INPUTS = [
     f"{A}/RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv", f"{A}/RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv",
     f"{A}/RQ2-cems-footprint-points/rq2_density_null.csv", f"{A}/RQ2-cems-footprint-points/rq2_ms_confidence_curve.csv",
-    f"{A}/RQ5-ensemble/rq5b_six_member.csv", f"{A}/RQ5-ensemble/rq5b_six_member_r20.csv", f"{A}/RQ5-ensemble/rq5b_six_member_r30.csv",
-    f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv",
-    f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_caraballeda.csv", f"{A}/RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv",
     f"{A}/RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv", f"{A}/RQ3-prioritization-error-structure/rq3b_per_area_moran.csv",
     f"{A}/RQ3-prioritization-error-structure/rq3d_lisa_summary.csv",
-    f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv", f"{A}/RQ8-learned-fusion/rq8_best_f1_r20.csv", f"{A}/RQ8-learned-fusion/rq8_best_f1_r30.csv",
-    f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv", f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv",
+    expand(f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", r=[10, 20, 30]), expand(f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv", r=[10, 20]),
     f"{A}/RQ9-uncertainty/rq9_ci_core.csv", f"{A}/RQ9-uncertainty/rq9_ci_asdelivered_r10.csv", f"{A}/RQ9-uncertainty/rq9_ci_models_r10.csv",
+    f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv",
     f"{A}/RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv", f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv",
     f"{A}/RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv",
 ]
 
 rule results:
-    input: RESULT_INPUTS, f"{A}/consolidate.py"
+    input: f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv", f"{P}/results_facts.csv", FROZEN_INPUTS, f"{A}/consolidate.py"
     output: f"{A}/results.csv"
-    shell: f"cd {A} && {PY} consolidate.py"
+    shell: f"cd {A} && python consolidate.py"
+
+# ---------------------------------------------------------------- figures (drawn from CSVs or static; the frozen fig scripts stay in place)
+FIG_RULES = {
+    # output png : (script, inputs..., args)
+    f"{A}/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png": ("RQ2-cems-footprint-points/scripts/rq2e_grade_slope_fig.py", [f"{A}/RQ2-cems-footprint-points/rq2_chatmap_recall.csv"], ""),
+    f"{A}/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png": ("RQ2-cems-footprint-points/scripts/rq2r_bounds_fig.py", [f"{A}/RQ2-cems-footprint-points/rq2r_precision_bounds.csv"], ""),
+    f"{A}/RQ5-ensemble/figs/rq5b_frontier_r10.png": ("RQ5-ensemble/scripts/rq5b_frontier_fig.py", [f"{A}/RQ5-ensemble/rq5b_six_member.csv"], ""),
+    f"{A}/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both_summary.png": ("RQ3-prioritization-error-structure/scripts/rq3f_null_ranking_both_fig.py", [f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv"], "--summary"),
+    f"{A}/RQ3-prioritization-error-structure/figs/rq3h_agreement_ranking_summary.png": ("RQ3-prioritization-error-structure/scripts/rq3h_agreement_ranking_fig.py", [f"{A}/RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv"], "--summary"),
+    f"{A}/RQ8-learned-fusion/figs/rq8_best_f1_r10_summary.png": ("RQ8-learned-fusion/scripts/rq8_best_f1_fig.py", [f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv", f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv"], "--summary"),
+    f"{A}/RQ8-learned-fusion/figs/rq8c_basis_precision_r10.png": ("RQ8-learned-fusion/scripts/rq8c_basis_fig.py", [f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv"], ""),
+    f"{A}/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png": ("RQ7-mapswipe-validation/scripts/rq7_round2_explainer_fig.py", [f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv", LIB[1]], ""),
+    f"{A}/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png": ("RQ7-mapswipe-validation/scripts/rq7_west_cluster_fig.py", [f"{A}/RQ7-mapswipe-validation/rq7_west_cluster_join.csv"], ""),
+    f"{A}/RQ0-matching-basis/figs/fig_extents_map.png": ("RQ0-matching-basis/scripts/fig_extents_map.py", [LIB[1]], ""),
+    f"{A}/RQ0-matching-basis/figs/reference_architecture.png": ("RQ0-matching-basis/scripts/reference_architecture_fig.py", [], ""),
+    f"{A}/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png": ("RQ8-learned-fusion/scripts/rq8_dayzero_schematic.py", [], ""),
+    f"{A}/RQ3-prioritization-error-structure/figs/rq3_residual_maps_res8.png": ("RQ3-prioritization-error-structure/scripts/rq3_error_structure.py", [LIB[1]], ""),
+    f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png": ("RQ2-cems-footprint-points/scripts/rq2i_per_aoi_scorecard.py", [LIB[1]], ""),
+}
+# NOTE: the fig scripts still read the frozen per-RQ CSVs (rq5b, rq2r, rq3f, rq3h, rq2_chatmap). Those CSVs are
+# byte-equal to the pipeline's rows (oracle check) and are kept as the figures' inputs until the fig scripts read results.csv.
+
+for _png, (_script, _inputs, _args) in FIG_RULES.items():
+    rule:
+        name: "fig_" + _png.rsplit("/", 1)[1].replace(".png", "")
+        input: f"{A}/{_script}", *_inputs
+        output: _png
+        params: script=_script, args=_args
+        shell: art("{params.script}", "{params.args}")
 
 # ---------------------------------------------------------------- brief
-FIGS = [
-    f"{A}/RQ0-matching-basis/figs/fig_extents_map.png", f"{A}/RQ0-matching-basis/figs/reference_architecture.png",
-    f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png", f"{A}/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png",
-    f"{A}/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png",
-    f"{A}/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both_summary.png", f"{A}/RQ3-prioritization-error-structure/figs/rq3h_agreement_ranking_summary.png",
-    f"{A}/RQ3-prioritization-error-structure/figs/rq3g_frac_vs_count_rho.png", f"{A}/RQ3-prioritization-error-structure/figs/rq3_residual_maps_res8.png",
-    f"{A}/RQ5-ensemble/figs/rq5b_frontier_r10.png", f"{A}/RQ8-learned-fusion/figs/rq8_best_f1_r10_summary.png",
-    f"{A}/RQ8-learned-fusion/figs/rq8c_basis_precision_r10.png", f"{A}/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png",
-    f"{A}/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png", f"{A}/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png",
-]
-
 rule audit:
-    input: "manuscript_brief.qmd", "brief_numbers.py", f"{A}/results.csv", "audit_brief_numbers.py"
+    input: "manuscript_brief.qmd", "audit_brief_numbers.py"
     output: f"{A}/_audit/brief_numbers_audit.txt"
-    shell: f"{PY} audit_brief_numbers.py > {{output}}"
+    shell: "python audit_brief_numbers.py > {output}"
 
 rule brief:
-    input: "manuscript_brief.qmd", "brief_numbers.py", "appendix-fold.html", f"{A}/results.csv", FIGS
+    input: "manuscript_brief.qmd", "brief_numbers.py", "appendix-fold.html", f"{A}/results.csv", list(FIG_RULES), f"{P}/.oracle_checked"
     output: "manuscript_brief.html"
     shell: 'QUARTO_PYTHON="$(python -c \'import sys; print(sys.executable)\')" quarto render manuscript_brief.qmd --to html'
 
-# ---------------------------------------------------------------- number diff against any git ref
+# ---------------------------------------------------------------- number diff against any git ref (report in artefacts/_audit/)
 rule diff:
-    # usage: snakemake diff --config base=origin/v1   -> artefacts/_audit/diff_<base>.md
     input: f"{A}/results.csv", f"{A}/diff_results.py"
     params: base=config.get("base", "origin/v1")
     output: touch(f"{A}/_audit/diff.done")
-    shell: f"cd {A} && {PY} diff_results.py --base {{params.base}}"
+    shell: f"cd {A} && python diff_results.py --base {{params.base}}"

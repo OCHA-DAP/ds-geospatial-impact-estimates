@@ -42,17 +42,6 @@ def regions() -> list:
                 n_buildings_base=len(b))
     for p, a in aois.items():
         out += rows("all", p, aoi_km2=a.area / 1e6)
-    # LIST's extent against the core: the trim the core takes because LIST is the narrowest
-    lst = aois["LIST"]
-    core_wo_list = pl.cems_extent_latest()
-    for p, a in aois.items():
-        if p != "LIST":
-            core_wo_list = core_wo_list.intersection(a)
-    ref = pl.reference("floor")
-    in_wo = ref[ref.geometry.within(core_wo_list)]
-    out += rows("core", "LIST", core_without_list_km2=core_wo_list.area / 1e6, list_covers_km2=core_wo_list.intersection(lst).area / 1e6,
-                list_share_of_core=core_wo_list.intersection(lst).area / core_wo_list.area,
-                cems_in_core_without_list=len(in_wo), cems_in_core_with_list=int(in_wo.geometry.within(lst).sum()))
     # building spacing in the core (centroid nearest neighbour)
     xy = np.c_[inb.geometry.centroid.x, inb.geometry.centroid.y]
     d, _ = cKDTree(xy).query(xy, k=2)
@@ -84,25 +73,45 @@ def h3_areas() -> list:
 
 def microsoft_cloud() -> list:
     """Share of Microsoft-analysed footprints in the core that are mostly obscured (unknown_pct > 0.5)."""
-    ms = gp.to_metric(gp._read_pq("silver", "source=microsoft", "adm0=VE", "footprints.parquet"))
-    ms = ms[~ms.superseded.astype(bool)]
+    import ocha_stratus as stratus
+    import tempfile
+    blob = gp.S.blob_path("bronze", "source=microsoft", "adm0=VE", "merged", "ALL_AOIS_building_predictions_deduplicated.gpkg", event=None)
+    with tempfile.NamedTemporaryFile(suffix=".gpkg") as f:
+        f.write(stratus.load_blob_data(blob, stage="dev", container_name=gp.S.container)); f.flush()
+        ms = gpd.read_file(f.name).to_crs(pl.METRIC_CRS)
     core = pl.core_region()
     inc = ms[ms.geometry.representative_point().within(core)]
-    return rows("core", "MS", n_footprints=len(inc), share_mostly_obscured=float((inc.unknown_pct > 0.5).mean()))
+    return (rows("all", "MS", n_footprints=len(ms), share_mostly_obscured=float((ms.unknown_pct > 0.5).mean()))
+            + rows("core", "MS", n_footprints=len(inc), share_mostly_obscured=float((inc.unknown_pct > 0.5).mean())))
+
+
+def disha_extent() -> list:
+    """DISHA's analysed extent (licence-gated points are never used): how much of the core it
+    covers and how many reference points it holds — why it is not a comparison member."""
+    ext = gp.dissolve_union(gp._read_pq("silver", "source=disha", "adm0=VE", "analysed_extent.parquet"))
+    core = pl.core_region()
+    ref = pl.reference("floor"); in_core = ref[ref.geometry.within(core)]
+    return rows("core", "DISHA", extent_km2=ext.area / 1e6, covers_km2=ext.intersection(core).area / 1e6,
+                share_of_core=ext.intersection(core).area / core.area,
+                cems_in_extent=int(in_core.geometry.within(ext).sum()), cems_in_core=len(in_core))
 
 
 def osu_versions() -> list:
     """OSU v0 vs v1 delivered flags, and the turnover between them on the shared base."""
     import ocha_stratus as stratus
-    ids = {}
+    ids, sat = {}, np.nan
     for v in ("v0", "v1"):
         raw = stratus.load_blob_data(gp.S.blob_path("silver", "source=osu", "adm0=VE", f"version={v}", "building_damage.parquet", event=None),
                                      stage="dev", container_name=gp.S.container)
-        ids[v] = set(pd.read_parquet(io.BytesIO(raw), columns=["id"]).id)
+        d = pd.read_parquet(io.BytesIO(raw))
+        ids[v] = set(d.id)
+        if v == "v0":
+            sat = float((d.damage_probability == 1.0).mean())   # v0's score saturation
     base = set(pl.buildings().id)
     v0, v1 = ids["v0"] & base, ids["v1"] & base
     return rows("all", "OSU", v0_flags_delivered=len(ids["v0"]), v1_flags_delivered=len(ids["v1"]), v0_flags_on_base=len(v0), v1_flags_on_base=len(v1),
-                dropped_v0_to_v1=len(v0 - v1), added_v0_to_v1=len(v1 - v0), coverage_growth=len(ids["v1"]) / len(ids["v0"]) - 1)
+                dropped_v0_to_v1=len(v0 - v1), added_v0_to_v1=len(v1 - v0), coverage_growth=len(ids["v1"]) / len(ids["v0"]) - 1,
+                v0_share_probability_1=sat)
 
 
 def field() -> list:
@@ -115,7 +124,7 @@ def field() -> list:
 
 def main():
     out = []
-    for fn in (regions, reference_points, h3_areas, microsoft_cloud, osu_versions, field):
+    for fn in (regions, reference_points, h3_areas, microsoft_cloud, disha_extent, osu_versions, field):
         print(f"== {fn.__name__}", flush=True)
         out += fn()
     res = pd.DataFrame(out)

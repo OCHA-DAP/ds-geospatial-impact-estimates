@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import pathlib
 
+import numpy as np
 import pandas as pd
 
 A = pathlib.Path(__file__).parent / "artefacts"
@@ -23,7 +24,6 @@ ORDER = ["Microsoft", "IMPACT v2", "OSU", "UH", "LIST", "UNEP"]  # delivery orde
 
 def ordered(names) -> list:
     return sorted(names, key=lambda n: ORDER.index(n) if n in ORDER else 99)
-N_CEMS_CORE = 1467  # core-region CEMS grade-2/3 points (rq2q cems_pts)
 
 
 class Numbers(dict):
@@ -45,6 +45,8 @@ def results() -> pd.DataFrame:
 
 
 _R = results()
+_R["radius"] = _R["radius"].fillna(-1)   # sentinel for "no radius" (facts, flag totals, round-2 metrics)
+N_CEMS_CORE = int(_R[(_R.lens == "facts") & (_R.region == "core") & (_R.predictor == "CEMS") & (_R.metric == "n_points_2_3")].value.iloc[0])  # core CEMS grade-2/3 points
 
 
 def W(region=None, lens=None, radius="any", source=None, index="predictor") -> pd.DataFrame:
@@ -53,14 +55,14 @@ def W(region=None, lens=None, radius="any", source=None, index="predictor") -> p
     m = pd.Series(True, index=_R.index)
     if region is not None: m &= _R.region == region
     if lens is not None: m &= _R.lens == lens
-    if radius is None: m &= _R.radius.isna()
+    if radius is None: m &= _R.radius == -1
     elif radius != "any": m &= _R.radius == radius
     if source is not None: m &= _R.source.str.contains(source, regex=False)
     sub = _R[m]
     if not len(sub):
         raise KeyError(f"results.csv has no rows for region={region} lens={lens} radius={radius} source={source}")
     idx = [index] if isinstance(index, str) else list(index)
-    return sub.pivot_table(index=idx, columns="metric", values="value", aggfunc="first", dropna=False)
+    return sub.pivot_table(index=idx, columns="metric", values="value", aggfunc="first")
 
 
 def L(region=None, lens=None, source=None) -> pd.DataFrame:
@@ -72,7 +74,9 @@ def L(region=None, lens=None, source=None) -> pd.DataFrame:
     sub = _R[m]
     if not len(sub):
         raise KeyError(f"results.csv has no rows for region={region} lens={lens} source={source}")
-    return sub.pivot_table(index=["region", "radius", "predictor"], columns="metric", values="value", aggfunc="first", dropna=False).reset_index()
+    w = sub.pivot_table(index=["region", "radius", "predictor"], columns="metric", values="value", aggfunc="first").reset_index()
+    w["radius"] = w["radius"].replace(-1, np.nan)
+    return w
 
 
 def tbl(region: str, lens: str, radius, index: str = "predictor") -> pd.DataFrame:
@@ -198,7 +202,8 @@ N["crowd_adj_P_range"] = rng(prod.P_crowd.min(), prod.P_crowd.max(), f2)
 
 # ---------------------------------------------------------------- as delivered (rq2i)
 def _rq2i():
-    sub = _R[(_R.lens.isin(["points", "crowd"])) & (_R.radius == 10) & (_R.source.str.contains("rq2i_per_aoi_scorecard"))]
+    AOIS = ["asd", "Caraballeda", "Moron", "San Felipe", "Caracas", "Santa Cruz"]   # the as-delivered frame and the CEMS AOIs
+    sub = _R[(_R.lens.isin(["points", "crowd"])) & (_R.radius == 10) & (_R.region.isin(AOIS))]
     w = sub.pivot_table(index=["region", "predictor"], columns="metric", values="value").reset_index()
     w = w.rename(columns={"region": "aoi", "predictor": "product", "P": "P_cems", "R": "R_cems", "crowd_cov": "crowd_cov_of_fps"})
     w["aoi"] = w["aoi"].replace({"asd": "ALL (as delivered)"})
@@ -366,7 +371,7 @@ def _rq3():
 
 # ---------------------------------------------------------------- west strip, OSU versions, tiers (rq2o, rq2h, rq2p)
 def _rq2_rest():
-    o = L(lens="points", source="rq2o_uh_west_strip").rename(columns={"predictor": "product", "P": "P_cems"}); o["side"] = o.region.str.replace("strip-", "")
+    o = L(lens="points"); o = o[o.region.str.startswith("strip-")].rename(columns={"predictor": "product", "P": "P_cems"}); o["side"] = o.region.str.replace("strip-", "")
     for p in ("MS", "UH"):
         for side in ("west", "east"):
             r = one(o, product=p, side=side)
@@ -420,6 +425,65 @@ def _frame():
     N["frame_dP_range"] = rng(dP.min(), dP.max(), f2); N["frame_dR_range"] = rng(dR.min(), dR.max(), f2)
 
 
+# ---------------------------------------------------------------- facts (pipeline/facts.py): geography, inputs, spacing, versions
+def _facts():
+    F = W(lens="facts", radius=None, index=["region", "predictor"])
+    def f(region, predictor, metric): return float(F.loc[(region, predictor), metric])
+    N["core_area_km2"] = f"{f('core', 'region', 'area_km2'):.0f}"; N["core_area_km2_1"] = f"{f('core', 'region', 'area_km2'):.1f}"
+    N["core_n_buildings"] = com(f("core", "region", "n_buildings"))
+    N["products_overlap_km2"] = f"{f('all', 'region', 'products_overlap_km2'):.0f}"
+    N["ms_aoi_km2"] = f"{f('all', 'MS', 'aoi_km2'):.0f}"
+    N["core_cems"] = com(f("core", "CEMS", "n_points_2_3")); N["core_destroyed"] = com(f("core", "CEMS", "n_destroyed")); N["core_damaged"] = com(f("core", "CEMS", "n_damaged"))
+    N["cems_total_2_3"] = com(f("all", "CEMS", "n_points_2_3"))
+    for aoi, key in (("Caraballeda", "cara"), ("Moron", "moron"), ("San Felipe", "sanfelipe"), ("Caracas", "caracas"), ("Santa Cruz", "santacruz")):
+        N[f"{key}_points"] = com(f(aoi, "CEMS", "n_points_2_3"))
+    N["cara_share_pct"] = pct(f("Caraballeda", "CEMS", "share_of_points_2_3"))
+    N["spacing_median_m"] = f"{f('core', 'spacing', 'median_nn_m'):.1f}"; N["spacing_within20_pct"] = pct(f("core", "spacing", "share_nn_within_20m"))
+    N["h3_res7_km2"] = f"{f('all', 'h3-res7', 'avg_area_km2'):.1f}"; N["h3_res7_km2_0"] = f"{f('all', 'h3-res7', 'avg_area_km2'):.0f}"
+    N["h3_res8_km2"] = f"{f('all', 'h3-res8', 'avg_area_km2'):.2f}"; N["h3_res8_km2_1"] = f"{f('all', 'h3-res8', 'avg_area_km2'):.1f}"
+    N["h3_res9_km2"] = f"{f('all', 'h3-res9', 'avg_area_km2'):.1f}"
+    N["ms_obscured_pct"] = pct(f("all", "MS", "share_mostly_obscured"), 1); N["ms_footprints"] = com(f("all", "MS", "n_footprints"))
+    N["disha_extent_km2"] = f"{f('core', 'DISHA', 'extent_km2'):.1f}"; N["disha_covers_km2"] = f"{f('core', 'DISHA', 'covers_km2'):.1f}"
+    N["disha_share_pct"] = pct(f("core", "DISHA", "share_of_core")); N["disha_cems"] = com(f("core", "DISHA", "cems_in_extent"))
+    N["disha_drop_pct"] = pct(1 - f("core", "DISHA", "cems_in_extent") / f("core", "DISHA", "cems_in_core"))
+    N["osu_v0_delivered"] = com(f("all", "OSU", "v0_flags_delivered")); N["osu_v1_delivered"] = com(f("all", "OSU", "v1_flags_delivered"))
+    N["osu_v0_on_base"] = com(f("all", "OSU", "v0_flags_on_base")); N["osu_dropped"] = com(f("all", "OSU", "dropped_v0_to_v1")); N["osu_added"] = com(f("all", "OSU", "added_v0_to_v1"))
+    N["field_n"] = com(f("all", "ChatMap", "n_points"))
+    v = W("osu-versions", "points", 10)
+    N["osu_common_cems"] = com(v.loc["v0 (common extent)", "n_ref"])
+
+
+# ---------------------------------------------------------------- ratios quoted in the appendices
+def _ratios():
+    pts, pos = W("core", "points", 10), W("core", "points+possibly", 10)
+    lift = (pos.P / pts.P.reindex(pos.index))
+    N["possibly_lift_range"] = f"{lift.min():.1f}–{lift.max():.1f}×"
+    N["possibly_ref_growth"] = f"{pos.n_ref.iloc[0] / N_CEMS_CORE:.1f}×"
+    best_single = W("core", "points", 10).loc[PRODUCTS].P.max()
+    margins = []
+    for basis in ("destroyed", "dmg+destroyed", "incl_possibly"):
+        t = W("core", f"labels-{basis}", 10)
+        margins.append(t.loc["weighted fusion", "P"] / t.loc[PRODUCTS].P.max())
+    N["fusion_margin_range"] = f"{min(margins):.1f}–{max(margins):.1f}×"
+    w, e = W("strip-west", "points", 10), W("strip-east", "points", 10)
+    N["strip_ms_ratio"] = f"{e.loc['MS', 'P'] / w.loc['MS', 'P']:.0f}×"
+    F = W(lens="facts", radius=None, index=["region", "predictor"])
+    N["osu_v0_saturated_pct"] = pct(F.loc[("all", "OSU"), "v0_share_probability_1"])
+
+
+# ---------------------------------------------------------------- frozen: the Microsoft scene head-to-head (rq2g)
+# rq2g scored Microsoft's two overlapping scenes on its own scene footprints by centroid distance
+# (pre-ADR-0030 frame) against CEMS and the crowd. Its per-scene inputs (HASTE layers) lived in a
+# session scratchpad that no longer exists, so these values cannot be regenerated. They are kept
+# as declared constants with that provenance; the brief says so where it quotes them.
+FROZEN_RQ2G = {
+    "scene_ratio": "2.5", "scene_P_two": "0.245", "scene_P_one": "0.097", "scene_overlap_bld": "24,700",
+    "scene_vantor_share": "4.9%", "scene_planet_share": "27.8%", "scene_vantor_conf": "7%", "scene_planet_conf": "14%",
+    "scene_overruled_rejected": "68%", "scene_overruled_damaged": "845", "scene_both_rejected": "72%", "scene_vantor_only": "2,600",
+}
+N.update({f"frozen_{k}": v for k, v in FROZEN_RQ2G.items()})
+
+
 # ---------------------------------------------------------------- crowd round 2 (rq7)
 def _rq7():
     s = W("asd", "crowd-round2", 10).rename(columns={"strip_unmatched": "strip_unmatched_flags", "conf_r1": "unmatched_conf_share_r1", "conf_r2": "unmatched_conf_share_r2", "strip_share": "strip_share_of_covered_fps"})
@@ -431,9 +495,12 @@ def _rq7():
     N["r2_padj_maxdelta"] = f2(s.delta.abs().max())
     rep = W("strip", "crowd-round2", None).loc["MS"]
     N["r2_cells"] = com(rep["paired_task_cells"])
+    N["r2_votes_per_cell"] = f"{rep['median_votes_per_task_r2']:.0f}"; N["r1_votes_per_cell"] = f"{rep['median_votes_per_task_r1']:.0f}"
+    N["r2_latent_corr"] = f2(rep["latent_correlation"]); N["r2_raw_corr"] = f2(rep["pearson_raw"])
+    N["r1_no_share_pct"] = pct(rep["cell_majority_no_share_r1"])
 
 
-for _fn in (_rq3, _rq2_rest, _ms_conf, _flags, _ratio, _frame, _rq7):
+for _fn in (_rq3, _rq2_rest, _ms_conf, _flags, _ratio, _frame, _facts, _ratios, _rq7):
     try:
         _fn()
     except FileNotFoundError as e:  # a not-yet-regenerated artefact: fail at render, loudly

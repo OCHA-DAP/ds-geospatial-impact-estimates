@@ -208,6 +208,13 @@ def rq8b():
     return out
 
 
+def rq8c():
+    """Fusion appendix: the frozen operating points re-scored under three reference grades (labels lens)."""
+    rel = "RQ8-learned-fusion/rq8c_basis_pr_r10.csv"
+    return sum((rows("core", f"labels-{x['basis']}", 10, x["predictor"], rel, P=x.get("precision"), R=x.get("recall"), F1=x.get("f1"),
+                     n_flags=x.get("n_flags"), n_pos=x.get("n_pos")) for _, x in load(rel).iterrows()), [])
+
+
 def rq9():
     out = []
     rel = "RQ9-uncertainty/rq9_ci_core.csv"
@@ -240,13 +247,38 @@ def frame():
                      centroid_P=x.get("centroid_P"), centroid_R=x.get("centroid_R"), centroid_F1=x.get("centroid_F1")) for _, x in load(rel).iterrows()), [])
 
 
-SOURCES = [rq5b, rq2i, rq2q, rq2r, rq2_chatmap, rq2k, rq2s, rq2l, rq2o, rq2h, rq2p, rq2_density_null, rq2_ms_confidence,
-           rq3f, rq3h, rq3g, rq3b, rq3d, rq8, rq8b, rq9, rq7, frame]
+PIPELINE = os.path.join(HERE, "..", "pipeline")
+
+
+def pipeline_rows(name):
+    """Rows written by a compact pipeline module (pipeline/results_<name>.csv)."""
+    def fn():
+        p = os.path.join(PIPELINE, f"results_{name}.csv")
+        if not os.path.exists(p):
+            raise FileNotFoundError(f"consolidate: pipeline output missing: pipeline/results_{name}.csv (run `snakemake {name}`)")
+        LOADED.add(f"../pipeline/results_{name}.csv")
+        return pd.read_csv(p).to_dict("records")
+    fn.__name__ = f"pipeline_{name}"
+    return fn
+
+
+# Current sources: the compact modules (ADR-0032) plus adapters over the frozen heavy chain and
+# the appendix-only diagnostics that were not migrated (their scripts remain under artefacts/).
+SOURCES = [pipeline_rows("scorecards"), pipeline_rows("ranking"), pipeline_rows("facts"),
+           rq2h, rq2p, rq2_density_null, rq2_ms_confidence, rq3g, rq3b, rq3d, rq8, rq8b, rq8c, rq9, rq7, frame]
+
+# The oracle: every number from the frozen per-RQ scripts, as consolidated on 2026-09-14
+# (artefacts/results_oracle_frozen.csv). `python consolidate.py --oracle` rebuilds it.
+ORACLE_SOURCES = [rq5b, rq2i, rq2q, rq2r, rq2_chatmap, rq2k, rq2s, rq2l, rq2o, rq2h, rq2p, rq2_density_null, rq2_ms_confidence,
+                  rq3f, rq3h, rq3g, rq3b, rq3d, rq8, rq8b, rq9, rq7, frame]
 
 
 def main():
+    import sys
+    oracle = "--oracle" in sys.argv[1:]
+    sources = ORACLE_SOURCES if oracle else SOURCES
     out = []
-    for fn in SOURCES:
+    for fn in sources:
         out += fn()
     res = pd.DataFrame(out)
     bad = res[pd.to_numeric(res.value, errors="coerce").isna()]
@@ -258,8 +290,9 @@ def main():
     if len(dup):
         raise SystemExit("consolidate: duplicate keys\n" + dup.sort_values(key).to_string())
     res = res.sort_values(key).reset_index(drop=True)
-    res.to_csv(os.path.join(HERE, "results.csv"), index=False)
-    print(f"results.csv: {len(res):,} rows from {len(SOURCES)} sources")
+    name = "results_oracle_frozen.csv" if oracle else "results.csv"
+    res.to_csv(os.path.join(HERE, name), index=False)
+    print(f"{name}: {len(res):,} rows from {len(sources)} sources")
 
 
 if __name__ == "__main__":

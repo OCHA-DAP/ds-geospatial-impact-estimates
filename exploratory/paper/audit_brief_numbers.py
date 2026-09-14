@@ -10,7 +10,8 @@ NUM = re.compile(r"(?<![\w/#.-])(?:\d{1,3}(?:,\d{3})+|\d+\.\d+|\d+)(?:%|\s?km²|
 # literals that are allowed to be typed: dates and times, radii and cell sizes (design choices),
 # document structure numbers. Anything derived from data is NOT allowed here.
 ALLOW = {r"^\d{4}$", r"^\d{1,2}$", r"^\d{1,2}:\d{2}$", r"^(10|20|30|50) m$", r"^0\.74 km²$", r"^0\.7 km²$", r"^0\.1 km²$", r"^5\.2 km²$", r"^5 km²$",
-         r"^\d{1,2} m$", r"^95%$", r"^72$", r"^20$", r"^400$", r"^415$", r"^133$", r"^2,000$", r"^M7\.[25]$"}
+         r"^\d{1,2} m$", r"^95%$", r"^72$", r"^20$", r"^400$", r"^133$", r"^2,000$", r"^M7\.[25]$",
+         r"^200$", r"^728$", r"^1\.0$"}  # 200 km swath, 728 round-2 volunteers (campaign metadata), probability 1.0
 allow = [re.compile(p) for p in ALLOW]
 strict = "--strict" in sys.argv
 in_code = in_yaml = False; bad = []

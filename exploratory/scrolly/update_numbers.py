@@ -7,7 +7,7 @@ and writes nothing. Run from the repo root after the artefact chain and the data
 import re, sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "exploratory/paper"))
-from brief_numbers import N, rq5b, rq2r, PRODUCTS, LONG, csv, words, N_CEMS_CORE  # noqa: E402
+from brief_numbers import N, rq5b, rq2r, PRODUCTS, LONG, L, W, words, N_CEMS_CORE  # noqa: E402
 
 html_path = pathlib.Path(__file__).parent / "index.html"
 t = html_path.read_text()
@@ -29,8 +29,7 @@ k1, k6 = core.loc["1-of-6"], core.loc["6-of-6"]
 sub1(r"from [\d,]+ flags at \d+% confirmed to [\d,]+\s+at \d+%",
      f"from {int(k1.flagged):,} flags at {100 * k1.P_cems:.0f}% confirmed to {int(k6.flagged):,}\n  at {100 * k6.P_cems:.0f}%")
 # --- ranking bars (rq3h, res 8): best agreement rule + the six products
-h = csv("RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv")
-h8 = h[h.res == 8].set_index("predictor")
+h8 = W("core", "cells-agreement", 8)
 votes = [p for p in h8.index if "-of-" in p]; best = h8.loc[votes, "rho"].idxmax()
 singles = {"Microsoft": "Microsoft", "IMPACT v2": "IMPACT", "OSU": "OSU", "UH": "UH", "LIST": "LIST", "UNEP": "UNEP"}
 rows = [f'["{best} agreement",{h8.loc[best, "rho"]:.3f},true]']
@@ -47,7 +46,7 @@ prod = core.loc[PRODUCTS]
 visits = prod.flagged / (rq5b[30].loc[PRODUCTS, "R_cems"] * N_CEMS_CORE)
 sub1(r"roughly \d+ to \d+ site visits", f"roughly {visits.min():.0f} to {visits.max():.0f} site visits")
 # --- arrivals: total flags per product on the shared base (rq2s)
-tot = csv("RQ2-cems-footprint-points/rq2s_flag_totals.csv").set_index("product").total_flags
+tot = W("all", "flags", None).total_flags.loc[list(PRODUCTS)].astype(int)
 sub1(r"<strong>[\d,]+ buildings</strong> in the coastal strip", f"<strong>{tot['MS']:,} buildings</strong> in the coastal strip")
 sub1(r"It flags <strong>[\d,]+ buildings</strong>\.", f"It flags <strong>{tot['IMPACT']:,} buildings</strong>.")
 sub1(r"a different area of interest:\s+<strong>[\d,]+ buildings</strong>", f"a different area of interest:\n    <strong>{tot['OSU']:,} buildings</strong>")
