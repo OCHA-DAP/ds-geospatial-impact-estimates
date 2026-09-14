@@ -37,7 +37,7 @@ rows = [f'["{best} agreement",{h8.loc[best, "rho"]:.3f},true]']
 rows += [f'["{short}",{h8.loc[lab, "rho"]:.3f},false]' for lab, short in sorted(singles.items(), key=lambda kv: -h8.loc[kv[0], "rho"])]
 sub1(r"const RANKDATA = \[.*?\];", "const RANKDATA = [" + ",".join(rows) + "];")
 n07 = int((h8.loc[list(singles), "rho"] >= 0.7).sum())
-sub1(r"\(\w+ of the six reach a Spearman ρ of 0\.7 or more", f"({words(n07)} of the six reach a Spearman ρ of 0.7 or more")
+sub1(r"\(\w+ of the six agree closely with", f"({words(n07)} of the six agree closely with")
 # --- precision bounds (rq2r): floor and upper bound, per cent, sorted by floor
 b = rq2r.loc[PRODUCTS].sort_values("P_floor", ascending=False)
 bounds = ",".join(f'["{LONG[p]}",{100 * r.P_floor:.1f},{100 * r.P_upper:.1f}]' for p, r in b.iterrows())
@@ -53,7 +53,7 @@ sub1(r"It flags <strong>[\d,]+ buildings</strong>\.", f"It flags <strong>{tot['I
 sub1(r"a different area of interest:\s+<strong>[\d,]+ buildings</strong>", f"a different area of interest:\n    <strong>{tot['OSU']:,} buildings</strong>")
 sub1(r"debris tonnage \(<strong>[\d,]+</strong> buildings\)", f"debris tonnage (<strong>{tot['UNEP']:,}</strong> buildings)")
 sub1(r"WFP, LIST and CERN\s+\(<strong>[\d,]+</strong>\)", f"WFP, LIST and CERN\n    (<strong>{tot['LIST']:,}</strong>)")
-sub1(r"<strong>[\d,]+ flagged</strong>\. Two further", f"<strong>{tot['UH']:,} flagged</strong>. Two further")
+sub1(r"<strong>[\d,]+ buildings flagged</strong>\. Two further", f"<strong>{tot['UH']:,} buildings flagged</strong>. Two further")
 sub1(r"answers from <strong>[\d,]+ to [\d,]+</strong>", f"answers from <strong>{tot.min():,} to {tot.max():,}</strong>")
 sub1(r"a factor of \w+\.", f"a factor of {words(round(tot.max() / tot.min()))}.")
 sub1(r"the six count anywhere from [\d,]+ to [\d,]+ damaged", f"the six count anywhere from {int(prod.flagged.min()):,} to {int(prod.flagged.max()):,} damaged")

@@ -156,6 +156,8 @@
            border-radius:999px; padding:5px 10px; margin-bottom:12px; }
   .plot .qchip { margin-bottom:10px; }
   .answer { display:block; margin-top:12px; padding-top:10px; border-top:1px solid rgba(250,251,251,.12); }
+  .card .fn { display:block; margin-top:10px; font-size:12px; line-height:1.45; color:var(--mut); }
+  .article strong.aud { color:#a3c0ef; }
   .answer b { color:#a3c0ef; font:700 12px/1 Roboto, sans-serif; letter-spacing:.12em; text-transform:uppercase; margin-right:8px; }
   .legend .ramp { width:150px; height:10px; border-radius:3px; margin:4px 0 2px;
                   background:linear-gradient(90deg,#fde9a9,#f2a03d,#c9402a,#77111f); }
@@ -277,7 +279,8 @@
       <p>Advances in AI and satellite imaging have made assessments like these far faster
          and cheaper to produce, and more organisations than ever are producing them. The
          abundance is new, and the humanitarian system is still learning how to make use
-         of it operationally.</p>
+         of it operationally. This story evaluates the assessments produced after the Venezuela
+earthquake and asks what responders can, and cannot, do with them.</p>
       <div class="hint">Scroll ↓</div>
     </div>
   </section>
@@ -326,7 +329,7 @@
 
   <section class="step" data-step="6"><div class="card">
     <div class="kicker">Day 7 · two more</div>
-    UNEP delivers another SAR-based analysis, this one relating detected damage to
+    UNEP delivers another SAR-based analysis, which also turns detected damage into an estimate of
     debris tonnage (<strong>75,476</strong> buildings). Later that week, another
     assessment arrives from a collaboration between WFP, LIST and CERN
     (<strong>163,225</strong>).
@@ -336,11 +339,12 @@
     <div class="kicker">Additional assessments</div>
     Meanwhile, the UN assessment and analysis group becomes aware of a further analysis
     by an academic group, UH SAIL at the University of Houston: a deep learning model
-    based on optical imagery classifying buildings across eight coastal AOIs.
-    <strong>74,705 flagged</strong>. Two further products arrived in the same window but are
-    not evaluated here: HOT's fAIr, an AI-plus-crowd product that publishes no analysed
-    extent, so its misses and false alarms cannot be counted fairly; and DISHA (UN Global
-    Pulse), which is licence-restricted and covers less than half of the shared strip.
+    based on optical imagery classifying buildings across eight coastal areas.
+    <strong>74,705 buildings flagged</strong>. Two further products arrived in the same window but are
+    not evaluated here.
+    <span class="fn">HOT's fAIr publishes no analysed extent, so its misses and false alarms
+    cannot be counted fairly. DISHA (UN Global Pulse) covers less than half of the shared
+    comparison area; including it would have halved the ground on which all six are compared.</span>
   </div></section>
 
   <section class="step" data-step="8"><div class="card">
@@ -353,8 +357,7 @@
   <section class="step" data-step="9"><div class="card">
     <div class="kicker">Where they can be compared</div>
     The outlines show where each assessment actually looked: areas spanning three orders
-    of magnitude, and no two alike. The dashed white line is where the Copernicus EMS analysts worked (manual mapping on
-    very-high-resolution imagery, not modelling). The small red
+    of magnitude, and no two alike. The dashed white line is where the Copernicus EMS analysts worked. The small red
     strip is the one place <em>all of them</em> overlap: 61 km² and 57,241 shared
     buildings, where the assessments can be compared fairly, building by building. Even
     here, on identical buildings, the six count anywhere from 5,362 to 25,882 damaged.
@@ -398,9 +401,11 @@
     At this scale, every one of the six assessments ranks the cells fairly well on its
     own. That matters: search-and-rescue teams told us that in the first 72 hours,
     narrowing down the worst-hit areas was exactly what they needed most. One caveat
-    carries through: this holds inside an area already known to be badly hit.
+    carries through: this holds inside an area already known to be badly hit. Across the wider ground
+    each assessment covered, the rankings weaken.
     <span class="answer"><b>Answer 2</b> Yes, inside a known disaster zone. Ranking
-    orders that zone; it does not find one, and it never names a building.</span>
+    says where to go first within a zone already known to be hit. It cannot say where that
+    zone is, and it cannot point to a building.</span>
   </div></section>
 
   <section class="step qstep" data-step="15"><div class="card">
@@ -425,8 +430,8 @@
 
   <section class="step qstep" data-step="18"><div class="card">
     <div class="kicker">Combining also ranks best</div>
-    Back to the neighbourhood ranking from question two, with one more row: the cells
-    ranked by agreement between the assessments out-rank every single one of them. So
+    Back to the neighbourhood ranking from question two, with one more row: ranking cells
+    by how many assessments agree beats the ranking from any single assessment. So
     combining helps at both levels that matter: fewer false alarms building by building,
     and a better answer to <em>where first</em>.
   </div></section>
@@ -434,7 +439,8 @@
   <section class="step qstep" data-step="19"><div class="card">
     <div class="kicker">Using them together</div>
     Combining is not only more accurate, it is the only way to see the whole picture.
-    Each colour is where one assessment looked, and no two covered the same area. During
+    Each colour is where one assessment looked, and no two extents match: they overlap in places,
+    but none covers the same ground as another. During
     this response, an ad hoc <a href="https://chd-ds-geospatial-impact-viewer.azurewebsites.net/"
     target="_blank" rel="noopener">viewer</a> our team stood up within days let
     responders see who had looked where. It filled part of the gap, not all of it, and
@@ -455,7 +461,7 @@
     <h3>2 · Ranking neighbourhoods for triage</h3>
     <p>Search-and-rescue teams told us that in the first 72 hours their pressing need was to narrow
     down the worst-hit areas, and this is where the products are strongest. Within a subset area
-    already known to be heavily damaged, they rank neighbourhoods for triage fairly well (three of the six reach a Spearman ρ of 0.7 or more against
+    already known to be heavily damaged, they rank neighbourhoods for triage fairly well (three of the six agree closely with
     the Copernicus EMS ordering). Evaluated against the full geographic scope each product delivered, their
     ranking ability declines markedly (see the <a href="https://ocha-dap.github.io/ds-geospatial-impact-estimates/brief/">technical brief</a>).</p>
     <h3>3 · Using the products together</h3>
@@ -475,16 +481,16 @@
       analyses as they become available.</li>
     </ol>
     <h3>Recommendations</h3>
-    <p><strong>For responders and response coordinators:</strong> do not act on a single flagged
+    <p><strong class="aud">For responders and response coordinators:</strong> do not act on a single flagged
     building from any one product; trust the neighbourhood ranking within an already-identified
     damage zone, where it is most useful in the first days; rather than choosing a product, count
-    agreement between them, and treat buildings where every product agrees but the reference is
-    silent as priorities for field verification rather than false alarms (in this event they were
+    agreement between them, and treat buildings where every product agrees but none of the three
+    reference sources recorded damage as priorities for field verification rather than false alarms (in this event they were
     mostly real damage); and keep one shared, live picture of what has been analysed where.</p>
-    <p><strong>For providers:</strong> publish the analysed extent and per-building acquisition
+    <p><strong class="aud">For providers:</strong> publish the analysed extent and per-building acquisition
     metadata, and keep a channel open for feedback during the activation while reprocessing can
     still help.</p>
-    <p><strong>For evaluators:</strong> keep testing this methodology across
+    <p><strong class="aud">For evaluators:</strong> keep testing this methodology across
     different crises, and build the system that makes it routine: a required specification for
     contributed products (analysed extent, metadata, a common building base) and a standing way for
     providers to contribute into a shared space, so that combining and evaluating starts the day the
