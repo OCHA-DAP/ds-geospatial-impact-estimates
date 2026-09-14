@@ -28,8 +28,8 @@ ROWS = {"CEMS {2,3}": ("CEMS (expert reference)", "#1b1f24", 2.6),
         "UH": ("UH", "#9aa5b1", 1.6),
         "UNEP debris (core region)": ("UNEP", "#9aa5b1", 1.6)}
 
-LABEL_DY = {"OSU": 6, "LIST": -9, "UNEP": 5, "UH": -12}
 fig, ax = plt.subplots(figsize=(9, 7.5))
+labels = []
 for key, (label, color, lw) in ROWS.items():
     r = df[df.reference == key]
     if not len(r):
@@ -37,8 +37,20 @@ for key, (label, color, lw) in ROWS.items():
     c, s = float(r.complete_r20.iloc[0]), float(r.significant_r20.iloc[0])
     ax.plot([0, 1], [c, s], c=color, lw=lw, marker="o", ms=7,
             zorder=4 if lw > 2 else 2)
-    ax.annotate(f"{label}  ({c:.2f} → {s:.2f})", (1, s), textcoords="offset points",
-                xytext=(10, LABEL_DY.get(label, -3)), fontsize=10.5, color=color)
+    labels.append((s, f"{label}  ({c:.2f} → {s:.2f})", color))
+# stack the right-hand labels so none overprint: sort by value, then push apart to a
+# minimum gap in data units (labels keep their line's value in the text itself)
+MIN_GAP = 0.032
+labels.sort(key=lambda x: x[0])
+ys = [s for s, _, _ in labels]
+for i in range(1, len(ys)):
+    ys[i] = max(ys[i], ys[i - 1] + MIN_GAP)
+for i in range(len(ys) - 2, -1, -1):  # pull back down where the stack overshoots the axis top
+    ys[i] = min(ys[i], ys[i + 1] - MIN_GAP)
+for (s, txt, color), y in zip(labels, ys):
+    ax.annotate(txt, (1, s), xytext=(1.06, y), textcoords="data", fontsize=10.5, color=color,
+                va="center", arrowprops=dict(arrowstyle="-", color=color, lw=0.6, alpha=0.6)
+                if abs(y - s) > 0.012 else None)
 
 ax.set_xlim(-0.15, 1.9)
 ax.set_ylim(0, 1.02)
