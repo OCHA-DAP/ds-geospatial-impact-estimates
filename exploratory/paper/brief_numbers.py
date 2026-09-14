@@ -284,16 +284,17 @@ rq8b20 = W("asd", "labels", 20).rename(columns=_rn8b)
 N["core_pos_r20"] = com(rq8b20.loc["MS", "n_pos"])
 
 # ---------------------------------------------------------------- confidence intervals (rq9)
-def _ci(region):
-    """rq9's long form again: rule, radius, metric, point, lo, hi."""
-    w = L(region, "ci"); out = []
+def _ci(region, lens="ci", name="rule"):
+    """rq9's long form again: rule|predictor, radius, metric, point, lo, hi."""
+    w = L(region, lens); out = []
     for _, row in w.iterrows():
         for m in [c for c in w.columns if c not in ("region", "radius", "predictor") and not c.endswith(("_lo", "_hi"))]:
             if pd.notna(row[m]):
-                out.append(dict(rule=row.predictor, radius=int(row.radius), metric=m, point=row[m], lo=row.get(f"{m}_lo"), hi=row.get(f"{m}_hi")))
+                out.append({name: row.predictor, "radius": int(row.radius), "metric": m, "point": row[m], "lo": row.get(f"{m}_lo"), "hi": row.get(f"{m}_hi")})
     return pd.DataFrame(out)
 ci = _ci("core")
 cia = _ci("asd")
+ci_models = _ci("core", "ci-labels", name="predictor")  # rq9 model-frame intervals (tbl-ci-models)
 r = one(cia, rule="UH", metric="P")
 N["asd_UH_P_lo"] = f3(r.lo); N["asd_UH_P_hi"] = f3(r.hi)
 v6 = one(ci, rule="6-of-6", radius=30, metric="visits_per_find")  # visits/find is defined at the 30 m finding distance

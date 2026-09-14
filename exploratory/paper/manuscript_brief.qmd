@@ -231,10 +231,7 @@ from great_tables import GT, style, loc
 from matplotlib import colormaps
 from matplotlib.colors import to_hex
 
-five = {r: pd.read_csv(f"artefacts/RQ5-ensemble/rq5b_six_member{'' if r == 10 else f'_r{r}'}.csv").set_index("rule")
-        for r in (10, 20, 30)}
-asd = pd.read_csv("artefacts/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv")
-asd = asd[asd.aoi == "ALL (as delivered)"].drop_duplicates("product").set_index("product")
+from brief_numbers import rq5b as five, asd   # both slices of artefacts/results.csv
 
 products = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 rules = [f"{k}-of-6" for k in range(1, 7)]
@@ -1132,7 +1129,7 @@ than its decimals suggest, which is worth remembering when reading any two produ
 import pandas as pd
 from great_tables import GT
 
-ci = pd.read_csv("artefacts/RQ9-uncertainty/rq9_ci_core.csv")
+from brief_numbers import ci   # rq9 core intervals, from artefacts/results.csv
 def cell(rule, radius, metric, dp=3):
     r = ci[(ci["rule"] == rule) & (ci.radius == radius) & (ci.metric == metric)].iloc[0]
     f = f"{{:.{dp}f}}"
@@ -1156,7 +1153,7 @@ rows = [{"rule": labels.get(k, k),
 ```{python}
 #| label: tbl-ci-models
 #| tbl-cap: "Model frame (building labels, core region), 95% block-bootstrap intervals: F1 at each predictor's frozen operating point and its paired difference from the logistic geography null. A difference interval that excludes zero separates from the null; only the combination rules do so upward."
-mi = pd.read_csv("artefacts/RQ9-uncertainty/rq9_ci_models_r10.csv")
+from brief_numbers import ci_models as mi   # from artefacts/results.csv
 def mcell(pred, metric):
     r = mi[(mi.predictor == pred) & (mi.metric == metric)].iloc[0]
     return f"{r['point']:+.3f} ({r['lo']:+.3f}–{r['hi']:+.3f})" if metric == "F1_diff"         else f"{r['point']:.3f} ({r['lo']:.3f}–{r['hi']:.3f})"
