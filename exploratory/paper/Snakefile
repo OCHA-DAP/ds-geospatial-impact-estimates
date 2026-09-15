@@ -44,6 +44,37 @@
 # hand-typed number). `oracle_check` is the historical validation of the modules against the
 # frozen scripts; `diff` compares any two states number by number.
 #
+# THE RESEARCH QUESTIONS (the RQn numbering in rule and file names). Each was one folder of
+# scripts in the archive; the brief's sections draw on them as noted.
+#     RQ0  matching basis: how a product flag is matched to a reference point (centroid vs footprint,
+#          radius, cloud/no-data robustness). Feeds the matching appendix and the frame paragraph.
+#     RQ1  CEMS coarse damage blocks vs CEMS damage points (an internal early-vs-refined check of the
+#          reference). Not used by the brief.
+#     RQ2  building-level precision and recall of every product against CEMS damage POINTS: the
+#          primary scorecard, per region (core / as delivered / per AOI), reference grades, crowd
+#          credit, field-report recall, flag totals, OSU v0 vs v1, the west-strip case. Now computed
+#          by pipeline/scorecards.py. Feeds brief section 2, Table 1, the dial table's as-delivered
+#          column, the bounds ladder, the grade-slope figure and several appendices.
+#     RQ3  area ranking and error structure: how well each product orders H3 cells by damage, against
+#          a geography null; spatial clustering of errors (Moran's I, LISA); count vs fraction. Now
+#          computed by pipeline/ranking.py (rq3f/rq3h); rq3b/rq3d/rq3g remain archived diagnostics.
+#          Feeds section 3, the two ranking figures, the ranking appendix.
+#     RQ4  UNEP debris scored inside hard-hit admin units (an early coverage workaround). Superseded;
+#          not used by the brief.
+#     RQ5  agreement rules: the six products combined as k-of-6 votes and pairs, the frontier of
+#          precision vs recall. Now computed by pipeline/scorecards.py. Feeds section 4 (the dial
+#          table, the frontier figure) and the abstract's "combining roughly doubles F1".
+#     RQ6  a do-it-yourself Sentinel-1 change-detection baseline. Not used by the brief.
+#     RQ7  the MapSwipe crowd: how crowd verdicts adjudicate unmatched flags, the west-strip cluster,
+#          and the independent round-2 re-vote. rq7_round2 and the west-cluster join are frozen
+#          inputs; the crowd credit itself is in pipeline/paperlib.py. Feeds the crowd appendix and
+#          the crowd-mechanism figure.
+#     RQ8  learned fusion and the geography null: a fitted combination of the six products, its
+#          out-of-fold scores, the "day zero" baseline, reference-grade and feature ablations. Heavy,
+#          archived, frozen inputs. Feeds the best-F1 figure, the null appendix, the basis appendix.
+#     RQ9  uncertainty: spatial block-bootstrap confidence intervals for the headline numbers. Heavy,
+#          archived, frozen input. Feeds the two interval tables in the appendix.
+#
 # Vocabulary used in rule and row names:
 #     region     core (where all six products and the reference overlap) | asd ("as delivered": every
 #                CEMS AOI pooled) | a CEMS AOI name | strip-west/east | all
@@ -161,33 +192,33 @@ rule legacy_csvs:
 # `{r}` is a wildcard: one rule stands for the r = 10, 20 and 30 m variants.
 # ---------------------------------------------------------------------------------------------
 rule rq8:
-    # learned fusion of the six products (labels lens); also dumps the out-of-fold parquet others read
+    # RQ8 learned fusion (labels lens); dumps the out-of-fold parquet. Feeds @fig-bestf1, the null and radius appendices.
     input: f"{A}/RQ8-learned-fusion/scripts/rq8_learned_fusion.py"
     output: f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", f"{A}/RQ8-learned-fusion/rq8_summary_r{{r}}.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r{{r}}.parquet"
     wildcard_constraints: r="10|20|30"
     shell: art("RQ8-learned-fusion/scripts/rq8_learned_fusion.py", env="GIE_LABEL_R={wildcards.r} GIE_DUMP_OOF=1")
 
 rule rq8b:
-    # as-delivered baseline in the labels lens (each product at its own list length vs geography)
+    # RQ8 as-delivered 'day zero' baseline (labels lens). Feeds @fig-bestf1 and the null appendix's list comparison.
     input: f"{A}/RQ8-learned-fusion/scripts/rq8b_asdelivered_baseline.py"
     output: f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv"
     wildcard_constraints: r="10|20|30"
     shell: art("RQ8-learned-fusion/scripts/rq8b_asdelivered_baseline.py", env="GIE_LABEL_R={wildcards.r}")
 
 rule rq8c:
-    # the frozen operating points re-scored under three reference grades
+    # RQ8 operating points under three reference grades. Feeds @fig-basis and the grade-sensitivity paragraph.
     input: f"{A}/RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py", f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r10.parquet"
     output: f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv"
     shell: art("RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py")
 
 rule rq8d:
-    # feature ablation of the geography null (needs network access for the SoilGrids rasters)
+    # RQ8 feature ablation of the geography null (needs network for SoilGrids). Feeds the null appendix.
     input: f"{A}/RQ8-learned-fusion/scripts/rq8d_null_ablation.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r10.parquet"
     output: f"{A}/RQ8-learned-fusion/rq8d_null_ablation.csv"
     shell: art("RQ8-learned-fusion/scripts/rq8d_null_ablation.py", "--with-soil")
 
 rule rq9:
-    # spatial block-bootstrap confidence intervals for the headline numbers
+    # RQ9 block-bootstrap CIs. Feeds the two interval tables and the as-delivered UH interval in the text.
     input: f"{A}/RQ9-uncertainty/scripts/rq9_block_bootstrap.py", f"{A}/RQ5-ensemble/rq5b_six_member.csv", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv", f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r10.parquet"
     output: f"{A}/RQ9-uncertainty/rq9_ci_core.csv", f"{A}/RQ9-uncertainty/rq9_ci_asdelivered_r10.csv", f"{A}/RQ9-uncertainty/rq9_ci_models_r10.csv"
     shell: art("RQ9-uncertainty/scripts/rq9_block_bootstrap.py")
@@ -198,43 +229,43 @@ rule rq9:
 # They read the shared data loaders (LIB[1]) but not the pipeline definitions.
 # ---------------------------------------------------------------------------------------------
 rule rq7_round2:
-    # the MapSwipe round-2 re-vote: reliability and the swap sensitivity of crowd-adjusted precision
+    # RQ7 round-2 re-vote: reliability and the crowd-adjusted swap sensitivity. Feeds the crowd appendix.
     input: LIB[1], f"{A}/RQ7-mapswipe-validation/scripts/rq7_round2_replication.py", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv"
     output: f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv", f"{A}/RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv"
     shell: art("RQ7-mapswipe-validation/scripts/rq7_round2_replication.py")
 
 rule rq2h:
-    # OSU v0 vs v1 scored on their common extent
+    # RQ2 OSU v0 vs v1 on their common extent. Feeds the version postscript.
     input: LIB[1], f"{A}/RQ2-cems-footprint-points/scripts/rq2h_osu_v0_v1.py"
     output: f"{A}/RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv"
     shell: art("RQ2-cems-footprint-points/scripts/rq2h_osu_v0_v1.py")
 
 rule rq2p:
-    # OSU v1 confidence tiers
+    # RQ2 OSU v1 confidence tiers. Feeds the version postscript.
     input: LIB[1], f"{A}/RQ2-cems-footprint-points/scripts/rq2p_osu_v1_tiers.py"
     output: f"{A}/RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv"
     shell: art("RQ2-cems-footprint-points/scripts/rq2p_osu_v1_tiers.py")
 
 rule rq2_density_null:
-    # per-AOI flag density against a random-thinning baseline
+    # RQ2 per-AOI flag density vs a random-thinning baseline. Feeds the sensing appendix (Santa Cruz shares).
     input: LIB[1], f"{A}/RQ2-cems-footprint-points/scripts/rq2_density_null.py"
     output: f"{A}/RQ2-cems-footprint-points/rq2_density_null.csv"
     shell: art("RQ2-cems-footprint-points/scripts/rq2_density_null.py")
 
 rule rq3g:
-    # area ranking by damage fraction instead of count
+    # RQ3 ranking by damage fraction instead of count. Feeds @fig-fracrank and the fraction paragraph.
     input: LIB[1], f"{A}/RQ3-prioritization-error-structure/scripts/rq3g_frac_ranking.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv"
     output: f"{A}/RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv", f"{A}/RQ3-prioritization-error-structure/figs/rq3g_frac_vs_count_rho.png"
     shell: art("RQ3-prioritization-error-structure/scripts/rq3g_frac_ranking.py")
 
 rule rq3b:
-    # spatial clustering (Moran's I) of over-flagging per area
+    # RQ3 Moran's I of over-flagging per area. Feeds the error-structure paragraph.
     input: LIB[1], f"{A}/RQ3-prioritization-error-structure/scripts/rq3b_per_area_moran.py"
     output: f"{A}/RQ3-prioritization-error-structure/rq3b_per_area_moran.csv"
     shell: art("RQ3-prioritization-error-structure/scripts/rq3b_per_area_moran.py")
 
 rule rq3d:
-    # local clustering (LISA) of each product's errors
+    # RQ3 LISA clustering of each product's errors. Feeds the error-structure paragraph.
     input: LIB[1], f"{A}/RQ3-prioritization-error-structure/scripts/rq3d_lisa_reliability.py"
     output: f"{A}/RQ3-prioritization-error-structure/rq3d_lisa_summary.csv"
     shell: art("RQ3-prioritization-error-structure/scripts/rq3d_lisa_reliability.py")
