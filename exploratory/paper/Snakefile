@@ -105,10 +105,12 @@ rule scorecards:
 
 rule ranking:
     # area ranking on H3 cells: each product vs the geography null (3 scopes), and the agreement
-    # rules on the core's fixed cell set. --with-fusion adds the frozen fusion score's row.
+    # rules on the core's fixed cell set. The frozen fusion score's row (--with-fusion) is NOT
+    # included by default: it would tie this rule to the heavy chain's parquet, and the brief
+    # does not quote it.
     input: LIB, f"{P}/ranking.py"
     output: f"{P}/results_ranking.csv"
-    shell: f"python {P}/ranking.py --with-fusion"
+    shell: f"python {P}/ranking.py"
 
 rule facts:
     # the geography and input facts the prose states: areas, building counts, reference points per
@@ -161,7 +163,7 @@ rule legacy_csvs:
 rule rq8:
     # learned fusion of the six products (labels lens); also dumps the out-of-fold parquet others read
     input: f"{A}/RQ8-learned-fusion/scripts/rq8_learned_fusion.py"
-    output: f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", f"{A}/RQ8-learned-fusion/rq8_summary_r{{r}}.csv"
+    output: f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", f"{A}/RQ8-learned-fusion/rq8_summary_r{{r}}.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r{{r}}.parquet"
     wildcard_constraints: r="10|20|30"
     shell: art("RQ8-learned-fusion/scripts/rq8_learned_fusion.py", env="GIE_LABEL_R={wildcards.r} GIE_DUMP_OOF=1")
 
@@ -174,19 +176,19 @@ rule rq8b:
 
 rule rq8c:
     # the frozen operating points re-scored under three reference grades
-    input: f"{A}/RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py", f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv"
+    input: f"{A}/RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py", f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r10.parquet"
     output: f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv"
     shell: art("RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py")
 
 rule rq8d:
     # feature ablation of the geography null (needs network access for the SoilGrids rasters)
-    input: f"{A}/RQ8-learned-fusion/scripts/rq8d_null_ablation.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv"
+    input: f"{A}/RQ8-learned-fusion/scripts/rq8d_null_ablation.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r10.parquet"
     output: f"{A}/RQ8-learned-fusion/rq8d_null_ablation.csv"
     shell: art("RQ8-learned-fusion/scripts/rq8d_null_ablation.py", "--with-soil")
 
 rule rq9:
     # spatial block-bootstrap confidence intervals for the headline numbers
-    input: f"{A}/RQ9-uncertainty/scripts/rq9_block_bootstrap.py", f"{A}/RQ5-ensemble/rq5b_six_member.csv", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv"
+    input: f"{A}/RQ9-uncertainty/scripts/rq9_block_bootstrap.py", f"{A}/RQ5-ensemble/rq5b_six_member.csv", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv", f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r10.parquet"
     output: f"{A}/RQ9-uncertainty/rq9_ci_core.csv", f"{A}/RQ9-uncertainty/rq9_ci_asdelivered_r10.csv", f"{A}/RQ9-uncertainty/rq9_ci_models_r10.csv"
     shell: art("RQ9-uncertainty/scripts/rq9_block_bootstrap.py")
 
