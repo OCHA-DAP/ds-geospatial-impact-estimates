@@ -318,7 +318,7 @@ earthquake and asks what responders can, and cannot, do with them.</p>
     <div class="kicker">Day 2 · the first model</div>
     Two days after the earthquake, the first modelled assessment arrived: a building-level classification
     based on high-resolution optical imagery from Microsoft AI for Good. It flags
-    <strong>8,338 buildings</strong> in the coastal strip area.
+    <strong>8,410 buildings</strong> in the coastal strip area.
   </div></section>
 
   <section class="step" data-step="4"><div class="card">
@@ -332,13 +332,13 @@ earthquake and asks what responders can, and cannot, do with them.</p>
     <div class="kicker">Day 5 · a third view</div>
     A team from Oregon State University, working with NASA, delivers another SAR (radar)
     based analysis, with different methods and a different area of interest:
-    <strong>57,066 buildings</strong>.
+    <strong>58,870 buildings</strong>.
   </div></section>
 
   <section class="step" data-step="6"><div class="card">
     <div class="kicker">Day 7 · two more</div>
     UNEP delivers another radar-based analysis, which also turns detected damage into an estimate of
-    debris tonnage (<strong>74,867</strong> buildings). Later that week, another
+    debris tonnage (<strong>96,046</strong> buildings). Later that week, another
     assessment arrives from a collaboration between WFP, LIST and CERN
     (<strong>163,225</strong>).
   </div></section>
@@ -348,7 +348,7 @@ earthquake and asks what responders can, and cannot, do with them.</p>
     Meanwhile, the UN assessment and analysis group becomes aware of a further analysis
     by an academic group, UH SAIL at the University of Houston: an AI model that
     classifies buildings from optical imagery across eight coastal areas.
-    <strong>75,118 buildings flagged</strong>. Two further products arrived in the same window but are
+    <strong>76,378 buildings flagged</strong>. Two further products arrived in the same window but are
     not evaluated here.
     <span class="fn">HOT's fAIr publishes no analysed extent, so its misses and false alarms
     cannot be counted fairly. DISHA (UN Global Pulse) covers less than half of the shared
@@ -358,8 +358,8 @@ earthquake and asks what responders can, and cannot, do with them.</p>
   <section class="step" data-step="8"><div class="card">
     <div class="kicker">The information coordination issue</div>
     <p>A stack of assessments of the same disaster: PDFs, shapefiles, dashboards. Different
-    methods, different extents, and answers from <strong>8,338 to 163,225</strong>
-    damaged buildings, a factor of twenty. Which do you act on?</p>
+    methods, different extents, and answers from <strong>8,410 to 163,225</strong>
+    damaged buildings, a factor of nineteen. Which do you act on?</p>
     <p>In those first days a coordinator has to decide where search-and-rescue teams go and who
     needs help first. Answers this far apart cannot all be right, and there is no time to find
     out which one is.</p>
@@ -604,12 +604,12 @@ map.on("load", () => {
 
 // arrival order by our ingest dates (timeline_events.csv; LIST/UH tentative)
 const ARRIVALS = [
-  { name:"Microsoft AI4G", date:"26 Jun", pct:19, bit:1,  col:"#2a78d6", n:9635,  tent:false },
+  { name:"Microsoft AI4G", date:"26 Jun", pct:19, bit:1,  col:"#2a78d6", n:8410,  tent:false },
   { name:"IMPACT",     date:"28 Jun", pct:31, bit:2,  col:"#8a5cd6", n:81446, tent:false },
-  { name:"OSU / NASA", date:"29 Jun", pct:38, bit:4,  col:"#1b9e77", n:57066, tent:false },
-  { name:"UNEP/OCHA",  date:"1 Jul",  pct:54, bit:32, col:"#c65d9e", n:75476,  tent:false },
+  { name:"OSU / NASA", date:"29 Jun", pct:38, bit:4,  col:"#1b9e77", n:58870, tent:false },
+  { name:"UNEP/OCHA",  date:"1 Jul",  pct:54, bit:32, col:"#c65d9e", n:96046,  tent:false },
   { name:"WFP/LIST/CERN", date:"1 Jul*", pct:58, bit:16, col:"#d95f02", n:163225, tent:true },
-  { name:"UH SAIL",    date:"3 Jul*", pct:69, bit:8,  col:"#e6a817", n:74705,  tent:true },
+  { name:"UH SAIL",    date:"3 Jul*", pct:69, bit:8,  col:"#e6a817", n:76378,  tent:true },
 ];
 const P = ARRIVALS.map(a => ({ name:a.name, date:a.date, pct:a.pct, col:a.col, n:a.n.toLocaleString()+" flagged", tent:a.tent }));
 const TL = [

@@ -17,7 +17,7 @@ def sub1(pattern, repl, flags=re.S):
     n = len(re.findall(pattern, t, flags))
     if n != 1:
         raise SystemExit(f"{n} matches for {pattern!r}")
-    t = re.sub(pattern, lambda m: repl, t, count=1, flags=flags)
+    t = re.sub(pattern, repl if callable(repl) else (lambda m: repl), t, count=1, flags=flags)
 
 core = rq5b[10]
 # --- agreement bars
@@ -45,8 +45,13 @@ sub1(r"no assessment does better than about one in \w+", f"no assessment does be
 prod = core.loc[PRODUCTS]
 visits = prod.flagged / (rq5b[30].loc[PRODUCTS, "R_cems"] * N_CEMS_CORE)
 sub1(r"roughly \d+ to \d+ site visits", f"roughly {visits.min():.0f} to {visits.max():.0f} site visits")
-# --- arrivals: total flags per product on the shared base (rq2s)
-tot = W("all", "flags", None).total_flags.loc[list(PRODUCTS)].astype(int)
+# --- arrivals: damaged buildings flagged AS DELIVERED (the brief's Table 1 convention: the provider's own
+# footprints for Microsoft/UH/UNEP, base ids for IMPACT/LIST, OSU v0). Core-region sentences stay on the shared base.
+import pandas as pd
+tot = pd.Series({p: int(N[f"native_{p}"].replace(",", "")) for p in PRODUCTS})
+# the timeline's ARRIVALS array carried hand-typed counts until 2026-09-15 (Microsoft still read 9,635)
+for label, p in (("Microsoft AI4G", "MS"), ("IMPACT", "IMPACT"), ("OSU / NASA", "OSU"), ("UNEP/OCHA", "UNEP"), ("WFP/LIST/CERN", "LIST"), ("UH SAIL", "UH")):
+    sub1(r'(\{ name:"' + re.escape(label) + r'",[^\n]*? n:)\d+', lambda m, v=tot[p]: f"{m.group(1)}{v}")
 sub1(r"<strong>[\d,]+ buildings</strong> in the coastal strip", f"<strong>{tot['MS']:,} buildings</strong> in the coastal strip")
 sub1(r"It flags <strong>[\d,]+ buildings</strong>\.", f"It flags <strong>{tot['IMPACT']:,} buildings</strong>.")
 sub1(r"a different area of interest:\s+<strong>[\d,]+ buildings</strong>", f"a different area of interest:\n    <strong>{tot['OSU']:,} buildings</strong>")
