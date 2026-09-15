@@ -15,15 +15,44 @@ read that first if you are reusing any of this on another event.
 | `satellite_damage_evaluation_deck_v2.qmd` | current 20-slide results deck |
 | `satellite_damage_evaluation_v1.qmd` | earlier deck, **numbers predate the corrections** — do not present |
 | `manuscript_draft.qmd` | v1 manuscript, superseded by `manuscript_v2` |
-| `artefacts/<RQ>/scripts/` | one script per research question; each writes CSVs + `figs/` |
-| `artefacts/<RQ>/*.csv` | frozen outputs — the numbers quoted in the docs |
+| `manuscript_brief.qmd` | the technical brief — **the keeper since 2026-09**; every number is an inline key from `results.csv` |
+| `Snakefile` | the analysis DAG (ADR-0032). Its header is the runbook and the glossary of RQ0–RQ9; start there |
+| `pipeline/` | the live analysis: `paperlib.py` (definitions), `scorecards.py`, `ranking.py`, `facts.py` (rows of the results table), `consolidate.py`, the exporters, figure scripts, checks, tests |
+| `lib/` | data loaders and the paper's pins (`gie_paper.py`), the three footprint id lists and their manifest |
+| `frozen/` | signed-off copies of the archived heavy chain's outputs, with `MANIFEST.csv` (source, commit, sha256, date) |
+| `results.csv` | the one table the brief reads (region, lens, radius, predictor, metric, value, source) |
+| `brief_numbers.py` | named, formatted values over `results.csv`; the brief quotes them as `{python} N["key"]` |
+| `review/` | Tristan's audit export, the refactor checklist, number diffs against earlier states |
+| `artefacts/` | **archive**: the ~40 per-RQ scripts that produced the first frozen numbers, their outputs, the oracle. Nothing in `snakemake all` reads from it |
 | `timeline/` | product availability timeline (reads `timeline_events.csv`) |
 
 Rendered HTML is **not** tracked. This repo is public and a built deck is a publication, so
 `exploratory/paper/*.html` is gitignored and publishing one is a deliberate act. The build
 *inputs* (`gie_slides.scss`, `hdx-bg.html`, `password.html`) are tracked.
 
-## Rebuilding
+## Rebuilding the brief (the current path)
+
+```bash
+uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exploratory/paper -n        # what is stale
+uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exploratory/paper -c2 all   # build
+uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exploratory/paper diff --config base=origin/v1
+```
+
+The Snakefile header explains rules, staleness, the pipeline's shape and the research questions.
+Before `--unlock`, check `pgrep -f "snakemake -s"`: a lock error is also what a healthy running
+build produces. The heavy archived chain is re-run only on request (`heavy --forcerun rq8 rq8b`,
+then `vendor` to sign its outputs into `frozen/`).
+
+The polygon frame reads the Overture base from the gold pipeline's local cache, `/tmp/gie_base_local`.
+macOS empties `/tmp` of files untouched for three days, so after a quiet stretch every rule that
+loads buildings fails with "needs the Overture base cache". Rebuild it with the pipeline's own
+downloader (a few minutes; it verifies the local set against blob):
+
+```bash
+uv run --group etl python -c "import sys; sys.path[:0] = ['pipelines', 'exploratory/paper/lib']; import gie_paper as gp; from harmonize_common import _local_base; print(_local_base(gp.S))"
+```
+
+## Rebuilding the older documents
 
 Everything is pinned to the **2026-07-15** data snapshot. Analysis scripts read the Azure data
 lake, so they need the usual `DSCI_*` / `GIE_*` environment (see the repo CLAUDE.md); the docs

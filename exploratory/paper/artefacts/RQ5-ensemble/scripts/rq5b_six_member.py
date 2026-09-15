@@ -10,7 +10,7 @@ Every rule scored against ALL THREE references in one table:
   - CEMS: dual-anchor precision(floor)/recall/F1, r=10 m
   - ChatMap field points: recall r=20 m (miss-side)
   - MapSwipe crowd: share of CEMS-unmatched flags in majority-DAMAGED hexes (>=4 votes)
-    -> crowd-adjusted precision (as RQ7b)
+    -> crowd-adjusted precision, measured convention: unreviewed flags earn nothing (ADR-0031)
 
 Run: uv run --group etl --with scipy python \
        exploratory/paper/artefacts/RQ5-ensemble/scripts/rq5b_six_member.py
@@ -52,7 +52,7 @@ def uh_aoi():
 def mapswipe_tasks():
     import ocha_stratus as stratus
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE")
+    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", event=None)
     frames = []
     for b in cc.list_blobs(name_starts_with=pref):
         if not gp.mapswipe_is_frozen(b.name):
@@ -70,9 +70,8 @@ def mapswipe_tasks():
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])  # OSU pinned to v0 (paper basis)
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=list(MEMBERS.values()))  # OSU v0-pinned; geometry per gp.PAPER_FRAME (ADR-0030)
+    df = bld
     votes = df[list(MEMBERS.values())].sum(axis=1)
 
     region = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
@@ -81,13 +80,13 @@ def main():
               gp.dissolve_union(gp._read_pq("silver", "source=list", "adm0=VE",
                                             "analysed_extent.parquet"))):
         region = region.intersection(a)
-    in_reg = bld.geometry.within(region)
+    in_reg = bld.geometry.representative_point().within(region)
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)][["geometry"]]
     cpts = cems[cems.geometry.within(region)]
     field = gpd.GeoDataFrame.from_features(json.loads(stratus.load_blob_data(
         gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", "hdx",
-                       "chatmap_field_validated_damage_points.geojson"),
+                       "chatmap_field_validated_damage_points.geojson", event=None),
         stage="dev", container_name=gp.S.container))["features"], crs=4326).to_crs(gp.METRIC_CRS)
     fpts = field[field.geometry.within(region)]
     tasks = mapswipe_tasks()
@@ -96,13 +95,15 @@ def main():
 
     def crowd_verdicts(sub4326):
         out = []
-        for p in sub4326.geometry:
+        for p in sub4326.geometry.representative_point():
+            v = np.nan  # NaN = the crowd never voted this building's cell
             for res in (11, 12):
                 c = h3.latlng_to_cell(p.y, p.x, res)
                 if c in tasks.index:
-                    out.append(int(tasks.loc[c, "majority"]))
+                    v = int(tasks.loc[c, "majority"])
                     break
-        return pd.Series(out)
+            out.append(v)
+        return pd.Series(out, dtype="float64")
 
     rules = [(nm, bld[in_reg & (df[col] == 1)]) for nm, col in MEMBERS.items()]
     rules += [(f"{a}∧{b_}", bld[in_reg & (df[MEMBERS[a]] == 1) & (df[MEMBERS[b_]] == 1)])
@@ -123,13 +124,17 @@ def main():
         j = j[~j.index.duplicated()]
         fp_idx = j[j["_d"].isna()].index
         v = crowd_verdicts(bld.loc[fp_idx].to_crs(4326)) if len(fp_idx) else pd.Series(dtype=int)
-        conf = (v == 1).mean() if len(v) else np.nan
-        p_adj = (np_ + len(fp_idx) * (conf if conf == conf else 0)) / dp if dp else np.nan
+        conf = (v == 1).sum() / v.notna().sum() if v.notna().any() else np.nan  # confirmed share among REVIEWED unmatched flags
+        # measured convention (ADR-0031): only reviewed-and-confirmed unmatched flags earn credit
+        n_conf = int((v == 1).sum())
+        cov = float(v.notna().mean()) if len(v) else np.nan
+        p_crowd = (np_ + n_conf) / dp if dp else np.nan
         rows.append(dict(rule=nm, flagged=len(flagged),
                          P_cems=round(prec, 3), R_cems=round(rec, 3), F1_cems=round(f1, 3),
                          R_field_r20=round(nf / dfld, 2) if dfld else np.nan,
                          FP_crowd_damaged=round(conf, 2) if conf == conf else np.nan,
-                         P_crowd_adj=round(p_adj, 3) if p_adj == p_adj else np.nan))
+                         crowd_cov_of_fps=round(cov, 2) if cov == cov else np.nan,
+                         P_crowd=round(p_crowd, 3) if p_crowd == p_crowd else np.nan))
         print(rows[-1], flush=True)
 
     out = pd.DataFrame(rows)

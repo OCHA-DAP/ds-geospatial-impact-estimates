@@ -52,16 +52,15 @@ def uh_aoi():
 
 
 def main():
-    d = gp.building_flags(columns=["lon", "lat", *MEMBERS])
-    bld = gpd.GeoDataFrame(d, geometry=gpd.points_from_xy(d.lon, d.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=[*MEMBERS])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    d = bld
     region = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
     for a in (gp.dissolve_union(gp.microsoft_aoi()), gp.dissolve_union(gp.impact_v2_aoi()),
               gp.dissolve_union(gp.osu_aoi()), uh_aoi(),
               gp.dissolve_union(gp._read_pq("silver", "source=list", "adm0=VE",
                                             "analysed_extent.parquet"))):
         region = region.intersection(a)
-    inreg = bld.geometry.within(region).to_numpy()
+    inreg = bld.geometry.representative_point().within(region).to_numpy()
     votes = np.zeros(len(d), int)
     for c in MEMBERS:
         votes += d[c].to_numpy(dtype="float64", na_value=0.0).astype(int)
@@ -69,11 +68,10 @@ def main():
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)]
     cems = cems[cems.geometry.within(region)]
-    ct = cKDTree(np.c_[cems.geometry.x, cems.geometry.y])
+    
 
     # is_tp per building = a CEMS damage point within R
-    xy = np.c_[bld.geometry.x, bld.geometry.y]
-    is_tp = (ct.query(xy, k=1)[0] <= R)
+    is_tp = gp.within_r(bld, cems, R)
 
     union_mask = inreg & (votes >= 1)
     u_tp = is_tp[union_mask]

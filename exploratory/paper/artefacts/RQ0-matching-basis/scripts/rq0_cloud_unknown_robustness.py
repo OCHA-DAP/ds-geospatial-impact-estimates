@@ -40,7 +40,7 @@ R = 10
 def _bronze(name):
     import ocha_stratus as stratus
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    blob = gp.S.blob_path("bronze", "source=microsoft", "adm0=VE", "merged", name)
+    blob = gp.S.blob_path("bronze", "source=microsoft", "adm0=VE", "merged", name, event=None)
     return gpd.read_file(io.BytesIO(cc.download_blob(blob).readall()))
 
 
@@ -84,14 +84,12 @@ def main():
     cpts = cpts[cpts.geometry.within(region)]
 
     fl = m[in_reg & (m.damaged == 1)]
-    ct = cKDTree(np.c_[cpts.geometry.x, cpts.geometry.y])
-    hit = ct.query(np.c_[fl.x, fl.y], k=1)[0] <= R
+    hit = gp.within_r(fl, cpts, R)  # footprint distance (ADR-0030)
     mr = m[in_reg]
     d_b, i_b = cKDTree(np.c_[mr.x, mr.y]).query(np.c_[cpts.geometry.x, cpts.geometry.y], k=1)
     on_stock = d_b <= 15
     uu = mr.unknown_pct.to_numpy()[i_b]
-    matched = cKDTree(np.c_[fl.x, fl.y]).query(
-        np.c_[cpts.geometry.x, cpts.geometry.y], k=1)[0] <= R
+    matched = gp.within_r(cpts, fl, R)
 
     rows = []
     for t in (None, 0.5, 0.25):

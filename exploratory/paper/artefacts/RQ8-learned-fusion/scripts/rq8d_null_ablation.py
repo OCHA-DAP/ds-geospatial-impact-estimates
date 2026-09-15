@@ -8,7 +8,7 @@ per-fold standardization). Building-level AP / best-F1 and core ranking rho (res
 Arms:
     dens                          density alone — nothing event-specific at all
     dens+mmi                      + ShakeMap MMI (integer contour bands)
-    dens+coast+mmi                the paper's null    <- ANCHOR: rq3f core rho .648/.478
+    dens+coast+mmi                the paper's null    <- ANCHOR: rq3f core rho_null (res 8/9)
     dens+rupt+mmi                 coast swapped for distance to the M7.5 finite-fault
                                   SURFACE PROJECTION — documented DEAD END: the core sits
                                   ON the rupture polygon (median distance 0, max 1.6 km),
@@ -208,9 +208,12 @@ def main():
 
     out = pd.DataFrame(rows_out)
     paper = out[out.features == "dens+coast+mmi (paper)"].iloc[0]
-    if not (paper.rho_res8 == 0.648 and paper.rho_res9 == 0.478):
+    _ref = pd.read_csv(os.path.join(HERE, "..", "..", "RQ3-prioritization-error-structure",
+                                    "rq3f_null_ranking_core.csv"))
+    _want = {r: round(float(_ref[_ref.res == r].rho_null.iloc[0]), 3) for r in (8, 9)}
+    if not (paper.rho_res8 == _want[8] and paper.rho_res9 == _want[9]):
         raise SystemExit(f"ANCHOR FAILED vs rq3f core null: got "
-                         f"{paper.rho_res8}/{paper.rho_res9}, frozen 0.648/0.478")
+                         f"{paper.rho_res8}/{paper.rho_res9}, rq3f {_want[8]}/{_want[9]}")
     print("anchor OK: the paper arm reproduces the rq3f core null exactly")
     out.to_csv(os.path.join(HERE, "..", "rq8d_null_ablation.csv"), index=False)
     print("wrote rq8d_null_ablation.csv")

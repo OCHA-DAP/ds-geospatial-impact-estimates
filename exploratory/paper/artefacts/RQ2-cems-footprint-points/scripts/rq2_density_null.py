@@ -33,8 +33,8 @@ MEMBERS = ("ms", "impact", "osu", "uh")
 
 def building_flags():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["id", "lon", "lat", "ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg"])  # OSU pinned to v0 (paper basis)
-    g = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat), crs=4326)
+    g = gp.buildings(columns=["ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg"]).to_crs(4326)  # geometry per gp.PAPER_FRAME (ADR-0030)
+    df = g
     return g.to_crs(gp.METRIC_CRS).rename(
         columns={"ms_dmg": "dmg_ms", "sar_dmg": "dmg_impact", "osu_dmg": "dmg_osu",
                  "uh_dmg": "dmg_uh"})
@@ -67,12 +67,12 @@ def main():
         "uh": uh_aoi(),
     }
     for m, a in aois.items():
-        bld[f"in_{m}"] = bld.geometry.within(a)
+        bld[f"in_{m}"] = bld.geometry.representative_point().within(a)
 
     rows = []
     for aoi_name, sub in latest.groupby("aoi_name"):
         area = sub.geometry.make_valid().union_all()
-        in_area = bld.geometry.within(area)
+        in_area = bld.geometry.representative_point().within(area)
         cems_a = cems[cems.geometry.within(area)]
         for m in MEMBERS:
             uni = bld[in_area & bld[f"in_{m}"]]

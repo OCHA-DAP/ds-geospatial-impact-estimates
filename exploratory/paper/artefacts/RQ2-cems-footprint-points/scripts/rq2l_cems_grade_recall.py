@@ -41,9 +41,8 @@ def uh_aoi():
 
 
 def main():
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])  # OSU v0-pinned
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=[*MEMBERS.values()])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
     region = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
     for a in (gp.dissolve_union(gp.microsoft_aoi()), gp.dissolve_union(gp.impact_v2_aoi()),
               gp.dissolve_union(gp.osu_aoi()), uh_aoi(),
@@ -61,15 +60,14 @@ def main():
 
     rows = []
     for nm, col in MEMBERS.items():
-        fl = bld[bld.geometry.within(region) & (bld[col].to_numpy(dtype="float64", na_value=0.0) == 1)]
-        xy = np.c_[fl.geometry.x, fl.geometry.y]
-        tree_fl = cKDTree(xy)
+        fl = bld[bld.geometry.representative_point().within(region) & (bld[col].to_numpy(dtype="float64", na_value=0.0) == 1)]
+        
         # PRECISION per grade: share of the product's flags within r of a Damaged / Destroyed point
-        P_dam = (tree_dam.query(xy, k=1)[0] <= R).mean()
-        P_des = (tree_des.query(xy, k=1)[0] <= R).mean()
+        P_dam = gp.within_r(fl, dam, R).mean()
+        P_des = gp.within_r(fl, des, R).mean()
         # RECALL per grade: share of Damaged / Destroyed points with a flag within r
-        R_dam = (tree_fl.query(np.c_[dam.geometry.x, dam.geometry.y], k=1)[0] <= R).mean()
-        R_des = (tree_fl.query(np.c_[des.geometry.x, des.geometry.y], k=1)[0] <= R).mean()
+        R_dam = gp.within_r(dam, fl, R).mean()
+        R_des = gp.within_r(des, fl, R).mean()
         rows.append(dict(product=nm, n_flags=len(fl),
                          P_vs_damaged=round(float(P_dam), 3),
                          P_vs_destroyed=round(float(P_des), 3),

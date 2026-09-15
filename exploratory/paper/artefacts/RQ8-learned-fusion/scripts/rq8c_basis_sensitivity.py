@@ -40,12 +40,14 @@ BASES = {"destroyed": (3,), "dmg+destroyed": (2, 3), "incl_possibly": (1, 2, 3)}
 PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 
 d = pd.read_parquet(os.path.join(HERE, "..", "rq8_oof_scores_r10.parquet"))
+if "id" not in d.columns:
+    raise RuntimeError("rq8_oof_scores_r10.parquet lacks id — re-run rq8 with GIE_DUMP_OOF=1 (ADR-0030)")
+_geo = gp.buildings(columns=[])[["id", "geometry"]]  # geometry per gp.PAPER_FRAME
+bld_m = gpd.GeoDataFrame(d.merge(_geo, on="id", how="left"), geometry="geometry", crs=gp.METRIC_CRS)
+assert not bld_m.geometry.isna().any()
 ref = pd.read_csv(os.path.join(HERE, "..", "rq8_best_f1_r10.csv"))
 nfl = ref.set_index("predictor").n_flags
 
-bld = gpd.GeoDataFrame(d, geometry=gpd.points_from_xy(d.lon, d.lat), crs=4326)
-bld = bld.to_crs(gp.METRIC_CRS)
-bxy = np.c_[bld.geometry.x, bld.geometry.y]
 cems = gp.to_metric(gp.cems_points())
 
 
@@ -59,14 +61,16 @@ predictors["geography null (logistic)"] = at_nflags(d.null_logit.to_numpy(),
                                                     nfl["geography null (logistic)"])
 predictors["geography null (rand. forest)"] = at_nflags(d.null_rf.to_numpy(),
                                                         nfl["geography null (rand. forest)"])
-predictors["flat k-of-6 voting"] = votes >= 5  # integer score, no rounding issue
+_k = [k for k in range(1, 7) if int((votes >= k).sum()) == int(nfl["flat k-of-6 voting"])]
+if len(_k) != 1:
+    raise RuntimeError(f"no unique k reproduces the frozen voting operating point ({nfl['flat k-of-6 voting']} flags): {_k}")
+predictors["flat k-of-6 voting"] = votes >= _k[0]  # integer score, no rounding issue
 predictors["weighted fusion"] = at_nflags(d.fusion_logit.to_numpy(), nfl["weighted fusion"])
 
 rows = []
 for bname, classes in BASES.items():
     cp = cems[cems.damage_class.isin(classes)]
-    dist, _ = cKDTree(np.c_[cp.geometry.x, cp.geometry.y]).query(bxy, k=1)
-    y = (dist <= R).astype(int)
+    y = gp.within_r(bld_m, cp, R).astype(int)
     npos = int(y.sum())
     print(f"[{bname}] classes {classes}: {len(cp):,} CEMS points -> {npos:,} positive buildings")
     for nm, mask in predictors.items():

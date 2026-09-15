@@ -53,7 +53,7 @@ def mapswipe_tasks():
     """All bronze MapSwipe validate tasks with an h3 index: h3 -> (majority, res, depth)."""
     import ocha_stratus as stratus
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
-    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE")
+    pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", event=None)
     frames = []
     for b in cc.list_blobs(name_starts_with=pref):
         if not gp.mapswipe_is_frozen(b.name):
@@ -76,9 +76,8 @@ def mapswipe_tasks():
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", "ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg"])  # OSU pinned to v0 (paper basis)
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=["ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg"])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
     bld["votes"] = df[["ms_dmg", "sar_dmg", "osu_dmg", "uh_dmg"]].sum(axis=1)
 
     quad = gp.dissolve_union(gp.microsoft_aoi())
@@ -91,9 +90,9 @@ def main():
     cems = cems[cems.damage_class.isin(POS)][["geometry"]]
 
     tasks = mapswipe_tasks()
-    in_reg = bld.geometry.within(region)
+    in_reg = bld.geometry.representative_point().within(region)
     ll = bld[in_reg].to_crs(4326)
-    cells = {res: [h3.latlng_to_cell(p.y, p.x, res) for p in ll.geometry]
+    cells = {res: [h3.latlng_to_cell(p.y, p.x, res) for p in ll.geometry.representative_point()]
              for res in sorted(tasks.res.unique())}
 
     rows = []
@@ -109,7 +108,7 @@ def main():
         for label, idx in (("FP", fp_idx), ("TP", tp_idx)):
             sub = bld.loc[idx].to_crs(4326)
             verdicts = []
-            for p in sub.geometry:
+            for p in sub.geometry.representative_point():
                 for res in cells:
                     c = h3.latlng_to_cell(p.y, p.x, res)
                     if c in tasks.index:

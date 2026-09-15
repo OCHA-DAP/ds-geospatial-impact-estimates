@@ -44,9 +44,8 @@ def uh_aoi():
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])  # OSU v0-pinned
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=[*MEMBERS.values()])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
     region = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
     for a in (gp.dissolve_union(gp.microsoft_aoi()), gp.dissolve_union(gp.impact_v2_aoi()),
               gp.dissolve_union(gp.osu_aoi()), uh_aoi(),
@@ -59,7 +58,7 @@ def main():
     cpts = cems[cems.geometry.within(region)][["geometry"]]
     field = gpd.GeoDataFrame.from_features(json.loads(stratus.load_blob_data(
         gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", "hdx",
-                       "chatmap_field_validated_damage_points.geojson"),
+                       "chatmap_field_validated_damage_points.geojson", event=None),
         stage="dev", container_name=gp.S.container))["features"], crs=4326).to_crs(gp.METRIC_CRS)
     fpts = field[field.geometry.within(region)][["geometry"]]
     truth = np.r_[np.c_[cpts.geometry.x, cpts.geometry.y],
@@ -68,21 +67,22 @@ def main():
           f"| union {len(truth):,}")
     tree_c = cKDTree(np.c_[cpts.geometry.x, cpts.geometry.y])
     tree_u = cKDTree(truth)
+    truth_gdf = gpd.GeoDataFrame(geometry=pd.concat([cpts.geometry, fpts.geometry], ignore_index=True), crs=gp.METRIC_CRS)
 
     # truth-point arrays for recall (denominator = CEMS, or CEMS ∪ ChatMap)
     cems_xy = np.c_[cpts.geometry.x, cpts.geometry.y]
     union_xy = truth
     rows = []
     for nm, col in MEMBERS.items():
-        fl = bld[bld.geometry.within(region) & (bld[col].to_numpy(dtype="float64", na_value=0.0) == 1)]
-        xy = np.c_[fl.geometry.x, fl.geometry.y]
+        fl = bld[bld.geometry.representative_point().within(region) & (bld[col].to_numpy(dtype="float64", na_value=0.0) == 1)]
+        
         # PRECISION: share of flags near a CEMS point / near a CEMS-or-ChatMap point
-        p_cems = (tree_c.query(xy, k=1)[0] <= R).mean()
-        p_union = (tree_u.query(xy, k=1)[0] <= R).mean()
+        p_cems = gp.within_r(fl, cpts, R).mean()
+        p_union = gp.within_r(fl, truth_gdf, R).mean()
         # RECALL: share of truth points with a flag nearby, denominator = CEMS / union
-        tree_fl = cKDTree(xy)
-        r_cems = (tree_fl.query(cems_xy, k=1)[0] <= R).mean()
-        r_union = (tree_fl.query(union_xy, k=1)[0] <= R).mean()
+        
+        r_cems = gp.within_r(cpts, fl, R).mean()
+        r_union = gp.within_r(truth_gdf, fl, R).mean()
         rows.append(dict(product=nm, n_flags=len(fl),
                          P_cems=round(float(p_cems), 3),
                          P_union=round(float(p_union), 3),

@@ -65,9 +65,7 @@ def uh_aoi():
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *FLAGS.values()])  # OSU v0-pinned
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=list(FLAGS.values()))  # geometry per gp.PAPER_FRAME (ADR-0030)
 
     ext = gp.cems_extent()
     lat = ext[ext.is_latest == True]  # noqa: E712
@@ -77,12 +75,11 @@ def main():
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)]
 
-    d = bld[bld.geometry.within(ext_latest)].copy().reset_index(drop=True)
-    ct = cKDTree(np.c_[cems.geometry.x, cems.geometry.y])
-    d["y"] = (ct.query(np.c_[d.geometry.x, d.geometry.y], k=1)[0] <= LABEL_R).astype(int)
+    d = bld[bld.geometry.representative_point().within(ext_latest)].copy().reset_index(drop=True)
+    d["y"] = gp.within_r(d, cems, LABEL_R).astype(int)
 
     # context features (identical construction to the fusion analysis)
-    ll = d.to_crs(4326)
+    ll = gpd.GeoDataFrame(geometry=d.geometry.representative_point(), crs=d.crs).to_crs(4326)
     d["cell7"] = [h3.latlng_to_cell(p.y, p.x, 7) for p in ll.geometry]
     for _r in RESOS:
         if _r != 7:
@@ -94,7 +91,7 @@ def main():
     frames = []
     for ev in ("us6000t7zp", "us6000t7zc"):
         raw = json.loads(stratus.load_blob_data(
-            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json"),
+            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json", event=None),
             stage="dev", container_name=gp.S.container))
         g = gpd.GeoDataFrame.from_features(raw["features"], crs=4326).to_crs(gp.METRIC_CRS)
         frames.append(g[["value", "geometry"]])
@@ -129,7 +126,7 @@ def main():
     rows = []
     for name, col in FLAGS.items():
         region = ext_latest if aois[name] is None else ext_latest.intersection(aois[name])
-        sel = d.geometry.within(region).to_numpy()
+        sel = d.geometry.representative_point().within(region).to_numpy()
         sub = d[sel].copy()
         X = sub[CONTEXT].astype(float).to_numpy()
         y = sub.y.to_numpy()

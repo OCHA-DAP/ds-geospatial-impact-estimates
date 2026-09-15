@@ -78,9 +78,8 @@ def lisa(cells, values):
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *FLAGS.values()])  # OSU pinned to v0 (paper basis)
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=[*FLAGS.values()])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)]
     ext_latest = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
@@ -96,7 +95,7 @@ def main():
     aois["UNEP"] = core  # stated coverage assumption
 
     ll_all = bld.to_crs(4326)
-    bld["cell"] = [h3.latlng_to_cell(p.y, p.x, RES) for p in ll_all.geometry]
+    bld["cell"] = [h3.latlng_to_cell(p.y, p.x, RES) for p in ll_all.geometry.representative_point()]
     cems_ll = cems.to_crs(4326)
     cems = cems.assign(cell=[h3.latlng_to_cell(p.y, p.x, RES) for p in cems_ll.geometry])
 
@@ -105,7 +104,7 @@ def main():
     COLORS = {"HH": "#c62828", "LL": "#1565c0", "HL": "#ef9a9a", "LH": "#90caf9", "ns": "#d5d5d5"}
     for ax, (nm, col) in zip(axes.flat, FLAGS.items()):
         region = ext_latest.intersection(aois[nm])
-        bm = bld.geometry.within(region)
+        bm = bld.geometry.representative_point().within(region)
         d = (bld[bm].groupby("cell")
              .agg(base=("cell", "size"), pdmg=(col, "sum"))
              .join(cems[cems.geometry.within(region)].groupby("cell").size().rename("cems"))

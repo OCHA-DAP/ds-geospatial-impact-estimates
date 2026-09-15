@@ -32,7 +32,7 @@ R_CEMS, R_FIELD = 10, 20
 def _silver(version, name):
     import ocha_stratus as stratus
     b = stratus.load_blob_data(
-        gp.S.blob_path("silver", "source=osu", "adm0=VE", f"version={version}", name),
+        gp.S.blob_path("silver", "source=osu", "adm0=VE", f"version={version}", name, event=None),
         stage="dev", container_name=gp.S.container)
     try:
         return gpd.read_parquet(io.BytesIO(b))
@@ -43,16 +43,15 @@ def _silver(version, name):
 def main():
     import ocha_stratus as stratus
     # geometry lookup: the shared Overture base (id -> lon/lat), version-neutral
-    base = gp.building_flags(columns=["lon", "lat"])
-    base = gpd.GeoDataFrame(base, geometry=gpd.points_from_xy(base.lon, base.lat),
-                            crs=4326).to_crs(gp.METRIC_CRS).set_index("id")
+    base = gp.buildings(columns=[])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    base = base.set_index("id")
 
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)][["geometry"]]
     cems_ext = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
     field = gpd.GeoDataFrame.from_features(json.loads(stratus.load_blob_data(
         gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", "hdx",
-                       "chatmap_field_validated_damage_points.geojson"),
+                       "chatmap_field_validated_damage_points.geojson", event=None),
         stage="dev", container_name=gp.S.container))["features"], crs=4326).to_crs(gp.METRIC_CRS)
 
     flags, exts = {}, {}
@@ -65,14 +64,12 @@ def main():
               f"extent {exts[v].area/1e6:.0f} km2")
 
     def score(fl, region):
-        fin = fl[fl.geometry.within(region)]
+        fin = fl[fl.geometry.representative_point().within(region)]
         cpts = cems[cems.geometry.within(region)]
         fpts = field[field.geometry.within(region)]
-        ft = cKDTree(np.c_[fin.geometry.x, fin.geometry.y])
-        ct = cKDTree(np.c_[cpts.geometry.x, cpts.geometry.y])
-        prec = (ct.query(np.c_[fin.geometry.x, fin.geometry.y], k=1)[0] <= R_CEMS).mean()
-        rec = (ft.query(np.c_[cpts.geometry.x, cpts.geometry.y], k=1)[0] <= R_CEMS).mean()
-        frec = (ft.query(np.c_[fpts.geometry.x, fpts.geometry.y], k=1)[0] <= R_FIELD).mean()
+        prec = gp.within_r(fin, cpts, R_CEMS).mean()
+        rec = gp.within_r(cpts, fin, R_CEMS).mean()
+        frec = gp.within_r(fpts, fin, R_FIELD).mean()
         f1 = 2 * prec * rec / (prec + rec) if prec + rec else 0
         return dict(flags=len(fin), cems_pts=len(cpts), P=round(prec, 3), R=round(rec, 3),
                     F1=round(f1, 3), field_pts=len(fpts), R_field=round(frec, 2))

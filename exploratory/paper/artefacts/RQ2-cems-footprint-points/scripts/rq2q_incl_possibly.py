@@ -5,8 +5,7 @@ score (#app-matching). An early pre-freeze artefact (rq2_points, 3 products, pre
 reference, pre-merged-refresh Microsoft) reported an incl-possibly variant, but its levels
 do not carry to the frozen basis. This re-runs the sensitivity on the paper's frozen data:
 gold building_flags (OSU v0-pinned), CEMS latest-monitoring points, the RQ5b core region
-(construction copied verbatim), centroid matching at r = 10 m (within 0.005 of the native
-scorecard, see #tbl-frames). Scores all six products AND the k-of-6 voting rules under both
+(construction copied verbatim), matching per gp.PAPER_FRAME at r = 10 m (ADR-0030). Scores all six products AND the k-of-6 voting rules under both
 thresholds, so the check covers the ensemble headline the early artefact never touched.
 
 Run: uv run --group etl --with scipy --with h3 python \
@@ -44,9 +43,8 @@ def uh_aoi():
 
 
 def main():
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=list(MEMBERS.values()))  # geometry per gp.PAPER_FRAME (ADR-0030)
+    df = bld
     votes = df[list(MEMBERS.values())].sum(axis=1)
 
     region = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
@@ -55,7 +53,7 @@ def main():
               gp.dissolve_union(gp._read_pq("silver", "source=list", "adm0=VE",
                                             "analysed_extent.parquet"))):
         region = region.intersection(a)
-    in_reg = bld.geometry.within(region)
+    in_reg = bld.geometry.representative_point().within(region)
 
     cems = gp.to_metric(gp.cems_points())
     rules = [(nm, in_reg & (df[col] == 1)) for nm, col in MEMBERS.items()]
@@ -64,13 +62,11 @@ def main():
     rows = []
     for tname, classes in THRESHOLDS.items():
         cpts = cems[cems.damage_class.isin(classes) & cems.geometry.within(region)]
-        ct = cKDTree(np.c_[cpts.geometry.x, cpts.geometry.y])
         print(f"[{tname}] reference points in core: {len(cpts):,}")
         for nm, mask in rules:
             f = bld[mask.values]
-            ft = cKDTree(np.c_[f.geometry.x, f.geometry.y])
-            prec = (ct.query(np.c_[f.geometry.x, f.geometry.y], k=1)[0] <= R).mean()
-            rec = (ft.query(np.c_[cpts.geometry.x, cpts.geometry.y], k=1)[0] <= R).mean()
+            prec = gp.within_r(f, cpts, R).mean()
+            rec = gp.within_r(cpts, f, R).mean()
             f1 = 2 * prec * rec / (prec + rec) if prec + rec else 0
             rows.append(dict(threshold=tname, rule=nm, flags=len(f), cems_pts=len(cpts),
                              P=round(prec, 3), R=round(rec, 3), F1=round(f1, 3)))

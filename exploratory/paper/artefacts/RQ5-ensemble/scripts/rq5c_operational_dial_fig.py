@@ -53,17 +53,17 @@ ax.text(0.985, 22, "not worth the walk (>8 visits per find)", fontsize=9.5,
 def band(sub, color, size, marker, label_pts=False):
     for i, (_, r) in enumerate(sub.iterrows()):
         x = r.R_field_r20
-        lo, hi = cost(r.P_crowd_adj), cost(r.P_cems)
+        lo, hi = cost(r.P_crowd), cost(r.P_cems)
         ax.plot([x, x], [lo, hi], c=color, lw=2.2, alpha=0.5, zorder=3)
         ax.plot(x, hi, marker="_", ms=11, c=color, zorder=3)  # CEMS-floor cost (worst)
 
 # single products: faint bands + dots at crowd-adjusted (fair) cost
 for _, r in singles.iterrows():
     x = r.R_field_r20
-    ax.plot([x, x], [cost(r.P_crowd_adj), cost(r.P_cems)], c="#9aa5b1", lw=1.6,
+    ax.plot([x, x], [cost(r.P_crowd), cost(r.P_cems)], c="#9aa5b1", lw=1.6,
             alpha=0.6, zorder=2)
-    ax.scatter(x, cost(r.P_crowd_adj), c="#4a5560", s=70, zorder=4)
-    ax.annotate(r.rule, (x, cost(r.P_crowd_adj)), textcoords="offset points",
+    ax.scatter(x, cost(r.P_crowd), c="#4a5560", s=70, zorder=4)
+    ax.annotate(r.rule, (x, cost(r.P_crowd)), textcoords="offset points",
                 xytext=(6, 3), fontsize=9, color="#4a5560")
 ax.scatter([], [], c="#4a5560", s=70, label="single products")
 
@@ -71,10 +71,10 @@ ax.scatter([], [], c="#4a5560", s=70, label="single products")
 kx = kof.R_field_r20.to_numpy()
 for _, r in kof.iterrows():
     x = r.R_field_r20
-    ax.plot([x, x], [cost(r.P_crowd_adj), cost(r.P_cems)], c="#2a78d6", lw=3,
+    ax.plot([x, x], [cost(r.P_crowd), cost(r.P_cems)], c="#2a78d6", lw=3,
             alpha=0.35, zorder=3)
-ax.plot(kx, [cost(p) for p in kof.P_crowd_adj], c="#2a78d6", lw=1.6, zorder=4)
-ax.scatter(kx, [cost(p) for p in kof.P_crowd_adj], c="#2a78d6", s=200, marker="s",
+ax.plot(kx, [cost(p) for p in kof.P_crowd], c="#2a78d6", lw=1.6, zorder=4)
+ax.scatter(kx, [cost(p) for p in kof.P_crowd], c="#2a78d6", s=200, marker="s",
            zorder=5, label="k-of-6 agreement (k in square)")
 # label the two ends of the band once, on the 1-of-6 rule
 r1 = kof[kof.k == 1].iloc[0]
@@ -82,10 +82,10 @@ ax.annotate("strict: counts only\nexpert-recorded damage\n(= the '10–20 per hi
             (r1.R_field_r20, cost(r1.P_cems)), textcoords="offset points",
             xytext=(-12, -6), ha="right", fontsize=9, color="#8a5a00")
 ax.annotate("best estimate: also counts\ndamage the expert missed\n(crowd-confirmed)",
-            (r1.R_field_r20, cost(r1.P_crowd_adj)), textcoords="offset points",
+            (r1.R_field_r20, cost(r1.P_crowd)), textcoords="offset points",
             xytext=(-12, 4), ha="right", fontsize=9, color="#2e7d32")
 for _, r in kof.iterrows():
-    ax.annotate(str(int(r.k)), (r.R_field_r20, cost(r.P_crowd_adj)),
+    ax.annotate(str(int(r.k)), (r.R_field_r20, cost(r.P_crowd)),
                 ha="center", va="center", fontsize=10, color="white", zorder=6)
 
 ax.set_yscale("log")
@@ -108,4 +108,4 @@ fig.savefig(os.path.join(FIGS, "rq5c_operational_dial.png"), dpi=150)
 print("wrote rq5c_operational_dial.png")
 for _, r in kof.iterrows():
     print(f"  {int(r.k)}-of-6: coverage {r.R_field_r20:.2f} | "
-          f"visits/find {cost(r.P_crowd_adj):.1f}–{cost(r.P_cems):.1f}")
+          f"visits/find {cost(r.P_crowd):.1f}–{cost(r.P_cems):.1f}")

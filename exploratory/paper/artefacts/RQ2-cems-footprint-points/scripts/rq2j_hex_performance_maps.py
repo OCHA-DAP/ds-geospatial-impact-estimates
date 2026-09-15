@@ -55,9 +55,8 @@ def hexpoly(c):
 
 
 def main():
-    df = gp.building_flags(columns=["lon", "lat", *MEMBERS.values()])  # OSU v0-pinned
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=[*MEMBERS.values()])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
     all_ext = gp.to_metric(gp.cems_extent().query("is_latest")).geometry.make_valid().union_all()
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)]
@@ -78,17 +77,16 @@ def main():
     ct_all = cKDTree(np.c_[cems.geometry.x, cems.geometry.y])
     for nm, col in MEMBERS.items():
         reg = all_ext if prod_aois[nm] is None else all_ext.intersection(prod_aois[nm])
-        inb = bld[bld.geometry.within(reg)]
+        inb = bld[bld.geometry.representative_point().within(reg)]
         fl = inb[inb[col].to_numpy(dtype="float64", na_value=0.0) == 1]
         ca = cems[cems.geometry.within(reg)]
         if not len(fl) or not len(ca):
             continue
         fll = fl.to_crs(4326)
-        fl_cell = [h3.latlng_to_cell(p.y, p.x, RES) for p in fll.geometry]
-        fl_hit10 = ct_all.query(np.c_[fl.geometry.x, fl.geometry.y], k=1)[0] <= 10
-        ft = cKDTree(np.c_[fl.geometry.x, fl.geometry.y])
-        ca_hit10 = ft.query(np.c_[ca.geometry.x, ca.geometry.y], k=1)[0] <= 10
-        ca_hit30 = ft.query(np.c_[ca.geometry.x, ca.geometry.y], k=1)[0] <= 30
+        fl_cell = [h3.latlng_to_cell(p.y, p.x, RES) for p in fll.geometry.representative_point()]
+        fl_hit10 = gp.within_r(fl, cems, 10)
+        ca_hit10 = gp.within_r(ca, fl, 10)
+        ca_hit30 = gp.within_r(ca, fl, 30)
         ca_cell = cems_cell.loc[ca.index]
 
         F = pd.DataFrame({"cell": fl_cell, "hit": fl_hit10})

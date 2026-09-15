@@ -48,7 +48,7 @@ def ms_residuals():
     ms = gp.to_metric(gp.microsoft())
     region = ext_latest.intersection(gp.dissolve_union(gp.microsoft_aoi()))
     b = stratus.load_blob_data(
-        gp.S.blob_path("gold", "model=common", "adm0=VE", "building_flags.parquet"),
+        gp.S.blob_path("gold", "model=common", "adm0=VE", "building_flags.parquet", event=None),
         stage="dev", container_name=gp.S.container)
     df = pd.read_parquet(io.BytesIO(b), columns=["lon", "lat"])
     base = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
@@ -77,7 +77,7 @@ def mapswipe_hexes():
     cc = stratus.get_container_client(stage="dev", container_name=gp.S.container)
     frames = []
     for pid in (3179, 3178):
-        pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={pid}")
+        pref = gp.S.blob_path("bronze", "source=mapswipe", "adm0=VE", f"project={pid}", event=None)
         for b in cc.list_blobs(name_starts_with=pref):
             if "agg_results_by_task" in b.name and b.name.endswith(".geojson.gz"):
                 feats = json.loads(gzip.decompress(cc.download_blob(b.name).readall()))["features"]

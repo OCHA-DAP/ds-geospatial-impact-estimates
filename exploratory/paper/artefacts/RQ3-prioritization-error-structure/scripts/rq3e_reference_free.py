@@ -49,12 +49,11 @@ def moran_of(cells, values):
 
 def main():
     import ocha_stratus as stratus
-    df = gp.building_flags(columns=["lon", "lat", *FLAGS.values()])  # OSU pinned to v0 (paper basis)
-    bld = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lon, df.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS)
+    bld = gp.buildings(columns=[*FLAGS.values()])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    df = bld
     votes = df[list(FLAGS.values())].sum(axis=1)
     ll = bld.to_crs(4326)
-    bld["cell"] = [h3.latlng_to_cell(p.y, p.x, RES) for p in ll.geometry]
+    bld["cell"] = [h3.latlng_to_cell(p.y, p.x, RES) for p in ll.geometry.representative_point()]
 
     ext = gp.cems_extent()
     latest = gp.to_metric(ext[ext.is_latest == True])  # noqa: E712
@@ -62,7 +61,7 @@ def main():
 
     rows = []
     for area_name, geom in areas.items():
-        am = bld.geometry.within(geom)
+        am = bld.geometry.representative_point().within(geom)
         for nm, col in FLAGS.items():
             sub = bld[am]
             if len(sub) < 1000:

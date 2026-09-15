@@ -42,7 +42,7 @@ def uh_aoi():
 def _silver(version, name):
     import ocha_stratus as stratus
     b = stratus.load_blob_data(
-        gp.S.blob_path("silver", "source=osu", "adm0=VE", f"version={version}", name),
+        gp.S.blob_path("silver", "source=osu", "adm0=VE", f"version={version}", name, event=None),
         stage="dev", container_name=gp.S.container)
     try:
         return gpd.read_parquet(io.BytesIO(b))
@@ -51,9 +51,8 @@ def _silver(version, name):
 
 
 def main():
-    base = gp.building_flags(columns=["lon", "lat", "osu_dmg"])
-    bld = gpd.GeoDataFrame(base, geometry=gpd.points_from_xy(base.lon, base.lat),
-                           crs=4326).to_crs(gp.METRIC_CRS).set_index("id")
+    bld = gp.buildings(columns=["osu_dmg"])  # geometry per gp.PAPER_FRAME (ADR-0030); METRIC_CRS
+    bld = bld.set_index("id")
 
     cems = gp.to_metric(gp.cems_points())
     cems = cems[cems.damage_class.isin(POS)][["geometry"]]
@@ -87,7 +86,7 @@ def main():
         cpts = cems[cems.geometry.within(region)]
         for cut_name, ids in cuts.items():
             fl = bld.loc[[i for i in ids if i in bld.index]]
-            fin = fl[fl.geometry.within(region)]
+            fin = fl[fl.geometry.representative_point().within(region)]
             nr, dr = gp.match_rate(cpts, fin, R_CEMS)
             np_, dp = gp.match_rate(fin, cpts, R_CEMS)
             prec, rec = np_ / dp if dp else 0, nr / dr if dr else 0
