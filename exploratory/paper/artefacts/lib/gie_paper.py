@@ -45,16 +45,24 @@ def _read_gpkg(layer, *parts):
 #   "polygon"  — distance from the Overture footprint polygon. Requires the local Overture base
 #               cache (/tmp/gie_base_local) or blob; recovers delivered-geometry scores (within
 #               ~0.01 F1) while keeping one shared building list for combination rules.
-# MS_MAP_RULE: how Microsoft's own footprints were mapped onto Overture ids in gold.
-#   "intersects"  — gold as built (harmonize_common.py): any Overture footprint touching a damaged
-#                   MS polygon is flagged; one-to-many, bleeds ~16% extra buildings in the core.
-#   "max_overlap" — paper-side 1:1 override: each MS polygon flags only the Overture footprint with
-#                   the largest overlap (ties -> nearest centroid, then id; orphans keep no base
-#                   building and are recorded), id set frozen in lib/ms_1to1_ids.csv.
+# FOOTPRINT_MAP_RULE: how products that delivered their OWN footprints (Microsoft, UNEP, UH) are
+# mapped onto Overture ids for the paper.
+#   "gold"      — each product as gold built it (harmonize_common.py): Microsoft by ST_Intersects
+#                 (one-to-many, ~16% extra buildings in the core), UNEP by centroid nearest within
+#                 20 m, UH by point-on-surface containment. Three rules for three products.
+#   "iou_1to1"  — one rule for all three (ADR-0030 rule set, 2026-09-14): each delivered footprint
+#                 maps to the base building with the highest IoU among those it overlaps; if it
+#                 overlaps none, to the nearest base building within 20 m; else it is an orphan
+#                 (counted, listed). One assignment per footprint. Id sets frozen in
+#                 lib/<ms|unep|uh>_1to1_ids.csv, counts in lib/footprint_map_manifest.csv.
 # Both switches are module constants on purpose: the frame is a property of the branch, not of the
 # environment, so a script cannot silently run in a mixed frame.
 PAPER_FRAME = "polygon"
-MS_MAP_RULE = "max_overlap"
+FOOTPRINT_MAP_RULE = "iou_1to1"  # "gold" = each product's mapping as gold built it. ADR-0030 rule set (2026-09-14)
+MS_MAP_RULE = FOOTPRINT_MAP_RULE   # older name, kept for callers
+# Products that delivered their OWN footprints. Each is re-mapped 1:1 onto the base by
+# lib/build_footprint_maps.py (highest IoU among overlapping base buildings, else nearest within 20 m).
+FOOTPRINT_PRODUCTS = {"ms": "ms_dmg", "unep": "debris_dmg", "uh": "uh_dmg"}
 BASE_CACHE = "/tmp/gie_base_local"
 
 # --- gold building flags, paper-pinned -----------------------------------------
@@ -100,15 +108,16 @@ def building_flags(columns=None):
         df["osu_dmg"] = df["id"].isin(ids).astype("int64")
         if "osu_class" in df.columns:
             df["osu_class"] = df["osu_dmg"] * 2
-    if "ms_dmg" in df.columns and MS_MAP_RULE == "max_overlap":
-        f = os.path.join(os.path.dirname(__file__), "ms_1to1_ids.csv")
-        if not os.path.exists(f):
-            raise FileNotFoundError(f"MS_MAP_RULE='max_overlap' needs {f}; build it with "
-                                    "lib/build_ms_1to1_ids.py")
-        ids = set(pd.read_csv(f)["id"])
-        df["ms_dmg"] = df["id"].isin(ids).astype("int64")
-    elif MS_MAP_RULE not in ("intersects", "max_overlap"):
-        raise ValueError(f"unknown MS_MAP_RULE {MS_MAP_RULE!r}")
+    if FOOTPRINT_MAP_RULE == "iou_1to1":
+        for key, col in FOOTPRINT_PRODUCTS.items():
+            if col in df.columns:
+                f = os.path.join(os.path.dirname(__file__), f"{key}_1to1_ids.csv")
+                if not os.path.exists(f):
+                    raise FileNotFoundError(f"FOOTPRINT_MAP_RULE='iou_1to1' needs {f}; build it with lib/build_footprint_maps.py")
+                ids = set(pd.read_csv(f)["id"])
+                df[col] = df["id"].isin(ids).astype("int64")
+    elif FOOTPRINT_MAP_RULE != "gold":
+        raise ValueError(f"unknown FOOTPRINT_MAP_RULE {FOOTPRINT_MAP_RULE!r}")
     return df
 
 

@@ -48,6 +48,28 @@ def build_at(ref: str, tmp: str) -> pd.DataFrame:
         raise SystemExit(f"consolidate --oracle failed at {ref}:\n{r.stderr[-2000:]}")
     return pd.read_csv(os.path.join(tmp, "results_oracle_frozen.csv"))
 
+def expectations_footprint_rule(m: pd.DataFrame) -> list:
+    """Expectations for the one-rule footprint mapping (IoU 1:1 for MS, UNEP, UH; 2026-09-14) against
+    the previous commit, where only Microsoft was re-mapped (largest overlap)."""
+    def sel(region, lens, radius, metric, preds):
+        q = m[(m.region == region) & (m.lens == lens) & (m.radius == radius) & (m.metric == metric) & (m._merge == "both")]
+        return q[q.predictor.isin(preds)]
+    out = []
+    for metric in ("P", "R", "n_flags"):
+        d = sel("core", "points", 10, metric, ["IMPACT", "OSU", "LIST"])
+        out.append((f"IMPACT/OSU/LIST core {metric} unchanged (id-mapped products untouched)", bool((d.value_now == d.value_base).all()), f"{len(d)} rows"))
+    d = sel("core", "points", 10, "n_flags", ["MS"]); out.append(("Microsoft core flags move by <= 25 (largest-overlap -> IoU)", bool(((d.value_now - d.value_base).abs() <= 25).all()), f"{d.value_base.iloc[0]:g} -> {d.value_now.iloc[0]:g}"))
+    d = sel("core", "points", 10, "n_flags", ["UH"]); out.append(("UH core flags move by <= 1%", bool(((d.value_now - d.value_base).abs() / d.value_base <= 0.01).all()), f"{d.value_base.iloc[0]:g} -> {d.value_now.iloc[0]:g}"))
+    d = sel("core", "points", 10, "n_flags", ["UNEP"]); out.append(("UNEP core flags move by <= 4%", bool(((d.value_now - d.value_base).abs() / d.value_base <= 0.04).all()), f"{d.value_base.iloc[0]:g} -> {d.value_now.iloc[0]:g}"))
+    d = sel("core", "points", 10, "P", ["MS", "UH", "UNEP"]); out.append(("MS/UH/UNEP core precision moves by <= 0.01", bool(((d.value_now - d.value_base).abs() <= 0.01).all()), f"max |Δ| {(d.value_now - d.value_base).abs().max():.3f}"))
+    d = m[(m.lens == "cells") & (m.metric == "rho") & (m._merge == "both")]; out.append(("area-ranking correlations move by <= 0.02", bool(((d.value_now - d.value_base).abs() <= 0.02).all()), f"max |Δ| {(d.value_now - d.value_base).abs().max():.3f}"))
+    d = m[(m.lens == "facts") & (m.predictor == "CEMS") & (m._merge == "both")]; out.append(("reference-point facts unchanged", bool((d.value_now == d.value_base).all()), f"{len(d)} rows"))
+    return out
+
+
+EXPECTATION_SETS = {"live": None, "footprint-rule": expectations_footprint_rule}   # "live" = the ADR-0030/0031 set below
+
+
 def expectations(m: pd.DataFrame) -> list:
     """Declared expectations for the ADR-0030/0031 refreeze against the live (v1) numbers.
     Each returns (name, passed, detail). Edit this list when the next change has different
@@ -78,6 +100,7 @@ def expectations(m: pd.DataFrame) -> list:
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--base", default="origin/v1"); ap.add_argument("--out")
+    ap.add_argument("--expect", default="live", choices=list(EXPECTATION_SETS), help="which declared expectation set to check")
     a = ap.parse_args()
     now = pd.read_csv(os.path.join(HERE, "results.csv"))
     with tempfile.TemporaryDirectory() as tmp:
@@ -92,7 +115,7 @@ def main():
              "| region | lens | r | predictor | metric | base | now | Δ | source |", "|---|---|---|---|---|---|---|---|---|"]
     for _, r in changed.sort_values(["source_now", *key]).iterrows():
         lines.append(f"| {r.region} | {r.lens} | {r.radius} | {r.predictor} | {r.metric} | {r.value_base:g} | {r.value_now:g} | {r.value_now - r.value_base:+.3f} | {r.source_now} |")
-    exp = expectations(m)
+    exp = (EXPECTATION_SETS[a.expect] or expectations)(m)
     lines += ["", "## expectations", "", "| expectation | result | detail |", "|---|---|---|"]
     lines += [f"| {n} | {'PASS' if ok else '**FAIL**'} | {det} |" for n, ok, det in exp]
     print(f"expectations: {sum(ok for _, ok, _ in exp)}/{len(exp)} pass")

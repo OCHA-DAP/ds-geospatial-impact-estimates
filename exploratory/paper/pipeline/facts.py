@@ -114,6 +114,17 @@ def osu_versions() -> list:
                 v0_share_probability_1=sat)
 
 
+def footprint_maps() -> list:
+    """How each own-footprint product's delivery maps onto the shared base (lib/footprint_map_manifest.csv)."""
+    m = pd.read_csv(os.path.join(HERE, "..", "artefacts", "lib", "footprint_map_manifest.csv")).set_index("product")
+    out = []
+    for key, p in (("ms", "MS"), ("unep", "UNEP"), ("uh", "UH")):
+        r = m.loc[key]
+        out += rows("all", p, delivered_footprints=r.delivered, mapped_by_iou=r.mapped_by_iou, mapped_by_snap=r.mapped_by_snap,
+                    orphans=r.orphans, base_buildings=r.base_ids, collapsed=r.collapsed, median_iou=r.median_iou)
+    return out
+
+
 def field() -> list:
     f = pl.field_points()
     out = rows("all", "ChatMap", n_points=len(f))
@@ -124,7 +135,7 @@ def field() -> list:
 
 def main():
     out = []
-    for fn in (regions, reference_points, h3_areas, microsoft_cloud, disha_extent, osu_versions, field):
+    for fn in (regions, reference_points, h3_areas, microsoft_cloud, disha_extent, osu_versions, footprint_maps, field):
         print(f"== {fn.__name__}", flush=True)
         out += fn()
     res = pd.DataFrame(out)

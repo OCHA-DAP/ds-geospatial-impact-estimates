@@ -39,10 +39,10 @@
 #         |
 #     manuscript_brief.qmd  ------>  manuscript_brief.html   (Quarto render)
 #
-# plus three guards that run on the way: `pipeline_tests` (synthetic-geometry tests of the
-# definitions and cross-lens invariants of the results), `oracle_check` (the compact modules must
-# reproduce the frozen scripts' numbers, with every difference explained), and `audit` (the brief
-# may not contain a hand-typed number).
+# plus the guards that run on the way: `pipeline_tests` (synthetic-geometry tests of the
+# definitions and cross-lens invariants of the results) and `audit` (the brief may not contain a
+# hand-typed number). `oracle_check` is the historical validation of the modules against the
+# frozen scripts; `diff` compares any two states number by number.
 #
 # Vocabulary used in rule and row names:
 #     region     core (where all six products and the reference overlap) | asd ("as delivered": every
@@ -125,9 +125,10 @@ rule pipeline_tests:
     shell: f"pytest {P}/tests -q"
 
 rule oracle_check:
-    # guard 2: the compact modules must reproduce the frozen scripts' numbers. Differences are only
-    # allowed if listed with a reason in check_against_oracle.py (currently two old scripts that
-    # deviated from the paper's own conventions). Exit 1 otherwise.
+    # guard 2 (historical): the compact modules were validated against the frozen scripts' numbers
+    # at commit 9e33053 (1,257 values identical, 17 explained). The frozen scripts are not re-run
+    # any more, so this check is a standalone target (`snakemake oracle_check`), not a gate on the
+    # brief; regressions are now caught by `snakemake diff --config base=<previous commit>`.
     input: f"{P}/check_against_oracle.py", f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv", f"{A}/results_oracle_frozen.csv"
     output: touch(f"{P}/.oracle_checked")
     shell: f"python {P}/check_against_oracle.py {P}/results_scorecards.csv {P}/results_ranking.csv"
@@ -288,7 +289,7 @@ rule audit:
     shell: "python audit_brief_numbers.py > {output}"
 
 rule brief:
-    input: "manuscript_brief.qmd", "brief_numbers.py", "appendix-fold.html", f"{A}/results.csv", list(FIG_RULES), f"{P}/.oracle_checked"
+    input: "manuscript_brief.qmd", "brief_numbers.py", "appendix-fold.html", f"{A}/results.csv", list(FIG_RULES)
     output: "manuscript_brief.html"
     shell: 'QUARTO_PYTHON="$(python -c \'import sys; print(sys.executable)\')" quarto render manuscript_brief.qmd --to html'
 
