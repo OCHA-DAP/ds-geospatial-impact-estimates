@@ -54,7 +54,7 @@ script migration; `snakemake -n` shows nothing stale after a full build.
 - [x] G2 verification build green (five relaunches: fig output paths, legacy dir, contextily, per-AOI figure still read artefacts/); render text identical to the pre-promotion render (870 text nodes, 0 differences); `-n` clean
 - [x] G3 one footprint rule (IoU 1:1) applied to MS/UNEP/UH; diff 9/9 vs 0c9cc12, Table 1 delivered vs on-base
 - [x] G4 diff vs live restated for the one-rule mapping (UNEP/UH may move ≤ 2%; ranking ρ ≤ 0.02 for the three re-mapped products): 12/12; `review/diff_vs_live_v1.md` refreshed
-- [ ] G5 oracle re-run under the current conventions (`snakemake oracle`: archived light scripts → results_oracle_frozen.csv), then `oracle_check` 0 unexplained. Blocked 2026-09-15 00:15 on the Overture base cache: macOS emptied /tmp/gie_base_local at midnight and the blob endpoint is timing out during the rebuild
+- [x] G5 oracle re-run under the current conventions (15 archived scripts, 00:28–01:30 on 2026-09-15; the archive's gie_paper shim had imported itself and was fixed first). 878 rows: 860 identical, 18 explained (rq2i's fp_crowd_damaged denominator; rq2i/rq5b representative point taken in lon/lat, one building for 5-of-6), 0 unexplained. rq2r, rq2_chatmap and the three rq3f null rankings re-ran byte-identical to the pipeline exports
 - [ ] G6 push + PR #116 body (promotion, one-rule mapping, oracle rule)
 
 ## H. Things that bit (for the next person)

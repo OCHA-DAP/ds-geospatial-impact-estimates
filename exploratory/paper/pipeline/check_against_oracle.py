@@ -20,8 +20,9 @@ KEY = ["region", "lens", "radius", "predictor", "metric"]
 EXCEPTIONS = [
     (lambda r: r.lens == "crowd" and r.metric == "fp_crowd_damaged" and r.source_oracle.endswith("rq2i_per_aoi_scorecard.csv"),
      "rq2i defined fp_crowd_damaged as confirmed / ALL unmatched flags; the pipeline uses confirmed / REVIEWED (rq5b's definition) everywhere"),
-    (lambda r: r.lens == "crowd" and r.metric in ("crowd_cov", "P_crowd") and r.source_oracle.endswith("rq2i_per_aoi_scorecard.csv") and abs(r.value_new - r.value_oracle) <= 0.011,
-     "rq2i took representative points after reprojecting to lon/lat (not in the metric frame, ADR-0030); 1-2 buildings change crowd cell"),
+    (lambda r: r.lens == "crowd" and r.metric in ("crowd_cov", "P_crowd") and (r.source_oracle.endswith("rq2i_per_aoi_scorecard.csv") or r.source_oracle.endswith("rq5b_six_member.csv")) and abs(r.value_new - r.value_oracle) <= 0.011,
+     "rq2i and rq5b took representative points after reprojecting to lon/lat (not in the metric frame, ADR-0030); 1-2 buildings change crowd cell "
+     "(verified 2026-09-15 for 5-of-6: 469 vs 468 of 481 unmatched flags reviewed -> .98 vs .97)"),
     (lambda r: r.lens == "cells-agreement" and r.predictor == "weighted fusion",
      "fusion row is only produced with --with-fusion (frozen rq8 parquet)"),
 ]
