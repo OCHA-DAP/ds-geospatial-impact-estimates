@@ -12,37 +12,46 @@
 # What "stale" means. Every time a rule runs, Snakemake records (in the hidden folder
 # `.snakemake/`, not in git) when each output was made, the command that made it, and its
 # inputs. An output is stale, and its rule reruns, when an input is newer than it, or the
-# command/params changed. Nothing stale means nothing runs: asking for the brief twice costs
-# nothing the second time. Because this is judged on file modification times, a fresh
-# `git checkout` can make everything look stale; if you have verified the state, run
-# `... --touch all` once to mark the outputs current.
+# command/params changed. Nothing stale means nothing runs. Because this is judged on file
+# modification times, a fresh `git checkout` can make everything look stale; if you have
+# verified the state, run `... --touch all` once to mark the outputs current.
 #
 # How to run it (always from the repository root):
 #     uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exploratory/paper -n       # dry run: what WOULD run
 #     uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exploratory/paper -c2 all  # build the brief
-#     ... heavy                              # rerun the slow appendix chain (fusion, bootstrap); ~1 h
+#     ... heavy --forcerun rq8 rq8b          # re-run the slow archived chain (fusion, bootstrap; ~1.5 h) ...
+#     ... vendor                             # ... then sign its outputs off into frozen/ (updates frozen/MANIFEST.csv)
 #     ... diff --config base=origin/v1       # list every number that changed vs a git ref, with PASS/FAIL expectations
 #     ... --touch all                        # mark outputs current after a verified checkout
 #     ... --dag all | dot -Tpng > dag.png    # draw the graph (needs graphviz)
 #
-# The shape of the pipeline, top to bottom:
+# The shape of the pipeline, top to bottom (everything below lives in exploratory/paper/):
 #
-#     pipeline/paperlib.py            the definitions: what "the core region" is, how a flag is matched to a
-#         |                            reference point, how the crowd credits a flag, who the predictors are
+#     lib/gie_paper.py               data loaders and the paper's pins (OSU v0, the three footprint id lists)
+#     pipeline/paperlib.py           the definitions: what "the core region" is, how a flag is matched to a
+#         |                          reference point, how the crowd credits a flag, who the predictors are
 #     pipeline/scorecards.py  --+
 #     pipeline/ranking.py     --+--->  three modules compute rows of ONE table from those definitions
 #     pipeline/facts.py       --+
-#         |                                 + adapters over the FROZEN heavy chain (fusion, bootstrap, ...)
-#     artefacts/consolidate.py  ------>  artefacts/results.csv   (region, lens, radius, predictor, metric, value, source)
+#         |                                + frozen/*.csv: SIGNED-OFF copies of the archived heavy chain's outputs
+#     pipeline/consolidate.py  ------>  results.csv   (region, lens, radius, predictor, metric, value, source)
 #         |
 #     brief_numbers.py  ------>  named, formatted values the brief quotes inline as `{python} N["key"]`
 #         |
-#     manuscript_brief.qmd  ------>  manuscript_brief.html   (Quarto render)
+#     manuscript_brief.qmd  ------>  manuscript_brief.html   (Quarto render; figures/ embedded)
 #
-# plus the guards that run on the way: `pipeline_tests` (synthetic-geometry tests of the
-# definitions and cross-lens invariants of the results) and `audit` (the brief may not contain a
-# hand-typed number). `oracle_check` is the historical validation of the modules against the
-# frozen scripts; `diff` compares any two states number by number.
+# Guards on the way: `pipeline_tests` (synthetic-geometry tests of the definitions and cross-lens
+# invariants of the results) and `audit` (the brief may not contain a hand-typed number).
+# `diff` compares any two states number by number. `oracle_check` compares the modules with the
+# archived scripts' numbers (results_oracle_frozen.csv, an independent implementation of the same
+# conventions); `oracle` regenerates that snapshot by re-running the archived light scripts.
+#
+# The archive. `artefacts/` holds the ~40 per-RQ scripts that produced the paper's first frozen
+# numbers, their outputs, and the oracle. NOTHING reachable from `all` reads from it. Only three
+# explicit targets touch it: `heavy` runs the archived fusion/bootstrap/ablation scripts, `vendor`
+# copies their outputs into frozen/ with a manifest line (source, commit, sha256, date), and
+# `oracle` re-runs the archived scorecard/ranking scripts and rebuilds results_oracle_frozen.csv.
+# Re-signing a frozen number is therefore always a visible change under frozen/.
 #
 # THE RESEARCH QUESTIONS (the RQn numbering in rule and file names). Each was one folder of
 # scripts in the archive; the brief's sections draw on them as noted.
@@ -83,114 +92,195 @@
 #                reports), cells (area ranking on H3 hexagons), crowd, bounds, facts, ...
 #     radius     matching radius in metres (10 is the paper's), or the H3 resolution for cells
 #     predictor  MS | IMPACT | OSU | UH | LIST | UNEP | k-of-6 rules | pairs | geography null | fusion
-#     frozen     produced by the archived per-RQ scripts under artefacts/, not by the compact modules.
-#                They are in the current frame (re-run 2026-09-10) but were NOT re-derived by the
-#                library; the oracle check says nothing about them.
-#     oracle     artefacts/results_oracle_frozen.csv: the frozen scripts' final consolidated output,
-#                the reference the compact modules are checked against.
-#
-# Conventions in this file: `A` is the artefacts folder (archive + frozen outputs), `P` the
-# pipeline folder (the live code). Paths are relative to exploratory/paper (the -d directory).
-# A rule that lists LIB as an input reruns whenever a shared definition changes; the heavy
-# rules deliberately do not, so a library edit never costs an hour unless you ask for it.
+#     frozen     a signed-off copy under frozen/ of an archived script's output (see MANIFEST.csv)
 # =============================================================================================
 
-A = "artefacts"
 P = "pipeline"
-LIB = [f"{P}/paperlib.py", f"{A}/lib/gie_paper.py"]   # the definitions (paperlib) and the data loaders/pins (gie_paper)
+A = "artefacts"                                     # the archive; only `heavy` and `vendor` touch it
+LIB = [f"{P}/paperlib.py", "lib/gie_paper.py"]      # definitions + data loaders/pins
+IDS = ["lib/ms_1to1_ids.csv", "lib/unep_1to1_ids.csv", "lib/uh_1to1_ids.csv", "lib/footprint_map_manifest.csv"]
 
 
 def art(script, *args, env=""):
-    """Shell line for a frozen artefact script: run it from inside artefacts/ (they use relative paths)."""
+    """Shell line for an archived script: run it from inside artefacts/ (they use relative paths)."""
     return f"cd {A} && {env} python {script} {' '.join(args)}"
 
 
 # ---------------------------------------------------------------------------------------------
-# FINAL TARGETS. `snakemake all` asks for these three files; everything else is pulled in by need.
+# FINAL TARGETS
 # ---------------------------------------------------------------------------------------------
 rule all:
-    input:
-        "manuscript_brief.html",                    # the rendered brief
-        f"{A}/_audit/brief_numbers_audit.txt",      # proof that it contains no hand-typed numbers
-        f"{P}/.tests_passed",                       # proof that the definitions and invariants hold
+    input: "manuscript_brief.html", "_audit/brief_numbers_audit.txt", f"{P}/.tests_passed"
 
-# The slow appendix chain. Not part of `all`; run `snakemake heavy` when you mean it.
+
+# ---------------------------------------------------------------------------------------------
+# THE COMPACT PIPELINE: three modules, each a plain Python file, each writing rows of the results table.
+# ---------------------------------------------------------------------------------------------
+rule scorecards:
+    # precision/recall of every predictor against the reference: core (3 radii), as delivered,
+    # per AOI, the precision ladder (floor / +possibly / +crowd / both), field recall, flag totals
+    input: LIB, IDS, f"{P}/scorecards.py"
+    output: f"{P}/results_scorecards.csv"
+    shell: f"python {P}/scorecards.py"
+
+rule ranking:
+    # area ranking on H3 cells: each product vs the geography null (3 scopes), and the agreement rules
+    input: LIB, IDS, f"{P}/ranking.py"
+    output: f"{P}/results_ranking.csv"
+    shell: f"python {P}/ranking.py"
+
+rule facts:
+    # geography and input facts the prose states: areas, counts, spacing, cell areas, cloud share,
+    # OSU versions, footprint-mapping manifest, field-report counts
+    input: LIB, IDS, f"{P}/facts.py"
+    output: f"{P}/results_facts.csv"
+    shell: f"python {P}/facts.py"
+
+rule legacy_csvs:
+    # the figure scripts read per-RQ CSVs in their original layouts; these are RESHAPED from the
+    # pipeline's rows into pipeline/legacy/ (one computation, two layouts)
+    input: f"{P}/export_legacy.py", f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv"
+    output:
+        expand(f"{P}/legacy/rq5b_six_member{{s}}.csv", s=["", "_r20", "_r30"]),
+        f"{P}/legacy/rq2i_per_aoi_scorecard.csv", f"{P}/legacy/rq2r_precision_bounds.csv", f"{P}/legacy/rq2_chatmap_recall.csv",
+        expand(f"{P}/legacy/rq3f_null_ranking{{s}}.csv", s=["", "_core", "_caraballeda"]), f"{P}/legacy/rq3h_agreement_ranking.csv",
+    shell: f"python {P}/export_legacy.py"
+
+# ---------------------------------------------------------------------------------------------
+# ONE RESULTS TABLE: pipeline rows + adapters over the signed-off frozen copies.
+# ---------------------------------------------------------------------------------------------
+FROZEN = [f"frozen/{n}" for n in [
+    "rq2h_osu_v0_v1.csv", "rq2p_osu_v1_tiers.csv", "rq2_density_null.csv", "rq2_ms_confidence_curve.csv",
+    "rq3g_frac_vs_count.csv", "rq3b_per_area_moran.csv", "rq3d_lisa_summary.csv",
+    "rq8_best_f1_r10.csv", "rq8_best_f1_r20.csv", "rq8_best_f1_r30.csv", "rq8b_asdelivered_baseline_r10.csv", "rq8b_asdelivered_baseline_r20.csv",
+    "rq8c_basis_pr_r10.csv", "rq9_ci_core.csv", "rq9_ci_asdelivered_r10.csv", "rq9_ci_models_r10.csv",
+    "rq7_round2_padj_sensitivity.csv", "rq7_round2_replication.csv", "shared_base_polygon_core.csv",
+]]
+
+rule results:
+    input: f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv", f"{P}/results_facts.csv", FROZEN, "frozen/MANIFEST.csv", f"{P}/consolidate.py"
+    output: "results.csv"
+    shell: f"python {P}/consolidate.py"
+
+# ---------------------------------------------------------------------------------------------
+# GUARDS
+# ---------------------------------------------------------------------------------------------
+rule pipeline_tests:
+    input: LIB, f"{P}/tests/test_paperlib.py", f"{P}/tests/test_results_invariants.py", "results.csv"
+    output: touch(f"{P}/.tests_passed")
+    shell: f"pytest {P}/tests -q"
+
+rule audit:
+    input: "manuscript_brief.qmd", "audit_brief_numbers.py"
+    output: "_audit/brief_numbers_audit.txt"
+    shell: "python audit_brief_numbers.py > {output}"
+
+rule oracle_check:
+    # the modules vs the archived scripts' consolidated numbers (results_oracle_frozen.csv; rebuilt by `oracle`).
+    # Every difference must be listed with a reason in check_against_oracle.py; unexplained ones fail.
+    input: f"{P}/check_against_oracle.py", f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv", "results_oracle_frozen.csv"
+    output: touch(f"{P}/.oracle_checked")
+    shell: f"python {P}/check_against_oracle.py {P}/results_scorecards.csv {P}/results_ranking.csv"
+
+rule diff:
+    #   snakemake diff --config base=origin/v1 [expect=live|footprint-rule]
+    input: "results.csv", f"{P}/diff_results.py"
+    params: base=config.get("base", "origin/v1"), expect=config.get("expect", "live")
+    output: touch("_audit/diff.done")
+    shell: f"python {P}/diff_results.py --base {{params.base}} --expect {{params.expect}}"
+
+# ---------------------------------------------------------------------------------------------
+# FIGURES: drawn from pipeline/legacy CSVs or frozen copies into figures/ (gitignored; embedded at render)
+# ---------------------------------------------------------------------------------------------
+FIG = {
+    "figures/rq2e_grade_slope.png": ("rq2e_grade_slope_fig.py", [f"{P}/legacy/rq2_chatmap_recall.csv"], ""),
+    "figures/rq2r_bounds_ladder.png": ("rq2r_bounds_fig.py", [f"{P}/legacy/rq2r_precision_bounds.csv"], ""),
+    "figures/rq5b_frontier_r10.png": ("rq5b_frontier_fig.py", [f"{P}/legacy/rq5b_six_member.csv"], ""),
+    "figures/rq3f_null_ranking_both_summary.png": ("rq3f_null_ranking_both_fig.py", [f"{P}/legacy/rq3f_null_ranking.csv", f"{P}/legacy/rq3f_null_ranking_core.csv"], "--summary"),
+    "figures/rq3h_agreement_ranking_summary.png": ("rq3h_agreement_ranking_fig.py", [f"{P}/legacy/rq3h_agreement_ranking.csv"], "--summary"),
+    "figures/rq8_best_f1_r10_summary.png": ("rq8_best_f1_fig.py", ["frozen/rq8_best_f1_r10.csv", "frozen/rq8b_asdelivered_baseline_r10.csv"], "--summary"),
+    "figures/rq8c_basis_precision_r10.png": ("rq8c_basis_fig.py", ["frozen/rq8c_basis_pr_r10.csv"], ""),
+    "figures/rq7_crowd_adjustment_explainer.png": ("rq7_round2_explainer_fig.py", ["frozen/rq7_round2_replication.csv", LIB[1]], ""),
+    "figures/rq7_west_cluster_adjudication.png": ("rq7_west_cluster_fig.py", ["frozen/rq7_west_cluster_join.csv"], ""),
+    "figures/fig_extents_map.png": ("fig_extents_map.py", [LIB[1]], ""),
+    "figures/reference_architecture.png": ("reference_architecture_fig.py", [], ""),
+    "figures/rq8_dayzero_schematic.png": ("rq8_dayzero_schematic.py", [], ""),
+    "figures/rq3_residual_maps_res8.png": ("rq3_error_structure.py", [LIB[1]], ""),
+    "figures/rq3g_frac_vs_count_rho.png": ("rq3g_fig.py", ["frozen/rq3g_frac_vs_count.csv"], ""),
+}
+
+for _png, (_script, _inputs, _args) in FIG.items():
+    rule:
+        name: "fig_" + _png.rsplit("/", 1)[1].replace(".png", "")
+        input: f"{P}/figs/{_script}", *_inputs
+        output: _png
+        params: script=_script, args=_args
+        shell: f"python {P}/figs/{{params.script}} {{params.args}}"
+
+rule fig_per_aoi:
+    input: f"{P}/fig_per_aoi.py", f"{P}/legacy/rq2i_per_aoi_scorecard.csv"
+    output: "figures/rq2i_per_aoi_scorecard.png"
+    shell: f"python {P}/fig_per_aoi.py"
+
+# ---------------------------------------------------------------------------------------------
+# THE BRIEF
+# ---------------------------------------------------------------------------------------------
+rule brief:
+    input: "manuscript_brief.qmd", "brief_numbers.py", "appendix-fold.html", "results.csv", list(FIG), "figures/rq2i_per_aoi_scorecard.png"
+    output: "manuscript_brief.html"
+    shell: 'QUARTO_PYTHON="$(python -c \'import sys; print(sys.executable)\')" quarto render manuscript_brief.qmd --to html'
+
+# ---------------------------------------------------------------------------------------------
+# THE ARCHIVE'S HEAVY CHAIN (explicit only). `heavy` runs the archived scripts as they are;
+# `vendor` signs their outputs off into frozen/. Neither is reachable from `all`.
+# ---------------------------------------------------------------------------------------------
 rule heavy:
     input:
         expand(f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", r=[10, 20, 30]),
         expand(f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv", r=[10, 20]),
         f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv", f"{A}/RQ8-learned-fusion/rq8d_null_ablation.csv",
         f"{A}/RQ9-uncertainty/rq9_ci_core.csv",
+        f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv", f"{A}/RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv",
+        f"{A}/RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv", f"{A}/RQ2-cems-footprint-points/rq2_density_null.csv",
+        f"{A}/RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv", f"{A}/RQ3-prioritization-error-structure/rq3b_per_area_moran.csv",
+        f"{A}/RQ3-prioritization-error-structure/rq3d_lisa_summary.csv",
 
+rule vendor:
+    # copy the archive's current outputs into frozen/ and rewrite MANIFEST.csv (source, commit, sha256, date)
+    input: f"{P}/vendor_frozen.py"
+    shell: f"python {P}/vendor_frozen.py"
 
-# ---------------------------------------------------------------------------------------------
-# THE COMPACT PIPELINE. Three modules, each a plain Python file you can run by hand, each writing
-# rows of the results table. They depend on LIB, so editing a definition marks all three stale.
-# ---------------------------------------------------------------------------------------------
-rule scorecards:
-    # precision/recall of every predictor against the reference: core (3 radii), as delivered,
-    # per AOI, the precision ladder (floor / +possibly / +crowd / both), field recall, flag totals
-    input: LIB, f"{P}/scorecards.py"
-    output: f"{P}/results_scorecards.csv"
-    shell: f"python {P}/scorecards.py"
+# The oracle: the archived scorecard/ranking scripts, re-run under the CURRENT conventions (they import
+# lib/gie_paper.py through the artefacts/lib shim, so a frame or mapping switch reaches them too), then
+# consolidated the archive way into results_oracle_frozen.csv. Run after any convention change, then
+# `oracle_check`. ~1 h; the null-ranking scripts dominate. Needs the Overture base cache (README).
+ORACLE_LIGHT = {  # archived script -> env (rq5b takes the radius, rq3f the scope, from the environment)
+    "RQ5-ensemble/scripts/rq5b_six_member.py": ["GIE_LABEL_R=10", "GIE_LABEL_R=20", "GIE_LABEL_R=30"],
+    "RQ2-cems-footprint-points/scripts/rq2i_per_aoi_scorecard.py": [""],
+    "RQ2-cems-footprint-points/scripts/rq2q_incl_possibly.py": [""],
+    "RQ2-cems-footprint-points/scripts/rq2r_precision_bounds.py": [""],
+    "RQ2-cems-footprint-points/scripts/rq2_chatmap_recall.py": [""],
+    "RQ2-cems-footprint-points/scripts/rq2k_field_union_precision.py": [""],
+    "RQ2-cems-footprint-points/scripts/rq2s_flag_totals.py": [""],
+    "RQ2-cems-footprint-points/scripts/rq2l_cems_grade_recall.py": [""],
+    "RQ2-cems-footprint-points/scripts/rq2o_uh_west_strip.py": [""],
+    "RQ3-prioritization-error-structure/scripts/rq3f_null_ranking.py": ["GIE_SCOPE=all", "GIE_SCOPE=core", "GIE_SCOPE=caraballeda"],
+    "RQ3-prioritization-error-structure/scripts/rq3h_agreement_ranking.py": [""],
+}
 
-rule ranking:
-    # area ranking on H3 cells: each product vs the geography null (3 scopes), and the agreement
-    # rules on the core's fixed cell set. The frozen fusion score's row (--with-fusion) is NOT
-    # included by default: it would tie this rule to the heavy chain's parquet, and the brief
-    # does not quote it.
-    input: LIB, f"{P}/ranking.py"
-    output: f"{P}/results_ranking.csv"
-    shell: f"python {P}/ranking.py"
+rule oracle:
+    input: LIB, IDS, f"{P}/consolidate.py", [f"{A}/{s}" for s in ORACLE_LIGHT]
+    output: "results_oracle_frozen.csv"
+    shell:
+        f"cd {A} && " + " && ".join(f"{e} python {s}" for s, envs in ORACLE_LIGHT.items() for e in envs)
+        + f" && cd .. && python {P}/consolidate.py --oracle"
 
-rule facts:
-    # the geography and input facts the prose states: areas, building counts, reference points per
-    # AOI and grade, building spacing, H3 cell areas, cloud share, OSU v0/v1 totals, field counts
-    input: LIB, f"{P}/facts.py"
-    output: f"{P}/results_facts.csv"
-    shell: f"python {P}/facts.py"
+# the archived scripts need the legacy layouts of the pipeline's rows where they anchor (rq9 on rq5b/rq2i, rq3g on rq3f)
+rule archive_inputs:
+    input: f"{P}/legacy/rq5b_six_member.csv", f"{P}/legacy/rq2i_per_aoi_scorecard.csv", f"{P}/legacy/rq3f_null_ranking.csv", f"{P}/legacy/rq3f_null_ranking_core.csv"
+    output: f"{A}/RQ5-ensemble/rq5b_six_member.csv", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv"
+    shell: "cp {input[0]} {output[0]} && cp {input[1]} {output[1]} && cp {input[2]} {output[2]} && cp {input[3]} {output[3]}"
 
-rule pipeline_tests:
-    # guard 1: synthetic-geometry tests of the definitions + invariants across results.csv
-    # (bounds monotone, lenses agree where they must, every key the brief uses exists)
-    input: LIB, f"{P}/tests/test_paperlib.py", f"{P}/tests/test_results_invariants.py", f"{A}/results.csv"
-    output: touch(f"{P}/.tests_passed")   # touch(): an empty marker file, since pytest writes nothing
-    shell: f"pytest {P}/tests -q"
-
-rule oracle_check:
-    # guard 2 (historical): the compact modules were validated against the frozen scripts' numbers
-    # at commit 9e33053 (1,257 values identical, 17 explained). The frozen scripts are not re-run
-    # any more, so this check is a standalone target (`snakemake oracle_check`), not a gate on the
-    # brief; regressions are now caught by `snakemake diff --config base=<previous commit>`.
-    input: f"{P}/check_against_oracle.py", f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv", f"{A}/results_oracle_frozen.csv"
-    output: touch(f"{P}/.oracle_checked")
-    shell: f"python {P}/check_against_oracle.py {P}/results_scorecards.csv {P}/results_ranking.csv"
-
-
-# ---------------------------------------------------------------------------------------------
-# LEGACY LAYOUTS. The figure scripts and two frozen anchors (rq3g, rq9) read per-RQ CSVs in their
-# original column layouts. Those files are now WRITTEN FROM the pipeline's rows by export_legacy.py:
-# one computation, reshaped. They are not inputs to results.csv, so there is no cycle.
-# ---------------------------------------------------------------------------------------------
-LEGACY = [
-    f"{A}/RQ5-ensemble/rq5b_six_member.csv", f"{A}/RQ5-ensemble/rq5b_six_member_r20.csv", f"{A}/RQ5-ensemble/rq5b_six_member_r30.csv",
-    f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv", f"{A}/RQ2-cems-footprint-points/rq2r_precision_bounds.csv",
-    f"{A}/RQ2-cems-footprint-points/rq2_chatmap_recall.csv",
-    f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv",
-    f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_caraballeda.csv", f"{A}/RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv",
-]
-
-rule legacy_csvs:
-    input: f"{P}/export_legacy.py", f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv"
-    output: LEGACY
-    shell: f"python {P}/export_legacy.py"
-
-
-# ---------------------------------------------------------------------------------------------
-# FROZEN HEAVY CHAIN (appendix only). These are the archived scripts, run as they are. Note that
-# LIB is NOT an input: an edit to the library does not rerun them. Reach them via `snakemake heavy`.
-# `{r}` is a wildcard: one rule stands for the r = 10, 20 and 30 m variants.
-# ---------------------------------------------------------------------------------------------
 rule rq8:
     # RQ8 learned fusion (labels lens); dumps the out-of-fold parquet. Feeds @fig-bestf1, the null and radius appendices.
     input: f"{A}/RQ8-learned-fusion/scripts/rq8_learned_fusion.py"
@@ -223,11 +313,6 @@ rule rq9:
     output: f"{A}/RQ9-uncertainty/rq9_ci_core.csv", f"{A}/RQ9-uncertainty/rq9_ci_asdelivered_r10.csv", f"{A}/RQ9-uncertainty/rq9_ci_models_r10.csv"
     shell: art("RQ9-uncertainty/scripts/rq9_block_bootstrap.py")
 
-
-# ---------------------------------------------------------------------------------------------
-# APPENDIX-ONLY DIAGNOSTICS still produced by their frozen scripts (small, not yet worth porting).
-# They read the shared data loaders (LIB[1]) but not the pipeline definitions.
-# ---------------------------------------------------------------------------------------------
 rule rq7_round2:
     # RQ7 round-2 re-vote: reliability and the crowd-adjusted swap sensitivity. Feeds the crowd appendix.
     input: LIB[1], f"{A}/RQ7-mapswipe-validation/scripts/rq7_round2_replication.py", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv"
@@ -255,7 +340,7 @@ rule rq2_density_null:
 rule rq3g:
     # RQ3 ranking by damage fraction instead of count. Feeds @fig-fracrank and the fraction paragraph.
     input: LIB[1], f"{A}/RQ3-prioritization-error-structure/scripts/rq3g_frac_ranking.py", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv"
-    output: f"{A}/RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv", f"{A}/RQ3-prioritization-error-structure/figs/rq3g_frac_vs_count_rho.png"
+    output: f"{A}/RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv"
     shell: art("RQ3-prioritization-error-structure/scripts/rq3g_frac_ranking.py")
 
 rule rq3b:
@@ -269,97 +354,3 @@ rule rq3d:
     input: LIB[1], f"{A}/RQ3-prioritization-error-structure/scripts/rq3d_lisa_reliability.py"
     output: f"{A}/RQ3-prioritization-error-structure/rq3d_lisa_summary.csv"
     shell: art("RQ3-prioritization-error-structure/scripts/rq3d_lisa_reliability.py")
-
-
-# ---------------------------------------------------------------------------------------------
-# ONE RESULTS TABLE. consolidate.py stacks the three modules' rows with adapters that read the
-# frozen CSVs below, checks there is exactly one value per (region, lens, radius, predictor,
-# metric), and writes artefacts/results.csv: the only file the brief reads.
-# ---------------------------------------------------------------------------------------------
-FROZEN_INPUTS = [
-    f"{A}/RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv", f"{A}/RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv",
-    f"{A}/RQ2-cems-footprint-points/rq2_density_null.csv", f"{A}/RQ2-cems-footprint-points/rq2_ms_confidence_curve.csv",
-    f"{A}/RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv", f"{A}/RQ3-prioritization-error-structure/rq3b_per_area_moran.csv",
-    f"{A}/RQ3-prioritization-error-structure/rq3d_lisa_summary.csv",
-    expand(f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", r=[10, 20, 30]), expand(f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv", r=[10, 20]),
-    f"{A}/RQ9-uncertainty/rq9_ci_core.csv", f"{A}/RQ9-uncertainty/rq9_ci_asdelivered_r10.csv", f"{A}/RQ9-uncertainty/rq9_ci_models_r10.csv",
-    f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv",
-    f"{A}/RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv", f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv",
-    f"{A}/RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv",   # centroid-vs-footprint frame deltas (ADR-0030 evidence)
-]
-
-rule results:
-    input: f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv", f"{P}/results_facts.csv", FROZEN_INPUTS, f"{A}/consolidate.py"
-    output: f"{A}/results.csv"
-    shell: f"cd {A} && python consolidate.py"
-
-
-# ---------------------------------------------------------------------------------------------
-# FIGURES. The brief embeds these PNGs at render time (figures are gitignored, so they must exist
-# locally). Each entry: output png -> (script, extra inputs, args). The loop below turns every
-# entry into a rule named fig_<png stem>. Static/schematic figures list no data inputs and only
-# redraw when their script changes.
-# NOTE: these fig scripts still read the frozen per-RQ CSVs (rq5b, rq2r, rq3f, rq3h, rq2_chatmap).
-# Those CSVs are byte-equal to the pipeline's rows (oracle check) and stay as the figures' inputs
-# until the fig scripts are pointed at results.csv.
-# ---------------------------------------------------------------------------------------------
-FIG_RULES = {
-    f"{A}/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png": ("RQ2-cems-footprint-points/scripts/rq2e_grade_slope_fig.py", [f"{A}/RQ2-cems-footprint-points/rq2_chatmap_recall.csv"], ""),
-    f"{A}/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png": ("RQ2-cems-footprint-points/scripts/rq2r_bounds_fig.py", [f"{A}/RQ2-cems-footprint-points/rq2r_precision_bounds.csv"], ""),
-    f"{A}/RQ5-ensemble/figs/rq5b_frontier_r10.png": ("RQ5-ensemble/scripts/rq5b_frontier_fig.py", [f"{A}/RQ5-ensemble/rq5b_six_member.csv"], ""),
-    f"{A}/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both_summary.png": ("RQ3-prioritization-error-structure/scripts/rq3f_null_ranking_both_fig.py", [f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv"], "--summary"),
-    f"{A}/RQ3-prioritization-error-structure/figs/rq3h_agreement_ranking_summary.png": ("RQ3-prioritization-error-structure/scripts/rq3h_agreement_ranking_fig.py", [f"{A}/RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv"], "--summary"),
-    f"{A}/RQ8-learned-fusion/figs/rq8_best_f1_r10_summary.png": ("RQ8-learned-fusion/scripts/rq8_best_f1_fig.py", [f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv", f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv"], "--summary"),
-    f"{A}/RQ8-learned-fusion/figs/rq8c_basis_precision_r10.png": ("RQ8-learned-fusion/scripts/rq8c_basis_fig.py", [f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv"], ""),
-    f"{A}/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png": ("RQ7-mapswipe-validation/scripts/rq7_round2_explainer_fig.py", [f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv", LIB[1]], ""),
-    f"{A}/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png": ("RQ7-mapswipe-validation/scripts/rq7_west_cluster_fig.py", [f"{A}/RQ7-mapswipe-validation/rq7_west_cluster_join.csv"], ""),
-    f"{A}/RQ0-matching-basis/figs/fig_extents_map.png": ("RQ0-matching-basis/scripts/fig_extents_map.py", [LIB[1]], ""),
-    f"{A}/RQ0-matching-basis/figs/reference_architecture.png": ("RQ0-matching-basis/scripts/reference_architecture_fig.py", [], ""),
-    f"{A}/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png": ("RQ8-learned-fusion/scripts/rq8_dayzero_schematic.py", [], ""),
-    f"{A}/RQ3-prioritization-error-structure/figs/rq3_residual_maps_res8.png": ("RQ3-prioritization-error-structure/scripts/rq3_error_structure.py", [LIB[1]], ""),
-}
-
-rule fig_per_aoi:
-    # the per-AOI heatmap, drawn from the legacy-layout rq2i CSV (itself exported from pipeline rows)
-    input: f"{P}/fig_per_aoi.py", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv"
-    output: f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png"
-    shell: f"python {P}/fig_per_aoi.py"
-
-for _png, (_script, _inputs, _args) in FIG_RULES.items():
-    rule:
-        name: "fig_" + _png.rsplit("/", 1)[1].replace(".png", "")
-        input: f"{A}/{_script}", *_inputs
-        output: _png
-        params: script=_script, args=_args
-        shell: art("{params.script}", "{params.args}")
-
-
-# ---------------------------------------------------------------------------------------------
-# THE BRIEF. `audit` is guard 3: it scans the prose for numeric literals that are not inline keys
-# and not on its short allowlist (dates, radii, cell sizes, campaign metadata) and exits 1 if it
-# finds one. `brief` renders the Quarto document; it waits for results.csv, every figure, and the
-# oracle check, so a stale or unverified number cannot reach the page.
-# ---------------------------------------------------------------------------------------------
-rule audit:
-    input: "manuscript_brief.qmd", "audit_brief_numbers.py"
-    output: f"{A}/_audit/brief_numbers_audit.txt"
-    shell: "python audit_brief_numbers.py > {output}"
-
-rule brief:
-    input: "manuscript_brief.qmd", "brief_numbers.py", "appendix-fold.html", f"{A}/results.csv", list(FIG_RULES), f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png"
-    output: "manuscript_brief.html"
-    shell: 'QUARTO_PYTHON="$(python -c \'import sys; print(sys.executable)\')" quarto render manuscript_brief.qmd --to html'
-
-
-# ---------------------------------------------------------------------------------------------
-# NUMBER DIFF. Rebuilds the results table as it would have been at another git ref (from that
-# ref's frozen CSVs) and lists every changed value, plus PASS/FAIL against the expectations
-# declared in diff_results.py. Report: artefacts/_audit/diff_<ref>.md. This is how a reviewer
-# checks that a change moved the numbers the way it was supposed to.
-#     snakemake diff --config base=origin/v1
-# ---------------------------------------------------------------------------------------------
-rule diff:
-    input: f"{A}/results.csv", f"{A}/diff_results.py"
-    params: base=config.get("base", "origin/v1")
-    output: touch(f"{A}/_audit/diff.done")
-    shell: f"cd {A} && python diff_results.py --base {{params.base}}"

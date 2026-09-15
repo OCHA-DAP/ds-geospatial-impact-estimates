@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ORACLE = os.path.join(HERE, "..", "artefacts", "results_oracle_frozen.csv")  # the frozen scripts' final output (2026-09-14)
+ORACLE = os.path.join(HERE, "..", "results_oracle_frozen.csv")  # the frozen scripts' final output (2026-09-14)
 KEY = ["region", "lens", "radius", "predictor", "metric"]
 
 # Known, explained differences between the pipeline and the frozen scripts. Each entry is a
@@ -49,7 +49,7 @@ def main(paths):
     print(f"explained differences: {len(explained)} | UNEXPLAINED differences: {len(unexplained)} | pipeline rows absent from oracle: {len(missing)} | oracle rows not produced: {len(not_produced)}")
     for r, why in explained[:6]:
         print(f"  ok  {r.region}/{r.lens}/{r.radius}/{r.predictor}/{r.metric}: {r.value_oracle} -> {r.value_new}  ({why[:70]})")
-    for r, _ in unexplained[:40]:
+    for r, _ in unexplained:   # every row: a capped list once hid 155 of 195
         print(f"  XX  {r.region}/{r.lens}/{r.radius}/{r.predictor}/{r.metric}: oracle {r.value_oracle} vs new {r.value_new}")
     for _, r in missing.head(20).iterrows():
         print(f"  new-only  {r.region}/{r.lens}/{r.radius}/{r.predictor}/{r.metric} = {r.value_new}")

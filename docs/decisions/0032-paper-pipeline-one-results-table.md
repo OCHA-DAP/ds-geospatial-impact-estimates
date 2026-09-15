@@ -54,6 +54,16 @@ a change's effect on every number must be verifiable.
 * Verification during the migration: each module's rows had to equal the oracle to the
   CSVs' rounding, with every difference explained in `check_against_oracle.py`.
 
+### Layout after promotion (2026-09-14, evening)
+
+Nothing reachable from `snakemake all` points into `artefacts/`. `lib/` holds the data loaders
+and the footprint id lists; `frozen/` holds signed-off copies of the archived heavy chain's
+outputs with `MANIFEST.csv` (file, source, producing commit, sha256, date); the figure scripts
+live in `pipeline/figs/` and read `pipeline/legacy/` (layouts reshaped from pipeline rows) or
+`frozen/`; `results.csv` sits at the paper root. `artefacts/` is the archive plus the oracle.
+Two explicit targets touch it: `heavy` runs the archived scripts, `vendor` re-signs their
+outputs into `frozen/`, so a frozen number can only change through a visible git diff.
+
 ### Consequences
 
 * Good: a convention change is one edit, one `snakemake`, one diff report.

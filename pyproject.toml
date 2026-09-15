@@ -44,6 +44,7 @@ etl = [
     "ocha-stratus>=0.1.7",
 ]
 paper = [
+    "contextily>=1.7.1",
     "cryptography>=49.0.0",
     "great-tables>=0.24.0",
     "h3>=4.5.0",

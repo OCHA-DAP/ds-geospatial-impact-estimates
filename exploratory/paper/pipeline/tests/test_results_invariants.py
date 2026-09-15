@@ -11,7 +11,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PAPER = os.path.join(HERE, "..", "..")
 sys.path.insert(0, PAPER)
 
-R = pd.read_csv(os.path.join(PAPER, "artefacts", "results.csv"))
+R = pd.read_csv(os.path.join(PAPER, "results.csv"))
 PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 RULES = [f"{k}-of-6" for k in range(1, 7)]
 

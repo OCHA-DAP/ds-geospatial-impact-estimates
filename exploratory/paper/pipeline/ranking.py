@@ -146,7 +146,7 @@ def cells_agreement(with_fusion: bool) -> list:
     for k in range(1, 7):
         preds[f"{k}-of-6"] = (d.votes >= k).astype(float).to_numpy()
     if with_fusion:
-        pq = pd.read_parquet(os.path.join(HERE, "..", "artefacts", "RQ8-learned-fusion", "rq8_oof_scores_r10.parquet"))
+        pq = pd.read_parquet(os.path.join(HERE, "..", "artefacts", "RQ8-learned-fusion", "rq8_oof_scores_r10.parquet"))  # archived heavy output; --with-fusion only
         m = d[["id"]].merge(pq[["id", "fusion_logit"]], on="id", how="left")
         if m.fusion_logit.isna().any():
             raise SystemExit("fusion join incomplete: rq8 parquet does not cover the core buildings")

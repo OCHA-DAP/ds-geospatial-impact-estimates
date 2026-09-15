@@ -2,7 +2,7 @@
 in their original column layouts, FROM the pipeline's results rows. One computation, two
 layouts: nothing here is recomputed, only reshaped.
 
-Produces (under artefacts/): rq2_chatmap_recall.csv, rq2r_precision_bounds.csv,
+Produces (under pipeline/legacy/): rq2_chatmap_recall.csv, rq2r_precision_bounds.csv,
 rq5b_six_member{,_r20,_r30}.csv, rq2i_per_aoi_scorecard.csv, rq3f_null_ranking{,_core,_caraballeda}.csv,
 rq3h_agreement_ranking.csv.
 
@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-A = os.path.join(HERE, "..", "artefacts")
+A = os.path.join(HERE, "legacy")   # legacy-layout CSVs live here, flat
 PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 PAIRS = ["IMPACT∧OSU", "MS∧UH", "MS∧LIST", "LIST∧UH", "UNEP∧OSU", "MS∧UNEP"]
 RULES = [f"{k}-of-6" for k in range(1, 7)]
@@ -32,7 +32,8 @@ def wide(df, region, lens, radius):
 
 
 def write(df: pd.DataFrame, rel: str):
-    path = os.path.join(A, rel)
+    path = os.path.join(A, os.path.basename(rel))
+    os.makedirs(A, exist_ok=True)
     df.to_csv(path, index=False)
     print(f"  {rel}: {len(df)} rows")
 

@@ -95,7 +95,7 @@ during the response. {#tbl-products}
 head-to-head and combination analyses live. UH publishes no extent (its polygon is
 derived from its own classified footprints); UNEP publishes none at all and is scored
 under a stated coverage
-assumption.](artefacts/RQ0-matching-basis/figs/fig_extents_map.png){#fig-extents}
+assumption.](figures/fig_extents_map.png){#fig-extents}
 
 We use two reporting regions throughout. *As delivered* scores each product across
 everything it shipped, wherever the expert reference mapped. This is the view that
@@ -118,7 +118,7 @@ measured precision is a lower bound and measured recall an upper bound.
 ![The three reference datasets at a glance. Two are HOT-run and easily confused:
 MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
 ChatMap is field teams reporting building-level points from the ground, used to reveal
-misses.](artefacts/RQ0-matching-basis/figs/reference_architecture.png){#fig-refarch}
+misses.](figures/reference_architecture.png){#fig-refarch}
 
 (A side note on sources: this brief condenses a longer-form draft technical write-up,
 available [here](https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/)
@@ -150,7 +150,7 @@ scorecard. Left: precision lower bound per product per CEMS AOI; right: recall w
 the reference is thick enough to support it. `{python} N["cara_share_pct"]` of all CEMS damage points are in the
 first column; outside it, measured precision (`{python} N["outside_P_range"]`) cannot separate product
 over-flagging from reference
-incompleteness.](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png){#fig-peraoi}
+incompleteness.](figures/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 
 The expert reference is itself incomplete, and this was measured rather than assumed.
 ChatMap, the one reference collected on the ground independently of any satellite
@@ -164,7 +164,7 @@ extents. Recall was never the products' weakness; precision is the limiting fact
 field-reported damage, at "complete" destruction versus "significant" damage. Every
 line slopes down: the products and the expert reference alike find lighter damage far
 less often, which is why measured recall is an upper bound and measured precision a
-lower bound.](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png){#fig-gradeslope}
+lower bound.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
 Because the reference misses lesser damage, the headline precisions are lower bounds,
 and there is more than one defensible way to define the reference. @fig-bounds shows
@@ -182,7 +182,7 @@ paper's reference and the lower bound. Open circle: also counting the points gra
 MapSwipe crowd reviewed and confirmed as damaged. Filled diamond: counting both
 additions, the upper bound. A flag is credited only where volunteers actually reviewed its location and judged it damaged; unreviewed locations receive no credit, so
 products the crowd barely saw (UH: `{python} N["crowdcov_UH"]`) have understated upper
-bounds.](artefacts/RQ2-cems-footprint-points/figs/rq2r_bounds_ladder.png){#fig-bounds}
+bounds.](figures/rq2r_bounds_ladder.png){#fig-bounds}
 
 ## The products rank neighbourhoods well enough to triage, within the damage zone {#sec-ranking}
 
@@ -202,7 +202,7 @@ the worst-hit areas better). As delivered, rankings spread widely and one produc
 negative; restricted to the known damage zone, every product ranks usefully. This is
 the basis for the caveat repeated throughout the paper: trust the neighbourhood ranking
 *within* an identified damage zone, not for finding
-one.](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both_summary.png){#fig-ranktests}
+one.](figures/rq3f_null_ranking_both_summary.png){#fig-ranktests}
 
 Counting agreement between products improves that ranking (@fig-agreerank). Ranking
 cells by their count of buildings with three or four products agreeing beats every
@@ -214,7 +214,7 @@ product's `{python} N["top20_single_8"]`, and `{python} N["top20_vote_9"]` again
 ![**Region: core (`{python} N["core_area_km2"]` km²), both cell scales.** The six k-of-6 agreement rules at the area-ranking task, against each single product (grey). Top row: rank correlation with
 the expert ordering over all cells. Bottom row: share of the 20 worst-hit cells that
 make the predictor's own top-20 shortlist (tie-aware expected
-value).](artefacts/RQ3-prioritization-error-structure/figs/rq3h_agreement_ranking_summary.png){#fig-agreerank}
+value).](figures/rq3h_agreement_ranking_summary.png){#fig-agreerank}
 
 ## Count agreement between products {#sec-dial}
 
@@ -300,7 +300,7 @@ products with nothing in common but the event cover for each other's blind spots
 
 ![**Region: core (`{python} N["core_area_km2"]` km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
 the pair sharing its entire method adds the
-least.](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){#fig-frontier}
+least.](figures/rq5b_frontier_r10.png){#fig-frontier}
 
 Counting agreement is also close to the ceiling of what any combination can achieve. A
 statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1, but
@@ -313,7 +313,7 @@ all products against each other and the derived combined products. Bar length an
 label show F1, followed by precision and recall. The derived combined products (green)
 are shown at their optimal performance weighting/configuration; they are defined on the
 shared building base, so they exist only in the core
-region.](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10_summary.png){#fig-bestf1}
+region.](figures/rq8_best_f1_r10_summary.png){#fig-bestf1}
 
 ## Recommendations
 
@@ -553,7 +553,7 @@ target changes. Grey lines and band: the six products; coloured lines: the compo
 and the geography nulls. The dashed line marks the paper's reference. The rise is
 mechanical (same flags, more reference points to be near); the finding is what does
 *not* change: no comparison flips at any
-basis.](artefacts/RQ8-learned-fusion/figs/rq8c_basis_precision_r10.png){#fig-basis}
+basis.](figures/rq8c_basis_precision_r10.png){#fig-basis}
 
 There is one matching rule and two labelled exceptions. Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled
@@ -761,7 +761,7 @@ curve, against which a single product is one already-thresholded point. No satel
 product enters this model. Note what the diagram cannot show: fitting it requires the
 damage labels themselves, which is why it is a retrospective null rather than something
 available on the day its inputs
-are.](artefacts/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png){#fig-dayzero-build}
+are.](figures/rq8_dayzero_schematic.png){#fig-dayzero-build}
 
 
 ### Area-ranking detail: tables and error structure {#app-ranking-tables .unnumbered}
@@ -832,7 +832,7 @@ expert ordering when cells are ranked by damaged-building count (filled circles,
 paper's target) versus damage fraction (filled squares; cells with at least 20
 buildings). Open markers: the geography null under each target. The null is as strong
 under fractions as under counts, and only OSU beats it under
-either.](artefacts/RQ3-prioritization-error-structure/figs/rq3g_frac_vs_count_rho.png){#fig-fracrank}
+either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
 
 The error-structure test explains why area ranking works despite the per-building noise. The residual over-flagging is
 strongly clustered in space (Moran's I `{python} N["moran_range"]`, p ≤ `{python} N["moran_p"]` for each of the three
@@ -854,7 +854,7 @@ single ~30 km coastal strip, so its few hundred grid cells appear as individual 
 while IMPACT and OSU are Sentinel-1 swaths spanning roughly 200 km, whose thousands of
 cells merge visually. IMPACT and OSU residuals follow the coastal severity gradient.
 Microsoft's error is a single hard cluster at the west end of its
-region.](artefacts/RQ3-prioritization-error-structure/figs/rq3_residual_maps_res8.png)
+region.](figures/rq3_residual_maps_res8.png)
 
 The same cell lattice yields two further results. First, nothing in
 a product's own flag pattern predicts how reliable it is: across the fifteen
@@ -991,7 +991,7 @@ where Microsoft flags far more than the expert map
 records. Bottom left: where crowd volunteers said nothing is there. Right: cell by cell
 the two do not track; the agreement is at the scale of the strip, which sat under a
 single satellite
-scene.](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png){#fig-weststrip}
+scene.](figures/rq7_west_cluster_adjudication.png){#fig-weststrip}
 
 The product's own metadata explains where it came from. Every building in the strip has
 `num_observations = 1`: the zone was covered by exactly one satellite scene, processed
@@ -1250,6 +1250,6 @@ judged undamaged or uncertain it remains a false alarm (orange). **B**, round 2,
 the identical cells at ~`{python} N["r2_votes_per_cell"]` votes each, with no "no damage" answer available (its "not
 sure" absorbs it): purple outlines mark cells whose verdict changed between rounds. Individual
 cells flip; the total the adjustment depends on barely moves (`{python} N["r2_MS_conf_r1"]` → `{python} N["r2_MS_conf_r2"]` of the
-strip's unmatched Microsoft flags confirmed).](artefacts/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
+strip's unmatched Microsoft flags confirmed).](figures/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
 :::
 

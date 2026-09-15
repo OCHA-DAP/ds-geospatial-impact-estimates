@@ -2,7 +2,7 @@
 legacy-layout rq2i CSV that export_legacy.py writes from the pipeline rows. Replaces the drawing
 half of the retired rq2i script, which re-scored everything to make this figure.
 
-Usage: python fig_per_aoi.py  (from exploratory/paper) -> artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png
+Usage: python fig_per_aoi.py  (from exploratory/paper) -> figures/rq2i_per_aoi_scorecard.png
 """
 import os
 
@@ -13,12 +13,13 @@ import numpy as np
 import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-A = os.path.join(HERE, "..", "artefacts", "RQ2-cems-footprint-points")
+LEGACY = os.path.join(HERE, "legacy")            # rq2i layout reshaped from pipeline rows (export_legacy.py)
+FIGS = os.path.join(HERE, "..", "figures")
 PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 
 
 def main():
-    out = pd.read_csv(os.path.join(A, "rq2i_per_aoi_scorecard.csv"))
+    out = pd.read_csv(os.path.join(LEGACY, "rq2i_per_aoi_scorecard.csv"))
     aois = (out[out.aoi != "ALL (as delivered)"].groupby("aoi").n_cems.max().sort_values(ascending=False)).index.tolist()
     aois = ["ALL (as delivered)"] + aois
     n_all = int(out[out.aoi == "ALL (as delivered)"].n_cems.max())
@@ -49,9 +50,9 @@ def main():
     fig.suptitle("The scorecard is not one number per product: per-CEMS-AOI performance\n"
                  f"({share_cara:.0%} of reference damage points sit in Caraballeda; n = CEMS {{2,3}} points per AOI)", fontsize=12.5)
     fig.tight_layout()
-    os.makedirs(os.path.join(A, "figs"), exist_ok=True)
-    fig.savefig(os.path.join(A, "figs", "rq2i_per_aoi_scorecard.png"), dpi=150)
-    print("wrote figs/rq2i_per_aoi_scorecard.png")
+    os.makedirs(FIGS, exist_ok=True)
+    fig.savefig(os.path.join(FIGS, "rq2i_per_aoi_scorecard.png"), dpi=150)
+    print("wrote figures/rq2i_per_aoi_scorecard.png")
 
 
 if __name__ == "__main__":

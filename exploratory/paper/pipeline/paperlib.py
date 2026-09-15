@@ -10,7 +10,7 @@ here once, with the ADR that fixed it:
                    it damaged; unreviewed flags earn nothing (ADR-0031)
   * regions        core = CEMS latest extent ∩ the six products' analysed extents
 
-Data access is delegated to artefacts/lib/gie_paper.py (loaders, pins, the base cache); this
+Data access is delegated to lib/gie_paper.py (loaders, pins, the base cache); this
 module adds the definitions the 40 frozen scripts used to re-implement individually.
 """
 from __future__ import annotations
@@ -28,7 +28,7 @@ import pandas as pd
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "artefacts", "lib"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
 import gie_paper as gp  # noqa: E402
 
 METRIC_CRS = gp.METRIC_CRS

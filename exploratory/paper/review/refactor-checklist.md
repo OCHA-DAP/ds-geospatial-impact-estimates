@@ -46,5 +46,19 @@ script migration; `snakemake -n` shows nothing stale after a full build.
 - [x] E5 audit passes with an allowlist of dates/units only
 
 ## F. Wrap-up
-- [ ] F1 ADR-0032 (pipeline + results table); runner shells removed; README updated
-- [ ] F2 diff report vs origin/v1 attached to PR #116; Tristan checklist statuses filled
+- [x] F1 ADR-0032 (pipeline + results table); runner shells removed; README updated
+- [x] F2 diff report vs origin/v1 attached to PR #116; Tristan checklist statuses filled
+
+## G. Promotion (2026-09-14)
+- [x] G1 lib/, frozen/ + MANIFEST, pipeline/figs, results at paper root; `all` reaches nothing under artefacts/
+- [x] G2 verification build green (five relaunches: fig output paths, legacy dir, contextily, per-AOI figure still read artefacts/); render text identical to the pre-promotion render (870 text nodes, 0 differences); `-n` clean
+- [x] G3 one footprint rule (IoU 1:1) applied to MS/UNEP/UH; diff 9/9 vs 0c9cc12, Table 1 delivered vs on-base
+- [x] G4 diff vs live restated for the one-rule mapping (UNEP/UH may move ≤ 2%; ranking ρ ≤ 0.02 for the three re-mapped products): 12/12; `review/diff_vs_live_v1.md` refreshed
+- [ ] G5 oracle re-run under the current conventions (`snakemake oracle`: archived light scripts → results_oracle_frozen.csv), then `oracle_check` 0 unexplained. Blocked 2026-09-15 00:15 on the Overture base cache: macOS emptied /tmp/gie_base_local at midnight and the blob endpoint is timing out during the rebuild
+- [ ] G6 push + PR #116 body (promotion, one-rule mapping, oracle rule)
+
+## H. Things that bit (for the next person)
+- `/tmp/gie_base_local` is wiped by macOS after three idle days; every buildings() call then fails loud. Rebuild command in README.
+- Snakemake does not rebuild a missing *input* of an up-to-date output (`--summary` shows "missing / no update"); target the file itself.
+- Never `--unlock` without `pgrep -f "snakemake -s"`.
+- Fig scripts built by hand outside Snakemake have no provenance; `--forcerun` them once under the DAG.

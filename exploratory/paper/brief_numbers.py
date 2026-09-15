@@ -16,7 +16,7 @@ import pathlib
 import numpy as np
 import pandas as pd
 
-A = pathlib.Path(__file__).parent / "artefacts"
+A = pathlib.Path(__file__).parent
 PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 LONG = {"MS": "Microsoft", "IMPACT": "IMPACT", "OSU": "OSU", "UH": "UH", "LIST": "LIST", "UNEP": "UNEP"}
 ORDER = ["Microsoft", "IMPACT v2", "OSU", "UH", "LIST", "UNEP"]  # delivery order, used wherever products are listed
@@ -35,12 +35,12 @@ N = Numbers()
 
 
 # ---------------------------------------------------------------- helpers
-RESULTS = A / "results.csv"
+RESULTS = A / "results.csv"   # exploratory/paper/results.csv
 
 
 def results() -> pd.DataFrame:
     if not RESULTS.exists():
-        raise FileNotFoundError("artefacts/results.csv missing — run `snakemake results` (consolidate.py)")
+        raise FileNotFoundError("results.csv missing — run `snakemake results` (pipeline/consolidate.py)")
     return pd.read_csv(RESULTS)
 
 

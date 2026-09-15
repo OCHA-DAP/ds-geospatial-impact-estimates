@@ -116,7 +116,7 @@ def osu_versions() -> list:
 
 def footprint_maps() -> list:
     """How each own-footprint product's delivery maps onto the shared base (lib/footprint_map_manifest.csv)."""
-    m = pd.read_csv(os.path.join(HERE, "..", "artefacts", "lib", "footprint_map_manifest.csv")).set_index("product")
+    m = pd.read_csv(os.path.join(HERE, "..", "lib", "footprint_map_manifest.csv")).set_index("product")
     out = []
     for key, p in (("ms", "MS"), ("unep", "UNEP"), ("uh", "UH")):
         r = m.loc[key]
