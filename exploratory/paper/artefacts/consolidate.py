@@ -244,7 +244,8 @@ def rq7():
 def frame():
     rel = "RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv"
     return sum((rows("core", "frame", int(x["radius_m"]), x["rule"], rel, poly_P=x.get("poly_P"), poly_R=x.get("poly_R"), poly_F1=x.get("poly_F1"),
-                     centroid_P=x.get("centroid_P"), centroid_R=x.get("centroid_R"), centroid_F1=x.get("centroid_F1")) for _, x in load(rel).iterrows()), [])
+                     centroid_P=x.get("centroid_P"), centroid_R=x.get("centroid_R"), centroid_F1=x.get("centroid_F1"),
+                     flags_intersects=x.get("flags"), flags_centroid=x.get("centroid_flags")) for _, x in load(rel).iterrows()), [])
 
 
 PIPELINE = os.path.join(HERE, "..", "pipeline")

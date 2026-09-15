@@ -103,6 +103,30 @@ to `"centroid"` / `"intersects"` reproduces it from the same code. The refreeze 
 * Neutral: the two ADRs numbered 0029 (this repo has a numbering collision) are both left as
   is; this ADR amends the frozen-v3 one.
 
+## Amendment 2026-09-14: one footprint-mapping rule for every own-footprint product
+
+Checking gold's rules for the other products that delivered their own footprints showed three
+rules for three products: Microsoft by `ST_Intersects` (one-to-many), UNEP by centroid nearest
+within 20 m, UH by point-on-surface containment. Re-assigning UNEP's and UH's damaged footprints
+by largest overlap or IoU changes 3.2% and 0.6% of their assignments respectively (about 1,800
+and 180 base buildings). Decision: one rule set, applied identically (`lib/build_footprint_maps.py`,
+`FOOTPRINT_MAP_RULE = "iou_1to1"` in `lib/gie_paper.py`):
+
+1. id-keyed deliveries (IMPACT v2, OSU, LIST): join on id;
+2. own footprints (Microsoft, UNEP, UH): the overlapping base building with the highest IoU
+   (IoU rather than largest area: where the two disagree, area picks a neighbour ~5x the
+   footprint's size; they differ for 15 of 8,410 Microsoft footprints);
+3. no overlap: the nearest base building within 20 m (gold's tolerance for point deliveries);
+4. beyond that, an orphan: counted and listed, mapped to nothing;
+5. one assignment per delivered item; several may share a base building (the collapse is counted).
+
+`lib/footprint_map_manifest.csv` records delivered / mapped-by-IoU / snapped / orphans / base ids /
+collapsed per product; the brief's Table 1 shows flags as delivered beside flags on the shared
+base, so a provider's own count is never silently replaced. Numbers: Microsoft 8,410 -> 8,339
+(71 collapsed), UH 76,378 -> 75,294 (1,066 collapsed, 1,031 snapped, 18 orphans), UNEP 96,046 ->
+75,814 (20,073 collapsed, 3,067 snapped, 159 orphans; median IoU 0.41, GBA footprints being a
+finer building model than Overture's).
+
 ## More Information
 
 Evidence: `exploratory/paper/artefacts/RQ0-matching-basis/native_rerun/` (native vs centroid,

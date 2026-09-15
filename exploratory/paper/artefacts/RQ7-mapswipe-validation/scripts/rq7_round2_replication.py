@@ -135,9 +135,10 @@ def padj_sensitivity(fl: pd.DataFrame) -> pd.DataFrame:
         w = min(strip_cov / covered, 1.0)
         d_conf = (fl.loc[prod, "unmatched_conf_share_r2"]
                   - fl.loc[prod, "unmatched_conf_share_r1"])
-        # measured convention (ADR-0031). rq2i's fp_crowd_damaged is confirmed / ALL unmatched
-        # flags (unreviewed count as not confirmed), so credit = unmatched x that share.
-        p_r1 = (tp + unmatched * r.fp_crowd_damaged) / r.n_flags
+        # measured convention (ADR-0031). rq2i's fp_crowd_damaged is the confirmed share among
+        # REVIEWED unmatched flags and crowd_cov_of_fps the reviewed share, so the confirmed count
+        # is unmatched x cov x share.
+        p_r1 = (tp + unmatched * r.crowd_cov_of_fps * r.fp_crowd_damaged) / r.n_flags
         if abs(p_r1 - r.P_crowd) > 0.006:  # rounded inputs (conf to 2 dp)
             raise RuntimeError(f"{prod}: recomputed P_crowd {p_r1:.3f} != rq2i {r.P_crowd}")
         # the strip's cells were all voted in both rounds, so swapping verdicts changes the

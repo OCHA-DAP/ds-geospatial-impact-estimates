@@ -423,6 +423,9 @@ def _frame():
     f = W("core", "frame", 10).loc[["Microsoft", "IMPACT", "OSU", "UH", "LIST", "UNEP"]]
     dP = f.poly_P - f.centroid_P; dR = f.poly_R - f.centroid_R
     N["frame_dP_range"] = rng(dP.min(), dP.max(), f2); N["frame_dR_range"] = rng(dR.min(), dR.max(), f2)
+    # gold's intersect mapping flagged this many core buildings for Microsoft (frame CSV, pre-ADR-0030); the 1:1 count is the points lens
+    fr = W("core", "frame", 10)
+    N["bleed_MS"] = pct(fr.loc["Microsoft", "flags_centroid"] / W("core", "points", 10).loc["MS", "n_flags"] - 1)
 
 
 # ---------------------------------------------------------------- facts (pipeline/facts.py): geography, inputs, spacing, versions
@@ -449,6 +452,13 @@ def _facts():
     N["osu_v0_delivered"] = com(f("all", "OSU", "v0_flags_delivered")); N["osu_v1_delivered"] = com(f("all", "OSU", "v1_flags_delivered"))
     N["osu_v0_on_base"] = com(f("all", "OSU", "v0_flags_on_base")); N["osu_dropped"] = com(f("all", "OSU", "dropped_v0_to_v1")); N["osu_added"] = com(f("all", "OSU", "added_v0_to_v1"))
     N["field_n"] = com(f("all", "ChatMap", "n_points"))
+    # own-footprint products: how the delivery maps onto the shared base (one rule, ADR-0030)
+    for p in ("MS", "UNEP", "UH"):
+        N[f"delivered_{p}"] = com(f("all", p, "delivered_footprints")); N[f"onbase_{p}"] = com(f("all", p, "base_buildings"))
+        N[f"collapsed_{p}"] = com(f("all", p, "collapsed")); N[f"snapped_{p}"] = com(f("all", p, "mapped_by_snap"))
+        N[f"orphans_{p}"] = com(f("all", p, "orphans")); N[f"median_iou_{p}"] = f2(f("all", p, "median_iou"))
+    for p in ("IMPACT", "OSU", "LIST"):   # id-keyed deliveries: the delivered set IS a base-id set
+        N[f"delivered_{p}"] = N[f"total_flags_{p}"]
     v = W("osu-versions", "points", 10)
     N["osu_common_cems"] = com(v.loc["v0 (common extent)", "n_ref"])
 

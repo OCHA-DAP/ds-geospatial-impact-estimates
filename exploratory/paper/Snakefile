@@ -135,6 +135,25 @@ rule oracle_check:
 
 
 # ---------------------------------------------------------------------------------------------
+# LEGACY LAYOUTS. The figure scripts and two frozen anchors (rq3g, rq9) read per-RQ CSVs in their
+# original column layouts. Those files are now WRITTEN FROM the pipeline's rows by export_legacy.py:
+# one computation, reshaped. They are not inputs to results.csv, so there is no cycle.
+# ---------------------------------------------------------------------------------------------
+LEGACY = [
+    f"{A}/RQ5-ensemble/rq5b_six_member.csv", f"{A}/RQ5-ensemble/rq5b_six_member_r20.csv", f"{A}/RQ5-ensemble/rq5b_six_member_r30.csv",
+    f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv", f"{A}/RQ2-cems-footprint-points/rq2r_precision_bounds.csv",
+    f"{A}/RQ2-cems-footprint-points/rq2_chatmap_recall.csv",
+    f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking.csv", f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_core.csv",
+    f"{A}/RQ3-prioritization-error-structure/rq3f_null_ranking_caraballeda.csv", f"{A}/RQ3-prioritization-error-structure/rq3h_agreement_ranking.csv",
+]
+
+rule legacy_csvs:
+    input: f"{P}/export_legacy.py", f"{P}/results_scorecards.csv", f"{P}/results_ranking.csv"
+    output: LEGACY
+    shell: f"python {P}/export_legacy.py"
+
+
+# ---------------------------------------------------------------------------------------------
 # FROZEN HEAVY CHAIN (appendix only). These are the archived scripts, run as they are. Note that
 # LIB is NOT an input: an edit to the library does not rerun them. Reach them via `snakemake heavy`.
 # `{r}` is a wildcard: one rule stands for the r = 10, 20 and 30 m variants.
@@ -265,7 +284,7 @@ FIG_RULES = {
     f"{A}/RQ0-matching-basis/figs/reference_architecture.png": ("RQ0-matching-basis/scripts/reference_architecture_fig.py", [], ""),
     f"{A}/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png": ("RQ8-learned-fusion/scripts/rq8_dayzero_schematic.py", [], ""),
     f"{A}/RQ3-prioritization-error-structure/figs/rq3_residual_maps_res8.png": ("RQ3-prioritization-error-structure/scripts/rq3_error_structure.py", [LIB[1]], ""),
-    f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png": ("RQ2-cems-footprint-points/scripts/rq2i_per_aoi_scorecard.py", [LIB[1]], ""),
+    f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png": ("RQ2-cems-footprint-points/scripts/rq2i_per_aoi_scorecard.py", [LIB[1]], ""),   # TODO: draw from results.csv instead of re-scoring
 }
 
 for _png, (_script, _inputs, _args) in FIG_RULES.items():
