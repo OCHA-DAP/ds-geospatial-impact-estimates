@@ -286,8 +286,13 @@ FIG_RULES = {
     f"{A}/RQ0-matching-basis/figs/reference_architecture.png": ("RQ0-matching-basis/scripts/reference_architecture_fig.py", [], ""),
     f"{A}/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png": ("RQ8-learned-fusion/scripts/rq8_dayzero_schematic.py", [], ""),
     f"{A}/RQ3-prioritization-error-structure/figs/rq3_residual_maps_res8.png": ("RQ3-prioritization-error-structure/scripts/rq3_error_structure.py", [LIB[1]], ""),
-    f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png": ("RQ2-cems-footprint-points/scripts/rq2i_per_aoi_scorecard.py", [LIB[1]], ""),   # TODO: draw from results.csv instead of re-scoring
 }
+
+rule fig_per_aoi:
+    # the per-AOI heatmap, drawn from the legacy-layout rq2i CSV (itself exported from pipeline rows)
+    input: f"{P}/fig_per_aoi.py", f"{A}/RQ2-cems-footprint-points/rq2i_per_aoi_scorecard.csv"
+    output: f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png"
+    shell: f"python {P}/fig_per_aoi.py"
 
 for _png, (_script, _inputs, _args) in FIG_RULES.items():
     rule:
@@ -310,7 +315,7 @@ rule audit:
     shell: "python audit_brief_numbers.py > {output}"
 
 rule brief:
-    input: "manuscript_brief.qmd", "brief_numbers.py", "appendix-fold.html", f"{A}/results.csv", list(FIG_RULES)
+    input: "manuscript_brief.qmd", "brief_numbers.py", "appendix-fold.html", f"{A}/results.csv", list(FIG_RULES), f"{A}/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png"
     output: "manuscript_brief.html"
     shell: 'QUARTO_PYTHON="$(python -c \'import sys; print(sys.executable)\')" quarto render manuscript_brief.qmd --to html'
 
