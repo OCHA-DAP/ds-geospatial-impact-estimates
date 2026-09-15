@@ -6,7 +6,7 @@ ALL,moran,8.0,IMPACT,n_cems,1500.0,RQ3-prioritization-error-structure/rq3b_per_a
 ALL,moran,8.0,IMPACT,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 ALL,moran,8.0,MS,cells,140.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 ALL,moran,8.0,MS,flag_pct,13.5,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
-ALL,moran,8.0,MS,moran_I,0.54,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
+ALL,moran,8.0,MS,moran_I,0.539,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 ALL,moran,8.0,MS,n_cems,1467.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 ALL,moran,8.0,MS,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 ALL,moran,8.0,OSU,cells,957.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
@@ -15,8 +15,8 @@ ALL,moran,8.0,OSU,moran_I,0.493,RQ3-prioritization-error-structure/rq3b_per_area
 ALL,moran,8.0,OSU,n_cems,1488.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 ALL,moran,8.0,OSU,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 ALL,moran,8.0,UH,cells,526.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
-ALL,moran,8.0,UH,flag_pct,19.3,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
-ALL,moran,8.0,UH,moran_I,0.401,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
+ALL,moran,8.0,UH,flag_pct,19.4,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
+ALL,moran,8.0,UH,moran_I,0.402,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 ALL,moran,8.0,UH,n_cems,1499.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 ALL,moran,8.0,UH,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,cells,8.0,IMPACT v2,cells,110.0,pipeline/ranking.py
@@ -44,15 +44,15 @@ Caraballeda,cells,8.0,OSU,rho_null,0.557,pipeline/ranking.py
 Caraballeda,cells,8.0,OSU,top20,0.45,pipeline/ranking.py
 Caraballeda,cells,8.0,OSU,top20_null,0.4,pipeline/ranking.py
 Caraballeda,cells,8.0,UH,cells,119.0,pipeline/ranking.py
-Caraballeda,cells,8.0,UH,delta,-0.204,pipeline/ranking.py
-Caraballeda,cells,8.0,UH,rho,0.388,pipeline/ranking.py
+Caraballeda,cells,8.0,UH,delta,-0.207,pipeline/ranking.py
+Caraballeda,cells,8.0,UH,rho,0.384,pipeline/ranking.py
 Caraballeda,cells,8.0,UH,rho_null,0.591,pipeline/ranking.py
 Caraballeda,cells,8.0,UH,top20,0.4,pipeline/ranking.py
 Caraballeda,cells,8.0,UH,top20_null,0.45,pipeline/ranking.py
-Caraballeda,cells,8.0,UNEP,cells,122.0,pipeline/ranking.py
-Caraballeda,cells,8.0,UNEP,delta,-0.066,pipeline/ranking.py
-Caraballeda,cells,8.0,UNEP,rho,0.451,pipeline/ranking.py
-Caraballeda,cells,8.0,UNEP,rho_null,0.516,pipeline/ranking.py
+Caraballeda,cells,8.0,UNEP,cells,123.0,pipeline/ranking.py
+Caraballeda,cells,8.0,UNEP,delta,-0.058,pipeline/ranking.py
+Caraballeda,cells,8.0,UNEP,rho,0.463,pipeline/ranking.py
+Caraballeda,cells,8.0,UNEP,rho_null,0.52,pipeline/ranking.py
 Caraballeda,cells,8.0,UNEP,top20,0.4,pipeline/ranking.py
 Caraballeda,cells,8.0,UNEP,top20_null,0.4,pipeline/ranking.py
 Caraballeda,cells,9.0,IMPACT v2,cells,376.0,pipeline/ranking.py
@@ -80,15 +80,15 @@ Caraballeda,cells,9.0,OSU,rho_null,0.351,pipeline/ranking.py
 Caraballeda,cells,9.0,OSU,top20,0.1,pipeline/ranking.py
 Caraballeda,cells,9.0,OSU,top20_null,0.0,pipeline/ranking.py
 Caraballeda,cells,9.0,UH,cells,450.0,pipeline/ranking.py
-Caraballeda,cells,9.0,UH,delta,-0.284,pipeline/ranking.py
-Caraballeda,cells,9.0,UH,rho,0.13,pipeline/ranking.py
+Caraballeda,cells,9.0,UH,delta,-0.286,pipeline/ranking.py
+Caraballeda,cells,9.0,UH,rho,0.128,pipeline/ranking.py
 Caraballeda,cells,9.0,UH,rho_null,0.414,pipeline/ranking.py
 Caraballeda,cells,9.0,UH,top20,0.05,pipeline/ranking.py
 Caraballeda,cells,9.0,UH,top20_null,0.0,pipeline/ranking.py
-Caraballeda,cells,9.0,UNEP,cells,414.0,pipeline/ranking.py
-Caraballeda,cells,9.0,UNEP,delta,-0.11,pipeline/ranking.py
-Caraballeda,cells,9.0,UNEP,rho,0.207,pipeline/ranking.py
-Caraballeda,cells,9.0,UNEP,rho_null,0.317,pipeline/ranking.py
+Caraballeda,cells,9.0,UNEP,cells,415.0,pipeline/ranking.py
+Caraballeda,cells,9.0,UNEP,delta,-0.106,pipeline/ranking.py
+Caraballeda,cells,9.0,UNEP,rho,0.212,pipeline/ranking.py
+Caraballeda,cells,9.0,UNEP,rho_null,0.318,pipeline/ranking.py
 Caraballeda,cells,9.0,UNEP,top20,0.1,pipeline/ranking.py
 Caraballeda,cells,9.0,UNEP,top20_null,0.0,pipeline/ranking.py
 Caraballeda,crowd,10.0,IMPACT,P_crowd,0.179,pipeline/scorecards.py
@@ -103,12 +103,12 @@ Caraballeda,crowd,10.0,MS,fp_crowd_damaged,0.17,pipeline/scorecards.py
 Caraballeda,crowd,10.0,OSU,P_crowd,0.138,pipeline/scorecards.py
 Caraballeda,crowd,10.0,OSU,crowd_cov,0.41,pipeline/scorecards.py
 Caraballeda,crowd,10.0,OSU,fp_crowd_damaged,0.19,pipeline/scorecards.py
-Caraballeda,crowd,10.0,UH,P_crowd,0.202,pipeline/scorecards.py
+Caraballeda,crowd,10.0,UH,P_crowd,0.2,pipeline/scorecards.py
 Caraballeda,crowd,10.0,UH,crowd_cov,0.26,pipeline/scorecards.py
 Caraballeda,crowd,10.0,UH,fp_crowd_damaged,0.34,pipeline/scorecards.py
-Caraballeda,crowd,10.0,UNEP,P_crowd,0.25,pipeline/scorecards.py
+Caraballeda,crowd,10.0,UNEP,P_crowd,0.249,pipeline/scorecards.py
 Caraballeda,crowd,10.0,UNEP,crowd_cov,0.87,pipeline/scorecards.py
-Caraballeda,crowd,10.0,UNEP,fp_crowd_damaged,0.18,pipeline/scorecards.py
+Caraballeda,crowd,10.0,UNEP,fp_crowd_damaged,0.17,pipeline/scorecards.py
 Caraballeda,density,,IMPACT,P,0.099,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,IMPACT,R,0.627,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,IMPACT,enrichment,3.5,RQ2-cems-footprint-points/rq2_density_null.csv
@@ -125,7 +125,7 @@ Caraballeda,density,,MS,flag_pct,13.5,RQ2-cems-footprint-points/rq2_density_null
 Caraballeda,density,,MS,lift,3.4,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,MS,n_bldg,58705.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,MS,n_cems,1467.0,RQ2-cems-footprint-points/rq2_density_null.csv
-Caraballeda,density,,MS,n_flag,7944.0,RQ2-cems-footprint-points/rq2_density_null.csv
+Caraballeda,density,,MS,n_flag,7950.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,MS,rand_prec,0.035,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,OSU,P,0.065,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,OSU,R,0.864,RQ2-cems-footprint-points/rq2_density_null.csv
@@ -136,14 +136,14 @@ Caraballeda,density,,OSU,n_bldg,63476.0,RQ2-cems-footprint-points/rq2_density_nu
 Caraballeda,density,,OSU,n_cems,1468.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,OSU,n_flag,27020.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,OSU,rand_prec,0.033,RQ2-cems-footprint-points/rq2_density_null.csv
-Caraballeda,density,,UH,P,0.126,RQ2-cems-footprint-points/rq2_density_null.csv
+Caraballeda,density,,UH,P,0.124,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,UH,R,0.453,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,UH,enrichment,4.8,RQ2-cems-footprint-points/rq2_density_null.csv
-Caraballeda,density,,UH,flag_pct,9.4,RQ2-cems-footprint-points/rq2_density_null.csv
-Caraballeda,density,,UH,lift,3.5,RQ2-cems-footprint-points/rq2_density_null.csv
+Caraballeda,density,,UH,flag_pct,9.5,RQ2-cems-footprint-points/rq2_density_null.csv
+Caraballeda,density,,UH,lift,3.4,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,UH,n_bldg,57264.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,UH,n_cems,1467.0,RQ2-cems-footprint-points/rq2_density_null.csv
-Caraballeda,density,,UH,n_flag,5366.0,RQ2-cems-footprint-points/rq2_density_null.csv
+Caraballeda,density,,UH,n_flag,5447.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,density,,UH,rand_prec,0.036,RQ2-cems-footprint-points/rq2_density_null.csv
 Caraballeda,facts,,CEMS,n_points_2_3,1468.0,pipeline/facts.py
 Caraballeda,facts,,CEMS,share_of_points_2_3,0.9557291666666666,pipeline/facts.py
@@ -154,7 +154,7 @@ Caraballeda,moran,8.0,IMPACT,n_cems,1468.0,RQ3-prioritization-error-structure/rq
 Caraballeda,moran,8.0,IMPACT,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,MS,cells,140.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,MS,flag_pct,13.5,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
-Caraballeda,moran,8.0,MS,moran_I,0.54,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
+Caraballeda,moran,8.0,MS,moran_I,0.539,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,MS,n_cems,1467.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,MS,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,OSU,cells,187.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
@@ -163,7 +163,7 @@ Caraballeda,moran,8.0,OSU,moran_I,0.373,RQ3-prioritization-error-structure/rq3b_
 Caraballeda,moran,8.0,OSU,n_cems,1468.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,OSU,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,UH,cells,134.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
-Caraballeda,moran,8.0,UH,flag_pct,9.4,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
+Caraballeda,moran,8.0,UH,flag_pct,9.5,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,UH,moran_I,0.527,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,UH,n_cems,1467.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caraballeda,moran,8.0,UH,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
@@ -184,26 +184,25 @@ Caraballeda,points,10.0,MS,R,0.611,pipeline/scorecards.py
 Caraballeda,points,10.0,MS,flag_share,0.135,pipeline/scorecards.py
 Caraballeda,points,10.0,MS,n_bld,58705.0,pipeline/scorecards.py
 Caraballeda,points,10.0,MS,n_cems,1467.0,pipeline/scorecards.py
-Caraballeda,points,10.0,MS,n_flags,7944.0,pipeline/scorecards.py
+Caraballeda,points,10.0,MS,n_flags,7950.0,pipeline/scorecards.py
 Caraballeda,points,10.0,OSU,P,0.065,pipeline/scorecards.py
 Caraballeda,points,10.0,OSU,R,0.864,pipeline/scorecards.py
 Caraballeda,points,10.0,OSU,flag_share,0.426,pipeline/scorecards.py
 Caraballeda,points,10.0,OSU,n_bld,63476.0,pipeline/scorecards.py
 Caraballeda,points,10.0,OSU,n_cems,1468.0,pipeline/scorecards.py
 Caraballeda,points,10.0,OSU,n_flags,27020.0,pipeline/scorecards.py
-Caraballeda,points,10.0,UH,P,0.126,pipeline/scorecards.py
+Caraballeda,points,10.0,UH,P,0.124,pipeline/scorecards.py
 Caraballeda,points,10.0,UH,R,0.453,pipeline/scorecards.py
-Caraballeda,points,10.0,UH,flag_share,0.094,pipeline/scorecards.py
+Caraballeda,points,10.0,UH,flag_share,0.095,pipeline/scorecards.py
 Caraballeda,points,10.0,UH,n_bld,57264.0,pipeline/scorecards.py
 Caraballeda,points,10.0,UH,n_cems,1467.0,pipeline/scorecards.py
-Caraballeda,points,10.0,UH,n_flags,5366.0,pipeline/scorecards.py
-Caraballeda,points,10.0,UNEP,P,0.116,pipeline/scorecards.py
-Caraballeda,points,10.0,UNEP,R,0.435,pipeline/scorecards.py
+Caraballeda,points,10.0,UH,n_flags,5447.0,pipeline/scorecards.py
+Caraballeda,points,10.0,UNEP,P,0.115,pipeline/scorecards.py
+Caraballeda,points,10.0,UNEP,R,0.431,pipeline/scorecards.py
 Caraballeda,points,10.0,UNEP,flag_share,0.09,pipeline/scorecards.py
 Caraballeda,points,10.0,UNEP,n_bld,63476.0,pipeline/scorecards.py
 Caraballeda,points,10.0,UNEP,n_cems,1468.0,pipeline/scorecards.py
-Caraballeda,points,10.0,UNEP,n_flags,5689.0,pipeline/scorecards.py
-Caracas,crowd,10.0,IMPACT,P_crowd,0.0,pipeline/scorecards.py
+Caraballeda,points,10.0,UNEP,n_flags,5693.0,pipeline/scorecards.py
 Caracas,crowd,10.0,IMPACT,crowd_cov,0.0,pipeline/scorecards.py
 Caracas,crowd,10.0,LIST,P_crowd,0.0,pipeline/scorecards.py
 Caracas,crowd,10.0,LIST,crowd_cov,0.0,pipeline/scorecards.py
@@ -238,11 +237,11 @@ Caracas,density,,OSU,rand_prec,0.0,RQ2-cems-footprint-points/rq2_density_null.cs
 Caracas,density,,UH,P,0.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caracas,density,,UH,R,1.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caracas,density,,UH,enrichment,5.6,RQ2-cems-footprint-points/rq2_density_null.csv
-Caracas,density,,UH,flag_pct,17.7,RQ2-cems-footprint-points/rq2_density_null.csv
+Caracas,density,,UH,flag_pct,18.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caracas,density,,UH,lift,5.6,RQ2-cems-footprint-points/rq2_density_null.csv
 Caracas,density,,UH,n_bldg,102573.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caracas,density,,UH,n_cems,3.0,RQ2-cems-footprint-points/rq2_density_null.csv
-Caracas,density,,UH,n_flag,18176.0,RQ2-cems-footprint-points/rq2_density_null.csv
+Caracas,density,,UH,n_flag,18452.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caracas,density,,UH,rand_prec,0.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Caracas,facts,,CEMS,n_points_2_3,3.0,pipeline/facts.py
 Caracas,facts,,CEMS,share_of_points_2_3,0.001953125,pipeline/facts.py
@@ -257,8 +256,8 @@ Caracas,moran,8.0,OSU,moran_I,0.301,RQ3-prioritization-error-structure/rq3b_per_
 Caracas,moran,8.0,OSU,n_cems,3.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caracas,moran,8.0,OSU,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caracas,moran,8.0,UH,cells,145.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
-Caracas,moran,8.0,UH,flag_pct,17.7,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
-Caracas,moran,8.0,UH,moran_I,0.374,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
+Caracas,moran,8.0,UH,flag_pct,18.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
+Caracas,moran,8.0,UH,moran_I,0.379,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caracas,moran,8.0,UH,n_cems,3.0,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caracas,moran,8.0,UH,p,0.001,RQ3-prioritization-error-structure/rq3b_per_area_moran.csv
 Caracas,points,10.0,IMPACT,P,0.0,pipeline/scorecards.py
@@ -277,15 +276,15 @@ Caracas,points,10.0,OSU,n_bld,111637.0,pipeline/scorecards.py
 Caracas,points,10.0,OSU,n_cems,3.0,pipeline/scorecards.py
 Caracas,points,10.0,OSU,n_flags,2827.0,pipeline/scorecards.py
 Caracas,points,10.0,UH,P,0.0,pipeline/scorecards.py
-Caracas,points,10.0,UH,flag_share,0.177,pipeline/scorecards.py
+Caracas,points,10.0,UH,flag_share,0.18,pipeline/scorecards.py
 Caracas,points,10.0,UH,n_bld,102573.0,pipeline/scorecards.py
 Caracas,points,10.0,UH,n_cems,3.0,pipeline/scorecards.py
-Caracas,points,10.0,UH,n_flags,18176.0,pipeline/scorecards.py
+Caracas,points,10.0,UH,n_flags,18452.0,pipeline/scorecards.py
 Caracas,points,10.0,UNEP,P,0.001,pipeline/scorecards.py
 Caracas,points,10.0,UNEP,flag_share,0.049,pipeline/scorecards.py
 Caracas,points,10.0,UNEP,n_bld,111637.0,pipeline/scorecards.py
 Caracas,points,10.0,UNEP,n_cems,3.0,pipeline/scorecards.py
-Caracas,points,10.0,UNEP,n_flags,5495.0,pipeline/scorecards.py
+Caracas,points,10.0,UNEP,n_flags,5509.0,pipeline/scorecards.py
 Moron,crowd,10.0,IMPACT,P_crowd,0.018,pipeline/scorecards.py
 Moron,crowd,10.0,IMPACT,crowd_cov,0.03,pipeline/scorecards.py
 Moron,crowd,10.0,IMPACT,fp_crowd_damaged,0.48,pipeline/scorecards.py
@@ -364,14 +363,10 @@ Moron,points,10.0,UNEP,R,0.0,pipeline/scorecards.py
 Moron,points,10.0,UNEP,flag_share,0.042,pipeline/scorecards.py
 Moron,points,10.0,UNEP,n_bld,13911.0,pipeline/scorecards.py
 Moron,points,10.0,UNEP,n_cems,26.0,pipeline/scorecards.py
-Moron,points,10.0,UNEP,n_flags,583.0,pipeline/scorecards.py
-San Felipe,crowd,10.0,IMPACT,P_crowd,0.0,pipeline/scorecards.py
+Moron,points,10.0,UNEP,n_flags,584.0,pipeline/scorecards.py
 San Felipe,crowd,10.0,IMPACT,crowd_cov,0.0,pipeline/scorecards.py
-San Felipe,crowd,10.0,LIST,P_crowd,0.0,pipeline/scorecards.py
 San Felipe,crowd,10.0,LIST,crowd_cov,0.0,pipeline/scorecards.py
-San Felipe,crowd,10.0,OSU,P_crowd,0.001,pipeline/scorecards.py
 San Felipe,crowd,10.0,OSU,crowd_cov,0.0,pipeline/scorecards.py
-San Felipe,crowd,10.0,UNEP,P_crowd,0.001,pipeline/scorecards.py
 San Felipe,crowd,10.0,UNEP,crowd_cov,0.0,pipeline/scorecards.py
 San Felipe,density,,IMPACT,P,0.0,RQ2-cems-footprint-points/rq2_density_null.csv
 San Felipe,density,,IMPACT,flag_pct,1.8,RQ2-cems-footprint-points/rq2_density_null.csv
@@ -418,16 +413,11 @@ San Felipe,points,10.0,UNEP,P,0.001,pipeline/scorecards.py
 San Felipe,points,10.0,UNEP,flag_share,0.012,pipeline/scorecards.py
 San Felipe,points,10.0,UNEP,n_bld,89259.0,pipeline/scorecards.py
 San Felipe,points,10.0,UNEP,n_cems,14.0,pipeline/scorecards.py
-San Felipe,points,10.0,UNEP,n_flags,1039.0,pipeline/scorecards.py
-Santa Cruz,crowd,10.0,IMPACT,P_crowd,0.001,pipeline/scorecards.py
+San Felipe,points,10.0,UNEP,n_flags,1044.0,pipeline/scorecards.py
 Santa Cruz,crowd,10.0,IMPACT,crowd_cov,0.0,pipeline/scorecards.py
-Santa Cruz,crowd,10.0,LIST,P_crowd,0.0,pipeline/scorecards.py
 Santa Cruz,crowd,10.0,LIST,crowd_cov,0.0,pipeline/scorecards.py
-Santa Cruz,crowd,10.0,OSU,P_crowd,0.001,pipeline/scorecards.py
 Santa Cruz,crowd,10.0,OSU,crowd_cov,0.0,pipeline/scorecards.py
-Santa Cruz,crowd,10.0,UH,P_crowd,0.0,pipeline/scorecards.py
 Santa Cruz,crowd,10.0,UH,crowd_cov,0.0,pipeline/scorecards.py
-Santa Cruz,crowd,10.0,UNEP,P_crowd,0.0,pipeline/scorecards.py
 Santa Cruz,crowd,10.0,UNEP,crowd_cov,0.0,pipeline/scorecards.py
 Santa Cruz,density,,IMPACT,P,0.001,RQ2-cems-footprint-points/rq2_density_null.csv
 Santa Cruz,density,,IMPACT,R,0.667,RQ2-cems-footprint-points/rq2_density_null.csv
@@ -454,7 +444,7 @@ Santa Cruz,density,,UH,flag_pct,27.5,RQ2-cems-footprint-points/rq2_density_null.
 Santa Cruz,density,,UH,lift,3.6,RQ2-cems-footprint-points/rq2_density_null.csv
 Santa Cruz,density,,UH,n_bldg,116901.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Santa Cruz,density,,UH,n_cems,3.0,RQ2-cems-footprint-points/rq2_density_null.csv
-Santa Cruz,density,,UH,n_flag,32145.0,RQ2-cems-footprint-points/rq2_density_null.csv
+Santa Cruz,density,,UH,n_flag,32144.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Santa Cruz,density,,UH,rand_prec,0.0,RQ2-cems-footprint-points/rq2_density_null.csv
 Santa Cruz,facts,,CEMS,n_points_2_3,3.0,pipeline/facts.py
 Santa Cruz,facts,,CEMS,share_of_points_2_3,0.001953125,pipeline/facts.py
@@ -492,12 +482,12 @@ Santa Cruz,points,10.0,UH,P,0.0,pipeline/scorecards.py
 Santa Cruz,points,10.0,UH,flag_share,0.275,pipeline/scorecards.py
 Santa Cruz,points,10.0,UH,n_bld,116901.0,pipeline/scorecards.py
 Santa Cruz,points,10.0,UH,n_cems,3.0,pipeline/scorecards.py
-Santa Cruz,points,10.0,UH,n_flags,32145.0,pipeline/scorecards.py
+Santa Cruz,points,10.0,UH,n_flags,32144.0,pipeline/scorecards.py
 Santa Cruz,points,10.0,UNEP,P,0.0,pipeline/scorecards.py
 Santa Cruz,points,10.0,UNEP,flag_share,0.035,pipeline/scorecards.py
 Santa Cruz,points,10.0,UNEP,n_bld,144649.0,pipeline/scorecards.py
 Santa Cruz,points,10.0,UNEP,n_cems,3.0,pipeline/scorecards.py
-Santa Cruz,points,10.0,UNEP,n_flags,5073.0,pipeline/scorecards.py
+Santa Cruz,points,10.0,UNEP,n_flags,5107.0,pipeline/scorecards.py
 all,facts,,CEMS,n_points_1,1583.0,pipeline/facts.py
 all,facts,,CEMS,n_points_2_3,1536.0,pipeline/facts.py
 all,facts,,CEMS,n_points_all_grades,3119.0,pipeline/facts.py
@@ -508,7 +498,14 @@ all,facts,,ChatMap,n_significant,63.0,pipeline/facts.py
 all,facts,,IMPACT,aoi_km2,32712.727664723578,pipeline/facts.py
 all,facts,,LIST,aoi_km2,223708.05093871543,pipeline/facts.py
 all,facts,,MS,aoi_km2,210.24083784580125,pipeline/facts.py
+all,facts,,MS,base_buildings,8339.0,pipeline/facts.py
+all,facts,,MS,collapsed,71.0,pipeline/facts.py
+all,facts,,MS,delivered_footprints,8410.0,pipeline/facts.py
+all,facts,,MS,mapped_by_iou,8410.0,pipeline/facts.py
+all,facts,,MS,mapped_by_snap,0.0,pipeline/facts.py
+all,facts,,MS,median_iou,0.667,pipeline/facts.py
 all,facts,,MS,n_footprints,72162.0,pipeline/facts.py
+all,facts,,MS,orphans,0.0,pipeline/facts.py
 all,facts,,MS,share_mostly_obscured,0.0360577589312934,pipeline/facts.py
 all,facts,,OSU,added_v0_to_v1,42723.0,pipeline/facts.py
 all,facts,,OSU,aoi_km2,41463.16263237391,pipeline/facts.py
@@ -520,6 +517,20 @@ all,facts,,OSU,v0_share_probability_1,0.5121114319687446,pipeline/facts.py
 all,facts,,OSU,v1_flags_delivered,69431.0,pipeline/facts.py
 all,facts,,OSU,v1_flags_on_base,69224.0,pipeline/facts.py
 all,facts,,UH,aoi_km2,533.2496218042317,pipeline/facts.py
+all,facts,,UH,base_buildings,75294.0,pipeline/facts.py
+all,facts,,UH,collapsed,1066.0,pipeline/facts.py
+all,facts,,UH,delivered_footprints,76378.0,pipeline/facts.py
+all,facts,,UH,mapped_by_iou,75329.0,pipeline/facts.py
+all,facts,,UH,mapped_by_snap,1031.0,pipeline/facts.py
+all,facts,,UH,median_iou,0.99,pipeline/facts.py
+all,facts,,UH,orphans,18.0,pipeline/facts.py
+all,facts,,UNEP,base_buildings,75814.0,pipeline/facts.py
+all,facts,,UNEP,collapsed,20073.0,pipeline/facts.py
+all,facts,,UNEP,delivered_footprints,96046.0,pipeline/facts.py
+all,facts,,UNEP,mapped_by_iou,92820.0,pipeline/facts.py
+all,facts,,UNEP,mapped_by_snap,3067.0,pipeline/facts.py
+all,facts,,UNEP,median_iou,0.413,pipeline/facts.py
+all,facts,,UNEP,orphans,159.0,pipeline/facts.py
 all,facts,,h3-res11,avg_area_km2,0.0021496431294518,pipeline/facts.py
 all,facts,,h3-res12,avg_area_km2,0.0003070918756316,pipeline/facts.py
 all,facts,,h3-res7,avg_area_km2,5.161293359717191,pipeline/facts.py
@@ -534,18 +545,18 @@ all,flags,,IMPACT,total_flags,81446.0,pipeline/scorecards.py
 all,flags,,LIST,in_cems_extent,34440.0,pipeline/scorecards.py
 all,flags,,LIST,share_outside,0.789,pipeline/scorecards.py
 all,flags,,LIST,total_flags,163225.0,pipeline/scorecards.py
-all,flags,,MS,in_cems_extent,7944.0,pipeline/scorecards.py
+all,flags,,MS,in_cems_extent,7950.0,pipeline/scorecards.py
 all,flags,,MS,share_outside,0.047,pipeline/scorecards.py
-all,flags,,MS,total_flags,8332.0,pipeline/scorecards.py
+all,flags,,MS,total_flags,8338.0,pipeline/scorecards.py
 all,flags,,OSU,in_cems_extent,32643.0,pipeline/scorecards.py
 all,flags,,OSU,share_outside,0.428,pipeline/scorecards.py
 all,flags,,OSU,total_flags,57066.0,pipeline/scorecards.py
-all,flags,,UH,in_cems_extent,55952.0,pipeline/scorecards.py
-all,flags,,UH,share_outside,0.251,pipeline/scorecards.py
-all,flags,,UH,total_flags,74705.0,pipeline/scorecards.py
-all,flags,,UNEP,in_cems_extent,17879.0,pipeline/scorecards.py
-all,flags,,UNEP,share_outside,0.763,pipeline/scorecards.py
-all,flags,,UNEP,total_flags,75476.0,pipeline/scorecards.py
+all,flags,,UH,in_cems_extent,56308.0,pipeline/scorecards.py
+all,flags,,UH,share_outside,0.25,pipeline/scorecards.py
+all,flags,,UH,total_flags,75118.0,pipeline/scorecards.py
+all,flags,,UNEP,in_cems_extent,17937.0,pipeline/scorecards.py
+all,flags,,UNEP,share_outside,0.76,pipeline/scorecards.py
+all,flags,,UNEP,total_flags,74867.0,pipeline/scorecards.py
 asd,cells,7.0,IMPACT v2,cells,114.0,pipeline/ranking.py
 asd,cells,7.0,IMPACT v2,delta,-0.245,pipeline/ranking.py
 asd,cells,7.0,IMPACT v2,rho,0.433,pipeline/ranking.py
@@ -570,15 +581,15 @@ asd,cells,7.0,OSU,rho,0.54,pipeline/ranking.py
 asd,cells,7.0,OSU,rho_null,0.48,pipeline/ranking.py
 asd,cells,7.0,OSU,top20,0.8,pipeline/ranking.py
 asd,cells,7.0,OSU,top20_null,0.65,pipeline/ranking.py
-asd,cells,7.0,UH,cells,106.0,pipeline/ranking.py
-asd,cells,7.0,UH,delta,-0.783,pipeline/ranking.py
-asd,cells,7.0,UH,rho,-0.085,pipeline/ranking.py
-asd,cells,7.0,UH,rho_null,0.698,pipeline/ranking.py
+asd,cells,7.0,UH,cells,107.0,pipeline/ranking.py
+asd,cells,7.0,UH,delta,-0.77,pipeline/ranking.py
+asd,cells,7.0,UH,rho,-0.073,pipeline/ranking.py
+asd,cells,7.0,UH,rho_null,0.696,pipeline/ranking.py
 asd,cells,7.0,UH,top20,0.05,pipeline/ranking.py
 asd,cells,7.0,UH,top20_null,0.8,pipeline/ranking.py
 asd,cells,7.0,UNEP,cells,165.0,pipeline/ranking.py
-asd,cells,7.0,UNEP,delta,-0.279,pipeline/ranking.py
-asd,cells,7.0,UNEP,rho,0.219,pipeline/ranking.py
+asd,cells,7.0,UNEP,delta,-0.276,pipeline/ranking.py
+asd,cells,7.0,UNEP,rho,0.222,pipeline/ranking.py
 asd,cells,7.0,UNEP,rho_null,0.498,pipeline/ranking.py
 asd,cells,7.0,UNEP,top20,0.2,pipeline/ranking.py
 asd,cells,7.0,UNEP,top20_null,0.55,pipeline/ranking.py
@@ -606,15 +617,15 @@ asd,cells,8.0,OSU,rho,0.505,pipeline/ranking.py
 asd,cells,8.0,OSU,rho_null,0.48,pipeline/ranking.py
 asd,cells,8.0,OSU,top20,0.45,pipeline/ranking.py
 asd,cells,8.0,OSU,top20_null,0.2,pipeline/ranking.py
-asd,cells,8.0,UH,cells,453.0,pipeline/ranking.py
+asd,cells,8.0,UH,cells,454.0,pipeline/ranking.py
 asd,cells,8.0,UH,delta,-0.695,pipeline/ranking.py
 asd,cells,8.0,UH,rho,-0.114,pipeline/ranking.py
 asd,cells,8.0,UH,rho_null,0.581,pipeline/ranking.py
 asd,cells,8.0,UH,top20,0.0,pipeline/ranking.py
 asd,cells,8.0,UH,top20_null,0.35,pipeline/ranking.py
-asd,cells,8.0,UNEP,cells,601.0,pipeline/ranking.py
-asd,cells,8.0,UNEP,delta,-0.382,pipeline/ranking.py
-asd,cells,8.0,UNEP,rho,0.068,pipeline/ranking.py
+asd,cells,8.0,UNEP,cells,602.0,pipeline/ranking.py
+asd,cells,8.0,UNEP,delta,-0.378,pipeline/ranking.py
+asd,cells,8.0,UNEP,rho,0.071,pipeline/ranking.py
 asd,cells,8.0,UNEP,rho_null,0.45,pipeline/ranking.py
 asd,cells,8.0,UNEP,top20,0.2,pipeline/ranking.py
 asd,cells,8.0,UNEP,top20_null,0.1,pipeline/ranking.py
@@ -642,16 +653,16 @@ asd,cells-fraction,7.0,OSU,rho_count,0.54,RQ3-prioritization-error-structure/rq3
 asd,cells-fraction,7.0,OSU,rho_frac,0.492,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,7.0,OSU,rho_null_count,0.48,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,7.0,OSU,rho_null_frac,0.355,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,7.0,UH,cells_count,106.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,7.0,UH,cells_count,107.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,7.0,UH,cells_frac,102.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,7.0,UH,rho_count,-0.085,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,7.0,UH,rho_frac,-0.211,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,7.0,UH,rho_null_count,0.698,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,7.0,UH,rho_count,-0.073,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,7.0,UH,rho_frac,-0.21,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,7.0,UH,rho_null_count,0.696,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,7.0,UH,rho_null_frac,0.645,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,7.0,UNEP,cells_count,165.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,7.0,UNEP,cells_frac,164.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,7.0,UNEP,rho_count,0.219,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,7.0,UNEP,rho_frac,0.139,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,7.0,UNEP,rho_count,0.222,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,7.0,UNEP,rho_frac,0.143,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,7.0,UNEP,rho_null_count,0.498,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,7.0,UNEP,rho_null_frac,0.423,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,IMPACT v2,cells_count,374.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
@@ -669,7 +680,7 @@ asd,cells-fraction,8.0,LIST,rho_null_frac,0.447,RQ3-prioritization-error-structu
 asd,cells-fraction,8.0,Microsoft,cells_count,112.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,Microsoft,cells_frac,106.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,Microsoft,rho_count,0.474,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,8.0,Microsoft,rho_frac,0.362,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,8.0,Microsoft,rho_frac,0.36,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,Microsoft,rho_null_count,0.56,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,Microsoft,rho_null_frac,0.59,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,OSU,cells_count,454.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
@@ -678,18 +689,18 @@ asd,cells-fraction,8.0,OSU,rho_count,0.505,RQ3-prioritization-error-structure/rq
 asd,cells-fraction,8.0,OSU,rho_frac,0.544,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,OSU,rho_null_count,0.48,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,OSU,rho_null_frac,0.451,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,8.0,UH,cells_count,453.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,8.0,UH,cells_count,454.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,UH,cells_frac,413.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,UH,rho_count,-0.114,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,8.0,UH,rho_frac,-0.21,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,8.0,UH,rho_frac,-0.212,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,UH,rho_null_count,0.581,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,UH,rho_null_frac,0.573,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,8.0,UNEP,cells_count,601.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,8.0,UNEP,cells_frac,582.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,8.0,UNEP,rho_count,0.068,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,8.0,UNEP,rho_frac,0.08,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,8.0,UNEP,cells_count,602.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,8.0,UNEP,cells_frac,583.0,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,8.0,UNEP,rho_count,0.071,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,8.0,UNEP,rho_frac,0.084,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,cells-fraction,8.0,UNEP,rho_null_count,0.45,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
-asd,cells-fraction,8.0,UNEP,rho_null_frac,0.469,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
+asd,cells-fraction,8.0,UNEP,rho_null_frac,0.467,RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv
 asd,ci,10.0,IMPACT,P,0.048,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
 asd,ci,10.0,IMPACT,P_hi,0.08,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
 asd,ci,10.0,IMPACT,P_lo,0.02,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
@@ -717,15 +728,15 @@ asd,ci,10.0,OSU,R_lo,0.782,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
 asd,ci,10.0,UH,P,0.012,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
 asd,ci,10.0,UH,P_hi,0.025,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
 asd,ci,10.0,UH,P_lo,0.005,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
-asd,ci,10.0,UH,R,0.45,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
-asd,ci,10.0,UH,R_hi,0.564,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
-asd,ci,10.0,UH,R_lo,0.326,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
+asd,ci,10.0,UH,R,0.451,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
+asd,ci,10.0,UH,R_hi,0.566,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
+asd,ci,10.0,UH,R_lo,0.327,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
 asd,ci,10.0,UNEP,P,0.037,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
-asd,ci,10.0,UNEP,P_hi,0.068,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
+asd,ci,10.0,UNEP,P_hi,0.067,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
 asd,ci,10.0,UNEP,P_lo,0.013,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
-asd,ci,10.0,UNEP,R,0.425,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
-asd,ci,10.0,UNEP,R_hi,0.47,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
-asd,ci,10.0,UNEP,R_lo,0.333,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
+asd,ci,10.0,UNEP,R,0.421,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
+asd,ci,10.0,UNEP,R_hi,0.468,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
+asd,ci,10.0,UNEP,R_lo,0.329,RQ9-uncertainty/rq9_ci_asdelivered_r10.csv
 asd,crowd,10.0,IMPACT,P_crowd,0.087,pipeline/scorecards.py
 asd,crowd,10.0,IMPACT,crowd_cov,0.21,pipeline/scorecards.py
 asd,crowd,10.0,IMPACT,fp_crowd_damaged,0.19,pipeline/scorecards.py
@@ -740,7 +751,7 @@ asd,crowd,10.0,OSU,crowd_cov,0.34,pipeline/scorecards.py
 asd,crowd,10.0,OSU,fp_crowd_damaged,0.19,pipeline/scorecards.py
 asd,crowd,10.0,UH,P_crowd,0.02,pipeline/scorecards.py
 asd,crowd,10.0,UH,crowd_cov,0.02,pipeline/scorecards.py
-asd,crowd,10.0,UH,fp_crowd_damaged,0.33,pipeline/scorecards.py
+asd,crowd,10.0,UH,fp_crowd_damaged,0.34,pipeline/scorecards.py
 asd,crowd,10.0,UNEP,P_crowd,0.081,pipeline/scorecards.py
 asd,crowd,10.0,UNEP,crowd_cov,0.26,pipeline/scorecards.py
 asd,crowd,10.0,UNEP,fp_crowd_damaged,0.18,pipeline/scorecards.py
@@ -752,40 +763,40 @@ asd,crowd-round2,10.0,IMPACT,delta,0.001,RQ7-mapswipe-validation/rq7_round2_padj
 asd,crowd-round2,10.0,IMPACT,strip_share,0.777,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,IMPACT,strip_unmatched,3649.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,LIST,P_crowd_r1,0.076,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,LIST,P_crowd_r2swap,0.078,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,LIST,P_crowd_r2swap,0.076,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,LIST,conf_r1,0.1458686241294937,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,LIST,conf_r2,0.1439864483342744,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,LIST,delta,0.002,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,LIST,delta,0.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,LIST,strip_share,0.803,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,LIST,strip_unmatched,5313.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,MS,P_crowd_r1,0.268,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,MS,P_crowd_r2swap,0.257,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,MS,conf_r1,0.127563704164077,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,MS,conf_r2,0.1110938471100062,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,MS,delta,-0.011,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,MS,P_crowd_r2swap,0.256,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,MS,conf_r1,0.127464679397609,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,MS,conf_r2,0.111318118304611,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,MS,delta,-0.012,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,MS,strip_share,0.931,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,MS,strip_unmatched,6436.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,MS,strip_unmatched,6441.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,OSU,P_crowd_r1,0.115,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,OSU,P_crowd_r2swap,0.105,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,OSU,P_crowd_r2swap,0.109,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,OSU,conf_r1,0.1415640839971035,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,OSU,conf_r2,0.1187545257060101,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,OSU,delta,-0.01,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,OSU,delta,-0.006,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,OSU,strip_share,0.789,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,OSU,strip_unmatched,8286.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,UH,P_crowd_r1,0.02,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,UH,P_crowd_r2swap,0.022,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,UH,P_crowd_r2swap,0.019,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,UH,conf_r1,0.1649048625792812,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,UH,conf_r2,0.1818181818181818,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,UH,delta,0.002,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,UH,strip_share,0.428,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,UH,delta,-0.001,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,UH,strip_share,0.425,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,UH,strip_unmatched,473.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,UNEP,P_crowd_r1,0.081,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,UNEP,P_crowd_r2swap,0.075,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,UNEP,conf_r1,0.1516763005780347,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,UNEP,conf_r2,0.110057803468208,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,UNEP,delta,-0.006,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,UNEP,strip_share,0.966,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
-asd,crowd-round2,10.0,UNEP,strip_unmatched,4325.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,UNEP,P_crowd_r2swap,0.072,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,UNEP,conf_r1,0.1514661740937427,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,UNEP,conf_r2,0.1108289078734703,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,UNEP,delta,-0.009,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,UNEP,strip_share,0.964,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,crowd-round2,10.0,UNEP,strip_unmatched,4331.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,labels,10.0,IMPACT,AP,0.029,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,IMPACT,AP_dayzero,0.061,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,IMPACT,P,0.048,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
@@ -808,10 +819,10 @@ asd,labels,10.0,MS,AP,0.075,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,MS,AP_dayzero,0.066,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,MS,P,0.121,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,MS,P_dayzero,0.079,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
-asd,labels,10.0,MS,R,0.464,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
+asd,labels,10.0,MS,R,0.465,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,MS,R_dayzero,0.304,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,MS,n_bld,58705.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
-asd,labels,10.0,MS,n_flags,7944.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
+asd,labels,10.0,MS,n_flags,7950.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,MS,n_pos,2064.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,OSU,AP,0.046,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,OSU,AP_dayzero,0.072,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
@@ -826,19 +837,19 @@ asd,labels,10.0,UH,AP,0.009,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UH,AP_dayzero,0.072,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UH,P,0.012,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UH,P_dayzero,0.035,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
-asd,labels,10.0,UH,R,0.326,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
+asd,labels,10.0,UH,R,0.327,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UH,R_dayzero,0.933,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UH,n_bld,290648.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
-asd,labels,10.0,UH,n_flags,55952.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
+asd,labels,10.0,UH,n_flags,56308.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UH,n_pos,2099.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UNEP,AP,0.015,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UNEP,AP_dayzero,0.059,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UNEP,P,0.037,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
-asd,labels,10.0,UNEP,P_dayzero,0.065,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
-asd,labels,10.0,UNEP,R,0.312,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
+asd,labels,10.0,UNEP,P_dayzero,0.064,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
+asd,labels,10.0,UNEP,R,0.31,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UNEP,R_dayzero,0.543,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UNEP,n_bld,422932.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
-asd,labels,10.0,UNEP,n_flags,17879.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
+asd,labels,10.0,UNEP,n_flags,17937.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,UNEP,n_pos,2129.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,20.0,IMPACT,AP,0.048,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,IMPACT,AP_dayzero,0.104,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
@@ -865,7 +876,7 @@ asd,labels,20.0,MS,P_dayzero,0.144,RQ8-learned-fusion/rq8b_asdelivered_baseline_
 asd,labels,20.0,MS,R,0.371,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,MS,R_dayzero,0.307,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,MS,n_bld,58705.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
-asd,labels,20.0,MS,n_flags,7944.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
+asd,labels,20.0,MS,n_flags,7950.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,MS,n_pos,3727.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,OSU,AP,0.078,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,OSU,AP_dayzero,0.126,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
@@ -880,19 +891,19 @@ asd,labels,20.0,UH,AP,0.014,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UH,AP_dayzero,0.127,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UH,P,0.018,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UH,P_dayzero,0.063,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
-asd,labels,20.0,UH,R,0.261,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
-asd,labels,20.0,UH,R_dayzero,0.936,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
+asd,labels,20.0,UH,R,0.262,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
+asd,labels,20.0,UH,R_dayzero,0.937,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UH,n_bld,290648.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
-asd,labels,20.0,UH,n_flags,55952.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
+asd,labels,20.0,UH,n_flags,56308.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UH,n_pos,3794.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UNEP,AP,0.02,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UNEP,AP_dayzero,0.103,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UNEP,P,0.054,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UNEP,P_dayzero,0.117,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
-asd,labels,20.0,UNEP,R,0.25,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
-asd,labels,20.0,UNEP,R_dayzero,0.54,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
+asd,labels,20.0,UNEP,R,0.251,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
+asd,labels,20.0,UNEP,R_dayzero,0.541,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UNEP,n_bld,422932.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
-asd,labels,20.0,UNEP,n_flags,17879.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
+asd,labels,20.0,UNEP,n_flags,17937.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,labels,20.0,UNEP,n_pos,3864.0,RQ8-learned-fusion/rq8b_asdelivered_baseline_r20.csv
 asd,lisa,8.0,IMPACT,HH,60.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
 asd,lisa,8.0,IMPACT,HL,0.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
@@ -924,12 +935,12 @@ asd,lisa,8.0,UH,LH,11.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
 asd,lisa,8.0,UH,LL,16.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
 asd,lisa,8.0,UH,cells,526.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
 asd,lisa,8.0,UH,ns,447.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
-asd,lisa,8.0,UNEP,HH,14.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
+asd,lisa,8.0,UNEP,HH,13.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
 asd,lisa,8.0,UNEP,HL,0.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
-asd,lisa,8.0,UNEP,LH,6.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
+asd,lisa,8.0,UNEP,LH,5.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
 asd,lisa,8.0,UNEP,LL,1.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
 asd,lisa,8.0,UNEP,cells,133.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
-asd,lisa,8.0,UNEP,ns,112.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
+asd,lisa,8.0,UNEP,ns,114.0,RQ3-prioritization-error-structure/rq3d_lisa_summary.csv
 asd,points,10.0,IMPACT,P,0.048,pipeline/scorecards.py
 asd,points,10.0,IMPACT,R,0.619,pipeline/scorecards.py
 asd,points,10.0,IMPACT,flag_share,0.069,pipeline/scorecards.py
@@ -947,7 +958,7 @@ asd,points,10.0,MS,R,0.611,pipeline/scorecards.py
 asd,points,10.0,MS,flag_share,0.135,pipeline/scorecards.py
 asd,points,10.0,MS,n_bld,58705.0,pipeline/scorecards.py
 asd,points,10.0,MS,n_cems,1467.0,pipeline/scorecards.py
-asd,points,10.0,MS,n_flags,7944.0,pipeline/scorecards.py
+asd,points,10.0,MS,n_flags,7950.0,pipeline/scorecards.py
 asd,points,10.0,OSU,P,0.054,pipeline/scorecards.py
 asd,points,10.0,OSU,R,0.856,pipeline/scorecards.py
 asd,points,10.0,OSU,flag_share,0.079,pipeline/scorecards.py
@@ -955,17 +966,17 @@ asd,points,10.0,OSU,n_bld,412637.0,pipeline/scorecards.py
 asd,points,10.0,OSU,n_cems,1488.0,pipeline/scorecards.py
 asd,points,10.0,OSU,n_flags,32643.0,pipeline/scorecards.py
 asd,points,10.0,UH,P,0.012,pipeline/scorecards.py
-asd,points,10.0,UH,R,0.45,pipeline/scorecards.py
-asd,points,10.0,UH,flag_share,0.193,pipeline/scorecards.py
+asd,points,10.0,UH,R,0.451,pipeline/scorecards.py
+asd,points,10.0,UH,flag_share,0.194,pipeline/scorecards.py
 asd,points,10.0,UH,n_bld,290648.0,pipeline/scorecards.py
 asd,points,10.0,UH,n_cems,1499.0,pipeline/scorecards.py
-asd,points,10.0,UH,n_flags,55952.0,pipeline/scorecards.py
+asd,points,10.0,UH,n_flags,56308.0,pipeline/scorecards.py
 asd,points,10.0,UNEP,P,0.037,pipeline/scorecards.py
-asd,points,10.0,UNEP,R,0.425,pipeline/scorecards.py
+asd,points,10.0,UNEP,R,0.421,pipeline/scorecards.py
 asd,points,10.0,UNEP,flag_share,0.042,pipeline/scorecards.py
 asd,points,10.0,UNEP,n_bld,422932.0,pipeline/scorecards.py
 asd,points,10.0,UNEP,n_cems,1514.0,pipeline/scorecards.py
-asd,points,10.0,UNEP,n_flags,17879.0,pipeline/scorecards.py
+asd,points,10.0,UNEP,n_flags,17937.0,pipeline/scorecards.py
 core,bounds,10.0,IMPACT,P_crowd,0.187,pipeline/scorecards.py
 core,bounds,10.0,IMPACT,P_floor,0.104,pipeline/scorecards.py
 core,bounds,10.0,IMPACT,P_grade,0.173,pipeline/scorecards.py
@@ -990,16 +1001,16 @@ core,bounds,10.0,OSU,P_grade,0.123,pipeline/scorecards.py
 core,bounds,10.0,OSU,P_upper,0.189,pipeline/scorecards.py
 core,bounds,10.0,OSU,crowd_cov,0.43,pipeline/scorecards.py
 core,bounds,10.0,OSU,crowd_fp_near_class1,0.14,pipeline/scorecards.py
-core,bounds,10.0,UH,P_crowd,0.202,pipeline/scorecards.py
-core,bounds,10.0,UH,P_floor,0.126,pipeline/scorecards.py
-core,bounds,10.0,UH,P_grade,0.171,pipeline/scorecards.py
-core,bounds,10.0,UH,P_upper,0.232,pipeline/scorecards.py
+core,bounds,10.0,UH,P_crowd,0.201,pipeline/scorecards.py
+core,bounds,10.0,UH,P_floor,0.124,pipeline/scorecards.py
+core,bounds,10.0,UH,P_grade,0.169,pipeline/scorecards.py
+core,bounds,10.0,UH,P_upper,0.23,pipeline/scorecards.py
 core,bounds,10.0,UH,crowd_cov,0.26,pipeline/scorecards.py
 core,bounds,10.0,UH,crowd_fp_near_class1,0.2,pipeline/scorecards.py
-core,bounds,10.0,UNEP,P_crowd,0.254,pipeline/scorecards.py
+core,bounds,10.0,UNEP,P_crowd,0.253,pipeline/scorecards.py
 core,bounds,10.0,UNEP,P_floor,0.117,pipeline/scorecards.py
-core,bounds,10.0,UNEP,P_grade,0.179,pipeline/scorecards.py
-core,bounds,10.0,UNEP,P_upper,0.296,pipeline/scorecards.py
+core,bounds,10.0,UNEP,P_grade,0.178,pipeline/scorecards.py
+core,bounds,10.0,UNEP,P_upper,0.295,pipeline/scorecards.py
 core,bounds,10.0,UNEP,crowd_cov,0.88,pipeline/scorecards.py
 core,bounds,10.0,UNEP,crowd_fp_near_class1,0.14,pipeline/scorecards.py
 core,cells,8.0,IMPACT v2,cells,133.0,pipeline/ranking.py
@@ -1027,14 +1038,14 @@ core,cells,8.0,OSU,rho_null,0.644,pipeline/ranking.py
 core,cells,8.0,OSU,top20,0.45,pipeline/ranking.py
 core,cells,8.0,OSU,top20_null,0.45,pipeline/ranking.py
 core,cells,8.0,UH,cells,133.0,pipeline/ranking.py
-core,cells,8.0,UH,delta,-0.164,pipeline/ranking.py
-core,cells,8.0,UH,rho,0.48,pipeline/ranking.py
+core,cells,8.0,UH,delta,-0.167,pipeline/ranking.py
+core,cells,8.0,UH,rho,0.477,pipeline/ranking.py
 core,cells,8.0,UH,rho_null,0.644,pipeline/ranking.py
 core,cells,8.0,UH,top20,0.4,pipeline/ranking.py
 core,cells,8.0,UH,top20_null,0.45,pipeline/ranking.py
 core,cells,8.0,UNEP,cells,133.0,pipeline/ranking.py
-core,cells,8.0,UNEP,delta,-0.067,pipeline/ranking.py
-core,cells,8.0,UNEP,rho,0.577,pipeline/ranking.py
+core,cells,8.0,UNEP,delta,-0.066,pipeline/ranking.py
+core,cells,8.0,UNEP,rho,0.579,pipeline/ranking.py
 core,cells,8.0,UNEP,rho_null,0.644,pipeline/ranking.py
 core,cells,8.0,UNEP,top20,0.4,pipeline/ranking.py
 core,cells,8.0,UNEP,top20_null,0.45,pipeline/ranking.py
@@ -1063,27 +1074,27 @@ core,cells,9.0,OSU,rho_null,0.471,pipeline/ranking.py
 core,cells,9.0,OSU,top20,0.1,pipeline/ranking.py
 core,cells,9.0,OSU,top20_null,0.0,pipeline/ranking.py
 core,cells,9.0,UH,cells,594.0,pipeline/ranking.py
-core,cells,9.0,UH,delta,-0.167,pipeline/ranking.py
-core,cells,9.0,UH,rho,0.304,pipeline/ranking.py
+core,cells,9.0,UH,delta,-0.168,pipeline/ranking.py
+core,cells,9.0,UH,rho,0.303,pipeline/ranking.py
 core,cells,9.0,UH,rho_null,0.471,pipeline/ranking.py
 core,cells,9.0,UH,top20,0.05,pipeline/ranking.py
 core,cells,9.0,UH,top20_null,0.0,pipeline/ranking.py
 core,cells,9.0,UNEP,cells,594.0,pipeline/ranking.py
-core,cells,9.0,UNEP,delta,-0.028,pipeline/ranking.py
-core,cells,9.0,UNEP,rho,0.443,pipeline/ranking.py
+core,cells,9.0,UNEP,delta,-0.025,pipeline/ranking.py
+core,cells,9.0,UNEP,rho,0.445,pipeline/ranking.py
 core,cells,9.0,UNEP,rho_null,0.471,pipeline/ranking.py
 core,cells,9.0,UNEP,top20,0.1,pipeline/ranking.py
 core,cells,9.0,UNEP,top20_null,0.0,pipeline/ranking.py
 core,cells-agreement,8.0,1-of-6,cells,133.0,pipeline/ranking.py
 core,cells-agreement,8.0,1-of-6,cells_frac,112.0,pipeline/ranking.py
 core,cells-agreement,8.0,1-of-6,rho,0.627,pipeline/ranking.py
-core,cells-agreement,8.0,1-of-6,rho_frac,0.659,pipeline/ranking.py
+core,cells-agreement,8.0,1-of-6,rho_frac,0.655,pipeline/ranking.py
 core,cells-agreement,8.0,1-of-6,top20,0.45,pipeline/ranking.py
 core,cells-agreement,8.0,1-of-6,top20_exp,0.45,pipeline/ranking.py
 core,cells-agreement,8.0,2-of-6,cells,133.0,pipeline/ranking.py
 core,cells-agreement,8.0,2-of-6,cells_frac,112.0,pipeline/ranking.py
 core,cells-agreement,8.0,2-of-6,rho,0.724,pipeline/ranking.py
-core,cells-agreement,8.0,2-of-6,rho_frac,0.742,pipeline/ranking.py
+core,cells-agreement,8.0,2-of-6,rho_frac,0.741,pipeline/ranking.py
 core,cells-agreement,8.0,2-of-6,top20,0.5,pipeline/ranking.py
 core,cells-agreement,8.0,2-of-6,top20_exp,0.5,pipeline/ranking.py
 core,cells-agreement,8.0,3-of-6,cells,133.0,pipeline/ranking.py
@@ -1094,14 +1105,14 @@ core,cells-agreement,8.0,3-of-6,top20,0.6,pipeline/ranking.py
 core,cells-agreement,8.0,3-of-6,top20_exp,0.6,pipeline/ranking.py
 core,cells-agreement,8.0,4-of-6,cells,133.0,pipeline/ranking.py
 core,cells-agreement,8.0,4-of-6,cells_frac,112.0,pipeline/ranking.py
-core,cells-agreement,8.0,4-of-6,rho,0.781,pipeline/ranking.py
-core,cells-agreement,8.0,4-of-6,rho_frac,0.73,pipeline/ranking.py
+core,cells-agreement,8.0,4-of-6,rho,0.783,pipeline/ranking.py
+core,cells-agreement,8.0,4-of-6,rho_frac,0.732,pipeline/ranking.py
 core,cells-agreement,8.0,4-of-6,top20,0.65,pipeline/ranking.py
 core,cells-agreement,8.0,4-of-6,top20_exp,0.65,pipeline/ranking.py
 core,cells-agreement,8.0,5-of-6,cells,133.0,pipeline/ranking.py
 core,cells-agreement,8.0,5-of-6,cells_frac,112.0,pipeline/ranking.py
-core,cells-agreement,8.0,5-of-6,rho,0.687,pipeline/ranking.py
-core,cells-agreement,8.0,5-of-6,rho_frac,0.638,pipeline/ranking.py
+core,cells-agreement,8.0,5-of-6,rho,0.684,pipeline/ranking.py
+core,cells-agreement,8.0,5-of-6,rho_frac,0.637,pipeline/ranking.py
 core,cells-agreement,8.0,5-of-6,top20,0.75,pipeline/ranking.py
 core,cells-agreement,8.0,5-of-6,top20_exp,0.77,pipeline/ranking.py
 core,cells-agreement,8.0,6-of-6,cells,133.0,pipeline/ranking.py
@@ -1125,7 +1136,7 @@ core,cells-agreement,8.0,LIST,top20_exp,0.65,pipeline/ranking.py
 core,cells-agreement,8.0,Microsoft,cells,133.0,pipeline/ranking.py
 core,cells-agreement,8.0,Microsoft,cells_frac,112.0,pipeline/ranking.py
 core,cells-agreement,8.0,Microsoft,rho,0.616,pipeline/ranking.py
-core,cells-agreement,8.0,Microsoft,rho_frac,0.444,pipeline/ranking.py
+core,cells-agreement,8.0,Microsoft,rho_frac,0.443,pipeline/ranking.py
 core,cells-agreement,8.0,Microsoft,top20,0.35,pipeline/ranking.py
 core,cells-agreement,8.0,Microsoft,top20_exp,0.35,pipeline/ranking.py
 core,cells-agreement,8.0,OSU,cells,133.0,pipeline/ranking.py
@@ -1136,14 +1147,14 @@ core,cells-agreement,8.0,OSU,top20,0.45,pipeline/ranking.py
 core,cells-agreement,8.0,OSU,top20_exp,0.45,pipeline/ranking.py
 core,cells-agreement,8.0,UH,cells,133.0,pipeline/ranking.py
 core,cells-agreement,8.0,UH,cells_frac,112.0,pipeline/ranking.py
-core,cells-agreement,8.0,UH,rho,0.48,pipeline/ranking.py
-core,cells-agreement,8.0,UH,rho_frac,0.241,pipeline/ranking.py
+core,cells-agreement,8.0,UH,rho,0.477,pipeline/ranking.py
+core,cells-agreement,8.0,UH,rho_frac,0.24,pipeline/ranking.py
 core,cells-agreement,8.0,UH,top20,0.4,pipeline/ranking.py
 core,cells-agreement,8.0,UH,top20_exp,0.4,pipeline/ranking.py
 core,cells-agreement,8.0,UNEP,cells,133.0,pipeline/ranking.py
 core,cells-agreement,8.0,UNEP,cells_frac,112.0,pipeline/ranking.py
-core,cells-agreement,8.0,UNEP,rho,0.577,pipeline/ranking.py
-core,cells-agreement,8.0,UNEP,rho_frac,0.389,pipeline/ranking.py
+core,cells-agreement,8.0,UNEP,rho,0.579,pipeline/ranking.py
+core,cells-agreement,8.0,UNEP,rho_frac,0.384,pipeline/ranking.py
 core,cells-agreement,8.0,UNEP,top20,0.4,pipeline/ranking.py
 core,cells-agreement,8.0,UNEP,top20_exp,0.4,pipeline/ranking.py
 core,cells-agreement,8.0,geography null,cells,133.0,pipeline/ranking.py
@@ -1155,19 +1166,13 @@ core,cells-agreement,8.0,geography null,top20_exp,0.45,pipeline/ranking.py
 core,cells-agreement,8.0,vote sum,cells,133.0,pipeline/ranking.py
 core,cells-agreement,8.0,vote sum,cells_frac,112.0,pipeline/ranking.py
 core,cells-agreement,8.0,vote sum,rho,0.695,pipeline/ranking.py
-core,cells-agreement,8.0,vote sum,rho_frac,0.727,pipeline/ranking.py
+core,cells-agreement,8.0,vote sum,rho_frac,0.726,pipeline/ranking.py
 core,cells-agreement,8.0,vote sum,top20,0.45,pipeline/ranking.py
 core,cells-agreement,8.0,vote sum,top20_exp,0.45,pipeline/ranking.py
-core,cells-agreement,8.0,weighted fusion,cells,133.0,pipeline/ranking.py
-core,cells-agreement,8.0,weighted fusion,cells_frac,112.0,pipeline/ranking.py
-core,cells-agreement,8.0,weighted fusion,rho,0.711,pipeline/ranking.py
-core,cells-agreement,8.0,weighted fusion,rho_frac,0.647,pipeline/ranking.py
-core,cells-agreement,8.0,weighted fusion,top20,0.5,pipeline/ranking.py
-core,cells-agreement,8.0,weighted fusion,top20_exp,0.5,pipeline/ranking.py
 core,cells-agreement,9.0,1-of-6,cells,594.0,pipeline/ranking.py
 core,cells-agreement,9.0,1-of-6,cells_frac,426.0,pipeline/ranking.py
 core,cells-agreement,9.0,1-of-6,rho,0.457,pipeline/ranking.py
-core,cells-agreement,9.0,1-of-6,rho_frac,0.554,pipeline/ranking.py
+core,cells-agreement,9.0,1-of-6,rho_frac,0.553,pipeline/ranking.py
 core,cells-agreement,9.0,1-of-6,top20,0.0,pipeline/ranking.py
 core,cells-agreement,9.0,1-of-6,top20_exp,0.0,pipeline/ranking.py
 core,cells-agreement,9.0,2-of-6,cells,594.0,pipeline/ranking.py
@@ -1184,14 +1189,14 @@ core,cells-agreement,9.0,3-of-6,top20,0.3,pipeline/ranking.py
 core,cells-agreement,9.0,3-of-6,top20_exp,0.3,pipeline/ranking.py
 core,cells-agreement,9.0,4-of-6,cells,594.0,pipeline/ranking.py
 core,cells-agreement,9.0,4-of-6,cells_frac,426.0,pipeline/ranking.py
-core,cells-agreement,9.0,4-of-6,rho,0.652,pipeline/ranking.py
-core,cells-agreement,9.0,4-of-6,rho_frac,0.649,pipeline/ranking.py
+core,cells-agreement,9.0,4-of-6,rho,0.656,pipeline/ranking.py
+core,cells-agreement,9.0,4-of-6,rho_frac,0.656,pipeline/ranking.py
 core,cells-agreement,9.0,4-of-6,top20,0.45,pipeline/ranking.py
 core,cells-agreement,9.0,4-of-6,top20_exp,0.45,pipeline/ranking.py
 core,cells-agreement,9.0,5-of-6,cells,594.0,pipeline/ranking.py
 core,cells-agreement,9.0,5-of-6,cells_frac,426.0,pipeline/ranking.py
-core,cells-agreement,9.0,5-of-6,rho,0.595,pipeline/ranking.py
-core,cells-agreement,9.0,5-of-6,rho_frac,0.585,pipeline/ranking.py
+core,cells-agreement,9.0,5-of-6,rho,0.592,pipeline/ranking.py
+core,cells-agreement,9.0,5-of-6,rho_frac,0.583,pipeline/ranking.py
 core,cells-agreement,9.0,5-of-6,top20,0.55,pipeline/ranking.py
 core,cells-agreement,9.0,5-of-6,top20_exp,0.55,pipeline/ranking.py
 core,cells-agreement,9.0,6-of-6,cells,594.0,pipeline/ranking.py
@@ -1226,14 +1231,14 @@ core,cells-agreement,9.0,OSU,top20,0.1,pipeline/ranking.py
 core,cells-agreement,9.0,OSU,top20_exp,0.1,pipeline/ranking.py
 core,cells-agreement,9.0,UH,cells,594.0,pipeline/ranking.py
 core,cells-agreement,9.0,UH,cells_frac,426.0,pipeline/ranking.py
-core,cells-agreement,9.0,UH,rho,0.304,pipeline/ranking.py
-core,cells-agreement,9.0,UH,rho_frac,0.21,pipeline/ranking.py
+core,cells-agreement,9.0,UH,rho,0.303,pipeline/ranking.py
+core,cells-agreement,9.0,UH,rho_frac,0.208,pipeline/ranking.py
 core,cells-agreement,9.0,UH,top20,0.05,pipeline/ranking.py
 core,cells-agreement,9.0,UH,top20_exp,0.05,pipeline/ranking.py
 core,cells-agreement,9.0,UNEP,cells,594.0,pipeline/ranking.py
 core,cells-agreement,9.0,UNEP,cells_frac,426.0,pipeline/ranking.py
-core,cells-agreement,9.0,UNEP,rho,0.443,pipeline/ranking.py
-core,cells-agreement,9.0,UNEP,rho_frac,0.366,pipeline/ranking.py
+core,cells-agreement,9.0,UNEP,rho,0.445,pipeline/ranking.py
+core,cells-agreement,9.0,UNEP,rho_frac,0.372,pipeline/ranking.py
 core,cells-agreement,9.0,UNEP,top20,0.1,pipeline/ranking.py
 core,cells-agreement,9.0,UNEP,top20_exp,0.1,pipeline/ranking.py
 core,cells-agreement,9.0,geography null,cells,594.0,pipeline/ranking.py
@@ -1245,15 +1250,9 @@ core,cells-agreement,9.0,geography null,top20_exp,0.0,pipeline/ranking.py
 core,cells-agreement,9.0,vote sum,cells,594.0,pipeline/ranking.py
 core,cells-agreement,9.0,vote sum,cells_frac,426.0,pipeline/ranking.py
 core,cells-agreement,9.0,vote sum,rho,0.543,pipeline/ranking.py
-core,cells-agreement,9.0,vote sum,rho_frac,0.623,pipeline/ranking.py
+core,cells-agreement,9.0,vote sum,rho_frac,0.622,pipeline/ranking.py
 core,cells-agreement,9.0,vote sum,top20,0.2,pipeline/ranking.py
 core,cells-agreement,9.0,vote sum,top20_exp,0.2,pipeline/ranking.py
-core,cells-agreement,9.0,weighted fusion,cells,594.0,pipeline/ranking.py
-core,cells-agreement,9.0,weighted fusion,cells_frac,426.0,pipeline/ranking.py
-core,cells-agreement,9.0,weighted fusion,rho,0.566,pipeline/ranking.py
-core,cells-agreement,9.0,weighted fusion,rho_frac,0.577,pipeline/ranking.py
-core,cells-agreement,9.0,weighted fusion,top20,0.25,pipeline/ranking.py
-core,cells-agreement,9.0,weighted fusion,top20_exp,0.25,pipeline/ranking.py
 core,ci,10.0,1-of-6,F1,0.1,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,1-of-6,F1_hi,0.135,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,1-of-6,F1_lo,0.067,RQ9-uncertainty/rq9_ci_core.csv
@@ -1279,50 +1278,50 @@ core,ci,10.0,2-of-6,R,0.899,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,2-of-6,R_hi,0.927,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,2-of-6,R_lo,0.857,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,F1,0.25,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,3-of-6,F1_hi,0.315,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,3-of-6,F1_hi,0.314,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,F1_lo,0.181,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,3-of-6,P,0.149,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,3-of-6,P,0.148,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,P_crowd,0.262,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,P_crowd_hi,0.311,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,3-of-6,P_crowd_lo,0.21,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,3-of-6,P_crowd_lo,0.211,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,P_hi,0.195,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,P_lo,0.103,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,R,0.781,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,R_hi,0.829,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,R_lo,0.712,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,F1,0.365,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,F1_hi,0.446,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,F1,0.364,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,F1_hi,0.445,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,4-of-6,F1_lo,0.265,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,P,0.269,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,P_crowd,0.417,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,P_crowd_hi,0.523,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,P_crowd_lo,0.324,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,P_hi,0.357,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,P_lo,0.182,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,R,0.568,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,R_hi,0.655,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,4-of-6,R_lo,0.475,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,F1,0.392,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,F1_hi,0.473,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,F1_lo,0.288,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,P,0.477,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,P_crowd,0.639,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,P_crowd_hi,0.777,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,P_crowd_lo,0.48,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,P_hi,0.583,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,P_lo,0.351,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,R,0.333,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,R_hi,0.431,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,5-of-6,R_lo,0.227,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,6-of-6,F1,0.25,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,P,0.268,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,P_crowd,0.416,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,P_crowd_hi,0.522,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,P_crowd_lo,0.323,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,P_hi,0.355,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,P_lo,0.181,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,R,0.566,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,R_hi,0.654,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6,R_lo,0.472,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,F1,0.388,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,F1_hi,0.47,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,F1_lo,0.282,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,P,0.474,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,P_crowd,0.636,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,P_crowd_hi,0.774,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,P_crowd_lo,0.478,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,P_hi,0.579,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,P_lo,0.348,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,R,0.329,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,R_hi,0.43,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6,R_lo,0.223,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,6-of-6,F1,0.251,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,F1_hi,0.33,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,6-of-6,F1_lo,0.16,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,6-of-6,P,0.793,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,6-of-6,F1_lo,0.162,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,6-of-6,P,0.791,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,P_crowd,0.948,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,P_crowd_hi,0.987,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,6-of-6,P_crowd_lo,0.897,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,6-of-6,P_crowd_lo,0.896,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,P_hi,0.863,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,6-of-6,P_lo,0.724,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,6-of-6,P_lo,0.722,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,R,0.149,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,R_hi,0.208,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,R_lo,0.09,RQ9-uncertainty/rq9_ci_core.csv
@@ -1356,7 +1355,7 @@ core,ci,10.0,MS,F1_lo,0.127,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,MS,P,0.122,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,MS,P_crowd,0.27,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,MS,P_crowd_hi,0.335,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,MS,P_crowd_lo,0.214,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,MS,P_crowd_lo,0.213,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,MS,P_hi,0.182,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,MS,P_lo,0.072,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,MS,R,0.611,RQ9-uncertainty/rq9_ci_core.csv
@@ -1374,33 +1373,33 @@ core,ci,10.0,OSU,P_lo,0.046,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,OSU,R,0.865,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,OSU,R_hi,0.896,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,OSU,R_lo,0.819,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,F1,0.197,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,F1_hi,0.277,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,F1_lo,0.122,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,P,0.126,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,P_crowd,0.202,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,P_crowd_hi,0.294,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,P_crowd_lo,0.13,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,P_hi,0.197,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,P_lo,0.072,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,F1,0.195,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,F1_hi,0.275,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,F1_lo,0.12,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,P,0.124,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,P_crowd,0.201,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,P_crowd_hi,0.293,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,P_crowd_lo,0.129,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,P_hi,0.195,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,P_lo,0.071,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,UH,R,0.453,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UH,R_hi,0.542,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UH,R_hi,0.543,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,UH,R_lo,0.359,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,F1,0.185,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,F1_hi,0.271,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,F1_lo,0.108,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,F1,0.184,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,F1_hi,0.269,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,F1_lo,0.107,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,UNEP,P,0.117,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,P_crowd,0.254,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,P_crowd_hi,0.321,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,P_crowd,0.253,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,P_crowd_hi,0.32,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,UNEP,P_crowd_lo,0.198,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,P_hi,0.188,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,P_lo,0.063,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,R,0.436,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,R_hi,0.538,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,10.0,UNEP,R_lo,0.34,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,P_hi,0.186,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,P_lo,0.062,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,R,0.431,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,R_hi,0.534,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,UNEP,R_lo,0.335,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,F1,0.171,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,F1_hi,0.225,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,1-of-6,F1_lo,0.12,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,1-of-6,F1_lo,0.119,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,P,0.094,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,P_hi,0.127,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,P_lo,0.064,RQ9-uncertainty/rq9_ci_core.csv
@@ -1408,7 +1407,7 @@ core,ci,20.0,1-of-6,R,0.982,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,R_hi,0.992,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,R_lo,0.965,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,F1,0.254,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,2-of-6,F1_hi,0.321,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,2-of-6,F1_hi,0.32,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,F1_lo,0.184,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,P,0.147,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,P_hi,0.193,RQ9-uncertainty/rq9_ci_core.csv
@@ -1417,38 +1416,38 @@ core,ci,20.0,2-of-6,R,0.948,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,R_hi,0.968,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,R_lo,0.916,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,F1,0.374,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,3-of-6,F1_hi,0.458,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,3-of-6,F1_hi,0.457,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,F1_lo,0.279,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,P,0.239,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,3-of-6,P_hi,0.31,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,3-of-6,P_lo,0.169,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,3-of-6,P_hi,0.309,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,3-of-6,P_lo,0.168,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,R,0.856,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,R_hi,0.891,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,R_lo,0.801,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,4-of-6,F1,0.485,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,4-of-6,F1,0.484,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,4-of-6,F1_hi,0.583,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,4-of-6,F1_lo,0.358,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,4-of-6,F1_lo,0.357,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,4-of-6,P,0.385,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,4-of-6,P_hi,0.507,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,4-of-6,P_hi,0.506,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,4-of-6,P_lo,0.257,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,4-of-6,R,0.654,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,4-of-6,R_hi,0.728,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,4-of-6,R_lo,0.567,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,5-of-6,F1,0.487,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,5-of-6,F1_hi,0.586,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,5-of-6,F1_lo,0.359,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,5-of-6,P,0.616,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,5-of-6,P_hi,0.748,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,5-of-6,P_lo,0.439,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,5-of-6,R,0.402,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,5-of-6,R_hi,0.515,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,5-of-6,R_lo,0.287,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,4-of-6,R,0.653,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,4-of-6,R_hi,0.727,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,4-of-6,R_lo,0.564,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6,F1,0.481,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6,F1_hi,0.581,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6,F1_lo,0.355,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6,P,0.612,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6,P_hi,0.742,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6,P_lo,0.436,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6,R,0.397,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6,R_hi,0.509,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6,R_lo,0.282,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,F1,0.313,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,6-of-6,F1_hi,0.411,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,6-of-6,F1_hi,0.412,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,F1_lo,0.203,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,6-of-6,P,0.939,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,6-of-6,P,0.938,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,P_hi,0.962,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,6-of-6,P_lo,0.899,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,6-of-6,P_lo,0.898,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,R,0.188,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,R_hi,0.263,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,R_lo,0.114,RQ9-uncertainty/rq9_ci_core.csv
@@ -1488,24 +1487,24 @@ core,ci,20.0,OSU,P_lo,0.082,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,OSU,R,0.914,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,OSU,R_hi,0.939,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,OSU,R_lo,0.878,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UH,F1,0.267,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UH,F1_hi,0.366,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UH,F1_lo,0.171,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UH,P,0.182,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UH,P_hi,0.28,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UH,P_lo,0.105,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UH,F1,0.265,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UH,F1_hi,0.364,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UH,F1_lo,0.169,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UH,P,0.18,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UH,P_hi,0.279,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UH,P_lo,0.104,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,UH,R,0.502,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,UH,R_hi,0.6,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,UH,R_lo,0.402,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,UNEP,F1,0.259,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,UNEP,F1_hi,0.369,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,UNEP,F1_lo,0.16,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UNEP,P,0.17,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UNEP,P,0.171,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,UNEP,P_hi,0.268,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,UNEP,P_lo,0.096,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UNEP,R,0.542,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UNEP,R_hi,0.642,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,20.0,UNEP,R_lo,0.443,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UNEP,R,0.541,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UNEP,R_hi,0.641,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,UNEP,R_lo,0.442,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,1-of-6,F1,0.239,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,1-of-6,F1_hi,0.307,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,1-of-6,F1_lo,0.172,RQ9-uncertainty/rq9_ci_core.csv
@@ -1515,68 +1514,68 @@ core,ci,30.0,1-of-6,P_lo,0.094,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,1-of-6,R,0.986,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,1-of-6,R_hi,0.996,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,1-of-6,R_lo,0.972,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,1-of-6,visits_per_find,25.79,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,1-of-6,visits_per_find_hi,39.51,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,1-of-6,visits_per_find_lo,18.67,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,1-of-6,visits_per_find,25.81,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,1-of-6,visits_per_find_hi,39.54,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,1-of-6,visits_per_find_lo,18.68,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,F1,0.341,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,F1_hi,0.422,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,2-of-6,F1_lo,0.256,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,2-of-6,F1_lo,0.255,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,P,0.207,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,P_hi,0.27,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,P_lo,0.148,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,R,0.964,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,R_hi,0.981,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,R_lo,0.938,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,2-of-6,visits_per_find,14.67,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,2-of-6,visits_per_find_hi,21.55,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,2-of-6,visits_per_find_lo,10.97,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,3-of-6,F1,0.473,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,2-of-6,visits_per_find,14.69,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,2-of-6,visits_per_find_hi,21.58,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,2-of-6,visits_per_find_lo,10.98,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,3-of-6,F1,0.472,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,F1_hi,0.563,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,3-of-6,F1_lo,0.366,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,3-of-6,F1_lo,0.365,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,P,0.322,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,P_hi,0.409,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,P_lo,0.232,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,R,0.89,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,R_hi,0.921,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,R_lo,0.841,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,3-of-6,visits_per_find,6.99,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,3-of-6,visits_per_find_hi,9.92,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,3-of-6,visits_per_find_lo,5.29,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,3-of-6,visits_per_find,7.0,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,3-of-6,visits_per_find_hi,9.95,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,3-of-6,visits_per_find_lo,5.31,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,F1,0.562,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,4-of-6,F1_hi,0.665,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,4-of-6,F1_lo,0.424,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,4-of-6,P,0.462,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,4-of-6,P_hi,0.603,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6,F1_hi,0.664,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6,F1_lo,0.423,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6,P,0.461,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6,P_hi,0.601,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,P_lo,0.311,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,R,0.718,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,R_hi,0.779,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,R_lo,0.642,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,4-of-6,visits_per_find,2.95,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,4-of-6,visits_per_find_hi,4.22,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,4-of-6,visits_per_find_lo,2.14,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,F1,0.552,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,F1_hi,0.652,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,F1_lo,0.42,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,P,0.683,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,P_hi,0.824,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,P_lo,0.489,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,R,0.464,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,R_hi,0.581,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,R_lo,0.344,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,visits_per_find,1.34,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,visits_per_find_hi,1.73,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,5-of-6,visits_per_find_lo,1.01,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6,visits_per_find,2.96,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6,visits_per_find_hi,4.24,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6,visits_per_find_lo,2.15,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,F1,0.548,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,F1_hi,0.649,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,F1_lo,0.417,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,P,0.681,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,P_hi,0.823,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,P_lo,0.487,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,R,0.459,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,R_hi,0.577,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,R_lo,0.34,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,visits_per_find,1.36,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,visits_per_find_hi,1.75,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6,visits_per_find_lo,1.03,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,F1,0.362,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,F1_hi,0.472,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,F1_lo,0.235,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,6-of-6,P,0.977,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,6-of-6,P,0.976,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,P_hi,0.995,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,6-of-6,P_lo,0.947,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,6-of-6,P_lo,0.946,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,R,0.222,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,R_hi,0.312,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,R_lo,0.134,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,visits_per_find,0.65,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,6-of-6,visits_per_find_hi,0.8,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,6-of-6,visits_per_find_hi,0.79,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,visits_per_find_lo,0.45,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,IMPACT,F1,0.379,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,IMPACT,F1_hi,0.466,RQ9-uncertainty/rq9_ci_core.csv
@@ -1612,7 +1611,7 @@ core,ci,30.0,MS,R,0.774,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,MS,R_hi,0.852,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,MS,R_lo,0.681,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,MS,visits_per_find,6.93,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,MS,visits_per_find_hi,11.07,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,MS,visits_per_find_hi,11.08,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,MS,visits_per_find_lo,4.69,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,OSU,F1,0.288,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,OSU,F1_hi,0.364,RQ9-uncertainty/rq9_ci_core.csv
@@ -1626,18 +1625,18 @@ core,ci,30.0,OSU,R_lo,0.906,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,OSU,visits_per_find,18.86,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,OSU,visits_per_find_hi,28.43,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,OSU,visits_per_find_lo,13.81,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,F1,0.321,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,F1_hi,0.429,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,F1_lo,0.214,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,P,0.225,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,P_hi,0.341,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,P_lo,0.134,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,R,0.562,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,R_hi,0.662,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,R_lo,0.464,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,visits_per_find,6.5,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,visits_per_find_hi,11.16,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UH,visits_per_find_lo,4.16,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,F1,0.319,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,F1_hi,0.428,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,F1_lo,0.211,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,P,0.222,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,P_hi,0.34,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,P_lo,0.132,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,R,0.563,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,R_hi,0.663,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,R_lo,0.465,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,visits_per_find,6.59,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,visits_per_find_hi,11.34,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UH,visits_per_find_lo,4.19,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,UNEP,F1,0.316,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,UNEP,F1_hi,0.434,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,UNEP,F1_lo,0.207,RQ9-uncertainty/rq9_ci_core.csv
@@ -1648,7 +1647,7 @@ core,ci,30.0,UNEP,R,0.633,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,UNEP,R_hi,0.718,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,UNEP,R_lo,0.541,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,UNEP,visits_per_find,6.03,RQ9-uncertainty/rq9_ci_core.csv
-core,ci,30.0,UNEP,visits_per_find_hi,10.34,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,UNEP,visits_per_find_hi,10.36,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,UNEP,visits_per_find_lo,3.87,RQ9-uncertainty/rq9_ci_core.csv
 core,ci-labels,10.0,IMPACT (as shipped),F1,0.174,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,IMPACT (as shipped),F1_hi,0.228,RQ9-uncertainty/rq9_ci_models_r10.csv
@@ -1678,10 +1677,10 @@ core,ci-labels,10.0,MS (as shipped),F1,0.193,RQ9-uncertainty/rq9_ci_models_r10.c
 core,ci-labels,10.0,MS (as shipped),F1_hi,0.267,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,MS (as shipped),F1_lo,0.127,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,MS (as shipped),P,0.122,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,MS (as shipped),P_hi,0.179,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,MS (as shipped),P_hi,0.18,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,MS (as shipped),P_lo,0.075,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,MS (as shipped),R,0.464,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,MS (as shipped),R_hi,0.574,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,MS (as shipped),R,0.465,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,MS (as shipped),R_hi,0.576,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,MS (as shipped),R_lo,0.363,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,MS (as shipped) − null (logit),F1_diff,0.019,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,MS (as shipped) − null (logit),F1_diff_hi,0.075,RQ9-uncertainty/rq9_ci_models_r10.csv
@@ -1698,41 +1697,41 @@ core,ci-labels,10.0,OSU (as shipped),R_lo,0.804,RQ9-uncertainty/rq9_ci_models_r1
 core,ci-labels,10.0,OSU (as shipped) − null (logit),F1_diff,-0.047,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,OSU (as shipped) − null (logit),F1_diff_hi,-0.013,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,OSU (as shipped) − null (logit),F1_diff_lo,-0.08,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UH (as shipped),F1,0.182,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UH (as shipped),F1_hi,0.258,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UH (as shipped),F1_lo,0.118,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UH (as shipped),P,0.126,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UH (as shipped),P_hi,0.205,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UH (as shipped),P_lo,0.074,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UH (as shipped),F1,0.18,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UH (as shipped),F1_hi,0.256,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UH (as shipped),F1_lo,0.117,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UH (as shipped),P,0.124,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UH (as shipped),P_hi,0.203,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UH (as shipped),P_lo,0.073,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,UH (as shipped),R,0.327,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,UH (as shipped),R_hi,0.409,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,UH (as shipped),R_lo,0.24,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UH (as shipped) − null (logit),F1_diff,0.009,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UH (as shipped) − null (logit),F1_diff_hi,0.068,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UH (as shipped) − null (logit),F1_diff_lo,-0.041,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped),F1,0.172,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped),F1_hi,0.25,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UH (as shipped) − null (logit),F1_diff,0.007,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UH (as shipped) − null (logit),F1_diff_hi,0.067,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UH (as shipped) − null (logit),F1_diff_lo,-0.043,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped),F1,0.171,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped),F1_hi,0.248,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,UNEP (as shipped),F1_lo,0.105,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,UNEP (as shipped),P,0.117,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped),P_hi,0.187,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped),P_lo,0.067,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped),R,0.319,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped),R_hi,0.414,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped),R_lo,0.229,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped) − null (logit),F1_diff,-0.004,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped) − null (logit),F1_diff_hi,0.065,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,UNEP (as shipped) − null (logit),F1_diff_lo,-0.057,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,flat k-of-6 voting,F1,0.324,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,flat k-of-6 voting,F1_hi,0.4,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,flat k-of-6 voting,F1_lo,0.234,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,flat k-of-6 voting,P,0.269,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,flat k-of-6 voting,P_hi,0.356,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped),P_hi,0.185,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped),P_lo,0.066,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped),R,0.317,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped),R_hi,0.412,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped),R_lo,0.228,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped) − null (logit),F1_diff,-0.005,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped) − null (logit),F1_diff_hi,0.063,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,UNEP (as shipped) − null (logit),F1_diff_lo,-0.058,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,flat k-of-6 voting,F1,0.323,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,flat k-of-6 voting,F1_hi,0.399,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,flat k-of-6 voting,F1_lo,0.233,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,flat k-of-6 voting,P,0.268,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,flat k-of-6 voting,P_hi,0.354,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,flat k-of-6 voting,P_lo,0.181,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,flat k-of-6 voting,R,0.406,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,flat k-of-6 voting,R_hi,0.503,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,flat k-of-6 voting,R_lo,0.302,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,flat k-of-6 voting − null (logit),F1_diff,0.148,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,flat k-of-6 voting − null (logit),F1_diff_hi,0.213,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,flat k-of-6 voting − null (logit),F1_diff,0.147,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,flat k-of-6 voting − null (logit),F1_diff_hi,0.212,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,flat k-of-6 voting − null (logit),F1_diff_lo,0.081,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,geography null (logistic),F1,0.172,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,geography null (logistic),F1_hi,0.217,RQ9-uncertainty/rq9_ci_models_r10.csv
@@ -1755,18 +1754,18 @@ core,ci-labels,10.0,geography null (rand. forest),R_lo,0.449,RQ9-uncertainty/rq9
 core,ci-labels,10.0,geography null (rand. forest) − null (logit),F1_diff,-0.03,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,geography null (rand. forest) − null (logit),F1_diff_hi,-0.012,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,ci-labels,10.0,geography null (rand. forest) − null (logit),F1_diff_lo,-0.049,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion,F1,0.374,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion,F1_hi,0.434,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion,F1_lo,0.295,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion,P,0.358,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion,P_hi,0.434,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion,P_lo,0.268,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion,R,0.39,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion,R_hi,0.476,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion,R_lo,0.298,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion − null (logit),F1_diff,0.197,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion − null (logit),F1_diff_hi,0.249,RQ9-uncertainty/rq9_ci_models_r10.csv
-core,ci-labels,10.0,weighted fusion − null (logit),F1_diff_lo,0.145,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion,F1,0.371,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion,F1_hi,0.433,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion,F1_lo,0.289,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion,P,0.37,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion,P_hi,0.448,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion,P_lo,0.276,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion,R,0.372,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion,R_hi,0.461,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion,R_lo,0.28,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion − null (logit),F1_diff,0.194,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion − null (logit),F1_diff_hi,0.25,RQ9-uncertainty/rq9_ci_models_r10.csv
+core,ci-labels,10.0,weighted fusion − null (logit),F1_diff_lo,0.139,RQ9-uncertainty/rq9_ci_models_r10.csv
 core,crowd,10.0,1-of-6,P_crowd,0.128,pipeline/scorecards.py
 core,crowd,10.0,1-of-6,crowd_cov,0.45,pipeline/scorecards.py
 core,crowd,10.0,1-of-6,fp_crowd_damaged,0.18,pipeline/scorecards.py
@@ -1776,10 +1775,10 @@ core,crowd,10.0,2-of-6,fp_crowd_damaged,0.19,pipeline/scorecards.py
 core,crowd,10.0,3-of-6,P_crowd,0.262,pipeline/scorecards.py
 core,crowd,10.0,3-of-6,crowd_cov,0.67,pipeline/scorecards.py
 core,crowd,10.0,3-of-6,fp_crowd_damaged,0.2,pipeline/scorecards.py
-core,crowd,10.0,4-of-6,P_crowd,0.417,pipeline/scorecards.py
+core,crowd,10.0,4-of-6,P_crowd,0.416,pipeline/scorecards.py
 core,crowd,10.0,4-of-6,crowd_cov,0.87,pipeline/scorecards.py
 core,crowd,10.0,4-of-6,fp_crowd_damaged,0.23,pipeline/scorecards.py
-core,crowd,10.0,5-of-6,P_crowd,0.639,pipeline/scorecards.py
+core,crowd,10.0,5-of-6,P_crowd,0.636,pipeline/scorecards.py
 core,crowd,10.0,5-of-6,crowd_cov,0.97,pipeline/scorecards.py
 core,crowd,10.0,5-of-6,fp_crowd_damaged,0.32,pipeline/scorecards.py
 core,crowd,10.0,6-of-6,P_crowd,0.948,pipeline/scorecards.py
@@ -1794,31 +1793,31 @@ core,crowd,10.0,IMPACT∧OSU,fp_crowd_damaged,0.2,pipeline/scorecards.py
 core,crowd,10.0,LIST,P_crowd,0.164,pipeline/scorecards.py
 core,crowd,10.0,LIST,crowd_cov,0.45,pipeline/scorecards.py
 core,crowd,10.0,LIST,fp_crowd_damaged,0.19,pipeline/scorecards.py
-core,crowd,10.0,LIST∧UH,P_crowd,0.388,pipeline/scorecards.py
-core,crowd,10.0,LIST∧UH,crowd_cov,0.38,pipeline/scorecards.py
+core,crowd,10.0,LIST∧UH,P_crowd,0.386,pipeline/scorecards.py
+core,crowd,10.0,LIST∧UH,crowd_cov,0.37,pipeline/scorecards.py
 core,crowd,10.0,LIST∧UH,fp_crowd_damaged,0.43,pipeline/scorecards.py
 core,crowd,10.0,MS,P_crowd,0.27,pipeline/scorecards.py
 core,crowd,10.0,MS,crowd_cov,0.99,pipeline/scorecards.py
 core,crowd,10.0,MS,fp_crowd_damaged,0.17,pipeline/scorecards.py
-core,crowd,10.0,MS∧LIST,P_crowd,0.382,pipeline/scorecards.py
+core,crowd,10.0,MS∧LIST,P_crowd,0.381,pipeline/scorecards.py
 core,crowd,10.0,MS∧LIST,crowd_cov,0.99,pipeline/scorecards.py
 core,crowd,10.0,MS∧LIST,fp_crowd_damaged,0.2,pipeline/scorecards.py
 core,crowd,10.0,MS∧UH,P_crowd,0.688,pipeline/scorecards.py
 core,crowd,10.0,MS∧UH,crowd_cov,0.99,pipeline/scorecards.py
 core,crowd,10.0,MS∧UH,fp_crowd_damaged,0.4,pipeline/scorecards.py
-core,crowd,10.0,MS∧UNEP,P_crowd,0.311,pipeline/scorecards.py
+core,crowd,10.0,MS∧UNEP,P_crowd,0.309,pipeline/scorecards.py
 core,crowd,10.0,MS∧UNEP,crowd_cov,0.99,pipeline/scorecards.py
 core,crowd,10.0,MS∧UNEP,fp_crowd_damaged,0.18,pipeline/scorecards.py
 core,crowd,10.0,OSU,P_crowd,0.144,pipeline/scorecards.py
 core,crowd,10.0,OSU,crowd_cov,0.43,pipeline/scorecards.py
 core,crowd,10.0,OSU,fp_crowd_damaged,0.19,pipeline/scorecards.py
-core,crowd,10.0,UH,P_crowd,0.202,pipeline/scorecards.py
+core,crowd,10.0,UH,P_crowd,0.201,pipeline/scorecards.py
 core,crowd,10.0,UH,crowd_cov,0.26,pipeline/scorecards.py
 core,crowd,10.0,UH,fp_crowd_damaged,0.34,pipeline/scorecards.py
-core,crowd,10.0,UNEP,P_crowd,0.254,pipeline/scorecards.py
+core,crowd,10.0,UNEP,P_crowd,0.253,pipeline/scorecards.py
 core,crowd,10.0,UNEP,crowd_cov,0.88,pipeline/scorecards.py
 core,crowd,10.0,UNEP,fp_crowd_damaged,0.18,pipeline/scorecards.py
-core,crowd,10.0,UNEP∧OSU,P_crowd,0.324,pipeline/scorecards.py
+core,crowd,10.0,UNEP∧OSU,P_crowd,0.323,pipeline/scorecards.py
 core,crowd,10.0,UNEP∧OSU,crowd_cov,0.88,pipeline/scorecards.py
 core,crowd,10.0,UNEP∧OSU,fp_crowd_damaged,0.2,pipeline/scorecards.py
 core,facts,,CEMS,n_damaged,784.0,pipeline/facts.py
@@ -1861,231 +1860,303 @@ core,field-union,10.0,OSU,P_union,0.071,pipeline/scorecards.py
 core,field-union,10.0,OSU,R_cems,0.865,pipeline/scorecards.py
 core,field-union,10.0,OSU,R_rel_change,1.0,pipeline/scorecards.py
 core,field-union,10.0,OSU,R_union,0.876,pipeline/scorecards.py
-core,field-union,10.0,UH,P_cems,0.126,pipeline/scorecards.py
+core,field-union,10.0,UH,P_cems,0.124,pipeline/scorecards.py
 core,field-union,10.0,UH,P_rel_gain,3.0,pipeline/scorecards.py
-core,field-union,10.0,UH,P_union,0.13,pipeline/scorecards.py
+core,field-union,10.0,UH,P_union,0.128,pipeline/scorecards.py
 core,field-union,10.0,UH,R_cems,0.453,pipeline/scorecards.py
 core,field-union,10.0,UH,R_rel_change,4.0,pipeline/scorecards.py
-core,field-union,10.0,UH,R_union,0.472,pipeline/scorecards.py
+core,field-union,10.0,UH,R_union,0.473,pipeline/scorecards.py
 core,field-union,10.0,UNEP,P_cems,0.117,pipeline/scorecards.py
 core,field-union,10.0,UNEP,P_rel_gain,4.0,pipeline/scorecards.py
-core,field-union,10.0,UNEP,P_union,0.122,pipeline/scorecards.py
-core,field-union,10.0,UNEP,R_cems,0.436,pipeline/scorecards.py
+core,field-union,10.0,UNEP,P_union,0.121,pipeline/scorecards.py
+core,field-union,10.0,UNEP,R_cems,0.431,pipeline/scorecards.py
 core,field-union,10.0,UNEP,R_rel_change,7.0,pipeline/scorecards.py
-core,field-union,10.0,UNEP,R_union,0.467,pipeline/scorecards.py
+core,field-union,10.0,UNEP,R_union,0.463,pipeline/scorecards.py
 core,frame,10.0,1-of-6,centroid_F1,0.066,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,1-of-6,centroid_P,0.034,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,1-of-6,centroid_R,0.768,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,1-of-6,flags_centroid,37644.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,1-of-6,flags_intersects,37644.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,1-of-6,poly_F1,0.099,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,1-of-6,poly_P,0.052,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,1-of-6,poly_R,0.952,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,2-of-6,centroid_F1,0.104,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,2-of-6,centroid_P,0.056,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,2-of-6,centroid_R,0.71,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,2-of-6,flags_centroid,21060.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,2-of-6,flags_intersects,21059.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,2-of-6,poly_F1,0.153,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,2-of-6,poly_P,0.084,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,2-of-6,poly_R,0.902,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,3-of-6,centroid_F1,0.173,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,3-of-6,centroid_P,0.101,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,3-of-6,centroid_R,0.605,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,3-of-6,flags_centroid,9409.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,3-of-6,flags_intersects,9410.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,3-of-6,poly_F1,0.248,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,3-of-6,poly_P,0.147,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,3-of-6,poly_R,0.787,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,4-of-6,centroid_F1,0.259,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,4-of-6,centroid_P,0.187,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,4-of-6,centroid_R,0.419,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,4-of-6,flags_centroid,3347.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,4-of-6,flags_intersects,3348.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,4-of-6,poly_F1,0.358,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,4-of-6,poly_P,0.259,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,4-of-6,poly_R,0.58,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,5-of-6,centroid_F1,0.276,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,5-of-6,centroid_P,0.339,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,5-of-6,centroid_R,0.232,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,5-of-6,flags_centroid,1005.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,5-of-6,flags_intersects,1005.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,5-of-6,poly_F1,0.382,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,5-of-6,poly_P,0.445,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,5-of-6,poly_R,0.335,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,6-of-6,centroid_F1,0.163,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,6-of-6,centroid_P,0.64,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,6-of-6,centroid_R,0.093,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,6-of-6,flags_centroid,214.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,6-of-6,flags_intersects,214.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,6-of-6,poly_F1,0.25,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,6-of-6,poly_P,0.794,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,6-of-6,poly_R,0.149,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,IMPACT,centroid_F1,0.12,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,IMPACT,centroid_P,0.069,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,IMPACT,centroid_R,0.462,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,IMPACT,flags_centroid,10788.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,IMPACT,flags_intersects,10787.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,IMPACT,poly_F1,0.178,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,IMPACT,poly_P,0.104,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,IMPACT,poly_R,0.627,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,LIST,centroid_F1,0.103,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,LIST,centroid_P,0.057,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,LIST,centroid_R,0.564,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,LIST,flags_centroid,15904.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,LIST,flags_intersects,15906.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,LIST,poly_F1,0.154,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,LIST,poly_P,0.086,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,LIST,poly_R,0.755,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,Microsoft,centroid_F1,0.139,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,Microsoft,centroid_P,0.081,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,Microsoft,centroid_R,0.474,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,Microsoft,flags_centroid,9138.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,Microsoft,flags_intersects,9139.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,Microsoft,poly_F1,0.191,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,Microsoft,poly_P,0.113,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,Microsoft,poly_R,0.622,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,OSU,centroid_F1,0.084,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,OSU,centroid_P,0.045,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,OSU,centroid_R,0.688,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,OSU,flags_centroid,25882.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,OSU,flags_intersects,25882.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,OSU,poly_F1,0.126,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,OSU,poly_P,0.068,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,OSU,poly_R,0.865,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UH,centroid_F1,0.146,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UH,centroid_P,0.093,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UH,centroid_R,0.337,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,UH,flags_centroid,5362.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,UH,flags_intersects,5362.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UH,poly_F1,0.197,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UH,poly_P,0.126,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UH,poly_R,0.453,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UNEP,centroid_F1,0.135,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UNEP,centroid_P,0.086,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UNEP,centroid_R,0.313,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,UNEP,flags_centroid,5605.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,10.0,UNEP,flags_intersects,5604.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UNEP,poly_F1,0.185,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UNEP,poly_P,0.117,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,10.0,UNEP,poly_R,0.436,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,1-of-6,centroid_F1,0.128,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,1-of-6,centroid_P,0.069,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,1-of-6,centroid_R,0.934,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,1-of-6,flags_centroid,37644.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,1-of-6,flags_intersects,37644.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,1-of-6,poly_F1,0.17,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,1-of-6,poly_P,0.093,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,1-of-6,poly_R,0.982,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,2-of-6,centroid_F1,0.193,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,2-of-6,centroid_P,0.108,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,2-of-6,centroid_R,0.895,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,2-of-6,flags_centroid,21060.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,2-of-6,flags_intersects,21059.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,2-of-6,poly_F1,0.252,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,2-of-6,poly_P,0.145,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,2-of-6,poly_R,0.948,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,3-of-6,centroid_F1,0.298,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,3-of-6,centroid_P,0.184,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,3-of-6,centroid_R,0.787,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,3-of-6,flags_centroid,9409.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,3-of-6,flags_intersects,9410.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,3-of-6,poly_F1,0.372,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,3-of-6,poly_P,0.237,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,3-of-6,poly_R,0.862,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,4-of-6,centroid_F1,0.405,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,4-of-6,centroid_P,0.311,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,4-of-6,centroid_R,0.579,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,4-of-6,flags_centroid,3347.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,4-of-6,flags_intersects,3348.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,4-of-6,poly_F1,0.479,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,4-of-6,poly_P,0.374,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,4-of-6,poly_R,0.667,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,5-of-6,centroid_F1,0.398,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,5-of-6,centroid_P,0.503,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,5-of-6,centroid_R,0.329,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,5-of-6,flags_centroid,1005.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,5-of-6,flags_intersects,1005.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,5-of-6,poly_F1,0.477,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,5-of-6,poly_P,0.576,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,5-of-6,poly_R,0.407,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,6-of-6,centroid_F1,0.251,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,6-of-6,centroid_P,0.85,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,6-of-6,centroid_R,0.147,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,6-of-6,flags_centroid,214.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,6-of-6,flags_intersects,214.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,6-of-6,poly_F1,0.313,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,6-of-6,poly_P,0.939,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,6-of-6,poly_R,0.188,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,IMPACT,centroid_F1,0.219,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,IMPACT,centroid_P,0.133,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,IMPACT,centroid_R,0.627,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,IMPACT,flags_centroid,10788.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,IMPACT,flags_intersects,10787.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,IMPACT,poly_F1,0.285,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,IMPACT,poly_P,0.179,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,IMPACT,poly_R,0.702,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,LIST,centroid_F1,0.194,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,LIST,centroid_P,0.111,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,LIST,centroid_R,0.766,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,LIST,flags_centroid,15904.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,LIST,flags_intersects,15906.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,LIST,poly_F1,0.255,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,LIST,poly_P,0.149,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,LIST,poly_R,0.864,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,Microsoft,centroid_F1,0.226,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,Microsoft,centroid_P,0.138,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,Microsoft,centroid_R,0.622,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,Microsoft,flags_centroid,9138.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,Microsoft,flags_intersects,9139.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,Microsoft,poly_F1,0.27,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,Microsoft,poly_P,0.167,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,Microsoft,poly_R,0.708,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,OSU,centroid_F1,0.159,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,OSU,centroid_P,0.087,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,OSU,centroid_R,0.86,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,OSU,flags_centroid,25882.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,OSU,flags_intersects,25882.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,OSU,poly_F1,0.209,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,OSU,poly_P,0.118,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,OSU,poly_R,0.914,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UH,centroid_F1,0.221,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UH,centroid_P,0.148,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UH,centroid_R,0.437,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,UH,flags_centroid,5362.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,UH,flags_intersects,5362.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UH,poly_F1,0.267,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UH,poly_P,0.182,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UH,poly_R,0.502,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UNEP,centroid_F1,0.217,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UNEP,centroid_P,0.143,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UNEP,centroid_R,0.451,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,UNEP,flags_centroid,5605.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,20.0,UNEP,flags_intersects,5604.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UNEP,poly_F1,0.259,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UNEP,poly_P,0.17,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,20.0,UNEP,poly_R,0.542,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,1-of-6,centroid_F1,0.195,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,1-of-6,centroid_P,0.109,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,1-of-6,centroid_R,0.973,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,1-of-6,flags_centroid,37644.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,1-of-6,flags_intersects,37644.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,1-of-6,poly_F1,0.237,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,1-of-6,poly_P,0.135,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,1-of-6,poly_R,0.986,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,2-of-6,centroid_F1,0.284,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,2-of-6,centroid_P,0.167,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,2-of-6,centroid_R,0.943,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,2-of-6,flags_centroid,21060.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,2-of-6,flags_intersects,21059.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,2-of-6,poly_F1,0.338,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,2-of-6,poly_P,0.205,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,2-of-6,poly_R,0.964,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,3-of-6,centroid_F1,0.407,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,3-of-6,centroid_P,0.267,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,3-of-6,centroid_R,0.856,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,3-of-6,flags_centroid,9409.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,3-of-6,flags_intersects,9410.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,3-of-6,poly_F1,0.47,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,3-of-6,poly_P,0.319,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,3-of-6,poly_R,0.893,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,4-of-6,centroid_F1,0.504,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,4-of-6,centroid_P,0.405,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,4-of-6,centroid_R,0.665,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,4-of-6,flags_centroid,3347.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,4-of-6,flags_intersects,3348.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,4-of-6,poly_F1,0.562,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,4-of-6,poly_P,0.455,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,4-of-6,poly_R,0.734,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,5-of-6,centroid_F1,0.487,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,5-of-6,centroid_P,0.6,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,5-of-6,centroid_R,0.41,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,5-of-6,flags_centroid,1005.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,5-of-6,flags_intersects,1005.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,5-of-6,poly_F1,0.542,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,5-of-6,poly_P,0.64,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,5-of-6,poly_R,0.47,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,6-of-6,centroid_F1,0.309,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,6-of-6,centroid_P,0.967,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,6-of-6,centroid_R,0.184,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,6-of-6,flags_centroid,214.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,6-of-6,flags_intersects,214.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,6-of-6,poly_F1,0.362,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,6-of-6,poly_P,0.977,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,6-of-6,poly_R,0.222,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,IMPACT,centroid_F1,0.318,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,IMPACT,centroid_P,0.205,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,IMPACT,centroid_R,0.712,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,IMPACT,flags_centroid,10788.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,IMPACT,flags_intersects,10787.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,IMPACT,poly_F1,0.379,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,IMPACT,poly_P,0.252,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,IMPACT,poly_R,0.77,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,LIST,centroid_F1,0.286,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,LIST,centroid_P,0.172,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,LIST,centroid_R,0.861,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,LIST,flags_centroid,15904.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,LIST,flags_intersects,15906.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,LIST,poly_F1,0.342,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,LIST,poly_P,0.211,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,LIST,poly_R,0.909,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,Microsoft,centroid_F1,0.292,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,Microsoft,centroid_P,0.184,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,Microsoft,centroid_R,0.708,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,Microsoft,flags_centroid,9138.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,Microsoft,flags_intersects,9139.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,Microsoft,poly_F1,0.331,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,Microsoft,poly_P,0.21,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,Microsoft,poly_R,0.781,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,OSU,centroid_F1,0.239,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,OSU,centroid_P,0.137,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,OSU,centroid_R,0.913,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,OSU,flags_centroid,25882.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,OSU,flags_intersects,25882.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,OSU,poly_F1,0.288,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,OSU,poly_P,0.17,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,OSU,poly_R,0.935,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UH,centroid_F1,0.284,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UH,centroid_P,0.197,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UH,centroid_R,0.506,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,UH,flags_centroid,5362.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,UH,flags_intersects,5362.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UH,poly_F1,0.321,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UH,poly_P,0.225,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UH,poly_R,0.562,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UNEP,centroid_F1,0.281,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UNEP,centroid_P,0.188,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UNEP,centroid_R,0.562,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,UNEP,flags_centroid,5605.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
+core,frame,30.0,UNEP,flags_intersects,5604.0,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UNEP,poly_F1,0.316,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UNEP,poly_P,0.211,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
 core,frame,30.0,UNEP,poly_R,0.633,RQ0-matching-basis/native_rerun/shared_base_polygon_core.csv
@@ -2105,14 +2176,14 @@ core,grade-recall,10.0,OSU,P_vs_damaged,0.043,pipeline/scorecards.py
 core,grade-recall,10.0,OSU,P_vs_destroyed,0.033,pipeline/scorecards.py
 core,grade-recall,10.0,OSU,R_of_damaged,0.847,pipeline/scorecards.py
 core,grade-recall,10.0,OSU,R_of_destroyed,0.886,pipeline/scorecards.py
-core,grade-recall,10.0,UH,P_vs_damaged,0.058,pipeline/scorecards.py
-core,grade-recall,10.0,UH,P_vs_destroyed,0.086,pipeline/scorecards.py
+core,grade-recall,10.0,UH,P_vs_damaged,0.057,pipeline/scorecards.py
+core,grade-recall,10.0,UH,P_vs_destroyed,0.085,pipeline/scorecards.py
 core,grade-recall,10.0,UH,R_of_damaged,0.338,pipeline/scorecards.py
-core,grade-recall,10.0,UH,R_of_destroyed,0.584,pipeline/scorecards.py
+core,grade-recall,10.0,UH,R_of_destroyed,0.586,pipeline/scorecards.py
 core,grade-recall,10.0,UNEP,P_vs_damaged,0.056,pipeline/scorecards.py
-core,grade-recall,10.0,UNEP,P_vs_destroyed,0.081,pipeline/scorecards.py
-core,grade-recall,10.0,UNEP,R_of_damaged,0.282,pipeline/scorecards.py
-core,grade-recall,10.0,UNEP,R_of_destroyed,0.612,pipeline/scorecards.py
+core,grade-recall,10.0,UNEP,P_vs_destroyed,0.08,pipeline/scorecards.py
+core,grade-recall,10.0,UNEP,R_of_damaged,0.281,pipeline/scorecards.py
+core,grade-recall,10.0,UNEP,R_of_destroyed,0.605,pipeline/scorecards.py
 core,labels,10.0,IMPACT,F1,0.174,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,IMPACT,P,0.104,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,IMPACT,R,0.542,RQ8-learned-fusion/rq8_best_f1_r10.csv
@@ -2123,24 +2194,24 @@ core,labels,10.0,LIST,R,0.659,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,LIST,n_flags,15906.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,MS,F1,0.193,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,MS,P,0.122,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,MS,R,0.464,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,MS,n_flags,7872.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,MS,R,0.465,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,MS,n_flags,7878.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,OSU,F1,0.126,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,OSU,P,0.068,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,OSU,R,0.851,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,OSU,n_flags,25882.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,UH,F1,0.182,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,UH,P,0.126,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,UH,F1,0.18,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,UH,P,0.124,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,UH,R,0.327,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,UH,n_flags,5362.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,UNEP,F1,0.172,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,UH,n_flags,5443.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,UNEP,F1,0.171,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,UNEP,P,0.117,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,UNEP,R,0.319,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,UNEP,n_flags,5604.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,flat k-of-6 voting,F1,0.324,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,flat k-of-6 voting,P,0.269,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,UNEP,R,0.317,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,UNEP,n_flags,5605.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,flat k-of-6 voting,F1,0.323,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,flat k-of-6 voting,P,0.268,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,flat k-of-6 voting,R,0.406,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,flat k-of-6 voting,n_flags,3114.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,flat k-of-6 voting,n_flags,3123.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,flat k-of-6 voting,threshold,4.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,geography null (logistic),F1,0.172,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,geography null (logistic),P,0.1,RQ8-learned-fusion/rq8_best_f1_r10.csv
@@ -2152,11 +2223,11 @@ core,labels,10.0,geography null (rand. forest),P,0.082,RQ8-learned-fusion/rq8_be
 core,labels,10.0,geography null (rand. forest),R,0.523,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,geography null (rand. forest),n_flags,13112.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,10.0,geography null (rand. forest),threshold,0.3103,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,weighted fusion,F1,0.374,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,weighted fusion,P,0.358,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,weighted fusion,R,0.39,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,weighted fusion,n_flags,2246.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
-core,labels,10.0,weighted fusion,threshold,0.873,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,weighted fusion,F1,0.371,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,weighted fusion,P,0.37,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,weighted fusion,R,0.372,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,weighted fusion,n_flags,2075.0,RQ8-learned-fusion/rq8_best_f1_r10.csv
+core,labels,10.0,weighted fusion,threshold,0.8806,RQ8-learned-fusion/rq8_best_f1_r10.csv
 core,labels,20.0,IMPACT,F1,0.266,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,IMPACT,P,0.179,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,IMPACT,R,0.518,RQ8-learned-fusion/rq8_best_f1_r20.csv
@@ -2168,23 +2239,23 @@ core,labels,20.0,LIST,n_flags,15906.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,MS,F1,0.238,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,MS,P,0.175,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,MS,R,0.371,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,MS,n_flags,7872.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,MS,n_flags,7878.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,OSU,F1,0.207,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,OSU,P,0.118,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,OSU,R,0.821,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,OSU,n_flags,25882.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,UH,F1,0.215,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,UH,P,0.182,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,UH,R,0.262,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,UH,n_flags,5362.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,UH,F1,0.214,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,UH,P,0.18,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,UH,R,0.263,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,UH,n_flags,5443.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,UNEP,F1,0.205,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,UNEP,P,0.17,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,UNEP,R,0.256,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,UNEP,n_flags,5604.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,flat k-of-6 voting,F1,0.35,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,UNEP,P,0.171,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,UNEP,R,0.257,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,UNEP,n_flags,5605.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,flat k-of-6 voting,F1,0.351,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,flat k-of-6 voting,P,0.385,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,flat k-of-6 voting,R,0.321,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,flat k-of-6 voting,n_flags,3114.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,flat k-of-6 voting,R,0.322,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,flat k-of-6 voting,n_flags,3123.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,flat k-of-6 voting,threshold,4.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,geography null (logistic),F1,0.257,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,geography null (logistic),P,0.165,RQ8-learned-fusion/rq8_best_f1_r20.csv
@@ -2197,10 +2268,10 @@ core,labels,20.0,geography null (rand. forest),R,0.431,RQ8-learned-fusion/rq8_be
 core,labels,20.0,geography null (rand. forest),n_flags,10982.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,geography null (rand. forest),threshold,0.4557,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,20.0,weighted fusion,F1,0.411,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,weighted fusion,P,0.41,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,weighted fusion,R,0.413,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,weighted fusion,n_flags,3757.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
-core,labels,20.0,weighted fusion,threshold,0.819,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,weighted fusion,P,0.411,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,weighted fusion,R,0.411,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,weighted fusion,n_flags,3726.0,RQ8-learned-fusion/rq8_best_f1_r20.csv
+core,labels,20.0,weighted fusion,threshold,0.8202,RQ8-learned-fusion/rq8_best_f1_r20.csv
 core,labels,30.0,IMPACT,F1,0.334,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,IMPACT,P,0.252,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,IMPACT,R,0.495,RQ8-learned-fusion/rq8_best_f1_r30.csv
@@ -2212,23 +2283,23 @@ core,labels,30.0,LIST,n_flags,15906.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,MS,F1,0.257,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,MS,P,0.218,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,MS,R,0.313,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,MS,n_flags,7872.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,MS,n_flags,7878.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,OSU,F1,0.281,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,OSU,P,0.17,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,OSU,R,0.805,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,OSU,n_flags,25882.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,UH,F1,0.223,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,UH,P,0.225,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,UH,R,0.22,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,UH,n_flags,5362.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,UH,F1,0.222,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,UH,P,0.222,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,UH,R,0.221,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,UH,n_flags,5443.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,UNEP,F1,0.213,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,UNEP,P,0.211,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,UNEP,R,0.216,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,UNEP,n_flags,5604.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,UNEP,n_flags,5605.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,flat k-of-6 voting,F1,0.402,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,flat k-of-6 voting,P,0.322,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,flat k-of-6 voting,R,0.536,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,flat k-of-6 voting,n_flags,9116.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,flat k-of-6 voting,R,0.537,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,flat k-of-6 voting,n_flags,9140.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,flat k-of-6 voting,threshold,3.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,geography null (logistic),F1,0.323,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,geography null (logistic),P,0.224,RQ8-learned-fusion/rq8_best_f1_r30.csv
@@ -2241,10 +2312,10 @@ core,labels,30.0,geography null (rand. forest),R,0.501,RQ8-learned-fusion/rq8_be
 core,labels,30.0,geography null (rand. forest),n_flags,14043.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,geography null (rand. forest),threshold,0.4226,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels,30.0,weighted fusion,F1,0.453,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,weighted fusion,P,0.425,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,weighted fusion,R,0.486,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,weighted fusion,n_flags,6259.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
-core,labels,30.0,weighted fusion,threshold,0.7588,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,weighted fusion,P,0.427,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,weighted fusion,R,0.482,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,weighted fusion,n_flags,6182.0,RQ8-learned-fusion/rq8_best_f1_r30.csv
+core,labels,30.0,weighted fusion,threshold,0.7611,RQ8-learned-fusion/rq8_best_f1_r30.csv
 core,labels-destroyed,10.0,IMPACT,F1,0.102,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,IMPACT,P,0.055,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,IMPACT,R,0.624,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
@@ -2257,28 +2328,28 @@ core,labels-destroyed,10.0,LIST,n_flags,15906.0,RQ8-learned-fusion/rq8c_basis_pr
 core,labels-destroyed,10.0,LIST,n_pos,957.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,MS,F1,0.143,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,MS,P,0.08,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,MS,R,0.658,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,MS,n_flags,7872.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,MS,R,0.659,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,MS,n_flags,7878.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,MS,n_pos,957.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,OSU,F1,0.063,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,OSU,P,0.033,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,OSU,R,0.886,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,OSU,n_flags,25882.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,OSU,n_pos,957.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,UH,F1,0.146,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,UH,P,0.086,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,UH,R,0.481,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,UH,n_flags,5362.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,UH,F1,0.144,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,UH,P,0.085,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,UH,R,0.482,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,UH,n_flags,5443.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,UH,n_pos,957.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,UNEP,F1,0.138,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,UNEP,P,0.081,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,UNEP,R,0.472,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,UNEP,n_flags,5604.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,UNEP,F1,0.137,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,UNEP,P,0.08,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,UNEP,R,0.469,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,UNEP,n_flags,5605.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,UNEP,n_pos,957.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,flat k-of-6 voting,F1,0.282,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,flat k-of-6 voting,F1,0.281,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,flat k-of-6 voting,P,0.184,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,flat k-of-6 voting,R,0.6,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,flat k-of-6 voting,n_flags,3114.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,flat k-of-6 voting,n_flags,3123.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,flat k-of-6 voting,n_pos,957.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,geography null (logistic),F1,0.093,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,geography null (logistic),P,0.05,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
@@ -2290,10 +2361,10 @@ core,labels-destroyed,10.0,geography null (rand. forest),P,0.039,RQ8-learned-fus
 core,labels-destroyed,10.0,geography null (rand. forest),R,0.531,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,geography null (rand. forest),n_flags,13112.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,geography null (rand. forest),n_pos,957.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,weighted fusion,F1,0.353,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,weighted fusion,P,0.252,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,weighted fusion,R,0.59,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-destroyed,10.0,weighted fusion,n_flags,2246.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,weighted fusion,F1,0.358,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,weighted fusion,P,0.262,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,weighted fusion,R,0.567,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-destroyed,10.0,weighted fusion,n_flags,2075.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-destroyed,10.0,weighted fusion,n_pos,957.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,IMPACT,F1,0.174,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,IMPACT,P,0.104,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
@@ -2307,28 +2378,28 @@ core,labels-dmg+destroyed,10.0,LIST,n_flags,15906.0,RQ8-learned-fusion/rq8c_basi
 core,labels-dmg+destroyed,10.0,LIST,n_pos,2064.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,MS,F1,0.193,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,MS,P,0.122,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,MS,R,0.464,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,MS,n_flags,7872.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,MS,R,0.465,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,MS,n_flags,7878.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,MS,n_pos,2064.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,OSU,F1,0.126,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,OSU,P,0.068,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,OSU,R,0.851,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,OSU,n_flags,25882.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,OSU,n_pos,2064.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,UH,F1,0.182,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,UH,P,0.126,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,UH,F1,0.18,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,UH,P,0.124,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,UH,R,0.327,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,UH,n_flags,5362.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,UH,n_flags,5443.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,UH,n_pos,2064.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,UNEP,F1,0.172,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,UNEP,F1,0.171,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,UNEP,P,0.117,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,UNEP,R,0.319,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,UNEP,n_flags,5604.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,UNEP,R,0.317,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,UNEP,n_flags,5605.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,UNEP,n_pos,2064.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,flat k-of-6 voting,F1,0.324,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,flat k-of-6 voting,P,0.269,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,flat k-of-6 voting,F1,0.323,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,flat k-of-6 voting,P,0.268,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,flat k-of-6 voting,R,0.406,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,flat k-of-6 voting,n_flags,3114.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,flat k-of-6 voting,n_flags,3123.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,flat k-of-6 voting,n_pos,2064.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,geography null (logistic),F1,0.172,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,geography null (logistic),P,0.1,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
@@ -2340,10 +2411,10 @@ core,labels-dmg+destroyed,10.0,geography null (rand. forest),P,0.082,RQ8-learned
 core,labels-dmg+destroyed,10.0,geography null (rand. forest),R,0.523,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,geography null (rand. forest),n_flags,13112.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,geography null (rand. forest),n_pos,2064.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,weighted fusion,F1,0.374,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,weighted fusion,P,0.358,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,weighted fusion,R,0.39,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-dmg+destroyed,10.0,weighted fusion,n_flags,2246.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,weighted fusion,F1,0.371,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,weighted fusion,P,0.37,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,weighted fusion,R,0.372,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-dmg+destroyed,10.0,weighted fusion,n_flags,2075.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-dmg+destroyed,10.0,weighted fusion,n_pos,2064.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,IMPACT,F1,0.253,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,IMPACT,P,0.173,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
@@ -2357,28 +2428,28 @@ core,labels-incl_possibly,10.0,LIST,n_flags,15906.0,RQ8-learned-fusion/rq8c_basi
 core,labels-incl_possibly,10.0,LIST,n_pos,3960.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,MS,F1,0.249,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,MS,P,0.187,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,MS,R,0.372,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,MS,n_flags,7872.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,MS,R,0.373,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,MS,n_flags,7878.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,MS,n_pos,3960.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,OSU,F1,0.214,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,OSU,P,0.123,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,OSU,R,0.806,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,OSU,n_flags,25882.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,OSU,n_pos,3960.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,UH,F1,0.197,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,UH,P,0.171,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,UH,R,0.231,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,UH,n_flags,5362.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,UH,F1,0.196,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,UH,P,0.169,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,UH,R,0.232,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,UH,n_flags,5443.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,UH,n_pos,3960.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,UNEP,F1,0.21,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,UNEP,P,0.179,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,UNEP,R,0.254,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,UNEP,n_flags,5604.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,UNEP,F1,0.209,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,UNEP,P,0.178,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,UNEP,R,0.252,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,UNEP,n_flags,5605.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,UNEP,n_pos,3960.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,flat k-of-6 voting,F1,0.337,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,flat k-of-6 voting,P,0.382,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,flat k-of-6 voting,F1,0.336,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,flat k-of-6 voting,P,0.381,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,flat k-of-6 voting,R,0.301,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,flat k-of-6 voting,n_flags,3114.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,flat k-of-6 voting,n_flags,3123.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,flat k-of-6 voting,n_pos,3960.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,geography null (logistic),F1,0.26,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,geography null (logistic),P,0.17,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
@@ -2390,41 +2461,41 @@ core,labels-incl_possibly,10.0,geography null (rand. forest),P,0.146,RQ8-learned
 core,labels-incl_possibly,10.0,geography null (rand. forest),R,0.484,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,geography null (rand. forest),n_flags,13112.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,geography null (rand. forest),n_pos,3960.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,weighted fusion,F1,0.357,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,weighted fusion,P,0.493,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,weighted fusion,R,0.28,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
-core,labels-incl_possibly,10.0,weighted fusion,n_flags,2246.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,weighted fusion,F1,0.347,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,weighted fusion,P,0.504,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,weighted fusion,R,0.264,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-incl_possibly,10.0,weighted fusion,n_flags,2075.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,weighted fusion,n_pos,3960.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,points,10.0,1-of-6,F1,0.1,pipeline/scorecards.py
 core,points,10.0,1-of-6,P,0.053,pipeline/scorecards.py
 core,points,10.0,1-of-6,R,0.952,pipeline/scorecards.py
 core,points,10.0,1-of-6,R_field20,0.99,pipeline/scorecards.py
-core,points,10.0,1-of-6,n_flags,37316.0,pipeline/scorecards.py
+core,points,10.0,1-of-6,n_flags,37346.0,pipeline/scorecards.py
 core,points,10.0,2-of-6,F1,0.155,pipeline/scorecards.py
 core,points,10.0,2-of-6,P,0.085,pipeline/scorecards.py
 core,points,10.0,2-of-6,R,0.899,pipeline/scorecards.py
 core,points,10.0,2-of-6,R_field20,0.98,pipeline/scorecards.py
-core,points,10.0,2-of-6,n_flags,20742.0,pipeline/scorecards.py
+core,points,10.0,2-of-6,n_flags,20766.0,pipeline/scorecards.py
 core,points,10.0,3-of-6,F1,0.25,pipeline/scorecards.py
-core,points,10.0,3-of-6,P,0.149,pipeline/scorecards.py
+core,points,10.0,3-of-6,P,0.148,pipeline/scorecards.py
 core,points,10.0,3-of-6,R,0.781,pipeline/scorecards.py
 core,points,10.0,3-of-6,R_field20,0.93,pipeline/scorecards.py
-core,points,10.0,3-of-6,n_flags,9116.0,pipeline/scorecards.py
-core,points,10.0,4-of-6,F1,0.365,pipeline/scorecards.py
-core,points,10.0,4-of-6,P,0.269,pipeline/scorecards.py
-core,points,10.0,4-of-6,R,0.568,pipeline/scorecards.py
+core,points,10.0,3-of-6,n_flags,9140.0,pipeline/scorecards.py
+core,points,10.0,4-of-6,F1,0.364,pipeline/scorecards.py
+core,points,10.0,4-of-6,P,0.268,pipeline/scorecards.py
+core,points,10.0,4-of-6,R,0.566,pipeline/scorecards.py
 core,points,10.0,4-of-6,R_field20,0.8,pipeline/scorecards.py
-core,points,10.0,4-of-6,n_flags,3114.0,pipeline/scorecards.py
-core,points,10.0,5-of-6,F1,0.392,pipeline/scorecards.py
-core,points,10.0,5-of-6,P,0.477,pipeline/scorecards.py
-core,points,10.0,5-of-6,R,0.333,pipeline/scorecards.py
+core,points,10.0,4-of-6,n_flags,3123.0,pipeline/scorecards.py
+core,points,10.0,5-of-6,F1,0.388,pipeline/scorecards.py
+core,points,10.0,5-of-6,P,0.474,pipeline/scorecards.py
+core,points,10.0,5-of-6,R,0.329,pipeline/scorecards.py
 core,points,10.0,5-of-6,R_field20,0.57,pipeline/scorecards.py
-core,points,10.0,5-of-6,n_flags,912.0,pipeline/scorecards.py
-core,points,10.0,6-of-6,F1,0.25,pipeline/scorecards.py
-core,points,10.0,6-of-6,P,0.793,pipeline/scorecards.py
+core,points,10.0,5-of-6,n_flags,915.0,pipeline/scorecards.py
+core,points,10.0,6-of-6,F1,0.251,pipeline/scorecards.py
+core,points,10.0,6-of-6,P,0.791,pipeline/scorecards.py
 core,points,10.0,6-of-6,R,0.149,pipeline/scorecards.py
 core,points,10.0,6-of-6,R_field20,0.28,pipeline/scorecards.py
-core,points,10.0,6-of-6,n_flags,213.0,pipeline/scorecards.py
+core,points,10.0,6-of-6,n_flags,211.0,pipeline/scorecards.py
 core,points,10.0,IMPACT,F1,0.178,pipeline/scorecards.py
 core,points,10.0,IMPACT,P,0.104,pipeline/scorecards.py
 core,points,10.0,IMPACT,R,0.627,pipeline/scorecards.py
@@ -2440,81 +2511,81 @@ core,points,10.0,LIST,P,0.086,pipeline/scorecards.py
 core,points,10.0,LIST,R,0.755,pipeline/scorecards.py
 core,points,10.0,LIST,R_field20,0.9,pipeline/scorecards.py
 core,points,10.0,LIST,n_flags,15906.0,pipeline/scorecards.py
-core,points,10.0,LIST∧UH,F1,0.311,pipeline/scorecards.py
-core,points,10.0,LIST∧UH,P,0.27,pipeline/scorecards.py
-core,points,10.0,LIST∧UH,R,0.368,pipeline/scorecards.py
+core,points,10.0,LIST∧UH,F1,0.31,pipeline/scorecards.py
+core,points,10.0,LIST∧UH,P,0.267,pipeline/scorecards.py
+core,points,10.0,LIST∧UH,R,0.369,pipeline/scorecards.py
 core,points,10.0,LIST∧UH,R_field20,0.52,pipeline/scorecards.py
-core,points,10.0,LIST∧UH,n_flags,1825.0,pipeline/scorecards.py
+core,points,10.0,LIST∧UH,n_flags,1848.0,pipeline/scorecards.py
 core,points,10.0,MS,F1,0.203,pipeline/scorecards.py
 core,points,10.0,MS,P,0.122,pipeline/scorecards.py
 core,points,10.0,MS,R,0.611,pipeline/scorecards.py
 core,points,10.0,MS,R_field20,0.81,pipeline/scorecards.py
-core,points,10.0,MS,n_flags,7872.0,pipeline/scorecards.py
+core,points,10.0,MS,n_flags,7878.0,pipeline/scorecards.py
 core,points,10.0,MS∧LIST,F1,0.306,pipeline/scorecards.py
-core,points,10.0,MS∧LIST,P,0.226,pipeline/scorecards.py
+core,points,10.0,MS∧LIST,P,0.225,pipeline/scorecards.py
 core,points,10.0,MS∧LIST,R,0.476,pipeline/scorecards.py
 core,points,10.0,MS∧LIST,R_field20,0.69,pipeline/scorecards.py
-core,points,10.0,MS∧LIST,n_flags,2875.0,pipeline/scorecards.py
+core,points,10.0,MS∧LIST,n_flags,2879.0,pipeline/scorecards.py
 core,points,10.0,MS∧UH,F1,0.403,pipeline/scorecards.py
-core,points,10.0,MS∧UH,P,0.483,pipeline/scorecards.py
-core,points,10.0,MS∧UH,R,0.346,pipeline/scorecards.py
+core,points,10.0,MS∧UH,P,0.482,pipeline/scorecards.py
+core,points,10.0,MS∧UH,R,0.347,pipeline/scorecards.py
 core,points,10.0,MS∧UH,R_field20,0.53,pipeline/scorecards.py
-core,points,10.0,MS∧UH,n_flags,965.0,pipeline/scorecards.py
-core,points,10.0,MS∧UNEP,F1,0.226,pipeline/scorecards.py
-core,points,10.0,MS∧UNEP,P,0.163,pipeline/scorecards.py
-core,points,10.0,MS∧UNEP,R,0.367,pipeline/scorecards.py
-core,points,10.0,MS∧UNEP,R_field20,0.59,pipeline/scorecards.py
-core,points,10.0,MS∧UNEP,n_flags,3172.0,pipeline/scorecards.py
+core,points,10.0,MS∧UH,n_flags,969.0,pipeline/scorecards.py
+core,points,10.0,MS∧UNEP,F1,0.224,pipeline/scorecards.py
+core,points,10.0,MS∧UNEP,P,0.162,pipeline/scorecards.py
+core,points,10.0,MS∧UNEP,R,0.363,pipeline/scorecards.py
+core,points,10.0,MS∧UNEP,R_field20,0.58,pipeline/scorecards.py
+core,points,10.0,MS∧UNEP,n_flags,3185.0,pipeline/scorecards.py
 core,points,10.0,OSU,F1,0.126,pipeline/scorecards.py
 core,points,10.0,OSU,P,0.068,pipeline/scorecards.py
 core,points,10.0,OSU,R,0.865,pipeline/scorecards.py
 core,points,10.0,OSU,R_field20,0.95,pipeline/scorecards.py
 core,points,10.0,OSU,n_flags,25882.0,pipeline/scorecards.py
-core,points,10.0,UH,F1,0.197,pipeline/scorecards.py
-core,points,10.0,UH,P,0.126,pipeline/scorecards.py
+core,points,10.0,UH,F1,0.195,pipeline/scorecards.py
+core,points,10.0,UH,P,0.124,pipeline/scorecards.py
 core,points,10.0,UH,R,0.453,pipeline/scorecards.py
 core,points,10.0,UH,R_field20,0.59,pipeline/scorecards.py
-core,points,10.0,UH,n_flags,5362.0,pipeline/scorecards.py
-core,points,10.0,UNEP,F1,0.185,pipeline/scorecards.py
+core,points,10.0,UH,n_flags,5443.0,pipeline/scorecards.py
+core,points,10.0,UNEP,F1,0.184,pipeline/scorecards.py
 core,points,10.0,UNEP,P,0.117,pipeline/scorecards.py
-core,points,10.0,UNEP,R,0.436,pipeline/scorecards.py
+core,points,10.0,UNEP,R,0.431,pipeline/scorecards.py
 core,points,10.0,UNEP,R_field20,0.65,pipeline/scorecards.py
-core,points,10.0,UNEP,n_flags,5604.0,pipeline/scorecards.py
-core,points,10.0,UNEP∧OSU,F1,0.251,pipeline/scorecards.py
-core,points,10.0,UNEP∧OSU,P,0.181,pipeline/scorecards.py
-core,points,10.0,UNEP∧OSU,R,0.413,pipeline/scorecards.py
+core,points,10.0,UNEP,n_flags,5605.0,pipeline/scorecards.py
+core,points,10.0,UNEP∧OSU,F1,0.25,pipeline/scorecards.py
+core,points,10.0,UNEP∧OSU,P,0.18,pipeline/scorecards.py
+core,points,10.0,UNEP∧OSU,R,0.41,pipeline/scorecards.py
 core,points,10.0,UNEP∧OSU,R_field20,0.62,pipeline/scorecards.py
-core,points,10.0,UNEP∧OSU,n_flags,3391.0,pipeline/scorecards.py
+core,points,10.0,UNEP∧OSU,n_flags,3389.0,pipeline/scorecards.py
 core,points,20.0,1-of-6,F1,0.171,pipeline/scorecards.py
 core,points,20.0,1-of-6,P,0.094,pipeline/scorecards.py
 core,points,20.0,1-of-6,R,0.982,pipeline/scorecards.py
 core,points,20.0,1-of-6,R_field20,0.99,pipeline/scorecards.py
-core,points,20.0,1-of-6,n_flags,37316.0,pipeline/scorecards.py
+core,points,20.0,1-of-6,n_flags,37346.0,pipeline/scorecards.py
 core,points,20.0,2-of-6,F1,0.254,pipeline/scorecards.py
 core,points,20.0,2-of-6,P,0.147,pipeline/scorecards.py
 core,points,20.0,2-of-6,R,0.948,pipeline/scorecards.py
 core,points,20.0,2-of-6,R_field20,0.98,pipeline/scorecards.py
-core,points,20.0,2-of-6,n_flags,20742.0,pipeline/scorecards.py
+core,points,20.0,2-of-6,n_flags,20766.0,pipeline/scorecards.py
 core,points,20.0,3-of-6,F1,0.374,pipeline/scorecards.py
 core,points,20.0,3-of-6,P,0.239,pipeline/scorecards.py
 core,points,20.0,3-of-6,R,0.856,pipeline/scorecards.py
 core,points,20.0,3-of-6,R_field20,0.93,pipeline/scorecards.py
-core,points,20.0,3-of-6,n_flags,9116.0,pipeline/scorecards.py
-core,points,20.0,4-of-6,F1,0.485,pipeline/scorecards.py
+core,points,20.0,3-of-6,n_flags,9140.0,pipeline/scorecards.py
+core,points,20.0,4-of-6,F1,0.484,pipeline/scorecards.py
 core,points,20.0,4-of-6,P,0.385,pipeline/scorecards.py
-core,points,20.0,4-of-6,R,0.654,pipeline/scorecards.py
+core,points,20.0,4-of-6,R,0.653,pipeline/scorecards.py
 core,points,20.0,4-of-6,R_field20,0.8,pipeline/scorecards.py
-core,points,20.0,4-of-6,n_flags,3114.0,pipeline/scorecards.py
-core,points,20.0,5-of-6,F1,0.487,pipeline/scorecards.py
-core,points,20.0,5-of-6,P,0.616,pipeline/scorecards.py
-core,points,20.0,5-of-6,R,0.402,pipeline/scorecards.py
+core,points,20.0,4-of-6,n_flags,3123.0,pipeline/scorecards.py
+core,points,20.0,5-of-6,F1,0.481,pipeline/scorecards.py
+core,points,20.0,5-of-6,P,0.612,pipeline/scorecards.py
+core,points,20.0,5-of-6,R,0.397,pipeline/scorecards.py
 core,points,20.0,5-of-6,R_field20,0.57,pipeline/scorecards.py
-core,points,20.0,5-of-6,n_flags,912.0,pipeline/scorecards.py
+core,points,20.0,5-of-6,n_flags,915.0,pipeline/scorecards.py
 core,points,20.0,6-of-6,F1,0.313,pipeline/scorecards.py
-core,points,20.0,6-of-6,P,0.939,pipeline/scorecards.py
+core,points,20.0,6-of-6,P,0.938,pipeline/scorecards.py
 core,points,20.0,6-of-6,R,0.188,pipeline/scorecards.py
 core,points,20.0,6-of-6,R_field20,0.28,pipeline/scorecards.py
-core,points,20.0,6-of-6,n_flags,213.0,pipeline/scorecards.py
+core,points,20.0,6-of-6,n_flags,211.0,pipeline/scorecards.py
 core,points,20.0,IMPACT,F1,0.285,pipeline/scorecards.py
 core,points,20.0,IMPACT,P,0.179,pipeline/scorecards.py
 core,points,20.0,IMPACT,R,0.702,pipeline/scorecards.py
@@ -2530,81 +2601,81 @@ core,points,20.0,LIST,P,0.149,pipeline/scorecards.py
 core,points,20.0,LIST,R,0.864,pipeline/scorecards.py
 core,points,20.0,LIST,R_field20,0.9,pipeline/scorecards.py
 core,points,20.0,LIST,n_flags,15906.0,pipeline/scorecards.py
-core,points,20.0,LIST∧UH,F1,0.404,pipeline/scorecards.py
-core,points,20.0,LIST∧UH,P,0.374,pipeline/scorecards.py
+core,points,20.0,LIST∧UH,F1,0.402,pipeline/scorecards.py
+core,points,20.0,LIST∧UH,P,0.37,pipeline/scorecards.py
 core,points,20.0,LIST∧UH,R,0.44,pipeline/scorecards.py
 core,points,20.0,LIST∧UH,R_field20,0.52,pipeline/scorecards.py
-core,points,20.0,LIST∧UH,n_flags,1825.0,pipeline/scorecards.py
+core,points,20.0,LIST∧UH,n_flags,1848.0,pipeline/scorecards.py
 core,points,20.0,MS,F1,0.281,pipeline/scorecards.py
 core,points,20.0,MS,P,0.175,pipeline/scorecards.py
 core,points,20.0,MS,R,0.703,pipeline/scorecards.py
 core,points,20.0,MS,R_field20,0.81,pipeline/scorecards.py
-core,points,20.0,MS,n_flags,7872.0,pipeline/scorecards.py
+core,points,20.0,MS,n_flags,7878.0,pipeline/scorecards.py
 core,points,20.0,MS∧LIST,F1,0.411,pipeline/scorecards.py
 core,points,20.0,MS∧LIST,P,0.32,pipeline/scorecards.py
 core,points,20.0,MS∧LIST,R,0.576,pipeline/scorecards.py
 core,points,20.0,MS∧LIST,R_field20,0.69,pipeline/scorecards.py
-core,points,20.0,MS∧LIST,n_flags,2875.0,pipeline/scorecards.py
-core,points,20.0,MS∧UH,F1,0.479,pipeline/scorecards.py
-core,points,20.0,MS∧UH,P,0.622,pipeline/scorecards.py
+core,points,20.0,MS∧LIST,n_flags,2879.0,pipeline/scorecards.py
+core,points,20.0,MS∧UH,F1,0.478,pipeline/scorecards.py
+core,points,20.0,MS∧UH,P,0.62,pipeline/scorecards.py
 core,points,20.0,MS∧UH,R,0.389,pipeline/scorecards.py
 core,points,20.0,MS∧UH,R_field20,0.53,pipeline/scorecards.py
-core,points,20.0,MS∧UH,n_flags,965.0,pipeline/scorecards.py
-core,points,20.0,MS∧UNEP,F1,0.294,pipeline/scorecards.py
-core,points,20.0,MS∧UNEP,P,0.218,pipeline/scorecards.py
-core,points,20.0,MS∧UNEP,R,0.448,pipeline/scorecards.py
-core,points,20.0,MS∧UNEP,R_field20,0.59,pipeline/scorecards.py
-core,points,20.0,MS∧UNEP,n_flags,3172.0,pipeline/scorecards.py
+core,points,20.0,MS∧UH,n_flags,969.0,pipeline/scorecards.py
+core,points,20.0,MS∧UNEP,F1,0.291,pipeline/scorecards.py
+core,points,20.0,MS∧UNEP,P,0.217,pipeline/scorecards.py
+core,points,20.0,MS∧UNEP,R,0.443,pipeline/scorecards.py
+core,points,20.0,MS∧UNEP,R_field20,0.58,pipeline/scorecards.py
+core,points,20.0,MS∧UNEP,n_flags,3185.0,pipeline/scorecards.py
 core,points,20.0,OSU,F1,0.209,pipeline/scorecards.py
 core,points,20.0,OSU,P,0.118,pipeline/scorecards.py
 core,points,20.0,OSU,R,0.914,pipeline/scorecards.py
 core,points,20.0,OSU,R_field20,0.95,pipeline/scorecards.py
 core,points,20.0,OSU,n_flags,25882.0,pipeline/scorecards.py
-core,points,20.0,UH,F1,0.267,pipeline/scorecards.py
-core,points,20.0,UH,P,0.182,pipeline/scorecards.py
+core,points,20.0,UH,F1,0.265,pipeline/scorecards.py
+core,points,20.0,UH,P,0.18,pipeline/scorecards.py
 core,points,20.0,UH,R,0.502,pipeline/scorecards.py
 core,points,20.0,UH,R_field20,0.59,pipeline/scorecards.py
-core,points,20.0,UH,n_flags,5362.0,pipeline/scorecards.py
+core,points,20.0,UH,n_flags,5443.0,pipeline/scorecards.py
 core,points,20.0,UNEP,F1,0.259,pipeline/scorecards.py
-core,points,20.0,UNEP,P,0.17,pipeline/scorecards.py
-core,points,20.0,UNEP,R,0.542,pipeline/scorecards.py
+core,points,20.0,UNEP,P,0.171,pipeline/scorecards.py
+core,points,20.0,UNEP,R,0.541,pipeline/scorecards.py
 core,points,20.0,UNEP,R_field20,0.65,pipeline/scorecards.py
-core,points,20.0,UNEP,n_flags,5604.0,pipeline/scorecards.py
-core,points,20.0,UNEP∧OSU,F1,0.339,pipeline/scorecards.py
-core,points,20.0,UNEP∧OSU,P,0.254,pipeline/scorecards.py
+core,points,20.0,UNEP,n_flags,5605.0,pipeline/scorecards.py
+core,points,20.0,UNEP∧OSU,F1,0.34,pipeline/scorecards.py
+core,points,20.0,UNEP∧OSU,P,0.255,pipeline/scorecards.py
 core,points,20.0,UNEP∧OSU,R,0.509,pipeline/scorecards.py
 core,points,20.0,UNEP∧OSU,R_field20,0.62,pipeline/scorecards.py
-core,points,20.0,UNEP∧OSU,n_flags,3391.0,pipeline/scorecards.py
+core,points,20.0,UNEP∧OSU,n_flags,3389.0,pipeline/scorecards.py
 core,points,30.0,1-of-6,F1,0.239,pipeline/scorecards.py
 core,points,30.0,1-of-6,P,0.136,pipeline/scorecards.py
 core,points,30.0,1-of-6,R,0.986,pipeline/scorecards.py
 core,points,30.0,1-of-6,R_field20,0.99,pipeline/scorecards.py
-core,points,30.0,1-of-6,n_flags,37316.0,pipeline/scorecards.py
+core,points,30.0,1-of-6,n_flags,37346.0,pipeline/scorecards.py
 core,points,30.0,2-of-6,F1,0.341,pipeline/scorecards.py
 core,points,30.0,2-of-6,P,0.207,pipeline/scorecards.py
 core,points,30.0,2-of-6,R,0.964,pipeline/scorecards.py
 core,points,30.0,2-of-6,R_field20,0.98,pipeline/scorecards.py
-core,points,30.0,2-of-6,n_flags,20742.0,pipeline/scorecards.py
-core,points,30.0,3-of-6,F1,0.473,pipeline/scorecards.py
+core,points,30.0,2-of-6,n_flags,20766.0,pipeline/scorecards.py
+core,points,30.0,3-of-6,F1,0.472,pipeline/scorecards.py
 core,points,30.0,3-of-6,P,0.322,pipeline/scorecards.py
 core,points,30.0,3-of-6,R,0.89,pipeline/scorecards.py
 core,points,30.0,3-of-6,R_field20,0.93,pipeline/scorecards.py
-core,points,30.0,3-of-6,n_flags,9116.0,pipeline/scorecards.py
+core,points,30.0,3-of-6,n_flags,9140.0,pipeline/scorecards.py
 core,points,30.0,4-of-6,F1,0.562,pipeline/scorecards.py
-core,points,30.0,4-of-6,P,0.462,pipeline/scorecards.py
+core,points,30.0,4-of-6,P,0.461,pipeline/scorecards.py
 core,points,30.0,4-of-6,R,0.718,pipeline/scorecards.py
 core,points,30.0,4-of-6,R_field20,0.8,pipeline/scorecards.py
-core,points,30.0,4-of-6,n_flags,3114.0,pipeline/scorecards.py
-core,points,30.0,5-of-6,F1,0.552,pipeline/scorecards.py
-core,points,30.0,5-of-6,P,0.683,pipeline/scorecards.py
-core,points,30.0,5-of-6,R,0.464,pipeline/scorecards.py
+core,points,30.0,4-of-6,n_flags,3123.0,pipeline/scorecards.py
+core,points,30.0,5-of-6,F1,0.548,pipeline/scorecards.py
+core,points,30.0,5-of-6,P,0.681,pipeline/scorecards.py
+core,points,30.0,5-of-6,R,0.459,pipeline/scorecards.py
 core,points,30.0,5-of-6,R_field20,0.57,pipeline/scorecards.py
-core,points,30.0,5-of-6,n_flags,912.0,pipeline/scorecards.py
+core,points,30.0,5-of-6,n_flags,915.0,pipeline/scorecards.py
 core,points,30.0,6-of-6,F1,0.362,pipeline/scorecards.py
-core,points,30.0,6-of-6,P,0.977,pipeline/scorecards.py
+core,points,30.0,6-of-6,P,0.976,pipeline/scorecards.py
 core,points,30.0,6-of-6,R,0.222,pipeline/scorecards.py
 core,points,30.0,6-of-6,R_field20,0.28,pipeline/scorecards.py
-core,points,30.0,6-of-6,n_flags,213.0,pipeline/scorecards.py
+core,points,30.0,6-of-6,n_flags,211.0,pipeline/scorecards.py
 core,points,30.0,IMPACT,F1,0.379,pipeline/scorecards.py
 core,points,30.0,IMPACT,P,0.252,pipeline/scorecards.py
 core,points,30.0,IMPACT,R,0.77,pipeline/scorecards.py
@@ -2620,80 +2691,80 @@ core,points,30.0,LIST,P,0.211,pipeline/scorecards.py
 core,points,30.0,LIST,R,0.909,pipeline/scorecards.py
 core,points,30.0,LIST,R_field20,0.9,pipeline/scorecards.py
 core,points,30.0,LIST,n_flags,15906.0,pipeline/scorecards.py
-core,points,30.0,LIST∧UH,F1,0.472,pipeline/scorecards.py
-core,points,30.0,LIST∧UH,P,0.449,pipeline/scorecards.py
+core,points,30.0,LIST∧UH,F1,0.469,pipeline/scorecards.py
+core,points,30.0,LIST∧UH,P,0.445,pipeline/scorecards.py
 core,points,30.0,LIST∧UH,R,0.496,pipeline/scorecards.py
 core,points,30.0,LIST∧UH,R_field20,0.52,pipeline/scorecards.py
-core,points,30.0,LIST∧UH,n_flags,1825.0,pipeline/scorecards.py
+core,points,30.0,LIST∧UH,n_flags,1848.0,pipeline/scorecards.py
 core,points,30.0,MS,F1,0.34,pipeline/scorecards.py
 core,points,30.0,MS,P,0.218,pipeline/scorecards.py
 core,points,30.0,MS,R,0.774,pipeline/scorecards.py
 core,points,30.0,MS,R_field20,0.81,pipeline/scorecards.py
-core,points,30.0,MS,n_flags,7872.0,pipeline/scorecards.py
-core,points,30.0,MS∧LIST,F1,0.485,pipeline/scorecards.py
+core,points,30.0,MS,n_flags,7878.0,pipeline/scorecards.py
+core,points,30.0,MS∧LIST,F1,0.484,pipeline/scorecards.py
 core,points,30.0,MS∧LIST,P,0.386,pipeline/scorecards.py
 core,points,30.0,MS∧LIST,R,0.651,pipeline/scorecards.py
 core,points,30.0,MS∧LIST,R_field20,0.69,pipeline/scorecards.py
-core,points,30.0,MS∧LIST,n_flags,2875.0,pipeline/scorecards.py
-core,points,30.0,MS∧UH,F1,0.535,pipeline/scorecards.py
-core,points,30.0,MS∧UH,P,0.692,pipeline/scorecards.py
+core,points,30.0,MS∧LIST,n_flags,2879.0,pipeline/scorecards.py
+core,points,30.0,MS∧UH,F1,0.534,pipeline/scorecards.py
+core,points,30.0,MS∧UH,P,0.691,pipeline/scorecards.py
 core,points,30.0,MS∧UH,R,0.436,pipeline/scorecards.py
 core,points,30.0,MS∧UH,R_field20,0.53,pipeline/scorecards.py
-core,points,30.0,MS∧UH,n_flags,965.0,pipeline/scorecards.py
-core,points,30.0,MS∧UNEP,F1,0.345,pipeline/scorecards.py
-core,points,30.0,MS∧UNEP,P,0.258,pipeline/scorecards.py
-core,points,30.0,MS∧UNEP,R,0.521,pipeline/scorecards.py
-core,points,30.0,MS∧UNEP,R_field20,0.59,pipeline/scorecards.py
-core,points,30.0,MS∧UNEP,n_flags,3172.0,pipeline/scorecards.py
+core,points,30.0,MS∧UH,n_flags,969.0,pipeline/scorecards.py
+core,points,30.0,MS∧UNEP,F1,0.343,pipeline/scorecards.py
+core,points,30.0,MS∧UNEP,P,0.257,pipeline/scorecards.py
+core,points,30.0,MS∧UNEP,R,0.516,pipeline/scorecards.py
+core,points,30.0,MS∧UNEP,R_field20,0.58,pipeline/scorecards.py
+core,points,30.0,MS∧UNEP,n_flags,3185.0,pipeline/scorecards.py
 core,points,30.0,OSU,F1,0.288,pipeline/scorecards.py
 core,points,30.0,OSU,P,0.17,pipeline/scorecards.py
 core,points,30.0,OSU,R,0.935,pipeline/scorecards.py
 core,points,30.0,OSU,R_field20,0.95,pipeline/scorecards.py
 core,points,30.0,OSU,n_flags,25882.0,pipeline/scorecards.py
-core,points,30.0,UH,F1,0.321,pipeline/scorecards.py
-core,points,30.0,UH,P,0.225,pipeline/scorecards.py
-core,points,30.0,UH,R,0.562,pipeline/scorecards.py
+core,points,30.0,UH,F1,0.319,pipeline/scorecards.py
+core,points,30.0,UH,P,0.222,pipeline/scorecards.py
+core,points,30.0,UH,R,0.563,pipeline/scorecards.py
 core,points,30.0,UH,R_field20,0.59,pipeline/scorecards.py
-core,points,30.0,UH,n_flags,5362.0,pipeline/scorecards.py
+core,points,30.0,UH,n_flags,5443.0,pipeline/scorecards.py
 core,points,30.0,UNEP,F1,0.316,pipeline/scorecards.py
 core,points,30.0,UNEP,P,0.211,pipeline/scorecards.py
 core,points,30.0,UNEP,R,0.633,pipeline/scorecards.py
 core,points,30.0,UNEP,R_field20,0.65,pipeline/scorecards.py
-core,points,30.0,UNEP,n_flags,5604.0,pipeline/scorecards.py
+core,points,30.0,UNEP,n_flags,5605.0,pipeline/scorecards.py
 core,points,30.0,UNEP∧OSU,F1,0.407,pipeline/scorecards.py
-core,points,30.0,UNEP∧OSU,P,0.308,pipeline/scorecards.py
+core,points,30.0,UNEP∧OSU,P,0.309,pipeline/scorecards.py
 core,points,30.0,UNEP∧OSU,R,0.599,pipeline/scorecards.py
 core,points,30.0,UNEP∧OSU,R_field20,0.62,pipeline/scorecards.py
-core,points,30.0,UNEP∧OSU,n_flags,3391.0,pipeline/scorecards.py
-core,points+possibly,10.0,1-of-6,F1,0.178,pipeline/scorecards.py
+core,points,30.0,UNEP∧OSU,n_flags,3389.0,pipeline/scorecards.py
+core,points+possibly,10.0,1-of-6,F1,0.177,pipeline/scorecards.py
 core,points+possibly,10.0,1-of-6,P,0.098,pipeline/scorecards.py
 core,points+possibly,10.0,1-of-6,R,0.946,pipeline/scorecards.py
-core,points+possibly,10.0,1-of-6,n_flags,37316.0,pipeline/scorecards.py
+core,points+possibly,10.0,1-of-6,n_flags,37346.0,pipeline/scorecards.py
 core,points+possibly,10.0,1-of-6,n_ref,2786.0,pipeline/scorecards.py
 core,points+possibly,10.0,2-of-6,F1,0.254,pipeline/scorecards.py
 core,points+possibly,10.0,2-of-6,P,0.149,pipeline/scorecards.py
 core,points+possibly,10.0,2-of-6,R,0.863,pipeline/scorecards.py
-core,points+possibly,10.0,2-of-6,n_flags,20742.0,pipeline/scorecards.py
+core,points+possibly,10.0,2-of-6,n_flags,20766.0,pipeline/scorecards.py
 core,points+possibly,10.0,2-of-6,n_ref,2786.0,pipeline/scorecards.py
-core,points+possibly,10.0,3-of-6,F1,0.363,pipeline/scorecards.py
+core,points+possibly,10.0,3-of-6,F1,0.362,pipeline/scorecards.py
 core,points+possibly,10.0,3-of-6,P,0.243,pipeline/scorecards.py
 core,points+possibly,10.0,3-of-6,R,0.713,pipeline/scorecards.py
-core,points+possibly,10.0,3-of-6,n_flags,9116.0,pipeline/scorecards.py
+core,points+possibly,10.0,3-of-6,n_flags,9140.0,pipeline/scorecards.py
 core,points+possibly,10.0,3-of-6,n_ref,2786.0,pipeline/scorecards.py
-core,points+possibly,10.0,4-of-6,F1,0.425,pipeline/scorecards.py
-core,points+possibly,10.0,4-of-6,P,0.382,pipeline/scorecards.py
-core,points+possibly,10.0,4-of-6,R,0.478,pipeline/scorecards.py
-core,points+possibly,10.0,4-of-6,n_flags,3114.0,pipeline/scorecards.py
+core,points+possibly,10.0,4-of-6,F1,0.424,pipeline/scorecards.py
+core,points+possibly,10.0,4-of-6,P,0.381,pipeline/scorecards.py
+core,points+possibly,10.0,4-of-6,R,0.477,pipeline/scorecards.py
+core,points+possibly,10.0,4-of-6,n_flags,3123.0,pipeline/scorecards.py
 core,points+possibly,10.0,4-of-6,n_ref,2786.0,pipeline/scorecards.py
-core,points+possibly,10.0,5-of-6,F1,0.346,pipeline/scorecards.py
-core,points+possibly,10.0,5-of-6,P,0.581,pipeline/scorecards.py
-core,points+possibly,10.0,5-of-6,R,0.247,pipeline/scorecards.py
-core,points+possibly,10.0,5-of-6,n_flags,912.0,pipeline/scorecards.py
+core,points+possibly,10.0,5-of-6,F1,0.343,pipeline/scorecards.py
+core,points+possibly,10.0,5-of-6,P,0.579,pipeline/scorecards.py
+core,points+possibly,10.0,5-of-6,R,0.244,pipeline/scorecards.py
+core,points+possibly,10.0,5-of-6,n_flags,915.0,pipeline/scorecards.py
 core,points+possibly,10.0,5-of-6,n_ref,2786.0,pipeline/scorecards.py
-core,points+possibly,10.0,6-of-6,F1,0.171,pipeline/scorecards.py
-core,points+possibly,10.0,6-of-6,P,0.883,pipeline/scorecards.py
+core,points+possibly,10.0,6-of-6,F1,0.172,pipeline/scorecards.py
+core,points+possibly,10.0,6-of-6,P,0.882,pipeline/scorecards.py
 core,points+possibly,10.0,6-of-6,R,0.095,pipeline/scorecards.py
-core,points+possibly,10.0,6-of-6,n_flags,213.0,pipeline/scorecards.py
+core,points+possibly,10.0,6-of-6,n_flags,211.0,pipeline/scorecards.py
 core,points+possibly,10.0,6-of-6,n_ref,2786.0,pipeline/scorecards.py
 core,points+possibly,10.0,IMPACT,F1,0.266,pipeline/scorecards.py
 core,points+possibly,10.0,IMPACT,P,0.173,pipeline/scorecards.py
@@ -2708,22 +2779,22 @@ core,points+possibly,10.0,LIST,n_ref,2786.0,pipeline/scorecards.py
 core,points+possibly,10.0,MS,F1,0.278,pipeline/scorecards.py
 core,points+possibly,10.0,MS,P,0.187,pipeline/scorecards.py
 core,points+possibly,10.0,MS,R,0.54,pipeline/scorecards.py
-core,points+possibly,10.0,MS,n_flags,7872.0,pipeline/scorecards.py
+core,points+possibly,10.0,MS,n_flags,7878.0,pipeline/scorecards.py
 core,points+possibly,10.0,MS,n_ref,2786.0,pipeline/scorecards.py
 core,points+possibly,10.0,OSU,F1,0.215,pipeline/scorecards.py
 core,points+possibly,10.0,OSU,P,0.123,pipeline/scorecards.py
 core,points+possibly,10.0,OSU,R,0.849,pipeline/scorecards.py
 core,points+possibly,10.0,OSU,n_flags,25882.0,pipeline/scorecards.py
 core,points+possibly,10.0,OSU,n_ref,2786.0,pipeline/scorecards.py
-core,points+possibly,10.0,UH,F1,0.229,pipeline/scorecards.py
-core,points+possibly,10.0,UH,P,0.171,pipeline/scorecards.py
-core,points+possibly,10.0,UH,R,0.348,pipeline/scorecards.py
-core,points+possibly,10.0,UH,n_flags,5362.0,pipeline/scorecards.py
+core,points+possibly,10.0,UH,F1,0.228,pipeline/scorecards.py
+core,points+possibly,10.0,UH,P,0.169,pipeline/scorecards.py
+core,points+possibly,10.0,UH,R,0.349,pipeline/scorecards.py
+core,points+possibly,10.0,UH,n_flags,5443.0,pipeline/scorecards.py
 core,points+possibly,10.0,UH,n_ref,2786.0,pipeline/scorecards.py
-core,points+possibly,10.0,UNEP,F1,0.244,pipeline/scorecards.py
-core,points+possibly,10.0,UNEP,P,0.179,pipeline/scorecards.py
-core,points+possibly,10.0,UNEP,R,0.384,pipeline/scorecards.py
-core,points+possibly,10.0,UNEP,n_flags,5604.0,pipeline/scorecards.py
+core,points+possibly,10.0,UNEP,F1,0.243,pipeline/scorecards.py
+core,points+possibly,10.0,UNEP,P,0.178,pipeline/scorecards.py
+core,points+possibly,10.0,UNEP,R,0.382,pipeline/scorecards.py
+core,points+possibly,10.0,UNEP,n_flags,5605.0,pipeline/scorecards.py
 core,points+possibly,10.0,UNEP,n_ref,2786.0,pipeline/scorecards.py
 field,field,10.0,"CEMS {2,3}",R,0.64,pipeline/scorecards.py
 field,field,10.0,IMPACT v2,R,0.65,pipeline/scorecards.py
@@ -2790,7 +2861,7 @@ field,field,20.0,UH,n_field,388.0,pipeline/scorecards.py
 field,field,20.0,UH,n_minimal,11.0,pipeline/scorecards.py
 field,field,20.0,UH,n_significant,56.0,pipeline/scorecards.py
 field,field,20.0,UNEP debris (core region),R,0.65,pipeline/scorecards.py
-field,field,20.0,UNEP debris (core region),R_complete,0.71,pipeline/scorecards.py
+field,field,20.0,UNEP debris (core region),R_complete,0.7,pipeline/scorecards.py
 field,field,20.0,UNEP debris (core region),R_significant,0.28,pipeline/scorecards.py
 field,field,20.0,UNEP debris (core region),n_complete,316.0,pipeline/scorecards.py
 field,field,20.0,UNEP debris (core region),n_field,367.0,pipeline/scorecards.py
@@ -3052,11 +3123,11 @@ strip,crowd-round2,,MS,cell_majority_yes_share_r2,0.1108558299827685,RQ7-mapswip
 strip,crowd-round2,,MS,latent_correlation,0.6334422654357648,RQ7-mapswipe-validation/rq7_round2_replication.csv
 strip,crowd-round2,,MS,median_votes_per_task_r1,6.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
 strip,crowd-round2,,MS,median_votes_per_task_r2,16.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
-strip,crowd-round2,,MS,ms_cems_matched,544.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
-strip,crowd-round2,,MS,ms_flags_in_cells,6980.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
-strip,crowd-round2,,MS,ms_unmatched,6436.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
-strip,crowd-round2,,MS,ms_unmatched_conf_share_r1,0.127563704164077,RQ7-mapswipe-validation/rq7_round2_replication.csv
-strip,crowd-round2,,MS,ms_unmatched_conf_share_r2,0.1110938471100062,RQ7-mapswipe-validation/rq7_round2_replication.csv
+strip,crowd-round2,,MS,ms_cems_matched,545.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
+strip,crowd-round2,,MS,ms_flags_in_cells,6986.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
+strip,crowd-round2,,MS,ms_unmatched,6441.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
+strip,crowd-round2,,MS,ms_unmatched_conf_share_r1,0.127464679397609,RQ7-mapswipe-validation/rq7_round2_replication.csv
+strip,crowd-round2,,MS,ms_unmatched_conf_share_r2,0.111318118304611,RQ7-mapswipe-validation/rq7_round2_replication.csv
 strip,crowd-round2,,MS,paired_task_cells,3482.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
 strip,crowd-round2,,MS,paired_tasks,3482.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
 strip,crowd-round2,,MS,pearson_raw,0.2889823782355796,RQ7-mapswipe-validation/rq7_round2_replication.csv
@@ -3072,17 +3143,17 @@ strip-east,points,10.0,MS,P,0.205,pipeline/scorecards.py
 strip-east,points,10.0,MS,flag_share,0.082,pipeline/scorecards.py
 strip-east,points,10.0,MS,n_bld,43355.0,pipeline/scorecards.py
 strip-east,points,10.0,MS,n_cems,1250.0,pipeline/scorecards.py
-strip-east,points,10.0,MS,n_flags,3546.0,pipeline/scorecards.py
-strip-east,points,10.0,UH,P,0.12,pipeline/scorecards.py
-strip-east,points,10.0,UH,flag_share,0.113,pipeline/scorecards.py
+strip-east,points,10.0,MS,n_flags,3545.0,pipeline/scorecards.py
+strip-east,points,10.0,UH,P,0.118,pipeline/scorecards.py
+strip-east,points,10.0,UH,flag_share,0.115,pipeline/scorecards.py
 strip-east,points,10.0,UH,n_bld,43075.0,pipeline/scorecards.py
 strip-east,points,10.0,UH,n_cems,1250.0,pipeline/scorecards.py
-strip-east,points,10.0,UH,n_flags,4887.0,pipeline/scorecards.py
-strip-west,points,10.0,MS,P,0.051,pipeline/scorecards.py
+strip-east,points,10.0,UH,n_flags,4968.0,pipeline/scorecards.py
+strip-west,points,10.0,MS,P,0.052,pipeline/scorecards.py
 strip-west,points,10.0,MS,flag_share,0.287,pipeline/scorecards.py
 strip-west,points,10.0,MS,n_bld,15350.0,pipeline/scorecards.py
 strip-west,points,10.0,MS,n_cems,217.0,pipeline/scorecards.py
-strip-west,points,10.0,MS,n_flags,4398.0,pipeline/scorecards.py
+strip-west,points,10.0,MS,n_flags,4405.0,pipeline/scorecards.py
 strip-west,points,10.0,UH,P,0.186,pipeline/scorecards.py
 strip-west,points,10.0,UH,flag_share,0.034,pipeline/scorecards.py
 strip-west,points,10.0,UH,n_bld,14189.0,pipeline/scorecards.py

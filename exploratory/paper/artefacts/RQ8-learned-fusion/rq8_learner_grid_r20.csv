@@ -1,4 +1,4 @@
 feature_set,rf,logit
-all (fusion),0.406,0.399
+all (fusion),0.407,0.399
 context only (geography null),0.122,0.14
-products only,0.369,0.359
+products only,0.37,0.359

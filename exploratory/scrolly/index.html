@@ -248,7 +248,7 @@
   <div class="bars" id="bars"></div>
   <div class="sub" style="margin-top:18px">The threshold is a choice responders can make to fit the stage of the response: wide
   coverage in the first hours, higher confidence once teams are being sent building by building.</div>
-  <div class="answerbox"><span class="answer"><b>In short</b> Requiring agreement trades coverage for confidence: from 37,316 flags at 5% confirmed to 213
+  <div class="answerbox"><span class="answer"><b>In short</b> Requiring agreement trades coverage for confidence: from 37,346 flags at 5% confirmed to 211
   at 79%.</span></div>
 </div></div>
 
@@ -318,7 +318,7 @@ earthquake and asks what responders can, and cannot, do with them.</p>
     <div class="kicker">Day 2 · the first model</div>
     Two days after the earthquake, the first modelled assessment arrived: a building-level classification
     based on high-resolution optical imagery from Microsoft AI for Good. It flags
-    <strong>8,332 buildings</strong> in the coastal strip area.
+    <strong>8,338 buildings</strong> in the coastal strip area.
   </div></section>
 
   <section class="step" data-step="4"><div class="card">
@@ -338,7 +338,7 @@ earthquake and asks what responders can, and cannot, do with them.</p>
   <section class="step" data-step="6"><div class="card">
     <div class="kicker">Day 7 · two more</div>
     UNEP delivers another radar-based analysis, which also turns detected damage into an estimate of
-    debris tonnage (<strong>75,476</strong> buildings). Later that week, another
+    debris tonnage (<strong>74,867</strong> buildings). Later that week, another
     assessment arrives from a collaboration between WFP, LIST and CERN
     (<strong>163,225</strong>).
   </div></section>
@@ -348,7 +348,7 @@ earthquake and asks what responders can, and cannot, do with them.</p>
     Meanwhile, the UN assessment and analysis group becomes aware of a further analysis
     by an academic group, UH SAIL at the University of Houston: an AI model that
     classifies buildings from optical imagery across eight coastal areas.
-    <strong>74,705 buildings flagged</strong>. Two further products arrived in the same window but are
+    <strong>75,118 buildings flagged</strong>. Two further products arrived in the same window but are
     not evaluated here.
     <span class="fn">HOT's fAIr publishes no analysed extent, so its misses and false alarms
     cannot be counted fairly. DISHA (UN Global Pulse) covers less than half of the shared
@@ -358,7 +358,7 @@ earthquake and asks what responders can, and cannot, do with them.</p>
   <section class="step" data-step="8"><div class="card">
     <div class="kicker">The information coordination issue</div>
     <p>A stack of assessments of the same disaster: PDFs, shapefiles, dashboards. Different
-    methods, different extents, and answers from <strong>8,332 to 163,225</strong>
+    methods, different extents, and answers from <strong>8,338 to 163,225</strong>
     damaged buildings, a factor of twenty. Which do you act on?</p>
     <p>In those first days a coordinator has to decide where search-and-rescue teams go and who
     needs help first. Answers this far apart cannot all be right, and there is no time to find
@@ -388,7 +388,7 @@ earthquake and asks what responders can, and cannot, do with them.</p>
     of magnitude, and no two alike. The dashed white line is where the Copernicus EMS analysts worked. The small red
     strip is the one place <em>all of them</em> overlap: 61 km² and 57,241 shared
     buildings, where the assessments can be compared fairly, building by building. Even
-    here, on identical buildings, the six count anywhere from 5,362 to 25,882 damaged.
+    here, on identical buildings, the six count anywhere from 5,443 to 25,882 damaged.
   </div></section>
 
   <section class="step" data-step="11"><div class="card">
@@ -442,7 +442,7 @@ earthquake and asks what responders can, and cannot, do with them.</p>
     that could give responders more meaningful, actionable building-level analysis. As
     we add more product-agreement requirements to the output, our confidence in each
     building flag grows and noise is lowered. On the map: the buildings where four or
-    more assessments agree (3,114 of them). It needs no training data and no waiting; it
+    more assessments agree (3,123 of them). It needs no training data and no waiting; it
     works as soon as the second assessment arrives, and it improves with every one that
     follows, using more of the available information instead of betting on one source.
   </div></section>
@@ -686,13 +686,13 @@ function legends(which){ for (const id of ["legend-verdict","legend-test","legen
   document.getElementById(id).classList.toggle("on", id==="legend-"+which); }
 function panels(id){ for (const p of document.querySelectorAll(".panel")) p.classList.toggle("on", p.id===id); }
 
-const BARDATA = [["any 1 of 6",37316,5.3],["2 or more",20742,8.5],["3 or more",9116,14.9],["4 or more",3114,26.9],["5 or more",912,47.7],["all 6",213,79.3]];
+const BARDATA = [["any 1 of 6",37346,5.3],["2 or more",20766,8.5],["3 or more",9140,14.8],["4 or more",3123,26.8],["5 or more",915,47.4],["all 6",211,79.1]];
 const barsEl = document.getElementById("bars");
 for (const [lab,v,pct] of BARDATA){ barsEl.insertAdjacentHTML("beforeend",
   `<div class="row"><div class="lab">${lab}</div><div class="bar" data-v="${v}"></div>
    <div class="val" style="opacity:0">${v.toLocaleString()}
    <span style="color:#51ac92; font-weight:700; margin-left:8px">${pct}% confirmed</span></div></div>`); }
-const RANKDATA = [["3-of-6 agreement",0.783,true],["LIST",0.737,false],["IMPACT",0.718,false],["OSU",0.703,false],["Microsoft",0.616,false],["UNEP",0.577,false],["UH",0.480,false]];
+const RANKDATA = [["3-of-6 agreement",0.783,true],["LIST",0.737,false],["IMPACT",0.718,false],["OSU",0.703,false],["Microsoft",0.616,false],["UNEP",0.579,false],["UH",0.477,false]];
 const rankEl = document.getElementById("rank");
 for (const [lab,v,hot] of RANKDATA){ rankEl.insertAdjacentHTML("beforeend",
   `<div class="row${hot?" agree":""}"><div class="lab" style="width:150px">${lab}</div>
@@ -703,7 +703,7 @@ function animRank(){ document.querySelectorAll("#rank .rfill").forEach(b=>{ b.st
   document.querySelectorAll("#rank .val").forEach((v,i)=>setTimeout(()=>v.style.opacity=1, 300+i*110)); }
 function resetRank(){ document.querySelectorAll("#rank .rfill").forEach(b=>b.style.width=0);
   document.querySelectorAll("#rank .val").forEach(v=>v.style.opacity=0); }
-const BOUNDS = [["UH",12.6,23.2],["Microsoft",12.2,31.7],["UNEP",11.7,29.6],["IMPACT",10.4,24.3],["LIST",8.6,21.7],["OSU",6.8,18.9]];
+const BOUNDS = [["UH",12.4,23.0],["Microsoft",12.2,31.7],["UNEP",11.7,29.5],["IMPACT",10.4,24.3],["LIST",8.6,21.7],["OSU",6.8,18.9]];
 const rangeEl = document.getElementById("range");
 for (const [lab,lo,hi] of BOUNDS){ rangeEl.insertAdjacentHTML("beforeend",
   `<div class="row"><div class="lab">${lab}</div>
