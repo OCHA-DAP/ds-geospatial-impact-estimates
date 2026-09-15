@@ -71,24 +71,29 @@ the area the product actually examined (@tbl-products): without one, "no flag" c
 be distinguished from "never looked", so neither misses nor false alarms can be counted
 fairly. Throughout, a *flag* is a building a product marked as damaged to any extent.
 
-| Product | Provider | Sensing basis | Analysed buildings | Flags as delivered | Flags on the shared base* |
-|---|---|---|---|---|---|
-| Microsoft AI4G | Microsoft | VHR optical + AI classifier | 72,162 (Overture footprints) | `{python} N["delivered_MS"]` | `{python} N["total_flags_MS"]` |
-| IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar coherence change | swath (~372 km²) | `{python} N["delivered_IMPACT"]` | `{python} N["total_flags_IMPACT"]` |
-| OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~471 km²) | `{python} N["delivered_OSU"]` | `{python} N["total_flags_OSU"]` |
-| UH QuakeDamage | Univ. of Houston | VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint | 447,263 incl. intact | `{python} N["delivered_UH"]` | `{python} N["total_flags_UH"]` |
-| LIST | WFP / LIST / CERN | AI change detection on before/after radar imagery (provider-stated) | 163,225 | `{python} N["delivered_LIST"]` | `{python} N["total_flags_LIST"]` |
-| UNEP debris | UNEP/OCHA JEU | Sentinel-1 radar change detection on building footprints (debris tonnage modeled from the detected damage) | no extent (stated assumption) | `{python} N["delivered_UNEP"]` | `{python} N["total_flags_UNEP"]` |
+```{python}
+#| label: tbl-products
+#| tbl-cap: "Products evaluated, as delivered. Analysis scope: Overture base buildings and area inside the provider's published extent. Damaged buildings flagged: the provider's own count (its own footprints for Microsoft, UH and UNEP; base-building ids for IMPACT, OSU and LIST). OSU figures refer to its v0 delivery, the version available during the response. UNEP publishes no extent and is scored under a stated coverage assumption."
+import pandas as pd
+from great_tables import GT, style, loc
 
-: Products evaluated. *Every score in this brief is computed on one shared building base
-(Overture footprints), so a product's flags are counted as base buildings. IMPACT, OSU and LIST
-reference that base directly. Microsoft, UNEP and UH delivered their own footprints, mapped one-to-one
-onto the base by the same rule (the overlapping base building with the highest intersection-over-union,
-else the nearest within 20 m): Microsoft's `{python} N["delivered_MS"]` footprints become `{python} N["total_flags_MS"]` buildings
-(`{python} N["collapsed_MS"]` share a building), UH's `{python} N["delivered_UH"]` become `{python} N["total_flags_UH"]`, and UNEP's
-`{python} N["delivered_UNEP"]` finer GBA footprints become `{python} N["total_flags_UNEP"]` (`{python} N["collapsed_UNEP"]` share a building,
-`{python} N["orphans_UNEP"]` touch no base building within 20 m). OSU figures refer to its v0 delivery, the version available
-during the response. {#tbl-products}
+from brief_numbers import N
+
+P = [("Microsoft AI4G", "Microsoft", "VHR optical + AI classifier", "MS"),
+     ("IMPACT v2", "IMPACT Initiatives", "Sentinel-1 radar coherence change", "IMPACT"),
+     ("OSU", "Oregon State Univ. / NASA", "Sentinel-1 radar coherence change", "OSU"),
+     ("UH QuakeDamage", "Univ. of Houston", "VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint", "UH"),
+     ("LIST", "WFP / LIST / CERN", "AI change detection on before/after radar imagery (provider-stated)", "LIST"),
+     ("UNEP debris", "UNEP/OCHA JEU", "Sentinel-1 radar change detection on building footprints (debris tonnage modelled from the detected damage)", "UNEP")]
+rows = [dict(product=n, provider=pr, basis=b,
+             scope=f'{N["scope_bld_" + k]} buildings · {N["scope_km2_" + k]} km²' if k != "UNEP" else "no published extent",
+             flags=N["native_" + k]) for n, pr, b, k in P]
+(GT(pd.DataFrame(rows), rowname_col="product")
+ .cols_label(provider="Provider", basis="Sensing basis", scope="Analysis scope", flags="Damaged buildings flagged")
+ .cols_align("right", columns=["flags"])
+ .tab_style(style.text(color="#555", size="12px"), loc.body(columns=["provider", "basis"]))
+ .tab_options(table_font_size="13px", column_labels_font_weight="bold", data_row_padding="4px"))
+```
 
 ![Who analysed where. Each product's analysed extent, the five expert-mapped CEMS AOIs
 (dashed black), and, in red with the zoom frame below, the ~`{python} N["core_area_km2"]` km² core region where the
@@ -97,7 +102,27 @@ derived from its own classified footprints); UNEP publishes none at all and is s
 under a stated coverage
 assumption.](figures/fig_extents_map.png){#fig-extents}
 
-We use two reporting regions throughout. *As delivered* scores each product across
+```{python}
+#| label: tbl-scope
+#| tbl-cap: "Where the products are scored: the two frames used throughout, on one shared building base. As delivered: each product's extent intersected with the expert-mapped areas, where each product gets its own precision and recall (not comparable across products). Core region: where all six products and the expert mapping overlap, where the head-to-head, voting rules, fusion and ranking live. Flags are counted as base buildings; Microsoft, UH and UNEP delivered their own footprints, mapped onto the base by one rule (Appendix, Matching products to references)."
+import pandas as pd
+from great_tables import GT, md, style, loc
+
+from brief_numbers import N
+
+K = [("Microsoft", "MS"), ("IMPACT v2", "IMPACT"), ("OSU", "OSU"), ("UH", "UH"), ("LIST", "LIST"), ("UNEP", "UNEP")]
+rows = [dict(product=n, asd_b=N["asd_bld_" + k], asd_f=N["asd_flags_" + k], core_b=N["core_n_buildings"], core_f=N["core_flags_" + k]) for n, k in K]
+(GT(pd.DataFrame(rows), rowname_col="product")
+ .tab_spanner(label=md("**As delivered** · extent ∩ expert-mapped areas"), columns=["asd_b", "asd_f"])
+ .tab_spanner(label=md(f'**Core region** · {N["core_area_km2"]} km² where all six and the experts overlap'), columns=["core_b", "core_f"])
+ .cols_label(asd_b="buildings", asd_f="flags", core_b="buildings", core_f="flags")
+ .cols_align("right", columns=["asd_b", "asd_f", "core_b", "core_f"])
+ .tab_style(style.fill("#e8f0f4"), loc.body(columns=["asd_b", "asd_f"]))
+ .tab_style(style.fill("#f7e3e1"), loc.body(columns=["core_b", "core_f"]))
+ .tab_options(table_font_size="13px", column_labels_font_weight="bold", data_row_padding="4px"))
+```
+
+We use two reporting regions throughout (@tbl-scope). *As delivered* scores each product across
 everything it shipped, wherever the expert reference mapped. This is the view that
 matches what responders actually received. The *core region* is the ~`{python} N["core_area_km2"]` km² where all six products
 and the reference overlap: one shared area on which every predictor is scored alike, and each product's favourable case (it holds `{python} N["cara_share_pct"]` of the expert-recorded
@@ -453,6 +478,41 @@ the field reports measure the expert reference's own recall, every measured prec
 reported as a lower bound, and the expert-unmatched flags are re-judged against the
 crowd (@sec-flags).
 
+**From delivered footprints to base buildings.** IMPACT, OSU and LIST reference the shared
+Overture base directly, so their flags are base buildings as delivered (OSU's v0 delivery lists
+`{python} N["osu_v0_delivered"]` ids, of which `{python} N["osu_v0_on_base"]` are buildings in the
+evaluation base). Microsoft, UH and UNEP delivered their own footprints, and @tbl-mapping follows
+those footprints onto the base. Their counts differ from the providers' for three reasons: two
+delivered footprints can map to the same base building (UNEP's finer footprints do so most often),
+a footprint can reach no base building within 20 m (an orphan), and a footprint can lie outside
+the frame being scored. The frame columns set the delivered footprints falling in each frame beside
+the base buildings flagged there, so the denominator of every precision in this brief can be traced
+back to the delivery.
+
+```{python}
+#| label: tbl-mapping
+#| tbl-cap: "Own-footprint products mapped onto the shared base by one rule: each delivered footprint goes to the overlapping base building with the highest intersection-over-union, else to the nearest base building within 20 m, else it is an orphan; one assignment per footprint. Collapsed: footprints that share a base building with another footprint. Native: delivered footprints whose location falls in the frame; base: base buildings flagged in the frame (the counts every score uses)."
+import pandas as pd
+from great_tables import GT, md, style, loc
+
+from brief_numbers import N
+
+K = [("Microsoft", "MS"), ("UH", "UH"), ("UNEP", "UNEP")]
+rows = [dict(product=n, delivered=N["delivered_" + k], iou=N["iou_" + k], snap=N["snapped_" + k], orphans=N["orphans_" + k],
+             base=N["onbase_" + k], collapsed=N["collapsed_" + k], miou=N["median_iou_" + k],
+             asd_n=N["native_asd_" + k], asd_b=N["asd_flags_" + k], core_n=N["native_core_" + k], core_b=N["core_flags_" + k]) for n, k in K]
+(GT(pd.DataFrame(rows), rowname_col="product")
+ .tab_spanner(label=md("**Whole delivery**"), columns=["delivered", "iou", "snap", "orphans", "base", "collapsed", "miou"])
+ .tab_spanner(label=md("**As delivered**"), columns=["asd_n", "asd_b"])
+ .tab_spanner(label=md("**Core region**"), columns=["core_n", "core_b"])
+ .cols_label(delivered="delivered footprints", iou="by IoU", snap="nearest ≤ 20 m", orphans="orphans", base="base buildings",
+             collapsed="collapsed", miou="median IoU", asd_n="native", asd_b="base", core_n="native", core_b="base")
+ .cols_align("right", columns=["delivered", "iou", "snap", "orphans", "base", "collapsed", "miou", "asd_n", "asd_b", "core_n", "core_b"])
+ .tab_style(style.fill("#e8f0f4"), loc.body(columns=["asd_n", "asd_b"]))
+ .tab_style(style.fill("#f7e3e1"), loc.body(columns=["core_n", "core_b"]))
+ .tab_options(table_font_size="12.5px", column_labels_font_weight="bold", data_row_padding="4px"))
+```
+
 ```{python}
 #| fig-cap: "Dual-anchored matching. Left: a product is scored only where it AND the reference both looked. Middle: recall anchors on the reference; for each CEMS damage point, the question is whether a product flag lies within radius r. Right: precision anchors on the product; for each flagged building, whether a CEMS point lies within r. Each metric has its own denominator."
 import matplotlib.pyplot as plt
@@ -588,7 +648,7 @@ footprint or within r of its edge is a hit, for scorecards, voting rules and the
 labels alike. Products that delivered their own footprints (Microsoft, UNEP, UH) are first mapped
 onto that base one-to-one by one rule: each delivered footprint goes to the overlapping base
 building with the highest intersection-over-union, or, if it overlaps none, to the nearest base
-building within 20 m; the few that reach neither are counted as orphans (@tbl-products gives the
+building within 20 m; the few that reach neither are counted as orphans (@tbl-mapping gives the
 counts). Gold had used a different rule for each product, and Microsoft's, any intersecting
 building, flagged `{python} N["bleed_MS"]` more buildings than it delivered footprints; one rule means no product is
 credited or penalised for the shape of its own building layer. An

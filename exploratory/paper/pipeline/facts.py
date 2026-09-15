@@ -125,6 +125,27 @@ def footprint_maps() -> list:
     return out
 
 
+def product_scopes() -> list:
+    """Table 1's analysis scope: base buildings inside each provider's published extent."""
+    b = pl.buildings()
+    return [r for p, a in pl.product_aois().items() for r in rows("all", p, scope_buildings=int(pl.in_region(b, a).sum()))]
+
+
+def native_frames() -> list:
+    """Own-footprint products: delivered footprints whose representative point falls in each scoring frame
+    (as delivered = extent ∩ CEMS extents, UNEP = CEMS extents; core). Feeds the appendix's native-vs-base table."""
+    sys.path.insert(0, os.path.join(HERE, "..", "lib"))
+    import build_footprint_maps as bfm   # the same loaders that built the 1:1 id lists
+    ext, core, aois = pl.cems_extent_latest(), pl.core_region(), pl.product_aois()
+    out = []
+    for key, p in (("ms", "MS"), ("unep", "UNEP"), ("uh", "UH")):
+        src = bfm.PRODUCTS[key]()
+        asd = ext if p == "UNEP" else ext.intersection(aois[p])
+        out += rows("asd", p, native_footprints=int(pl.in_region(src, asd).sum()))
+        out += rows("core", p, native_footprints=int(pl.in_region(src, core).sum()))
+    return out
+
+
 def field() -> list:
     f = pl.field_points()
     out = rows("all", "ChatMap", n_points=len(f))
@@ -135,7 +156,7 @@ def field() -> list:
 
 def main():
     out = []
-    for fn in (regions, reference_points, h3_areas, microsoft_cloud, disha_extent, osu_versions, footprint_maps, field):
+    for fn in (regions, reference_points, h3_areas, microsoft_cloud, disha_extent, osu_versions, footprint_maps, product_scopes, native_frames, field):
         print(f"== {fn.__name__}", flush=True)
         out += fn()
     res = pd.DataFrame(out)

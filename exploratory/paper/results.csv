@@ -496,7 +496,9 @@ all,facts,,ChatMap,n_minimal,24.0,pipeline/facts.py
 all,facts,,ChatMap,n_points,415.0,pipeline/facts.py
 all,facts,,ChatMap,n_significant,63.0,pipeline/facts.py
 all,facts,,IMPACT,aoi_km2,32712.727664723578,pipeline/facts.py
+all,facts,,IMPACT,scope_buildings,578509.0,pipeline/facts.py
 all,facts,,LIST,aoi_km2,223708.05093871543,pipeline/facts.py
+all,facts,,LIST,scope_buildings,702017.0,pipeline/facts.py
 all,facts,,MS,aoi_km2,210.24083784580125,pipeline/facts.py
 all,facts,,MS,base_buildings,8339.0,pipeline/facts.py
 all,facts,,MS,collapsed,71.0,pipeline/facts.py
@@ -506,11 +508,13 @@ all,facts,,MS,mapped_by_snap,0.0,pipeline/facts.py
 all,facts,,MS,median_iou,0.667,pipeline/facts.py
 all,facts,,MS,n_footprints,72162.0,pipeline/facts.py
 all,facts,,MS,orphans,0.0,pipeline/facts.py
+all,facts,,MS,scope_buildings,68115.0,pipeline/facts.py
 all,facts,,MS,share_mostly_obscured,0.0360577589312934,pipeline/facts.py
 all,facts,,OSU,added_v0_to_v1,42723.0,pipeline/facts.py
 all,facts,,OSU,aoi_km2,41463.16263237391,pipeline/facts.py
 all,facts,,OSU,coverage_growth,0.1793952777305929,pipeline/facts.py
 all,facts,,OSU,dropped_v0_to_v1,30565.0,pipeline/facts.py
+all,facts,,OSU,scope_buildings,616839.0,pipeline/facts.py
 all,facts,,OSU,v0_flags_delivered,58870.0,pipeline/facts.py
 all,facts,,OSU,v0_flags_on_base,57066.0,pipeline/facts.py
 all,facts,,OSU,v0_share_probability_1,0.5121114319687446,pipeline/facts.py
@@ -524,6 +528,7 @@ all,facts,,UH,mapped_by_iou,75329.0,pipeline/facts.py
 all,facts,,UH,mapped_by_snap,1031.0,pipeline/facts.py
 all,facts,,UH,median_iou,0.99,pipeline/facts.py
 all,facts,,UH,orphans,18.0,pipeline/facts.py
+all,facts,,UH,scope_buildings,352507.0,pipeline/facts.py
 all,facts,,UNEP,base_buildings,75814.0,pipeline/facts.py
 all,facts,,UNEP,collapsed,20073.0,pipeline/facts.py
 all,facts,,UNEP,delivered_footprints,96046.0,pipeline/facts.py
@@ -797,6 +802,9 @@ asd,crowd-round2,10.0,UNEP,conf_r2,0.1108289078734703,RQ7-mapswipe-validation/rq
 asd,crowd-round2,10.0,UNEP,delta,-0.009,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,UNEP,strip_share,0.964,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
 asd,crowd-round2,10.0,UNEP,strip_unmatched,4331.0,RQ7-mapswipe-validation/rq7_round2_padj_sensitivity.csv
+asd,facts,,MS,native_footprints,8023.0,pipeline/facts.py
+asd,facts,,UH,native_footprints,57138.0,pipeline/facts.py
+asd,facts,,UNEP,native_footprints,23344.0,pipeline/facts.py
 asd,labels,10.0,IMPACT,AP,0.029,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,IMPACT,AP_dayzero,0.061,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
 asd,labels,10.0,IMPACT,P,0.048,RQ8-learned-fusion/rq8b_asdelivered_baseline_r10.csv
@@ -1830,7 +1838,10 @@ core,facts,,DISHA,covers_km2,29.293154430397394,pipeline/facts.py
 core,facts,,DISHA,extent_km2,133.5964736294945,pipeline/facts.py
 core,facts,,DISHA,share_of_core,0.4815183124460085,pipeline/facts.py
 core,facts,,MS,n_footprints,61191.0,pipeline/facts.py
+core,facts,,MS,native_footprints,7949.0,pipeline/facts.py
 core,facts,,MS,share_mostly_obscured,0.0142831462143125,pipeline/facts.py
+core,facts,,UH,native_footprints,5726.0,pipeline/facts.py
+core,facts,,UNEP,native_footprints,6887.0,pipeline/facts.py
 core,facts,,region,area_km2,60.83497485608496,pipeline/facts.py
 core,facts,,region,n_buildings,57241.0,pipeline/facts.py
 core,facts,,spacing,median_nn_m,9.61313127760253,pipeline/facts.py

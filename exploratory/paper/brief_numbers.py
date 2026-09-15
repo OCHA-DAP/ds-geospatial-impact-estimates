@@ -213,6 +213,7 @@ asd = rq2i[rq2i.aoi == "ALL (as delivered)"].drop_duplicates("product").set_inde
 for p in PRODUCTS:
     N[f"asd_P_{p}"] = f3(asd.loc[p, "P_cems"]); N[f"asd_R_{p}"] = f2(asd.loc[p, "R_cems"])
     N[f"asd_flags_{p}"] = com(asd.loc[p, "n_flags"]); N[f"asd_crowdcov_{p}"] = pct(asd.loc[p, "crowd_cov_of_fps"])
+    N[f"asd_bld_{p}"] = com(asd.loc[p, "n_bld"])
 N["asd_P_min"] = f3(asd.P_cems.min()); N["asd_P_max"] = f3(asd.P_cems.max())
 N["asd_P_min_product"] = LONG[asd.P_cems.idxmin()]; N["asd_P_max_product"] = LONG[asd.P_cems.idxmax()]
 N["asd_UH_ratio"] = words(round(core.loc["UH", "P_cems"] / asd.loc["UH", "P_cems"]))
@@ -434,6 +435,11 @@ def _facts():
     def f(region, predictor, metric): return float(F.loc[(region, predictor), metric])
     N["core_area_km2"] = f"{f('core', 'region', 'area_km2'):.0f}"; N["core_area_km2_1"] = f"{f('core', 'region', 'area_km2'):.1f}"
     N["core_n_buildings"] = com(f("core", "region", "n_buildings"))
+    for p in ("MS", "IMPACT", "OSU", "UH", "LIST"):   # Table 1's analysis scope (UNEP publishes no extent)
+        N[f"scope_bld_{p}"] = com(f("all", p, "scope_buildings")); N[f"scope_km2_{p}"] = com(f("all", p, "aoi_km2"))
+    for p in ("MS", "UNEP", "UH"):   # appendix: delivered footprints falling in each frame
+        N[f"native_asd_{p}"] = com(f("asd", p, "native_footprints")); N[f"native_core_{p}"] = com(f("core", p, "native_footprints"))
+        N[f"iou_{p}"] = com(f("all", p, "mapped_by_iou"))
     N["products_overlap_km2"] = f"{f('all', 'region', 'products_overlap_km2'):.0f}"
     N["ms_aoi_km2"] = f"{f('all', 'MS', 'aoi_km2'):.0f}"
     N["core_cems"] = com(f("core", "CEMS", "n_points_2_3")); N["core_destroyed"] = com(f("core", "CEMS", "n_destroyed")); N["core_damaged"] = com(f("core", "CEMS", "n_damaged"))
@@ -532,7 +538,17 @@ def _rq7():
     N["r1_no_share_pct"] = pct(rep["cell_majority_no_share_r1"])
 
 
-for _fn in (_rq3, _rq2_rest, _ms_conf, _flags, _ratio, _frame, _facts, _ratios, _rq7):
+def _scope():
+    """Damaged buildings flagged as each provider delivered them (Table 1): own footprints for MS/UNEP/UH,
+    base-building ids for IMPACT/LIST, OSU's v0 delivery."""
+    for p in ("MS", "UNEP", "UH"):
+        N[f"native_{p}"] = N[f"delivered_{p}"]
+    for p in ("IMPACT", "LIST"):
+        N[f"native_{p}"] = N[f"total_flags_{p}"]
+    N["native_OSU"] = N["osu_v0_delivered"]
+
+
+for _fn in (_rq3, _rq2_rest, _ms_conf, _flags, _ratio, _frame, _facts, _ratios, _rq7, _scope):
     try:
         _fn()
     except FileNotFoundError as e:  # a not-yet-regenerated artefact: fail at render, loudly
