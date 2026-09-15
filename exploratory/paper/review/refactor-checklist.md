@@ -62,3 +62,5 @@ script migration; `snakemake -n` shows nothing stale after a full build.
 - Snakemake does not rebuild a missing *input* of an up-to-date output (`--summary` shows "missing / no update"); target the file itself.
 - Never `--unlock` without `pgrep -f "snakemake -s"`.
 - Fig scripts built by hand outside Snakemake have no provenance; `--forcerun` them once under the DAG.
+- Figure TITLES are not covered by the number audit. The before/after page (2026-09-15, `_audit/figs_before_after.html`, regenerated from the frozen-v3 tag in a scratch worktree) found three: fig-frontier's fixed recall axis clipped 1-of-6 and 2-of-6; fig-bounds' hand-typed lift range (2.2–3.6×) was stale; fig-basis' "no comparison flips" was false under both frames (UH's rank changes). All three are now computed from the data; the brief's matching prose quotes `basis_reversals`.
+- `frozen/MANIFEST.csv` used to stamp the vendoring HEAD as `producing_commit`; it now records the last commit that changed each archive file, so a file that was never re-run (rq7_west_cluster_join.csv, from 2fb074b) shows its real provenance.

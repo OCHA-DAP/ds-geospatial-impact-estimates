@@ -61,7 +61,7 @@ for _, r in kof.iterrows():
 ax.set_xlabel("recall (CEMS {2,3}, scorecard frame: dual-anchor r = 10 m)", fontsize=12)
 ax.set_ylabel("precision (CEMS floor, same frame)", fontsize=12)
 ax.tick_params(labelsize=11)
-ax.set_xlim(0, 0.85)
+ax.set_xlim(0, max(1.0, float(df.R_cems.max()) + 0.05))   # data-driven: a fixed 0.85 once clipped 1-of-6 and 2-of-6 (recall .95, .90)
 ax.set_ylim(0, 1.0)
 ax.legend(fontsize=10, loc="upper right")
 ax.set_title("Six-member voting frontier — every rule's precision is an interval\n"

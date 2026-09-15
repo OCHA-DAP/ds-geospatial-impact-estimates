@@ -12,6 +12,7 @@ Run: uv run --with pandas --with matplotlib python \
 """
 from __future__ import annotations
 import os
+import numpy as np
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
@@ -70,9 +71,15 @@ def slope_panel(ax, metric, label_right=True, lbl_fs=9.5, short_x=False):
 fig, ax = plt.subplots(figsize=(10.5, 7))
 slope_panel(ax, "precision")
 ax.set_ylabel("precision — share of flags within 10 m of a reference point", fontsize=11)
+# data-driven title: typical per-step lift over the products, and whether any pairwise ordering flips across bases
+_w = gb.pivot(index="predictor", columns="basis", values="precision")[BASES]
+_step = float(np.median(np.r_[_w.loc[PRODUCTS, BASES[1]] / _w.loc[PRODUCTS, BASES[0]], _w.loc[PRODUCTS, BASES[2]] / _w.loc[PRODUCTS, BASES[1]]]))
+_preds = list(_w.index)
+_flipped = {(a, b) for i, a in enumerate(_preds) for b in _preds[i + 1:] if len({np.sign(_w.loc[a, c] - _w.loc[b, c]) for c in BASES} - {0}) > 1}
+_inv = sorted({x for pr in _flipped for x in pr}, key=lambda x: -sum(x in pr for pr in _flipped))
+_flips = "no comparison flips" if not _flipped else (f"only {_inv[0]} changes rank" if all(_inv[0] in pr for pr in _flipped) else f"{len(_flipped)} orderings change")
 ax.set_title("Precision depends on which CEMS grades count as damage:\n"
-             "levels roughly double per step (mechanical: more reference, same flags); "
-             "no comparison flips",
+             f"levels rise ~{_step:.1f}× per step (mechanical: more reference, same flags); {_flips}",
              fontsize=12.5)
 fig.tight_layout()
 fig.savefig(os.path.join(FIGS, "rq8c_basis_precision_r10.png"), dpi=150)

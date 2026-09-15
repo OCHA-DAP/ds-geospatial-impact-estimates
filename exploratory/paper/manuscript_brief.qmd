@@ -542,7 +542,7 @@ way.
 The grade choice moves levels, not conclusions. Counting *possibly damaged* roughly
 widens the reference by `{python} N["possibly_ref_growth"]` and lifts every precision by `{python} N["possibly_lift_range"]`, singles and voting rules
 alike. Recall shifts along the grade slope: grade-neutral products gain,
-destruction-biased products lose. No comparison reverses. The fused score keeps its
+destruction-biased products lose. `{python} N["basis_reversals"]` The fused score keeps its
 ~`{python} N["fusion_margin_range"]` precision margin over the best single product, and the geography null stays
 inside the product band, under every definition. Excluding *possibly damaged* is the
 more demanding choice, and we keep it.
@@ -552,8 +552,7 @@ definitions of the CEMS reference, with flags and operating points frozen, so on
 target changes. Grey lines and band: the six products; coloured lines: the composites
 and the geography nulls. The dashed line marks the paper's reference. The rise is
 mechanical (same flags, more reference points to be near); the finding is what does
-*not* change: no comparison flips at any
-basis.](figures/rq8c_basis_precision_r10.png){#fig-basis}
+*not* change: `{python} N["basis_reversals_caption"]`.](figures/rq8c_basis_precision_r10.png){#fig-basis}
 
 There is one matching rule and two labelled exceptions. Every CEMS-based precision and recall in
 this paper uses the 10 m radius, so all of them are directly comparable. Two labelled

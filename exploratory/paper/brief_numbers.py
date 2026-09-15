@@ -475,6 +475,28 @@ def _ratios():
         t = W("core", f"labels-{basis}", 10)
         margins.append(t.loc["weighted fusion", "P"] / t.loc[PRODUCTS].P.max())
     N["fusion_margin_range"] = f"{min(margins):.1f}–{max(margins):.1f}×"
+    # Which pairwise precision orderings change between the three reference bases? Computed, because the
+    # prose once asserted "no comparison reverses" by hand and the one-rule frame made that false for UH.
+    tabs = {b: W("core", f"labels-{b}", 10).P for b in ("destroyed", "dmg+destroyed", "incl_possibly")}
+    preds = list(tabs["dmg+destroyed"].index)
+    flipped = {(a, b) for i, a in enumerate(preds) for b in preds[i + 1:]
+               if len({np.sign(t[a] - t[b]) for t in tabs.values()} - {0}) > 1}   # a tie at the CSV's rounding is not a reversal
+    involved = sorted({x for pair in flipped for x in pair}, key=lambda x: -sum(x in pr for pr in flipped))
+    if not flipped:
+        N["basis_reversals"] = "No comparison reverses."
+        N["basis_reversals_caption"] = "no comparison flips at any basis"
+    else:
+        culprit = involved[0]
+        if all(culprit in pr for pr in flipped):
+            rank = {b: list(tabs[b].loc[PRODUCTS].sort_values(ascending=False).index).index(culprit) + 1 for b in tabs}
+            ordn = lambda k: f"{k}{'tsnrhtdd'[(k // 10 % 10 != 1) * (k % 10 < 4) * k % 10::4]}"
+            N["basis_reversals"] = (f"Every reversal involves {culprit}: {ordn(rank['dmg+destroyed'])} among the single products under "
+                                    f"the paper's reference, {ordn(rank['incl_possibly'])} once *possibly damaged* points count, the "
+                                    f"signature of a destruction-biased product; no composite-versus-product comparison reverses.")
+            N["basis_reversals_caption"] = f"only {culprit} changes rank; every composite stays above every product at every basis"
+        else:
+            N["basis_reversals"] = f"{len(flipped)} pairwise comparisons reverse, involving {', '.join(involved)}."
+            N["basis_reversals_caption"] = f"{len(flipped)} pairwise orderings change ({', '.join(involved)})"
     w, e = W("strip-west", "points", 10), W("strip-east", "points", 10)
     N["strip_ms_ratio"] = f"{e.loc['MS', 'P'] / w.loc['MS', 'P']:.0f}×"
     F = W(lens="facts", radius=None, index=["region", "predictor"])

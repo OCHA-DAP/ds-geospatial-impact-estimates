@@ -53,8 +53,9 @@ ax.set_xlabel("precision of the flags as shipped (core region, r = 10 m)", fonts
 ax.legend(fontsize=9.5, loc="upper center", bbox_to_anchor=(0.5, -0.10), ncol=2,
           frameon=False, columnspacing=1.6, handletextpad=0.5)
 ax.spines[["top", "right", "left"]].set_visible(False)
+lift = pb.P_upper / pb.P_floor   # data-driven: the range was once typed by hand and went stale (2.2–3.6× under the old frame)
 ax.set_title("The headline precision is a lower bound: crediting CEMS's own low-grade points and\n"
-             "crowd-confirmed damage bounds each product's precision from above (2.2–3.6×)",
+             f"crowd-confirmed damage bounds each product's precision from above ({lift.min():.1f}–{lift.max():.1f}×)",
              fontsize=12.5)
 fig.text(0.99, 0.012,
          "a flag earns credit only where the crowd actually reviewed its location and judged it damaged;\n"
