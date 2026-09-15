@@ -231,6 +231,27 @@ rule brief:
     shell: 'QUARTO_PYTHON="$(python -c \'import sys; print(sys.executable)\')" quarto render manuscript_brief.qmd --to html'
 
 # ---------------------------------------------------------------------------------------------
+# THE SCROLL STORY (exploratory/scrolly). Its prose numbers and data arrays come from results.csv
+# through brief_numbers (update_numbers.py); audit_numbers.py fails on any numeral it did not write.
+# Its map layers come from the exporters, which read the archive's fusion parquet and the library
+# (`story_data`, explicit: needs blob access). `story` = numbers + audit + bundle.html.
+# ---------------------------------------------------------------------------------------------
+STORY = "../scrolly"
+STORY_JS = [f"{STORY}/{f}" for f in ("data.js", "extents.js", "hexes.js", "asdel.js")]
+
+rule story_data:
+    input: LIB, IDS, [f"{STORY}/{f}" for f in ("export.py", "export_extents.py", "export_hexes.py", "export_asdel.py")], f"{A}/RQ8-learned-fusion/rq8_oof_scores_r10.parquet"
+    output: STORY_JS
+    shell: "cd ../.. && python exploratory/scrolly/export.py && python exploratory/scrolly/export_extents.py && python exploratory/scrolly/export_hexes.py && python exploratory/scrolly/export_asdel.py"
+
+rule story:
+    # update_numbers rewrites index.html in place (only when a number changed) and records what it wrote;
+    # audit_numbers then fails on any other numeral in the prose; bundle.py inlines the data .js files.
+    input: "results.csv", "brief_numbers.py", f"{STORY}/update_numbers.py", f"{STORY}/audit_numbers.py", f"{STORY}/bundle.py", f"{STORY}/index.html", STORY_JS
+    output: f"{STORY}/bundle.html"
+    shell: f"python {STORY}/update_numbers.py && python {STORY}/audit_numbers.py && cd {STORY} && python bundle.py"
+
+# ---------------------------------------------------------------------------------------------
 # THE ARCHIVE'S HEAVY CHAIN (explicit only). `heavy` runs the archived scripts as they are;
 # `vendor` signs their outputs off into frozen/. Neither is reachable from `all`.
 # ---------------------------------------------------------------------------------------------

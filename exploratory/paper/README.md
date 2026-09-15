@@ -39,6 +39,8 @@ uv run --group etl --group paper snakemake -s exploratory/paper/Snakefile -d exp
 ```
 
 The Snakefile header explains rules, staleness, the pipeline's shape and the research questions.
+`snakemake story` re-points the scroll story's numbers from the same results table, audits its prose for
+hand-typed numerals, and rebuilds `exploratory/scrolly/bundle.html`; `story_data` re-runs its map exporters.
 Before `--unlock`, check `pgrep -f "snakemake -s"`: a lock error is also what a healthy running
 build produces. The heavy archived chain is re-run only on request (`heavy --forcerun rq8 rq8b`,
 then `vendor` to sign its outputs into `frozen/`).

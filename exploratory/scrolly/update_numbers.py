@@ -10,14 +10,21 @@ sys.path.insert(0, str(ROOT / "exploratory/paper"))
 from brief_numbers import N, rq5b, rq2r, PRODUCTS, LONG, L, W, words, N_CEMS_CORE  # noqa: E402
 
 html_path = pathlib.Path(__file__).parent / "index.html"
-t = html_path.read_text()
+t = ORIGINAL = html_path.read_text()
+CHECK = "--check" in sys.argv[1:]          # report staleness, write nothing (used by audit_numbers.py and the DAG)
+OWNED: set = set()                          # every numeral this script wrote; audit_numbers.py treats any other as hand-typed
+NUM = re.compile(r"\d(?:[\d,]*\d)?(?:\.\d+)?")
 
 def sub1(pattern, repl, flags=re.S):
     global t
     n = len(re.findall(pattern, t, flags))
     if n != 1:
         raise SystemExit(f"{n} matches for {pattern!r}")
-    t = re.sub(pattern, repl if callable(repl) else (lambda m: repl), t, count=1, flags=flags)
+    def _r(m):
+        out = repl(m) if callable(repl) else repl
+        OWNED.update(NUM.findall(out))
+        return out
+    t = re.sub(pattern, _r, t, count=1, flags=flags)
 
 core = rq5b[10]
 # --- agreement bars
@@ -61,9 +68,27 @@ sub1(r"<strong>[\d,]+ buildings flagged</strong>\. Two further", f"<strong>{tot[
 sub1(r"answers from <strong>[\d,]+ to [\d,]+</strong>", f"answers from <strong>{tot.min():,} to {tot.max():,}</strong>")
 sub1(r"a factor of \w+\.", f"a factor of {words(round(tot.max() / tot.min()))}.")
 sub1(r"the six count anywhere from [\d,]+ to [\d,]+ damaged", f"the six count anywhere from {int(prod.flagged.min()):,} to {int(prod.flagged.max()):,} damaged")
+# --- the shortlist test (rq3h, res 8): the voting rule with the best top-20 overlap vs the best single product
+WORDS_K = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
+best_top = h8.loc[votes, "top20"].idxmax(); best_single = h8.loc[list(singles), "top20"].idxmax()
+sub1(r"\w+-of-six agreement finds \d+ of the true worst 20; the best single assessment finds\s+\d+\.",
+     f"{WORDS_K[int(best_top[0])]}-of-six agreement finds {round(20 * h8.loc[best_top, 'top20'])} of the true worst 20; the best single assessment finds\n  {round(20 * h8.loc[best_single, 'top20'])}.")
+# --- the core region and the cell size (facts): three mentions of the area, one of the building count, two of the cell
+sub1(r"where all overlap \(~[\d.]+ km²\)", f"where all overlap (~{N['core_area_km2']} km²)")
+sub1(r"overlap: [\d.]+ km² and [\d,]+ shared", f"overlap: {N['core_area_km2']} km² and {N['core_n_buildings']} shared")
+sub1(r"comparison area is only\s+[\d.]+ km²", f"comparison area is only\n    {N['core_area_km2']} km²")
+sub1(r"damage per cell \(~[\d.]+ km²\)", f"damage per cell (~{N['h3_res8_km2_1']} km²)")
+sub1(r"neighbourhood cells of about [\d.]+ km² each", f"neighbourhood cells of about {N['h3_res8_km2_1']} km² each")
 # --- core labels and 4-of-6 count
 meta = re.search(r'"expert": (\d+)', (pathlib.Path(__file__).parent / "data.js").read_text()).group(1)
 sub1(r"The teal dots are the [\d,]+ buildings", f"The teal dots are the {int(meta):,} buildings")
 sub1(r"more assessments agree \([\d,]+ of them\)", f"more assessments agree ({int(core.loc['4-of-6', 'flagged']):,} of them)")
-html_path.write_text(t)
+(pathlib.Path(__file__).parent / ".numbers_owned.json").write_text(__import__("json").dumps(sorted(OWNED)))
+if CHECK:
+    if t != ORIGINAL:
+        changed = [l for l in __import__("difflib").unified_diff(ORIGINAL.splitlines(), t.splitlines(), lineterm="", n=0) if l[:1] in "+-" and l[:3] not in ("+++", "---")]
+        raise SystemExit("update_numbers --check: index.html is STALE against results.csv:\n" + "\n".join(c[:160] for c in changed[:20]))
+    print("update_numbers --check: index.html is current"); sys.exit(0)
+if t != ORIGINAL:
+    html_path.write_text(t)     # write only on change, so the DAG does not see a touched input every run
 print("story numbers re-pointed:", {"bars": bars[:60], "best_rank": best, "visits": f"{visits.min():.0f}-{visits.max():.0f}", "tot_MS": int(tot['MS']), "expert": meta})
