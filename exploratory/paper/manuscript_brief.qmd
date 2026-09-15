@@ -257,7 +257,7 @@ damaged.
 #| label: tbl-dial
 #| tbl-cap: "Building-level performance of the six products and the six agreement rules in the core region, at matching radii of 10, 20, and 30 m. Parentheses, at 10 m for the products only, give the as-delivered value; agreement rules are defined on the shared footprint base and exist only in the core region. Crowd-adjusted precision re-judges the expert-unmatched flags against the crowd verdicts (10 m): a flag is credited only where volunteers reviewed its cell and judged it damaged, and unreviewed flags earn nothing; the crowd-reviewed column is the share of each row's unmatched flags the crowd reviewed, the coverage that adjustment rests on. Visits/find is field visits per damage point reached at 30 m, the finding distance; computed as flags ÷ R₃₀ × 1,467 reference points. Shading ranks values within each column (darker = higher; for visits/find, fewer)."
 import pandas as pd
-from great_tables import GT, style, loc
+from great_tables import GT, html, style, loc
 from matplotlib import colormaps
 from matplotlib.colors import to_hex
 
@@ -302,9 +302,9 @@ gt = (GT(df, rowname_col="rule", groupname_col="group")
       .tab_spanner("10 m", ["P10", "R10", "F110", "Padj", "cov"])
       .tab_spanner("20 m", ["P20", "R20", "F120"])
       .tab_spanner("30 m", ["P30", "R30", "F130", "visits"])
-      .cols_label(flags="flags", P10="P", R10="R", F110="F1", Padj="P (crowd-adj)", cov="crowd reviewed",
+      .cols_label(flags="flags", P10="P", R10="R", F110="F1", Padj=html("P<br>(crowd-adj)"), cov=html("crowd<br>reviewed"),
                   P20="P", R20="R", F120="F1", P30="P", R30="R", F130="F1",
-                  visits="visits/find")
+                  visits=html("visits<br>per find"))
       .tab_options(column_labels_font_weight="bold",
                    row_group_font_weight="bold",
                    table_font_size="13px",
