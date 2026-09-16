@@ -18,8 +18,13 @@ import pandas as pd
 HERE = os.path.dirname(os.path.abspath(__file__))
 A = os.path.join(HERE, "legacy")   # legacy-layout CSVs live here, flat
 PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
-PAIRS = ["IMPACT∧OSU", "MS∧UH", "MS∧LIST", "LIST∧UH", "UNEP∧OSU", "MS∧UNEP"]
 RULES = [f"{k}-of-6" for k in range(1, 7)]
+
+
+def pair_names(sc: pd.DataFrame) -> list:
+    """The two-product rules present in the scorecard rows (paperlib.PAIRS, all 15), in first-seen order."""
+    seen = [p for p in sc.predictor if "∧" in str(p)]
+    return list(dict.fromkeys(seen))
 
 
 def wide(df, region, lens, radius):
@@ -43,7 +48,7 @@ def main():
     rk = pd.read_csv(os.path.join(HERE, "results_ranking.csv"))
 
     # rq5b_six_member{,_r20,_r30}.csv — rule, flagged, P_cems, R_cems, F1_cems, R_field_r20, FP_crowd_damaged, crowd_cov_of_fps, P_crowd
-    order = PRODUCTS + PAIRS + RULES
+    order = PRODUCTS + pair_names(sc) + RULES
     for r, name in ((10, "rq5b_six_member.csv"), (20, "rq5b_six_member_r20.csv"), (30, "rq5b_six_member_r30.csv")):
         p = wide(sc, "core", "points", r).loc[order]
         out = pd.DataFrame({"rule": order, "flagged": p.n_flags.astype(int).values, "P_cems": p.P.values, "R_cems": p.R.values,
