@@ -45,7 +45,7 @@ in each product's most favourable region, and although the expert reference miss
 lesser damage, the most generous defensible reading still leaves every product below
 `{python} N["P_upper_max"]`. The products do rank neighbourhoods well enough to triage, within a damage zone
 that is already identified. The practical way to use them is to count agreement between
-independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, ranking neighbourhoods by three- or four-product agreement beats every single product's ranking (at both cell sizes tested), and the method needs no weights, training data or reference, so it can be run as soon as the second product arrives.
+independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, ranking neighbourhoods by three- or four-product agreement beats every single product's ranking (at both cell sizes tested), and the method needs no weights, training data or reference, so it can be run as soon as several products are in hand.
 
 
 ## The event, the products, and the references
@@ -338,8 +338,8 @@ high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fi
 Counting agreement is also close to the ceiling of what any combination can achieve. A
 statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1, but
 fitting it requires the damage map a responder is still waiting for, so it explains the
-event afterwards and cannot run during one; flat counting can be done as soon as the
-second product arrives (@fig-bestf1).
+event afterwards and cannot run during one; flat counting can be done as soon as
+several products are in hand (@fig-bestf1).
 
 ![**Regions: core (left), as delivered (right).** F1 at each predictor's operating
 point: the six products (grey) and the two combinations (green). Bar length and bar
@@ -365,7 +365,12 @@ Combining them works better. Counting agreement between products outperformed
 every single product both at ranking neighbourhoods (@fig-agreerank) and at
 flagging individual buildings, where the better agreement thresholds roughly doubled the F1 of any product alone (`{python} N["better_rules_F1_range"]` against the best single product's `{python} N["core_F1_best2"]`; @tbl-dial). So do not spend time choosing a product; spend it counting agreement between
 products. Unlike a fitted model, counting requires no weights, no training data
-and no reference, so it can be done as soon as the second product arrives. Weight the
+and no reference, so it can be done as soon as several products are in hand. Two
+products are not enough on their own: in this event the fifteen possible pairs ranged
+from `{python} N["pair_P_worst"]` to `{python} N["pair_P_best"]` in precision depending on which two. And the
+count is a workload dial, not a known constant: which threshold marked the sweet spot
+here (`{python} N["best_rule"]`) was learned by scoring against the expert map afterwards, so
+set it against the field team's capacity rather than expecting a fixed hit rate. Weight the
 count toward products with independent sensing methods, for the reason given in
 @sec-dial.
 
@@ -930,11 +935,7 @@ cells merge visually. IMPACT and OSU residuals follow the coastal severity gradi
 Microsoft's error is a single hard cluster at the west end of its
 region.](figures/rq3_residual_maps_res8.png)
 
-The same cell lattice yields two further results. First, nothing in
-a product's own flag pattern predicts how reliable it is: across the fifteen
-product-and-area combinations, no correlation between the pattern signals (flag rate,
-clustering, agreement with other products) and measured reliability was statistically
-distinguishable from zero. Second, mapping each product's errors cell by cell, `{python} N["lisa_ns_range"]` of
+The same cell lattice yields one further result. Mapping each product's errors cell by cell, `{python} N["lisa_ns_range"]` of
 each product's territory shows errors scattered at random (noise rather than bias), with
 the failures concentrated in a few identifiable pockets; Microsoft's western strip,
 taken up in the [west-strip case study](#app-weststrip), is the largest.
@@ -971,7 +972,12 @@ every performance claim in this paper describes dense-damage coastal terrain, an
 low-damage AOIs the products' flags are almost entirely uncorroborated by any reference
 we have.
 
-Pooling all five AOIs gives the *as-delivered* numbers: the product as a responder received it, low-damage zones included. As-delivered precision: `{python} N["asd_P_sorted"]`. UH's number is
+Pooling all five AOIs gives the *as-delivered* numbers: the product as a responder received it, low-damage zones included. As-delivered precision: `{python} N["asd_P_sorted"]`. One assumption
+is doing more work here than in the core region: UNEP published no analysed extent, so in
+this frame it is scored as if it had examined all five expert-mapped areas, Caracas and the
+inland towns included. Where UNEP has no flags there, that may mean "never looked" rather
+than "saw nothing", so its as-delivered precision and recall are the values under that
+stated assumption, not measurements of a delivery whose scope we know. UH's number is
 `{python} N["asd_UH_ratio"]` times worse than its best-case `{python} N["core_P_UH"]`, because most of its flags sit in the
 low-damage AOIs (`{python} N["flags_SantaCruz_UH"]` in Santa Cruz alone). And Microsoft's number is *unchanged*,
 because it published flags only for the coastal strip it had analysed carefully. Restraint in coverage is itself a product
