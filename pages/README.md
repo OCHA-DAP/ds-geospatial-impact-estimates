@@ -154,14 +154,21 @@ format:
       hypothesis:
         openSidebar: false
         showHighlights: whenSidebarOpen
-        group: <private-group-id>      # omit and annotations go to the PUBLIC layer
 ```
+
+Quarto's schema has **no `group` key** under `comments.hypothesis` (the render fails with
+"property name group is invalid"), and the Hypothesis client has no such config option. The
+supported way to open the sidebar in a private group is the URL fragment
+`#annotations:group:<group-id>`. The brief sets it from an inline script in its
+`include-after-body` file (`exploratory/paper/appendix-fold.html`) when the URL carries no
+`#annotations:` fragment; copy that block for any new gated page. A reader who is not a member of
+the group still falls back to the public layer, so share the group join link with every reviewer.
 
 Then re-render and re-encrypt as above. The client loads inside the decrypted document, and
 because `document.write` leaves the URL unchanged, annotations anchor to `/manuscript/` stably
 across re-publishes.
 
-**The `group` is not optional, and the reason is the reviewers, not the manuscript.** Without it
+**Selecting the group is not optional, and the reason is the reviewers, not the manuscript.** Without it
 annotations land in Hypothesis's public layer, readable by anyone.
 
 Be precise about what is at stake, because it is easy to get backwards. The manuscript text is
