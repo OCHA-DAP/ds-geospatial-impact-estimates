@@ -252,7 +252,7 @@ tbl("RQ3-prioritization-error-structure/rq3g_frac_vs_count.csv")
   structured (coastal gradient), so dividing out building stock removes nothing the
   null uses. Only OSU beats its null under either target, at either scale — the
   published conclusion is target-invariant.
-- **Grade-bias split, fifth appearance**: coherence products gain under fractions
+- **Grade-bias split, fifth appearance**: the radar products gain under fractions
   (IMPACT 0.29→0.46, LIST 0.28→0.35 at res 8), appearance products lose (MS 0.47→0.37,
   UH −0.11→−0.21).
 - Scatter grid (fractions, res 8): `figs/rq3g_frac_scatter_res8.png` — diagnostic only.
@@ -832,9 +832,9 @@ the destruction bias shows up on precision AND recall, symmetrically.)
   sit near destruction.
 - **Two behaviours, roughly by sensing:** appearance/debris products **MS, UH, UNEP** are
   destruction-biased on both (P_vs_destroyed ≈ 1.5–2× P_vs_damaged; recall gap +0.23–0.30).
-  Radar-coherence **OSU, IMPACT** are grade-NEUTRAL on both (P and R ~equal for damaged vs
-  destroyed) — coherence senses structural change, not visible collapse. **LIST sides with
-  the coherence group — and LIST is a SAR ResNet per the provider (ADR-0020)**, so its
+  Radar **OSU** (coherence) **and IMPACT** (backscatter amplitude, ADR-0015; CORRECTED 2026-09-17, earlier text called both coherence) are grade-NEUTRAL on both (P and R ~equal for damaged vs
+  destroyed) — radar change senses structural alteration, not visible collapse. **LIST sides with
+  the radar group — and LIST is a SAR ResNet per the provider (ADR-0020)**, so its
   grade-neutrality is *consistent* with its stated sensor, not an exception. (CORRECTED
   2026-08-06: this line called LIST "optical" — an unsourced label contradicting ADR-0020
   and flag #14. The split reads better as appearance/debris vs structural-change than as
