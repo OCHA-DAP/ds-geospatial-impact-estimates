@@ -25,7 +25,9 @@ errata only. The living document is the technical brief (pages/brief/), built by
 subtraction from this one; review annotations anchor here, so this URL and text stay.
 ERRATA 2026-09-17: IMPACT v2 is a Sentinel-1 backscatter AMPLITUDE change product (ADR-0015); earlier text
 called it a coherence product in Table 1, the pairing paragraph, the fraction paragraph, the ceiling
-appendix and the sensing primer. Corrected in place; 'coherence' now names OSU alone. -->
+appendix and the sensing primer. Corrected in place; 'coherence' now names OSU alone.
+ERRATA 2026-09-17 (2): Table 1 gave the IMPACT v2 and OSU analysed extents as ~372 and ~471 km²; the
+extents are ~32,713 and ~41,463 km² (as in the extents map and the brief). Corrected in place. -->
 
 ## Abstract {.unnumbered}
 
@@ -126,8 +128,8 @@ region, so admitting it would have cut the shared comparison area from ~61 to ~2
 | Product | Provider | Sensing basis | Analysed buildings | Damage flags* |
 |---|---|---|---|---|
 | Microsoft AI4G | Microsoft | VHR optical + AI classifier | 72,162 (own footprints) | 8,410 |
-| IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar backscatter amplitude change, intersected with building footprints | swath (~372 km²) | 22,954 |
-| OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~471 km²) | 31,259 |
+| IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar backscatter amplitude change, intersected with building footprints | swath (~32,713 km²) | 22,954 |
+| OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~41,463 km²) | 31,259 |
 | UH QuakeDamage | Univ. of Houston | VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint | 447,263 incl. intact | ~91k dmg/destroyed |
 | LIST | WFP / LIST / CERN | AI change detection on before/after radar imagery (provider-stated) | 163,225 | 15,904 in core region |
 | UNEP debris | UNEP/OCHA JEU | Sentinel-1 radar change detection on building footprints (debris tonnage modeled from the detected damage) | no extent ([stated assumption](#app-matching)) | 96,046 |
