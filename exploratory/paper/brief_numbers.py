@@ -379,6 +379,12 @@ def _rq3():
     N["cara8_n_above"] = words((c8c.rho_product > c8c.rho_null).sum()); N["cara9_n_above"] = words((c9c.rho_product > c9c.rho_null).sum())
     N["core8_above_null"] = ", ".join(ordered(c8.index[c8.rho_product > c8.rho_null])) or "none"
     N["core8_n_above"] = words((c8.rho_product > c8.rho_null).sum())
+    # within-damage-zone test in the CORE region (the brief's own frame; replaces the retired Caraballeda-AOI table)
+    c9 = f_core[f_core.res == 9].set_index("product")
+    N["_tbl_nullrank_core"] = md_table(null_rank_rows(f_core[f_core.res == 8].sort_values("delta", ascending=False), scale_col=False),
+                                       ["product", "ρ product", "ρ geography null", "difference"])
+    N["core8_below_null"] = ", ".join(ordered(c8.index[c8.rho_product <= c8.rho_null])) or "none"
+    N["core9_n_above"] = words((c9.rho_product > c9.rho_null).sum())
     h = L("core", "cells-agreement").rename(columns={"radius": "res"}); h["res"] = h["res"].astype(int)
     h8 = h[h.res == 8].set_index("predictor")
     SINGLE = {"Microsoft", "IMPACT v2", "OSU", "UH", "LIST", "UNEP"}

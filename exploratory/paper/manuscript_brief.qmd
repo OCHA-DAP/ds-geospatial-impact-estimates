@@ -215,8 +215,8 @@ bounds.](figures/rq2r_bounds_ladder.png){#fig-bounds}
 
 Asked which *neighbourhoods* to go to first, rather than which buildings, the products
 do much better. In the core region, zoomed to the area already known to be damaged,
-every product orders ~`{python} N["h3_res8_km2"]` km² cells against the expert ordering at rank correlations
-of `{python} N["rank_core8_range"]`, and the best product correctly identifies most of the twenty worst-hit cells (`{python} N["top20_single_8"]` of 20; no other product reaches half). The qualifier matters: scored across everything each product delivered, the correlations spread from `{python} N["rank_asd7_range"]` at the ~`{python} N["h3_res7_km2_0"]` km² cell scale (@fig-ranktests), and
+every product orders ~`{python} N["h3_res8_km2"]` km² cells (H3 resolution 8; cell areas in this brief are the grid's global averages) against the expert ordering at rank correlations
+of `{python} N["rank_core8_range"]`, and the best product correctly identifies most of the twenty worst-hit cells (`{python} N["top20_single_8"]` of 20; no other product reaches half). The qualifier matters: scored across everything each product delivered, the correlations spread from `{python} N["rank_asd7_range"]` at the ~`{python} N["h3_res7_km2"]` km² cell scale (@fig-ranktests), and
 the ranking
 task largely reduces to "find the damage zone", which coarse geography solves
 almost by definition; the products' real ranking information is about where to go first
@@ -678,7 +678,7 @@ definitions of what counts as a hit.
 ### Area ranking and error structure: method {#app-ranking-method .unnumbered}
 
 For questions about where damage is concentrated, we aggregate per-building flags to
-hexagonal grid cells at two sizes, roughly `{python} N["h3_res8_km2"]` km² and `{python} N["h3_res7_km2"]` km² (the larger is roughly the size of an operational triage area), and compare each product's ranking of cells against the ranking implied
+hexagonal grid cells (H3) at two levels, resolution 8 (~`{python} N["h3_res8_km2"]` km²) and resolution 7 (~`{python} N["h3_res7_km2"]` km², roughly the size of an operational triage area); the areas are the grid's global averages, and cells at this latitude are somewhat smaller. We compare each product's ranking of cells against the ranking implied
 by CEMS, using rank correlation and top-k overlap.
 
 Whether a ranking survives noisy per-building labels depends on how the noise is arranged
@@ -775,7 +775,7 @@ it estimates how much of the damage pattern could be recovered from coarse spati
 and shaking alone, so that a product's score can be read against something other than
 zero. It uses three context variables computed per building, all available within hours
 of any earthquake: distance to the coastline, local building density, and the shaking
-intensity estimated by the USGS ShakeMap. From these it predicts which buildings have CEMS-recorded damage. It is validated by *spatial blocking*: the map is cut into ~`{python} N["h3_res7_km2_0"]` km²
+intensity estimated by the USGS ShakeMap. From these it predicts which buildings have CEMS-recorded damage. It is validated by *spatial blocking*: the map is cut into ~`{python} N["h3_res7_km2"]` km²
 zones and the model is always scored on zones it was not trained on, because neighbouring
 buildings resemble each other in both their features and their damage, and an ordinary
 random split would leak that resemblance into an inflated score (@fig-dayzero-build).
@@ -854,32 +854,32 @@ and correlated those with the CEMS count the same way:
 
 ```{python}
 #| label: tbl-nullrank
-#| tbl-cap: "How well each ranking matches the expert damage count per cell (rank correlation, Spearman's ρ): each product against the geography model, on identical cells within that product's shared region. The two scales are hexagonal grid cells of roughly 5 km² (res 7) and 0.7 km² (res 8). The larger of the two correlations in each row is in bold."
+#| tbl-cap: "How well each ranking matches the expert damage count per cell (rank correlation, Spearman's ρ): each product against the geography model, on identical cells within that product's shared region. The two scales are H3 resolution 7 and resolution 8 hexagons (sizes in the text). The larger of the two correlations in each row is in bold."
 from IPython.display import Markdown
 Markdown(N["_tbl_nullrank"])
 ```
 
 Across the delivered footprints, geography alone ranks these areas better than the
-products do, beating `{python} N["null_beats_n_asd7"]` of the six at the ~`{python} N["h3_res7_km2_0"]` km² scale and `{python} N["null_beats_n_asd8"]` of six at the finer scale. The margins are large (IMPACT `{python} N["rhonull_asd7_IMPACT"]` against `{python} N["rho_asd7_IMPACT"]`, UNEP `{python} N["rhonull_asd7_UNEP"]` against `{python} N["rho_asd7_UNEP"]`),
-and a negative rank correlation for `{python} N["asd_neg_7"]` means an ordering of the ~`{python} N["h3_res7_km2_0"]` km² cells slightly worse than no information at all. Only `{python} N["asd_above_null_7"]` is ahead of the null at the ~`{python} N["h3_res7_km2_0"]` km² scale, and only narrowly (`{python} N["rho_asd7_OSU"]` against
+products do, beating `{python} N["null_beats_n_asd7"]` of the six at the ~`{python} N["h3_res7_km2"]` km² scale and `{python} N["null_beats_n_asd8"]` of six at the finer scale. The margins are large (IMPACT `{python} N["rhonull_asd7_IMPACT"]` against `{python} N["rho_asd7_IMPACT"]`, UNEP `{python} N["rhonull_asd7_UNEP"]` against `{python} N["rho_asd7_UNEP"]`),
+and a negative rank correlation for `{python} N["asd_neg_7"]` means an ordering of the ~`{python} N["h3_res7_km2"]` km² cells slightly worse than no information at all. Only `{python} N["asd_above_null_7"]` is ahead of the null at the ~`{python} N["h3_res7_km2"]` km² scale, and only narrowly (`{python} N["rho_asd7_OSU"]` against
 `{python} N["rhonull_asd7_OSU"]`).
 
 That comparison spans all five mapped areas, however, and `{python} N["cara_share_pct"]` of the reference damage sits in
 one of them. Much of what it rewards is therefore the coarse discrimination of Caraballeda from
 four quiet AOIs, a task coastline distance and building density solve almost by definition. The
 sharper question is whether the products can out-rank geography *within* the damage zone, and
-there the result is different. Restricting every region to Caraballeda and re-running at
-~`{python} N["h3_res8_km2_1"]` km² cells, `{python} N["cara8_n_above"]` of the six beat the null (@tbl-nullrank-cara): `{python} N["cara8_above"]`;
-`{python} N["cara8_below"]` fall below it; and at ~`{python} N["h3_res9_km2"]` km² `{python} N["cara9_n_above"]` of six are ahead. So the products do contain real information about where within a damaged area to
+there the result is different. Re-running the test in the core region, the brief's
+within-damage-zone frame, at resolution 8 cells, `{python} N["core8_n_above"]` of the six beat the null (@tbl-nullrank-core): `{python} N["core8_above_null"]`;
+`{python} N["core8_below_null"]` fall below it; and at resolution 9 (~`{python} N["h3_res9_km2"]` km²) `{python} N["core9_n_above"]` of six are ahead. So the products do contain real information about where within a damaged area to
 go first: what they do not add is knowledge of which area that is, which is the part
 geography already encodes. The headline five-of-six should be read as a statement about the
 coarse task, not as evidence that the products are uninformative at every scale.
 
 ```{python}
-#| label: tbl-nullrank-cara
-#| tbl-cap: "The same test restricted to the Caraballeda AOI, ~0.7 km² cells, sorted by the product's margin over the geography null. The larger of the two correlations in each row is in bold."
+#| label: tbl-nullrank-core
+#| tbl-cap: "The same test in the core region, resolution 8 cells, sorted by the product's margin over the geography null. The larger of the two correlations in each row is in bold."
 from IPython.display import Markdown
-Markdown(N["_tbl_nullrank_cara"])
+Markdown(N["_tbl_nullrank_core"])
 ```
 
 The caveat stated earlier applies to this interpretation: the null is hindsight-fitted
@@ -898,9 +898,9 @@ with at least 20 buildings) tests exactly that, and the objection fails
 (@fig-fracrank). The null ranks fractions about as well as it ranks counts (ρ
 `{python} N["frac_null_range8"]`): damage *rate* is itself geographically structured in this event, high near
 the coast and low inland, so dividing out the stock removes nothing the null relies on.
-No conclusion changes: the products ahead of the null at ~`{python} N["h3_res8_km2_1"]` km² are `{python} N["count8_above_null"]` by count and `{python} N["frac8_above_null"]` by fraction.
+No conclusion changes: the products ahead of the null at ~`{python} N["h3_res8_km2"]` km² are `{python} N["count8_above_null"]` by count and `{python} N["frac8_above_null"]` by fraction.
 The products themselves split as their grade bias predicts: the coherence
-products gain under fractions (IMPACT `{python} N["frac_count_IMPACT"]` to `{python} N["frac_frac_IMPACT"]` at ~`{python} N["h3_res8_km2_1"]` km²) while the
+products gain under fractions (IMPACT `{python} N["frac_count_IMPACT"]` to `{python} N["frac_frac_IMPACT"]` at ~`{python} N["h3_res8_km2"]` km²) while the
 appearance-based products lose (Microsoft `{python} N["frac_count_MS"]` to `{python} N["frac_frac_MS"]`, UH `{python} N["frac_count_UH"]` to `{python} N["frac_frac_UH"]`).
 Count remains the headline target because the triage question is where the most
 damaged buildings are; the fraction view answers severity, and both give the same
