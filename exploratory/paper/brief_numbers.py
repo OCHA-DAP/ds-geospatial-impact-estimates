@@ -311,6 +311,13 @@ N["vote_F1"] = N["vote_F1_r10"]; N["fusion_F1"] = N["fusion_F1_r10"]
 N["vote_over_null"] = signed(d10.loc["flat k-of-6 voting", "f1"] - d10.loc["geography null (logistic)", "f1"])     # was +0.16
 N["fusion_over_null"] = signed(d10.loc["weighted fusion", "f1"] - d10.loc["geography null (logistic)", "f1"])      # was +0.21
 N["fusion_over_vote_pct"] = pct(d10.loc["weighted fusion", "f1"] / d10.loc["flat k-of-6 voting", "f1"] - 1)      # was 18%
+# threshold-selection check (rq8e, frozen): the F1 each score reaches when its cut is chosen on the training
+# folds and applied blind to the test fold, next to the hindsight cut the tables quote
+_thr = W("core", "labels-threshold", 10)
+for _nm, _k in (("geography null (logistic)", "null"), ("weighted fusion", "fusion"), ("flat k-of-6 voting", "vote")):
+    N[f"{_k}_F1_hind"] = f3(_thr.loc[_nm, "f1_hindsight"]); N[f"{_k}_F1_nested"] = f3(_thr.loc[_nm, "f1_nested"])
+    N[f"{_k}_F1_thr_delta"] = signed(_thr.loc[_nm, "f1_delta"], f3)
+N["fusion_over_vote_pct_nested"] = pct(_thr.loc["weighted fusion", "f1_nested"] / _thr.loc["flat k-of-6 voting", "f1_nested"] - 1)
 N["vote_best_cut"] = f"{int(round(d10.loc['flat k-of-6 voting', 'n_flags'] and next(k for k in range(1, 7) if int(core.loc[f'{k}-of-6', 'flagged']) == int(d10.loc['flat k-of-6 voting', 'n_flags']))))}-of-6"
 N["null_beats_n_products"] = words(d10.loc[PRODUCTS].f1.lt(d10.loc["geography null (logistic)", "f1"]).sum())
 N["null_F1_by_radius"] = "/".join(N[f"null_F1_r{r}"] for r in (10, 20, 30))

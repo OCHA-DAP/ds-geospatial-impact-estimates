@@ -153,7 +153,7 @@ FROZEN = [f"frozen/{n}" for n in [
     "rq2h_osu_v0_v1.csv", "rq2p_osu_v1_tiers.csv", "rq2_density_null.csv", "rq2_ms_confidence_curve.csv",
     "rq3g_frac_vs_count.csv", "rq3b_per_area_moran.csv", "rq3d_lisa_summary.csv",
     "rq8_best_f1_r10.csv", "rq8_best_f1_r20.csv", "rq8_best_f1_r30.csv", "rq8b_asdelivered_baseline_r10.csv", "rq8b_asdelivered_baseline_r20.csv",
-    "rq8c_basis_pr_r10.csv", "rq9_ci_core.csv", "rq9_ci_asdelivered_r10.csv", "rq9_ci_models_r10.csv",
+    "rq8c_basis_pr_r10.csv", "rq8d_null_ablation.csv", "rq8e_threshold_bias_r10.csv", "rq9_ci_core.csv", "rq9_ci_asdelivered_r10.csv", "rq9_ci_models_r10.csv",
     "rq7_round2_padj_sensitivity.csv", "rq7_round2_replication.csv", "shared_base_polygon_core.csv",
 ]]
 
@@ -260,6 +260,7 @@ rule heavy:
         expand(f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", r=[10, 20, 30]),
         expand(f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv", r=[10, 20]),
         f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv", f"{A}/RQ8-learned-fusion/rq8d_null_ablation.csv",
+        f"{A}/RQ8-learned-fusion/rq8e_threshold_bias_r10.csv",
         f"{A}/RQ9-uncertainty/rq9_ci_core.csv",
         f"{A}/RQ7-mapswipe-validation/rq7_round2_replication.csv", f"{A}/RQ2-cems-footprint-points/rq2h_osu_v0_v1.csv",
         f"{A}/RQ2-cems-footprint-points/rq2p_osu_v1_tiers.csv", f"{A}/RQ2-cems-footprint-points/rq2_density_null.csv",
@@ -321,6 +322,13 @@ rule rq8c:
     input: f"{A}/RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py", f"{A}/RQ8-learned-fusion/rq8_best_f1_r10.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r10.parquet"
     output: f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv"
     shell: art("RQ8-learned-fusion/scripts/rq8c_basis_sensitivity.py")
+
+rule rq8e:
+    # RQ8 threshold-selection check: hindsight cut vs a cut chosen on training folds, for the null, the
+    # fusion and flat voting alike. Seconds; reads the rq8 parquet only. Feeds the fairness paragraph.
+    input: f"{A}/RQ8-learned-fusion/scripts/rq8e_threshold_bias.py", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r10.parquet"
+    output: f"{A}/RQ8-learned-fusion/rq8e_threshold_bias_r10.csv"
+    shell: art("RQ8-learned-fusion/scripts/rq8e_threshold_bias.py")
 
 rule rq8d:
     # RQ8 feature ablation of the geography null (needs network for SoilGrids). Feeds the null appendix.

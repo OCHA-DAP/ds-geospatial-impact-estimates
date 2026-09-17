@@ -233,6 +233,15 @@ def rq8d():
                      rho_res8=x.get("rho_res8"), rho_res9=x.get("rho_res9")) for _, x in load(rel).iterrows()), [])
 
 
+def rq8e():
+    """Fairness paragraph: hindsight vs nested (training-fold) threshold for null, fusion and voting (labels lens, core, 10 m)."""
+    rel = "RQ8-learned-fusion/rq8e_threshold_bias_r10.csv"
+    tag = {"hindsight, one global cut on all scores": "hindsight", "nested, per-fold cut chosen on training folds": "nested",
+           "difference (nested - hindsight)": "delta"}
+    return sum((rows("core", "labels-threshold", 10, x["predictor"], rel, **{f"{m}_{tag[x['method']]}": x.get(m) for m in ("precision", "recall", "f1", "n_flags")})
+                for _, x in load(rel).iterrows()), [])
+
+
 def rq9():
     out = []
     rel = "RQ9-uncertainty/rq9_ci_core.csv"
@@ -284,7 +293,7 @@ def pipeline_rows(name):
 # Current sources: the compact modules (ADR-0032) plus adapters over the frozen heavy chain and
 # the appendix-only diagnostics that were not migrated (their scripts remain under artefacts/).
 SOURCES = [pipeline_rows("scorecards"), pipeline_rows("ranking"), pipeline_rows("facts"),
-           rq2h, rq2p, rq2_density_null, rq2_ms_confidence, rq3g, rq3b, rq3d, rq8, rq8b, rq8c, rq8d, rq9, rq7, frame]
+           rq2h, rq2p, rq2_density_null, rq2_ms_confidence, rq3g, rq3b, rq3d, rq8, rq8b, rq8c, rq8d, rq8e, rq9, rq7, frame]
 
 # The oracle: every number from the frozen per-RQ scripts, as consolidated on 2026-09-14
 # (artefacts/results_oracle_frozen.csv). `python consolidate.py --oracle` rebuilds it.

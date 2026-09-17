@@ -2558,6 +2558,42 @@ core,labels-incl_possibly,10.0,weighted fusion,P,0.504,RQ8-learned-fusion/rq8c_b
 core,labels-incl_possibly,10.0,weighted fusion,R,0.264,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,weighted fusion,n_flags,2075.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
 core,labels-incl_possibly,10.0,weighted fusion,n_pos,3960.0,RQ8-learned-fusion/rq8c_basis_pr_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,f1_delta,0.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,f1_hindsight,0.3227,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,f1_nested,0.3227,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,n_flags_delta,0.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,n_flags_hindsight,3123.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,n_flags_nested,3123.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,precision_delta,0.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,precision_hindsight,0.268,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,precision_nested,0.268,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,recall_delta,0.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,recall_hindsight,0.4055,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,flat k-of-6 voting,recall_nested,0.4055,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),f1_delta,-0.0132,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),f1_hindsight,0.172,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),f1_nested,0.1589,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),n_flags_delta,-1180.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),n_flags_hindsight,12864.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),n_flags_nested,11684.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),precision_delta,-0.0064,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),precision_hindsight,0.0998,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),precision_nested,0.0935,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),recall_delta,-0.093,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),recall_hindsight,0.6221,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,geography null (logistic),recall_nested,0.5291,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,f1_delta,-0.0037,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,f1_hindsight,0.3711,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,f1_nested,0.3674,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,n_flags_delta,36.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,n_flags_hindsight,2075.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,n_flags_nested,2111.0,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,precision_delta,-0.0068,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,precision_hindsight,0.3701,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,precision_nested,0.3633,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,recall_delta,-0.0005,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,recall_hindsight,0.3721,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,labels-threshold,10.0,weighted fusion,recall_nested,0.3716,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
 core,points,10.0,1-of-6,F1,0.1,pipeline/scorecards.py
 core,points,10.0,1-of-6,P,0.053,pipeline/scorecards.py
 core,points,10.0,1-of-6,R,0.952,pipeline/scorecards.py

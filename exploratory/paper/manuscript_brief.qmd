@@ -336,7 +336,7 @@ crowd-adjusted precision. Pairs of two radar products sit lowest; pairs that inc
 high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fig-frontier}
 
 Counting agreement is also close to the ceiling of what any combination can achieve. A
-statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1, but
+statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data; see the fairness note in the [appendix](#app-null)), but
 fitting it requires the damage map a responder is still waiting for, so it explains the
 event afterwards and cannot run during one; flat counting can be done as soon as
 several products are in hand (@fig-bestf1).
@@ -825,8 +825,15 @@ Two questions of fairness follow from putting a fitted model beside an unfitted
 product. They are scored on the same data: the validation folds partition the
 buildings and every building is scored by a model that never saw it, so models and
 products face identical building sets with identical denominators (the
-threshold-selection mechanics are in the frozen v3 record, appendix "The geography null model and weighted fusion, in full"). And the model is advantaged by
-hindsight, deliberately: it is fitted to this event's reference labels, so it is an
+threshold-selection mechanics are in the frozen v3 record, appendix "The geography null model and weighted fusion, in full"). One further
+hindsight enters through the cut: a product ships one operating point, while each of our
+scores is reported at the threshold that maximised F1 on the pooled out-of-fold scores, a
+cut chosen with the labels in view. Re-choosing that cut on the training folds only and
+applying it blind to each test fold moves the fusion from `{python} N["fusion_F1_hind"]` to `{python} N["fusion_F1_nested"]` F1, the
+geography null from `{python} N["null_F1_hind"]` to `{python} N["null_F1_nested"]`, and flat voting not at all (the
+best count is `{python} N["vote_best_cut"]` in every fold); the fusion's margin over counting is `{python} N["fusion_over_vote_pct_nested"]`
+under the blind cut against `{python} N["fusion_over_vote_pct"]` with hindsight. And the model is advantaged by
+hindsight in a second, deliberate way: it is fitted to this event's reference labels, so it is an
 upper bound on geography-only skill for this event, and the claim it supports is
 about information content (the products add little beyond what three context variables already explain), never the operational claim that responders held such a model on day zero. We return to this in the Limitations.
 
