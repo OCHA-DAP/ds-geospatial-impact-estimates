@@ -233,6 +233,13 @@ def rq8d():
                      rho_res8=x.get("rho_res8"), rho_res9=x.get("rho_res9")) for _, x in load(rel).iterrows()), [])
 
 
+def rq8_buf():
+    """Leakage check (ADR-0033): the r = 10 fusion/null refit with a 500 m buffer between training and test buildings."""
+    rel = "RQ8-learned-fusion/rq8_best_f1_r10_buf500.csv"
+    return sum((rows("core", "labels-buf500", 10, x["predictor"], rel, P=x.get("precision"), R=x.get("recall"), F1=x.get("f1"),
+                     n_flags=x.get("n_flags"), threshold=x.get("threshold")) for _, x in load(rel).iterrows()), [])
+
+
 def rq8e():
     """Fairness paragraph: hindsight vs nested (training-fold) threshold for null, fusion and voting (labels lens, core, 10 m)."""
     rel = "RQ8-learned-fusion/rq8e_threshold_bias_r10.csv"
@@ -293,7 +300,7 @@ def pipeline_rows(name):
 # Current sources: the compact modules (ADR-0032) plus adapters over the frozen heavy chain and
 # the appendix-only diagnostics that were not migrated (their scripts remain under artefacts/).
 SOURCES = [pipeline_rows("scorecards"), pipeline_rows("ranking"), pipeline_rows("facts"),
-           rq2h, rq2p, rq2_density_null, rq2_ms_confidence, rq3g, rq3b, rq3d, rq8, rq8b, rq8c, rq8d, rq8e, rq9, rq7, frame]
+           rq2h, rq2p, rq2_density_null, rq2_ms_confidence, rq3g, rq3b, rq3d, rq8, rq8_buf, rq8b, rq8c, rq8d, rq8e, rq9, rq7, frame]
 
 # The oracle: every number from the frozen per-RQ scripts, as consolidated on 2026-09-14
 # (artefacts/results_oracle_frozen.csv). `python consolidate.py --oracle` rebuilds it.

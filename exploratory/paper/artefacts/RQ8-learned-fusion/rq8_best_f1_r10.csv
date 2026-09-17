@@ -5,7 +5,7 @@ OSU,product (as shipped),0.068,0.851,0.126,25882,
 UH,product (as shipped),0.124,0.327,0.18,5443,
 LIST,product (as shipped),0.086,0.659,0.151,15906,
 UNEP,product (as shipped),0.117,0.317,0.171,5605,
-geography null (logistic),our score @ its best single cut,0.1,0.622,0.172,12864,0.6228
-geography null (rand. forest),our score @ its best single cut,0.082,0.523,0.142,13112,0.3103
+geography null (logistic),our score @ its best single cut,0.09,0.676,0.159,15456,0.622
+geography null (rand. forest),our score @ its best single cut,0.097,0.52,0.164,11055,0.3318
 flat k-of-6 voting,our score @ its best single cut,0.268,0.406,0.323,3123,4.0
-weighted fusion,our score @ its best single cut,0.37,0.372,0.371,2075,0.8806
+weighted fusion,our score @ its best single cut,0.363,0.352,0.357,2000,0.8851
