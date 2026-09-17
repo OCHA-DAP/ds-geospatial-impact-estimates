@@ -76,25 +76,27 @@ fairly. Throughout, a *flag* is a building a product marked as damaged to any ex
 
 ```{python}
 #| label: tbl-products
-#| tbl-cap: "Products evaluated, as delivered. Analysis scope: Overture base buildings and area inside the provider's published extent. Damaged buildings flagged: the provider's own count (its own footprints for Microsoft, UH and UNEP; base-building ids for IMPACT, OSU and LIST). OSU figures refer to its v0 delivery, the version available during the response. UNEP publishes no extent and is scored under a stated coverage assumption."
+#| tbl-cap: "Products evaluated, as delivered. Analysis scope: Overture base buildings and area inside the provider's published extent. Damaged buildings flagged: the provider's own count (its own footprints for Microsoft, UH and UNEP; base-building ids for IMPACT, OSU and LIST). OSU figures refer to its v0 delivery, the version available during the response. UNEP publishes no extent and is scored under a stated coverage assumption. Sensor and resolution are as stated by the provider or visible in the delivery; \"not stated\" marks the products for which neither applies."
 import pandas as pd
 from great_tables import GT, style, loc
 
 from brief_numbers import N
 
-P = [("Microsoft AI4G", "Microsoft", "VHR optical + AI classifier", "MS"),
-     ("IMPACT v2", "IMPACT Initiatives", "Sentinel-1 radar coherence change", "IMPACT"),
-     ("OSU", "Oregon State Univ. / NASA", "Sentinel-1 radar coherence change", "OSU"),
-     ("UH QuakeDamage", "Univ. of Houston", "VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint", "UH"),
-     ("LIST", "WFP / LIST / CERN", "AI change detection on before/after radar imagery (provider-stated)", "LIST"),
-     ("UNEP debris", "UNEP/OCHA JEU", "Sentinel-1 radar change detection on building footprints (debris tonnage modelled from the detected damage)", "UNEP")]
-rows = [dict(product=n, provider=pr, basis=b,
+# (product, provider, sensing basis, sensor and native resolution, key). Resolution as stated by the
+# provider or visible in the delivery; "not stated" where neither applies — the gap is the point of the column.
+P = [("Microsoft AI4G", "Microsoft", "VHR optical + AI classifier", "Vantor WorldView-3 and Planet SkySat scenes, sub-metre", "MS"),
+     ("IMPACT v2", "IMPACT Initiatives", "Sentinel-1 radar backscatter amplitude change, intersected with building footprints (provider-confirmed)", "Sentinel-1, 10 m", "IMPACT"),
+     ("OSU", "Oregon State Univ. / NASA", "Sentinel-1 radar coherence change", "Sentinel-1; product resolution not stated", "OSU"),
+     ("UH QuakeDamage", "Univ. of Houston", "VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint", "Vantor, sub-metre", "UH"),
+     ("LIST", "WFP / LIST / CERN", "AI change detection on before/after radar imagery (provider-stated)", "radar (sensor not stated); 10 m delivery grid", "LIST"),
+     ("UNEP debris", "UNEP/OCHA JEU", "Sentinel-1 radar amplitude change detection on building footprints (debris tonnage modelled from the detected damage)", "Sentinel-1; product resolution not stated", "UNEP")]
+rows = [dict(product=n, provider=pr, basis=b, sensor=s,
              scope=f'{N["scope_bld_" + k]} buildings · {N["scope_km2_" + k]} km²' if k != "UNEP" else "no published extent",
-             flags=N["native_" + k]) for n, pr, b, k in P]
+             flags=N["native_" + k]) for n, pr, b, s, k in P]
 (GT(pd.DataFrame(rows), rowname_col="product")
- .cols_label(provider="Provider", basis="Sensing basis", scope="Analysis scope", flags="Damaged buildings flagged")
+ .cols_label(provider="Provider", basis="Sensing basis", sensor="Sensor and native resolution", scope="Analysis scope", flags="Damaged buildings flagged")
  .cols_align("right", columns=["flags"])
- .tab_style(style.text(color="#555", size="12px"), loc.body(columns=["provider", "basis"]))
+ .tab_style(style.text(color="#555", size="12px"), loc.body(columns=["provider", "basis", "sensor"]))
  .tab_options(table_font_size="13px", column_labels_font_weight="bold", data_row_padding="4px"))
 ```
 
@@ -383,7 +385,11 @@ assessments accordingly.
 
 ::: {.callout-tip title="For providers"}
 Publish an analysed extent; without one, a user cannot tell "no flag" from "not
-analysed", so the product cannot be fairly evaluated or confidently used.
+analysed", so the product cannot be fairly evaluated or confidently used. Publish the
+sensor and its native spatial resolution alongside the method: a sub-metre optical
+classifier and a 10 m radar change detector cannot be expected to resolve the same
+damage, and a reader comparing them needs to know which is which (in this event, two of
+six deliveries stated neither; @tbl-products).
 Publish per-building acquisition metadata (scene count and dates); those fields are what made it possible to trace one failure in this event to a single satellite scene. Where a
 second scene confirms a flag, present that as an explicit confidence level. For the one
 product whose metadata allowed the check, two-scene flags were `{python} N["frozen_scene_ratio"]` times more precise
@@ -906,7 +912,7 @@ with at least 20 buildings) tests exactly that, and the objection fails
 `{python} N["frac_null_range8"]`): damage *rate* is itself geographically structured in this event, high near
 the coast and low inland, so dividing out the stock removes nothing the null relies on.
 No conclusion changes: the products ahead of the null at ~`{python} N["h3_res8_km2"]` km² are `{python} N["count8_above_null"]` by count and `{python} N["frac8_above_null"]` by fraction.
-The products themselves split as their grade bias predicts: the coherence
+The products themselves split as their grade bias predicts: the two Sentinel-1
 products gain under fractions (IMPACT `{python} N["frac_count_IMPACT"]` to `{python} N["frac_frac_IMPACT"]` at ~`{python} N["h3_res8_km2"]` km²) while the
 appearance-based products lose (Microsoft `{python} N["frac_count_MS"]` to `{python} N["frac_frac_MS"]`, UH `{python} N["frac_count_UH"]` to `{python} N["frac_frac_UH"]`).
 Count remains the headline target because the triage question is where the most
@@ -1040,10 +1046,10 @@ that single-method tuning does not rise above. (Note that this is the opposite k
 bound from the reference-driven lower bounds of @sec-flags: those mean the truth is
 higher than measured; the ceiling means single-product performance stops improving.)
 
-1. Same-sensor agreement barely helps. Requiring both Sentinel-1 coherence products
-   (IMPACT and OSU) to agree raises precision only to `{python} N["pair_P_IMPACT∧OSU"]`, barely above the single
-   products. Products that share sensor physics share false positives, so voting cannot
-   remove them.
+1. Same-satellite agreement barely helps. Requiring the two Sentinel-1 products
+   (IMPACT, amplitude change; OSU, coherence change) to agree raises precision only to `{python} N["pair_P_IMPACT∧OSU"]`, barely above the single
+   products, the weakest of the fifteen pairs. They share a satellite but not a signal,
+   and this event does not say which of the two is why their agreement adds so little.
 2. Product confidence scores add nothing. Sweeping Microsoft's continuous
    damage-fraction score (within its own analysed region, where its baseline numbers run
    higher than in the core region) trades recall `{python} N["msconf_R_hi"]`→`{python} N["msconf_R_lo"]` for precision `{python} N["msconf_P_lo"]`→`{python} N["msconf_P_hi"]`. The
@@ -1150,27 +1156,6 @@ tier remains below Microsoft's core-region precision (`{python} N["core_P_MS"]`)
 agreement rules, so the [ceiling appendix's](#app-ceiling) confidence finding, real signal but no additional precision to gain from thresholding it, now rests on two products rather than one.
 
 
-
-### Radar and optical: why they fail differently {#sec-sensing .unnumbered}
-
-Optical products (Microsoft, UH) classify what damage looks like from above. Radar
-coherence products (IMPACT, OSU) measure something else: whether the fine-scale
-arrangement of radar reflectors inside each pixel stayed stable between satellite passes.
-An intact building is a stable reflector and keeps high coherence; a collapse rearranges
-the reflectors and coherence drops. Vegetation never holds coherence in the first place,
-so coherence methods are largely immune to the farmland and vegetation changes that
-produce false alarms in optical and amplitude-based methods. LIST also runs on radar,
-but not on coherence: per the provider it is a deep-learning change-detection model (a
-ResNet) applied to before-and-after radar images (no methodology document accompanied
-the delivery), so we do not assume it shares that protection. UNEP's product is
-likewise radar-based (amplitude change detection, not coherence; its debris tonnage is
-modeled from the detected damage rather than sensed), so it is not assumed to share the
-protection either.
-
-The contrast is measurable in this event. Santa Cruz is a control case: the
-expert reference analysed it and found almost no damage, and much of it is agricultural.
-There the two coherence products flagged `{python} N["dn_share_SantaCruz_IMPACT"]` and `{python} N["dn_share_SantaCruz_OSU"]` of buildings, while the optical
-UH product flagged `{python} N["dn_share_SantaCruz_UH"]` (@sec-flags).
 
 ### Performance versus matching radius {#app-radius .unnumbered}
 

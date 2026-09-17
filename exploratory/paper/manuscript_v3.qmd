@@ -22,7 +22,10 @@ version supersedes manuscript_v2; deliberately short (takeaway / figure / how /
 appendix-pointer per result).
 FROZEN 2026-09-02 (ADR-0029): this document is the immutable technical record — factual
 errata only. The living document is the technical brief (pages/brief/), built by
-subtraction from this one; review annotations anchor here, so this URL and text stay. -->
+subtraction from this one; review annotations anchor here, so this URL and text stay.
+ERRATA 2026-09-17: IMPACT v2 is a Sentinel-1 backscatter AMPLITUDE change product (ADR-0015); earlier text
+called it a coherence product in Table 1, the pairing paragraph, the fraction paragraph, the ceiling
+appendix and the sensing primer. Corrected in place; 'coherence' now names OSU alone. -->
 
 ## Abstract {.unnumbered}
 
@@ -123,7 +126,7 @@ region, so admitting it would have cut the shared comparison area from ~61 to ~2
 | Product | Provider | Sensing basis | Analysed buildings | Damage flags* |
 |---|---|---|---|---|
 | Microsoft AI4G | Microsoft | VHR optical + AI classifier | 72,162 (own footprints) | 8,410 |
-| IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar coherence change | swath (~372 km²) | 22,954 |
+| IMPACT v2 | IMPACT Initiatives | Sentinel-1 radar backscatter amplitude change, intersected with building footprints | swath (~372 km²) | 22,954 |
 | OSU | Oregon State Univ. / NASA | Sentinel-1 radar coherence change | swath (~471 km²) | 31,259 |
 | UH QuakeDamage | Univ. of Houston | VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint | 447,263 incl. intact | ~91k dmg/destroyed |
 | LIST | WFP / LIST / CERN | AI change detection on before/after radar imagery (provider-stated) | 163,225 | 15,904 in core region |
@@ -480,10 +483,10 @@ What drives the gain is **independence of method**, and method means more than s
 The strongest two-product rule in the study pairs Microsoft with UH (the weakest single
 product): both are optical, and they even share an imagery vendor (Vantor), but they
 share no model, and their failure zones sit at opposite ends of the study area, so each
-covers for the other (@fig-frontier). The pair that shares its entire method, the two
-Sentinel-1 coherence products, is the weakest of all fifteen pairings: sharing the
-sensor and the physics means sharing the false positives, so their agreement mostly
-re-confirms shared errors instead of supplying an independent check. What products
+covers for the other (@fig-frontier). The pair that shares its satellite, the two
+Sentinel-1 products (IMPACT, amplitude change; OSU, coherence change), is the weakest of all fifteen pairings; they share the
+sensor but not the signal, so shared false positives are one reading of why their agreement
+adds so little, not an established one. What products
 share (sensor, platform, model) is knowable without labels on day one, which makes
 this usable in the next event: give a building more credit when the products agreeing
 on it share nothing in the way they work, and less when the agreeing products are
@@ -1135,7 +1138,7 @@ with at least 20 buildings) tests exactly that, and the objection does not survi
 0.43–0.65): damage *rate* is itself geographically structured in this event, high near
 the coast and low inland, so dividing out the stock removes nothing the null relies on.
 No conclusion changes: only OSU beats its null under either target, at either scale.
-The products themselves split along the familiar grade-bias line: the coherence
+The products themselves split along the familiar grade-bias line: the two Sentinel-1
 products gain under fractions (IMPACT 0.29 to 0.46 at ~0.7 km²) while the
 appearance-based products lose (Microsoft 0.47 to 0.37, and UH more negative still).
 Count remains the headline target because the triage question is where the most
@@ -1277,10 +1280,10 @@ that single-method tuning does not rise above. (Note that this is the opposite k
 bound from the reference-driven lower bounds of @sec-floor: those mean the truth is
 higher than measured; the ceiling means single-product performance stops improving.)
 
-1. **Same-sensor agreement barely helps.** Requiring both Sentinel-1 coherence products
-   (IMPACT and OSU) to agree raises precision only to 0.088, barely above the single
-   products. Products that share sensor physics share false positives, so voting cannot
-   remove them.
+1. **Same-satellite agreement barely helps.** Requiring the two Sentinel-1 products
+   (IMPACT, amplitude change; OSU, coherence change) to agree raises precision only to 0.088, barely above the single
+   products. They share a satellite but not a signal, and this event does not say which
+   of the two is why their agreement adds so little.
 2. **Product confidence scores add nothing.** Sweeping Microsoft's continuous
    damage-fraction score (within its own analysed region, where its baseline numbers run
    higher than in the core region) trades recall 0.66→0.10 for precision 0.10→0.19. The
@@ -1396,13 +1399,16 @@ signal but no hidden headroom, on two products rather than one.
 
 ### Radar and optical: why they fail differently {#sec-sensing .unnumbered}
 
-Optical products (Microsoft, UH) classify what damage looks like from above. Radar
-coherence products (IMPACT, OSU) measure something else: whether the fine-scale
+Optical products (Microsoft, UH) classify what damage looks like from above. The radar
+coherence product (OSU) measures something else: whether the fine-scale
 arrangement of radar reflectors inside each pixel stayed stable between satellite passes.
 An intact building is a stable reflector and keeps high coherence; a collapse rearranges
 the reflectors and coherence drops. Vegetation never holds coherence in the first place,
 so coherence methods are largely immune to the farmland and vegetation changes that
-produce false alarms in optical and amplitude-based methods. LIST also runs on radar,
+produce false alarms in optical and amplitude-based methods. IMPACT also runs on
+Sentinel-1 but on backscatter amplitude change intersected with building footprints, not
+coherence (ADR-0015; an earlier version of this text misattributed it), so the immunity
+argument does not apply to it. LIST also runs on radar,
 but not on coherence: per the provider it is a deep-learning change-detection model (a
 ResNet) applied to before-and-after radar images (no methodology document accompanied
 the delivery), so we do not assume it shares that protection. UNEP's product is
@@ -1412,7 +1418,7 @@ protection either.
 
 The contrast is measurable in this event. Santa Cruz is a control case: the
 expert reference analysed it and found almost no damage, and much of it is agricultural.
-There the two coherence products flagged 1.2% and 0.9% of buildings, while the optical
+There the two Sentinel-1 products flagged 1.2% (IMPACT, amplitude) and 0.9% (OSU, coherence) of buildings, while the optical
 UH product flagged 27.5% (@sec-floor).
 
 ### Performance versus matching radius {#app-radius .unnumbered}
