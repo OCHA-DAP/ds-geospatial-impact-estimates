@@ -189,15 +189,46 @@ for k in range(1, 7):
     N[f"k{k}_P_pct"] = pct(r.P_cems); N[f"k{k}_R_pct"] = pct(r.R_cems); N[f"k{k}_flags"] = com(r.flagged)
     N[f"k{k}_visits30"] = f"{r.flagged / (rq5b[30].loc[f'{k}-of-6', 'R_cems'] * N_CEMS_CORE):.1f}"
     N[f"k{k}_visits30_int"] = str(int(round(r.flagged / (rq5b[30].loc[f'{k}-of-6', 'R_cems'] * N_CEMS_CORE))))
+    # flags per CONFIRMED damaged building = 1/precision, same 10 m frame as the rest of the dial sentence.
+    # (The visits30 form above divides flags by expert POINTS reached and can fall below 1 for strict rules,
+    # because one flagged building can sit within 30 m of several points; kept for the CI table.)
+    N[f"k{k}_visits10_int"] = str(int(round(1 / r.P_cems)))
 better = core.loc[["4-of-6", "5-of-6"], "F1_cems"]
 N["better_rules_F1_range"] = rng(better.min(), better.max(), f2)        # was 0.26–0.28
 N["best_rule_F1"] = f3(core.loc[[f"{k}-of-6" for k in range(1, 7)], "F1_cems"].max())
 N["best_rule"] = core.loc[[f"{k}-of-6" for k in range(1, 7)], "F1_cems"].idxmax()
 N["best_rule_over_best_single"] = f"{core.loc[[f'{k}-of-6' for k in range(1, 7)], 'F1_cems'].max() / prod.F1_cems.max():.1f}"
-for pair in ("IMPACT∧OSU", "MS∧UH", "MS∧LIST", "LIST∧UH", "UNEP∧OSU", "MS∧UNEP"):
+_pairs = core.loc[[r for r in core.index if "∧" in r]]
+for pair in _pairs.index:
     N[f"pair_P_{pair}"] = f3(core.loc[pair, "P_cems"])
     N[f"pair_F1_{pair}"] = f3(core.loc[pair, "F1_cems"])
-N["pair_P_best"] = f3(core.loc[[r for r in core.index if "∧" in r], "P_cems"].max())
+N["pair_n"] = str(len(_pairs))
+N["pair_P_best"] = f3(_pairs.P_cems.max()); N["pair_best"] = _pairs.P_cems.idxmax().replace("∧", " and ")
+N["pair_P_worst"] = f3(_pairs.P_cems.min()); N["pair_worst"] = _pairs.P_cems.idxmin().replace("∧", " and ")
+N["pair_P_range_ex"] = rng(_pairs.P_cems.drop([_pairs.P_cems.idxmax(), _pairs.P_cems.idxmin()]).min(),
+                          _pairs.P_cems.drop([_pairs.P_cems.idxmax(), _pairs.P_cems.idxmin()]).max(), f2)
+# sensing modality per product (Table 1): two VHR-optical + AI products, four Sentinel-1 radar products
+_OPTICAL = {"MS", "UH"}
+_is_radar_pair = [set(r.split("∧")).isdisjoint(_OPTICAL) for r in _pairs.index]
+_radar = _pairs[_is_radar_pair]; _mixed_or_optical = _pairs[[not x for x in _is_radar_pair]]
+N["pair_radar_n"] = words(len(_radar)); N["pair_radar_P_range"] = rng(_radar.P_cems.min(), _radar.P_cems.max(), f2)
+_PAIR_P_THRESH = 0.3
+N["pair_P_thresh"] = f"{_PAIR_P_THRESH:.1f}"
+N["pair_P_above_thresh_n"] = words(int((_pairs.P_cems > _PAIR_P_THRESH).sum()))
+# The recommendation paragraph states these two facts in words. If a refreeze breaks either, fail the
+# build here rather than publish a sentence the data no longer supports.
+_bottom3 = _pairs.P_cems.nsmallest(3).index
+if not all(set(r.split("∧")).isdisjoint(_OPTICAL) for r in _bottom3):
+    raise AssertionError(f"brief says the three weakest pairs are all radar-radar; now {list(_bottom3)} — reword the recommendation")
+_above = _pairs.index[_pairs.P_cems > _PAIR_P_THRESH]
+if not all(not set(r.split("∧")).isdisjoint(_OPTICAL) for r in _above):
+    raise AssertionError(f"brief says every pair above P {_PAIR_P_THRESH} has an optical member; now {list(_above)} — reword the recommendation")
+if set(_pairs.P_cems.idxmax().split("∧")) <= _OPTICAL or set(_pairs.P_cems.idxmax().split("∧")).isdisjoint(_OPTICAL):
+    raise AssertionError(f"brief says the best pair mixes optical and radar; now {_pairs.P_cems.idxmax()} — reword the recommendation")
+_second = _pairs.P_cems.drop(_pairs.P_cems.idxmax()).idxmax()
+N["pair_second"] = _second.replace("∧", " and "); N["pair_P_second"] = f3(_pairs.loc[_second, "P_cems"])
+for _r in _pairs.index:
+    N[f"pair_P2_{_r}"] = f2(_pairs.loc[_r, "P_cems"])
 N["crowd_adj_P_range"] = rng(prod.P_crowd.min(), prod.P_crowd.max(), f2)
 
 # ---------------------------------------------------------------- as delivered (rq2i)
@@ -249,7 +280,8 @@ cm = pd.DataFrame({"recall_r20": _f[_f.radius == 20].set_index("predictor")["R"]
 cems_row = cm.loc["CEMS {2,3}"]
 N["cems_field_complete_pct"] = pct(cems_row.complete_r20)          # was 94%
 N["cems_field_significant_pct"] = pct(cems_row.significant_r20)    # was 49%
-N["field_missed_by_all_pct"] = pct(1 - cm.loc["≥1-of-4 votes", "recall_r20"])   # was "about 11%"
+N["field_missed_by_all_pct"] = pct(1 - cm.loc["≥1-of-4 votes", "recall_r20"])   # was "about 11%"; four products (MS, IMPACT, OSU, UH) inside their common extent
+N["field_missed_by_all6_pct"] = pct(1 - cm.loc["≥1-of-6 votes (core region)", "recall_r20"])   # all six products, core region
 for p, lab in (("MS", "MS"), ("IMPACT", "IMPACT v2"), ("OSU", "OSU"), ("UH", "UH"), ("LIST", "LIST"), ("UNEP", "UNEP debris (core region)")):
     N[f"field_R20_{p}"] = f2(cm.loc[lab, "recall_r20"])
 rq2k = W("core", "field-union", 10)
@@ -266,12 +298,26 @@ for r, d in rq8.items():
     N[f"prod_F1_range_r{r}"] = rng(pr.f1.min(), pr.f1.max(), f2)
 d10 = rq8[10]
 N["null_F1"] = N["null_F1_r10"]; N["null_F1_2"] = f2(d10.loc["geography null (logistic)", "f1"])
+# covariate ablation of the null (rq8d, frozen): density-only vs the weakest product at 10 m
+_abl = W("core", "labels-ablation", 10)
+N["dens_only_F1"] = f2(_abl.loc["dens", "F1"]); N["prod_F1_min_r10"] = f2(d10.loc[PRODUCTS, "f1"].min())
+_gap = d10.loc[PRODUCTS, "f1"].min() - _abl.loc["dens", "F1"]
+N["dens_vs_band"] = ("inside the six products' performance band" if _gap <= 0
+                     else f"within {_gap:.2f} of the bottom of the six products' performance band")
+N["dem_variant_F1"] = f2(_abl.loc["dens+elev+mmi", "F1"])
 N["null_P"] = f3(d10.loc["geography null (logistic)", "precision"]); N["null_R"] = f2(d10.loc["geography null (logistic)", "recall"])
 N["null_rf_F1"] = f3(d10.loc["geography null (rand. forest)", "f1"])
 N["vote_F1"] = N["vote_F1_r10"]; N["fusion_F1"] = N["fusion_F1_r10"]
 N["vote_over_null"] = signed(d10.loc["flat k-of-6 voting", "f1"] - d10.loc["geography null (logistic)", "f1"])     # was +0.16
 N["fusion_over_null"] = signed(d10.loc["weighted fusion", "f1"] - d10.loc["geography null (logistic)", "f1"])      # was +0.21
 N["fusion_over_vote_pct"] = pct(d10.loc["weighted fusion", "f1"] / d10.loc["flat k-of-6 voting", "f1"] - 1)      # was 18%
+# threshold-selection check (rq8e, frozen): the F1 each score reaches when its cut is chosen on the training
+# folds and applied blind to the test fold, next to the hindsight cut the tables quote
+_thr = W("core", "labels-threshold", 10)
+for _nm, _k in (("geography null (logistic)", "null"), ("weighted fusion", "fusion"), ("flat k-of-6 voting", "vote")):
+    N[f"{_k}_F1_hind"] = f3(_thr.loc[_nm, "f1_hindsight"]); N[f"{_k}_F1_nested"] = f3(_thr.loc[_nm, "f1_nested"])
+    N[f"{_k}_F1_thr_delta"] = signed(_thr.loc[_nm, "f1_delta"], f3)
+N["fusion_over_vote_pct_nested"] = pct(_thr.loc["weighted fusion", "f1_nested"] / _thr.loc["flat k-of-6 voting", "f1_nested"] - 1)
 N["vote_best_cut"] = f"{int(round(d10.loc['flat k-of-6 voting', 'n_flags'] and next(k for k in range(1, 7) if int(core.loc[f'{k}-of-6', 'flagged']) == int(d10.loc['flat k-of-6 voting', 'n_flags']))))}-of-6"
 N["null_beats_n_products"] = words(d10.loc[PRODUCTS].f1.lt(d10.loc["geography null (logistic)", "f1"]).sum())
 N["null_F1_by_radius"] = "/".join(N[f"null_F1_r{r}"] for r in (10, 20, 30))
@@ -340,6 +386,12 @@ def _rq3():
     N["cara8_n_above"] = words((c8c.rho_product > c8c.rho_null).sum()); N["cara9_n_above"] = words((c9c.rho_product > c9c.rho_null).sum())
     N["core8_above_null"] = ", ".join(ordered(c8.index[c8.rho_product > c8.rho_null])) or "none"
     N["core8_n_above"] = words((c8.rho_product > c8.rho_null).sum())
+    # within-damage-zone test in the CORE region (the brief's own frame; replaces the retired Caraballeda-AOI table)
+    c9 = f_core[f_core.res == 9].set_index("product")
+    N["_tbl_nullrank_core"] = md_table(null_rank_rows(f_core[f_core.res == 8].sort_values("delta", ascending=False), scale_col=False),
+                                       ["product", "ρ product", "ρ geography null", "difference"])
+    N["core8_below_null"] = ", ".join(ordered(c8.index[c8.rho_product <= c8.rho_null])) or "none"
+    N["core9_n_above"] = words((c9.rho_product > c9.rho_null).sum())
     h = L("core", "cells-agreement").rename(columns={"radius": "res"}); h["res"] = h["res"].astype(int)
     h8 = h[h.res == 8].set_index("predictor")
     SINGLE = {"Microsoft", "IMPACT v2", "OSU", "UH", "LIST", "UNEP"}

@@ -12,6 +12,7 @@ format:
     comments:
       hypothesis:
         showHighlights: whenSidebarOpen
+        # the review group is selected by URL fragment in appendix-fold.html (Quarto's schema has no `group` key)
 execute:
   echo: false
   warning: false
@@ -35,7 +36,7 @@ from brief_numbers import N
 
 After the M7.5 earthquake that struck coastal Venezuela on 24 June 2026, at least eight
 organisations released satellite-derived building-damage products. We evaluated the six
-that published an analysed extent against three references with complementary blind
+for which an analysed extent could be defined or defended against three references with complementary blind
 spots: expert damage points (Copernicus EMS), a crowd review of AI-flagged locations
 (MapSwipe), and `{python} N["field_n"]` field reports (ChatMap).
 
@@ -44,13 +45,15 @@ in each product's most favourable region, and although the expert reference miss
 lesser damage, the most generous defensible reading still leaves every product below
 `{python} N["P_upper_max"]`. The products do rank neighbourhoods well enough to triage, within a damage zone
 that is already identified. The practical way to use them is to count agreement between
-independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, ranking neighbourhoods by agreement beats every single product's ranking (at both cell sizes tested), and the method needs no weights, training data or reference, so it can be run as soon as the second product arrives.
+independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, ranking neighbourhoods by three- or four-product agreement beats every single product's ranking (at both cell sizes tested), and the method needs no weights, training data or reference, so it can be run as soon as several products are in hand.
 
 
 ## The event, the products, and the references
 
-An M7.5 earthquake, preceded about 40 seconds earlier by an M7.2, struck near Yumare on
-the Venezuelan coast at 22:05 UTC on 24 June 2026. Severe damage was concentrated along
+An M7.5 earthquake struck the Venezuelan coast 20 km west of Catia La Mar at 22:05 UTC
+on 24 June 2026, 32 seconds after an M7.2 inland near San Felipe, well to the west
+(USGS events us6000t7zp and us6000t7zc; solutions as published on 10 September 2026).
+Severe damage was concentrated along
 the La Guaira coastal strip, in western Caracas, and in several inland towns. Copernicus
 EMS rapid mapping was activated the same night (EMSR884). Products came from a variety
 of organisations: the EU's rapid-mapping service (Copernicus Emergency Management
@@ -170,8 +173,8 @@ model detects: the product that shipped only its best-covered strip kept most of
 core-region precision as delivered, while products that shipped broad extents lowered
 theirs.
 
-![**Region: each CEMS AOI separately, plus the pooled as-delivered total.** Per-AOI
-scorecard. Left: precision lower bound per product per CEMS AOI; right: recall where
+![**Region: each CEMS AOI separately, plus the pooled as-delivered total.** Precision and
+recall by AOI. Left: precision lower bound per product per CEMS AOI; right: recall where
 the reference is thick enough to support it. `{python} N["cara_share_pct"]` of all CEMS damage points are in the
 first column; outside it, measured precision (`{python} N["outside_P_range"]`) cannot separate product
 over-flagging from reference
@@ -181,12 +184,11 @@ The expert reference is itself incomplete, and this was measured rather than ass
 ChatMap, the one reference collected on the ground independently of any satellite
 imagery, audits the expert map: CEMS captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings
 but only `{python} N["cems_field_significant_pct"]` of those significantly damaged (@fig-gradeslope). The individual products
-share the same slope: everything sees destruction better than damage. Some damage was missed by everything: about `{python} N["field_missed_by_all_pct"]` of field-reported damage points, mostly in inland hill
-communities, had no flag from any product within 20 m despite lying inside analysed
-extents. Recall was never the products' weakness; precision is the limiting factor.
+share the same slope: everything sees destruction better than damage. Some damage was missed by everything: about `{python} N["field_missed_by_all_pct"]` of field-reported damage points inside the area analysed by all of Microsoft, IMPACT, OSU and UH, mostly in inland hill
+communities, had no flag from any of those four products within 20 m (the same check over all six products is possible only in the core region, where `{python} N["field_missed_by_all6_pct"]` of field reports go unflagged). Recall was never the products' weakness; precision is the limiting factor.
 
-![**Region: within the CEMS-analysed extents; reference: field reports (20 m GPS tolerance).** Recall by damage grade. Each line is one dataset's recall against
-field-reported damage, at "complete" destruction versus "significant" damage. Every
+![**Region: each product inside its own analysed extent, UNEP and the six-product union inside the core region, the expert map inside its own extent; reference: field reports (20 m GPS tolerance).** Recall by damage grade. Each line is one dataset's recall against
+field-reported damage, at "complete" destruction versus "significant" damage; the union line counts a field report as covered if any of the six products flagged a building within 20 m. Every
 line slopes down: the products and the expert reference alike find lighter damage far
 less often, which is why measured recall is an upper bound and measured precision a
 lower bound.](figures/rq2e_grade_slope.png){#fig-gradeslope}
@@ -213,8 +215,8 @@ bounds.](figures/rq2r_bounds_ladder.png){#fig-bounds}
 
 Asked which *neighbourhoods* to go to first, rather than which buildings, the products
 do much better. In the core region, zoomed to the area already known to be damaged,
-every product orders ~`{python} N["h3_res8_km2"]` km² cells against the expert ordering at rank correlations
-of `{python} N["rank_core8_range"]`, and the best products correctly identify most of the twenty worst-hit cells. The qualifier matters: scored across everything each product delivered, the correlations spread from `{python} N["rank_asd7_range"]` at the ~`{python} N["h3_res7_km2_0"]` km² cell scale (@fig-ranktests), and
+every product orders ~`{python} N["h3_res8_km2"]` km² cells (H3 resolution 8; cell areas in this brief are the grid's global averages) against the expert ordering at rank correlations
+of `{python} N["rank_core8_range"]`, and the best product correctly identifies most of the twenty worst-hit cells (`{python} N["top20_single_8"]` of 20; no other product reaches half). The qualifier matters: scored across everything each product delivered, the correlations spread from `{python} N["rank_asd7_range"]` at the ~`{python} N["h3_res7_km2"]` km² cell scale (@fig-ranktests), and
 the ranking
 task largely reduces to "find the damage zone", which coarse geography solves
 almost by definition; the products' real ranking information is about where to go first
@@ -245,8 +247,8 @@ value).](figures/rq3h_agreement_ranking_summary.png){#fig-agreerank}
 
 The products' errors fall in different places, so the number of them agreeing on a building
 works as a threshold a responder can set. Flag every building any product marked and `{python} N["k1_R_pct"]` of
-known damage is covered, but a field team following those flags would make `{python} N["k1_visits30_int"]` site
-visits for each damaged building it reached; require all six to agree and `{python} N["k6_P_pct"]` of flags
+known damage is covered, but a field team following those flags would make `{python} N["k1_visits10_int"]` site
+visits for each confirmed damaged building; require all six to agree and `{python} N["k6_P_pct"]` of flags
 are correct but only `{python} N["k6_R_pct"]` of the damage is covered. Between the extremes, each added
 agreeing product raises the odds that a flag is real, and setting the threshold fixes
 the size of the field job the same day (@tbl-dial). Setting the threshold fixes how
@@ -319,25 +321,31 @@ for col in nm.columns:
 gt
 ```
 
-Weight the count toward *independent methods*: products that share a sensing method
-err together, and their agreement added the least information in our tests, while
-products with nothing in common but the event cover for each other's blind spots
-(@fig-frontier).
+Weight the count toward products that *fail differently*. Scoring all `{python} N["pair_n"]` two-product
+rules in this event (@fig-frontier), the `{python} N["pair_radar_n"]` pairs built from two radar products added
+the least (precision `{python} N["pair_radar_P_range"]`), and every pair above a precision of `{python} N["pair_P_thresh"]` contained
+one of the two high-resolution optical products. The best pair mixed an optical and a
+radar product (`{python} N["pair_best"]`, `{python} N["pair_P_best"]`); the next best paired the two optical products,
+which share a sensor class but not a method (`{python} N["pair_second"]`, `{python} N["pair_P_second"]`). Sensor
+alone does not predict which pair will work, and one event cannot settle it: treat this
+as a reason to mix sensing methods, not as a ranking of providers.
 
-![**Region: core (`{python} N["core_area_km2"]` km²).** The fifteen two-product rules. Pairing across independent methods lifts precision;
-the pair sharing its entire method adds the
-least.](figures/rq5b_frontier_r10.png){#fig-frontier}
+![**Region: core (`{python} N["core_area_km2"]` km²).** All `{python} N["pair_n"]` two-product agreement rules (open circles, labelled) against the six
+products (grey) and the k-of-6 voting rules (blue squares, k inside); whiskers run from measured to
+crowd-adjusted precision. Pairs of two radar products sit lowest; pairs that include a
+high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fig-frontier}
 
 Counting agreement is also close to the ceiling of what any combination can achieve. A
-statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1, but
+statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data; see the fairness note in the [appendix](#app-null)), but
 fitting it requires the damage map a responder is still waiting for, so it explains the
-event afterwards and cannot run during one; flat counting can be done as soon as the
-second product arrives (@fig-bestf1).
+event afterwards and cannot run during one; flat counting can be done as soon as
+several products are in hand (@fig-bestf1).
 
-![**Regions: core (left), as delivered (right).** Comparing performance measurements of
-all products against each other and the derived combined products. Bar length and bar
-label show F1, followed by precision and recall. The derived combined products (green)
-are shown at their optimal performance weighting/configuration; they are defined on the
+![**Regions: core (left), as delivered (right).** F1 at each predictor's operating
+point: the six products (grey) and the two combinations (green). Bar length and bar
+label show F1, followed by precision and recall. Each product is scored at the threshold
+its provider shipped; the combinations are shown at the threshold that maximised F1 on
+this same data, chosen with hindsight. They are defined on the
 shared building base, so they exist only in the core
 region.](figures/rq8_best_f1_r10_summary.png){#fig-bestf1}
 
@@ -357,7 +365,12 @@ Combining them works better. Counting agreement between products outperformed
 every single product both at ranking neighbourhoods (@fig-agreerank) and at
 flagging individual buildings, where the better agreement thresholds roughly doubled the F1 of any product alone (`{python} N["better_rules_F1_range"]` against the best single product's `{python} N["core_F1_best2"]`; @tbl-dial). So do not spend time choosing a product; spend it counting agreement between
 products. Unlike a fitted model, counting requires no weights, no training data
-and no reference, so it can be done as soon as the second product arrives. Weight the
+and no reference, so it can be done as soon as several products are in hand. Two
+products are not enough on their own: in this event the fifteen possible pairs ranged
+from `{python} N["pair_P_worst"]` to `{python} N["pair_P_best"]` in precision depending on which two. And the
+count is a workload dial, not a known constant: which threshold marked the sweet spot
+here (`{python} N["best_rule"]`) was learned by scoring against the expert map afterwards, so
+set it against the field team's capacity rather than expecting a fixed hit rate. Weight the
 count toward products with independent sensing methods, for the reason given in
 @sec-dial.
 
@@ -377,7 +390,7 @@ product whose metadata allowed the check, two-scene flags were `{python} N["froz
 than single-scene ones. Products should be validated in the kinds of places they are
 deployed; the scene at issue here was the one absent from the provider's validation
 set. And accept feedback during the activation: a crowd campaign
-rejected `{python} N["r1_no_share_pct"]` of one zone's flags within days, and there was no mechanism for returning that
+rejected `{python} N["r1_no_share_pct"]` of one zone's flagged locations within days, and there was no mechanism for returning that
 result to the provider while reprocessing could still help.
 :::
 
@@ -434,7 +447,7 @@ one:
 | reporting region | what it is | used for |
 |---|---|---|
 | **Core region** | the ~`{python} N["core_area_km2"]` km² intersection of the CEMS extents with all five extent-publishing products (@fig-extents): one shared cell set | voting, the pairwise rules, fusion, and the best-F1 geography comparison |
-| **As delivered** | each product's full delivered footprint, wherever CEMS mapped: a different region per product | the as-delivered scorecard and geography benchmark; ranking test 1 |
+| **As delivered** | each product's full delivered footprint, wherever CEMS mapped: a different region per product | as-delivered precision and recall, and the geography benchmark; ranking test 1 |
 
 : The two reporting regions. Sections and captions state which they use. The core
 region gives every predictor an identical cell set (one geography score); as-delivered
@@ -597,8 +610,7 @@ damaged* points as damage, among other loosenings, to bound each product's preci
 from above. Here, @fig-basis re-scores every predictor of @fig-bestf1 under three
 definitions of the reference: *Destroyed* only, the paper's *Damaged or Destroyed*, and
 also counting *possibly damaged*. Every flag list and operating point is frozen, so
-only the reference changes. RQ2q in the analysis archive re-runs the scorecard the same
-way.
+only the reference changes.
 
 The grade choice moves levels, not conclusions. Counting *possibly damaged* roughly
 widens the reference by `{python} N["possibly_ref_growth"]` and lifts every precision by `{python} N["possibly_lift_range"]`, singles and voting rules
@@ -645,7 +657,7 @@ changes.
 
 "Is a CEMS point within r of this building" is measured one way everywhere in this
 brief: from the building's footprint polygon on the shared Overture base. A point on the
-footprint or within r of its edge is a hit, for scorecards, voting rules and the fusion
+footprint or within r of its edge is a hit, for single products, voting rules and the fusion
 labels alike. Products that delivered their own footprints (Microsoft, UNEP, UH) are first mapped
 onto that base one-to-one by one rule: each delivered footprint goes to the overlapping base
 building with the highest intersection-over-union, or, if it overlaps none, to the nearest base
@@ -666,7 +678,7 @@ definitions of what counts as a hit.
 ### Area ranking and error structure: method {#app-ranking-method .unnumbered}
 
 For questions about where damage is concentrated, we aggregate per-building flags to
-hexagonal grid cells at two sizes, roughly `{python} N["h3_res8_km2"]` km² and `{python} N["h3_res7_km2"]` km² (the larger is roughly the size of an operational triage area), and compare each product's ranking of cells against the ranking implied
+hexagonal grid cells (H3) at two levels, resolution 8 (~`{python} N["h3_res8_km2"]` km²) and resolution 7 (~`{python} N["h3_res7_km2"]` km², roughly the size of an operational triage area); the areas are the grid's global averages, and cells at this latitude are somewhat smaller. We compare each product's ranking of cells against the ranking implied
 by CEMS, using rank correlation and top-k overlap.
 
 Whether a ranking survives noisy per-building labels depends on how the noise is arranged
@@ -736,9 +748,9 @@ the six products' performance band (F1 `{python} N["null_F1_2"]` against the pro
 area ranking it performs comparably to the better single products; only the combinations
 exceed it by a wide margin (flat voting `{python} N["vote_over_null"]` F1, fitted fusion `{python} N["fusion_over_null"]`). A covariate
 ablation confirmed the benchmark's strength does not depend on any event-specific
-feature choice: building density alone already falls inside the product band, and a
+feature choice: building density alone comes `{python} N["dens_vs_band"]` (F1 `{python} N["dens_only_F1"]` against the weakest product's `{python} N["prod_F1_min_r10"]`), and a
 fully generalizable terrain-based variant (open Copernicus DEM elevation) is slightly
-stronger than the version reported in v3.
+stronger than the version reported in v3 (F1 `{python} N["dem_variant_F1"]`).
 
 *TBD: the framing of the benchmark comparison is being reworked for this document
 (what it does and does not imply about using satellites); until then, the full
@@ -750,13 +762,20 @@ and "Was the model-versus-product comparison fair?").*
 
 ### The geography null model and weighted fusion, in full {#app-null .unnumbered}
 
+*How to read this section next to the previous one.* This section is imported from the
+frozen v3 manuscript, where the benchmark was reported as a headline result and scored
+across everything each product delivered. The section above states the brief's position
+and scores in the core region. The two agree on the facts and differ in emphasis and in
+frame: across the delivered footprints the benchmark also carries the shaking estimate,
+which is why it looks stronger here than in the core-region comparison above.
+
 Two of this paper's constructions are models rather than products, and both are built the
 same way. The *geography null model* exists to calibrate what the accuracy numbers mean:
 it estimates how much of the damage pattern could be recovered from coarse spatial structure
 and shaking alone, so that a product's score can be read against something other than
 zero. It uses three context variables computed per building, all available within hours
 of any earthquake: distance to the coastline, local building density, and the shaking
-intensity estimated by the USGS ShakeMap. From these it predicts which buildings have CEMS-recorded damage. It is validated by *spatial blocking*: the map is cut into ~`{python} N["h3_res7_km2_0"]` km²
+intensity estimated by the USGS ShakeMap. From these it predicts which buildings have CEMS-recorded damage. It is validated by *spatial blocking*: the map is cut into ~`{python} N["h3_res7_km2"]` km²
 zones and the model is always scored on zones it was not trained on, because neighbouring
 buildings resemble each other in both their features and their damage, and an ordinary
 random split would leak that resemblance into an inflated score (@fig-dayzero-build).
@@ -786,7 +805,7 @@ not, however, a claim that geography was an available substitute.
 How much *event* information the null actually uses differs by analysis layer: in the
 core region the shaking estimate barely varies and the model runs on static geography
 alone, while across the delivered footprints shaking accounts for a quarter to a third of its weight. The as-delivered comparison is consequently the better founded of the two,
-and the core-region comparison should be read strictly as a null (the detail is in the Appendix).
+and the core-region comparison should be read strictly as a null (the detail is in the frozen v3 record, "Was the model-versus-product comparison fair?", at [pages/manuscript](https://ocha-dap.github.io/ds-geospatial-impact-estimates/manuscript/)).
 
 The model's output is not a flag list but a continuous risk score per building. Every
 cutoff on the score is a different flag list, so the model traces a whole curve of
@@ -806,8 +825,15 @@ Two questions of fairness follow from putting a fitted model beside an unfitted
 product. They are scored on the same data: the validation folds partition the
 buildings and every building is scored by a model that never saw it, so models and
 products face identical building sets with identical denominators (the
-threshold-selection mechanics are in the Appendix). And the model is advantaged by
-hindsight, deliberately: it is fitted to this event's reference labels, so it is an
+threshold-selection mechanics are in the frozen v3 record, appendix "The geography null model and weighted fusion, in full"). One further
+hindsight enters through the cut: a product ships one operating point, while each of our
+scores is reported at the threshold that maximised F1 on the pooled out-of-fold scores, a
+cut chosen with the labels in view. Re-choosing that cut on the training folds only and
+applying it blind to each test fold moves the fusion from `{python} N["fusion_F1_hind"]` to `{python} N["fusion_F1_nested"]` F1, the
+geography null from `{python} N["null_F1_hind"]` to `{python} N["null_F1_nested"]`, and flat voting not at all (the
+best count is `{python} N["vote_best_cut"]` in every fold); the fusion's margin over counting is `{python} N["fusion_over_vote_pct_nested"]`
+under the blind cut against `{python} N["fusion_over_vote_pct"]` with hindsight. And the model is advantaged by
+hindsight in a second, deliberate way: it is fitted to this event's reference labels, so it is an
 upper bound on geography-only skill for this event, and the claim it supports is
 about information content (the products add little beyond what three context variables already explain), never the operational claim that responders held such a model on day zero. We return to this in the Limitations.
 
@@ -835,32 +861,32 @@ and correlated those with the CEMS count the same way:
 
 ```{python}
 #| label: tbl-nullrank
-#| tbl-cap: "How well each ranking matches the expert damage count per cell (rank correlation, Spearman's ρ): each product against the geography model, on identical cells within that product's shared region. The two scales are hexagonal grid cells of roughly 5 km² (res 7) and 0.7 km² (res 8). The larger of the two correlations in each row is in bold."
+#| tbl-cap: "How well each ranking matches the expert damage count per cell (rank correlation, Spearman's ρ): each product against the geography model, on identical cells within that product's shared region. The two scales are H3 resolution 7 and resolution 8 hexagons (sizes in the text). The larger of the two correlations in each row is in bold."
 from IPython.display import Markdown
 Markdown(N["_tbl_nullrank"])
 ```
 
-The result is uncomfortable: geography alone ranks these areas better than the
-products do, beating `{python} N["null_beats_n_asd7"]` of the six at the ~`{python} N["h3_res7_km2_0"]` km² scale and `{python} N["null_beats_n_asd8"]` of six at the finer scale. The margins are large (IMPACT `{python} N["rhonull_asd7_IMPACT"]` against `{python} N["rho_asd7_IMPACT"]`, UNEP `{python} N["rhonull_asd7_UNEP"]` against `{python} N["rho_asd7_UNEP"]`),
-and a negative rank correlation for `{python} N["asd_neg_7"]` means an ordering of the ~`{python} N["h3_res7_km2_0"]` km² cells slightly worse than no information at all. Only `{python} N["asd_above_null_7"]` is ahead of the null at the ~`{python} N["h3_res7_km2_0"]` km² scale, and only narrowly (`{python} N["rho_asd7_OSU"]` against
+Across the delivered footprints, geography alone ranks these areas better than the
+products do, beating `{python} N["null_beats_n_asd7"]` of the six at the ~`{python} N["h3_res7_km2"]` km² scale and `{python} N["null_beats_n_asd8"]` of six at the finer scale. The margins are large (IMPACT `{python} N["rhonull_asd7_IMPACT"]` against `{python} N["rho_asd7_IMPACT"]`, UNEP `{python} N["rhonull_asd7_UNEP"]` against `{python} N["rho_asd7_UNEP"]`),
+and a negative rank correlation for `{python} N["asd_neg_7"]` means an ordering of the ~`{python} N["h3_res7_km2"]` km² cells slightly worse than no information at all. Only `{python} N["asd_above_null_7"]` is ahead of the null at the ~`{python} N["h3_res7_km2"]` km² scale, and only narrowly (`{python} N["rho_asd7_OSU"]` against
 `{python} N["rhonull_asd7_OSU"]`).
 
 That comparison spans all five mapped areas, however, and `{python} N["cara_share_pct"]` of the reference damage sits in
 one of them. Much of what it rewards is therefore the coarse discrimination of Caraballeda from
 four quiet AOIs, a task coastline distance and building density solve almost by definition. The
 sharper question is whether the products can out-rank geography *within* the damage zone, and
-there the result is different. Restricting every region to Caraballeda and re-running at
-~`{python} N["h3_res8_km2_1"]` km² cells, `{python} N["cara8_n_above"]` of the six beat the null (@tbl-nullrank-cara): `{python} N["cara8_above"]`;
-`{python} N["cara8_below"]` fall below it; and at ~`{python} N["h3_res9_km2"]` km² `{python} N["cara9_n_above"]` of six are ahead. So the products do contain real information about where within a damaged area to
+there the result is different. Re-running the test in the core region, the brief's
+within-damage-zone frame, at resolution 8 cells, `{python} N["core8_n_above"]` of the six beat the null (@tbl-nullrank-core): `{python} N["core8_above_null"]`;
+`{python} N["core8_below_null"]` fall below it; and at resolution 9 (~`{python} N["h3_res9_km2"]` km²) `{python} N["core9_n_above"]` of six are ahead. So the products do contain real information about where within a damaged area to
 go first: what they do not add is knowledge of which area that is, which is the part
 geography already encodes. The headline five-of-six should be read as a statement about the
 coarse task, not as evidence that the products are uninformative at every scale.
 
 ```{python}
-#| label: tbl-nullrank-cara
-#| tbl-cap: "The same test restricted to the Caraballeda AOI, ~0.7 km² cells, sorted by the product's margin over the geography null. The larger of the two correlations in each row is in bold."
+#| label: tbl-nullrank-core
+#| tbl-cap: "The same test in the core region, resolution 8 cells, sorted by the product's margin over the geography null. The larger of the two correlations in each row is in bold."
 from IPython.display import Markdown
-Markdown(N["_tbl_nullrank_cara"])
+Markdown(N["_tbl_nullrank_core"])
 ```
 
 The caveat stated earlier applies to this interpretation: the null is hindsight-fitted
@@ -879,9 +905,9 @@ with at least 20 buildings) tests exactly that, and the objection fails
 (@fig-fracrank). The null ranks fractions about as well as it ranks counts (ρ
 `{python} N["frac_null_range8"]`): damage *rate* is itself geographically structured in this event, high near
 the coast and low inland, so dividing out the stock removes nothing the null relies on.
-No conclusion changes: the products ahead of the null at ~`{python} N["h3_res8_km2_1"]` km² are `{python} N["count8_above_null"]` by count and `{python} N["frac8_above_null"]` by fraction.
+No conclusion changes: the products ahead of the null at ~`{python} N["h3_res8_km2"]` km² are `{python} N["count8_above_null"]` by count and `{python} N["frac8_above_null"]` by fraction.
 The products themselves split as their grade bias predicts: the coherence
-products gain under fractions (IMPACT `{python} N["frac_count_IMPACT"]` to `{python} N["frac_frac_IMPACT"]` at ~`{python} N["h3_res8_km2_1"]` km²) while the
+products gain under fractions (IMPACT `{python} N["frac_count_IMPACT"]` to `{python} N["frac_frac_IMPACT"]` at ~`{python} N["h3_res8_km2"]` km²) while the
 appearance-based products lose (Microsoft `{python} N["frac_count_MS"]` to `{python} N["frac_frac_MS"]`, UH `{python} N["frac_count_UH"]` to `{python} N["frac_frac_UH"]`).
 Count remains the headline target because the triage question is where the most
 damaged buildings are; the fraction view answers severity, and both give the same
@@ -916,11 +942,7 @@ cells merge visually. IMPACT and OSU residuals follow the coastal severity gradi
 Microsoft's error is a single hard cluster at the west end of its
 region.](figures/rq3_residual_maps_res8.png)
 
-The same cell lattice yields two further results. First, nothing in
-a product's own flag pattern predicts how reliable it is: across the fifteen
-product-and-area combinations, no correlation between the pattern signals (flag rate,
-clustering, agreement with other products) and measured reliability was statistically
-distinguishable from zero. Second, mapping each product's errors cell by cell, `{python} N["lisa_ns_range"]` of
+The same cell lattice yields one further result. Mapping each product's errors cell by cell, `{python} N["lisa_ns_range"]` of
 each product's territory shows errors scattered at random (noise rather than bias), with
 the failures concentrated in a few identifiable pockets; Microsoft's western strip,
 taken up in the [west-strip case study](#app-weststrip), is the largest.
@@ -936,13 +958,13 @@ above assumes CEMS is complete within its extents. The next section tests that
 assumption.
 
 
-### The scorecard in both frames, in full {#app-frames .unnumbered}
+### Precision and recall in both frames, in full {#app-frames .unnumbered}
 
-The pooled scorecard is one place's scorecard. That fact bounds every headline number in this paper. CEMS activated five separate AOIs,
+The pooled numbers are one place's numbers. That fact bounds every headline number in this paper. CEMS activated five separate AOIs,
 but `{python} N["cara_share_pct"]` of its damage points sit in one of them: Caraballeda (`{python} N["cara_points"]` points, against `{python} N["moron_points"]`
 in Morón, `{python} N["sanfelipe_points"]` in San Felipe, and `{python} N["caracas_points"]` each in Caracas and Santa Cruz). Splitting the
-scorecard by AOI (@fig-peraoi) shows two things. First, the pooled numbers *are*
-Caraballeda's numbers: the per-AOI Caraballeda row reproduces the headline scorecard
+results by AOI (@fig-peraoi) shows two things. First, the pooled numbers *are*
+Caraballeda's numbers: the Caraballeda row reproduces the headline precision and recall
 almost exactly. Second, outside Caraballeda every product keeps flagging at scale
 (IMPACT marks `{python} N["flags_Caracas_IMPACT"]` buildings in the Caracas AOI, UH marks `{python} N["flags_SantaCruz_UH"]`, `{python} N["flagshare_SantaCruz_UH"]` of the stock,
 in Santa Cruz) while measured precision collapses to `{python} N["outside_P_range"]` everywhere. Those zeros are lower bounds against a
@@ -957,7 +979,12 @@ every performance claim in this paper describes dense-damage coastal terrain, an
 low-damage AOIs the products' flags are almost entirely uncorroborated by any reference
 we have.
 
-Pooling all five AOIs gives the *as-delivered* scorecard: the product as a responder received it, low-damage zones included. As-delivered precision: `{python} N["asd_P_sorted"]`. UH's number is
+Pooling all five AOIs gives the *as-delivered* numbers: the product as a responder received it, low-damage zones included. As-delivered precision: `{python} N["asd_P_sorted"]`. One assumption
+is doing more work here than in the core region: UNEP published no analysed extent, so in
+this frame it is scored as if it had examined all five expert-mapped areas, Caracas and the
+inland towns included. Where UNEP has no flags there, that may mean "never looked" rather
+than "saw nothing", so its as-delivered precision and recall are the values under that
+stated assumption, not measurements of a delivery whose scope we know. UH's number is
 `{python} N["asd_UH_ratio"]` times worse than its best-case `{python} N["core_P_UH"]`, because most of its flags sit in the
 low-damage AOIs (`{python} N["flags_SantaCruz_UH"]` in Santa Cruz alone). And Microsoft's number is *unchanged*,
 because it published flags only for the coastal strip it had analysed carefully. Restraint in coverage is itself a product
@@ -1104,8 +1131,8 @@ why.
 
 One provider revised its product after the study window: OSU delivered a v1 on 22 July
 (confidence tiers, expanded coverage, `{python} N["osu_v1_delivered"]` flags versus v0's `{python} N["osu_v0_delivered"]`). We score v0 throughout, because v0 is what responders had during the response; the operational dashboard now uses v1. Since both versions are built on the same building base, they can be scored identically on the common extent against the same `{python} N["osu_common_cems"]` CEMS
-points (this comparison spans OSU's full extent, so its precision runs lower than the
-core-region scorecard figure). The result: precision `{python} N["osu_v0_P"]` (v0) versus `{python} N["osu_v1_P"]` (v1),
+points (this comparison spans OSU's full extent, so its precision runs lower than its
+core-region value). The result: precision `{python} N["osu_v0_P"]` (v0) versus `{python} N["osu_v1_P"]` (v1),
 recall `{python} N["osu_v0_R"]` versus `{python} N["osu_v1_R"]`, minimal accuracy change, while more than half the flag list turned over (v1
 dropped `{python} N["osu_dropped"]` of v0's `{python} N["osu_v0_on_base"]` flags and added `{python} N["osu_added"]` new ones). A revision that
 relabels half the buildings without moving precision or recall is itself evidence for

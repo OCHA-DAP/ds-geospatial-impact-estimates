@@ -28,6 +28,10 @@ FROZEN = os.path.join(PAPER, "frozen")            # signed-off copies of the hea
 ORACLE_ROOT = os.path.join(PAPER, "artefacts")   # the archive: only the --oracle build reads it
 PRODUCTS = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 RULES = [f"{k}-of-6" for k in range(1, 7)]
+# The six pairs the ARCHIVED rq5b script computed (2026-07-15 benchmark set). Only the --oracle
+# adapter below reads them; the pipeline's own 15-pair set is defined in paperlib.PAIRS and reaches
+# results.csv through pipeline/results_scorecards.csv, not through this list. (No paperlib import
+# here: diff_results.py copies this file alone into a temp dir and runs it there.)
 PAIRS = ["IMPACT∧OSU", "MS∧UH", "MS∧LIST", "LIST∧UH", "UNEP∧OSU", "MS∧UNEP"]
 
 
@@ -222,6 +226,22 @@ def rq8c():
                      n_flags=x.get("n_flags"), n_pos=x.get("n_pos")) for _, x in load(rel).iterrows()), [])
 
 
+def rq8d():
+    """Null appendix: covariate ablation of the geography null (labels lens, core, 10 m). Predictor = feature set."""
+    rel = "RQ8-learned-fusion/rq8d_null_ablation.csv"
+    return sum((rows("core", "labels-ablation", 10, x["features"], rel, AP=x.get("AP"), F1=x.get("best_F1"), P=x.get("P"), R=x.get("R"),
+                     rho_res8=x.get("rho_res8"), rho_res9=x.get("rho_res9")) for _, x in load(rel).iterrows()), [])
+
+
+def rq8e():
+    """Fairness paragraph: hindsight vs nested (training-fold) threshold for null, fusion and voting (labels lens, core, 10 m)."""
+    rel = "RQ8-learned-fusion/rq8e_threshold_bias_r10.csv"
+    tag = {"hindsight, one global cut on all scores": "hindsight", "nested, per-fold cut chosen on training folds": "nested",
+           "difference (nested - hindsight)": "delta"}
+    return sum((rows("core", "labels-threshold", 10, x["predictor"], rel, **{f"{m}_{tag[x['method']]}": x.get(m) for m in ("precision", "recall", "f1", "n_flags")})
+                for _, x in load(rel).iterrows()), [])
+
+
 def rq9():
     out = []
     rel = "RQ9-uncertainty/rq9_ci_core.csv"
@@ -273,7 +293,7 @@ def pipeline_rows(name):
 # Current sources: the compact modules (ADR-0032) plus adapters over the frozen heavy chain and
 # the appendix-only diagnostics that were not migrated (their scripts remain under artefacts/).
 SOURCES = [pipeline_rows("scorecards"), pipeline_rows("ranking"), pipeline_rows("facts"),
-           rq2h, rq2p, rq2_density_null, rq2_ms_confidence, rq3g, rq3b, rq3d, rq8, rq8b, rq8c, rq9, rq7, frame]
+           rq2h, rq2p, rq2_density_null, rq2_ms_confidence, rq3g, rq3b, rq3d, rq8, rq8b, rq8c, rq8d, rq8e, rq9, rq7, frame]
 
 # The oracle: every number from the frozen per-RQ scripts, as consolidated on 2026-09-14
 # (artefacts/results_oracle_frozen.csv). `python consolidate.py --oracle` rebuilds it.

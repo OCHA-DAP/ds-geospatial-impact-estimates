@@ -47,9 +47,39 @@ for _, r in singles.iterrows():
 
 ax.scatter(pairs.R_cems, pairs.P_cems, facecolors="none", edgecolors="#6b7684", s=70,
            lw=1.4, zorder=3, label="two-product agreement rules")
-best = pairs.loc[pairs.P_cems.idxmax()]
-ax.annotate(best.rule, (best.R_cems, best.P_cems), textcoords="offset points",
-            xytext=(7, 2), fontsize=10, color="#6b7684")
+# label every pair (all 15 are drawn). Labels start beside their marker and are pushed apart
+# from each other and from every other marker (singles, k-squares) in axes coordinates, then
+# joined to their marker by a hairline where they had to move.
+import numpy as np
+xmax = max(1.0, float(df.R_cems.max()) + 0.05)
+def to_ax(x, y): return np.array([x / xmax, y / 1.0])
+obstacles = [to_ax(r.R_cems, r.P_cems) for _, r in pd.concat([singles, kof]).iterrows()]
+lab = pairs.reset_index(drop=True)
+pos = np.array([to_ax(r.R_cems, r.P_cems) + np.array([0.012, 0.012]) for _, r in lab.iterrows()])
+anchors = np.array([to_ax(r.R_cems, r.P_cems) for _, r in lab.iterrows()])
+# labels are wide and short, so clearance is elliptical: ~0.11 of the axes wide, ~0.035 tall
+SCALE = np.array([0.11, 0.035])
+def push(i, other, factor=1.0):
+    d = (pos[i] - other) / (SCALE * factor); n = np.linalg.norm(d)
+    if n < 1.0:
+        pos[i] += (d / (n + 1e-9)) * (1.0 - n) * 0.5 * SCALE * factor
+        return True
+    return False
+for _ in range(600):
+    moved = False
+    for i in range(len(pos)):
+        for j in range(len(pos)):
+            if i != j:
+                moved |= push(i, pos[j])
+        for o in obstacles + [a for k, a in enumerate(anchors) if k != i]:
+            moved |= push(i, o, 0.7)
+        pos[i] = np.clip(pos[i], 0.04, 0.96)
+    if not moved:
+        break
+for i, r in lab.iterrows():
+    ax.annotate(r.rule, xy=(r.R_cems, r.P_cems), xytext=(pos[i][0], pos[i][1]), textcoords="axes fraction",
+                fontsize=8, color="#6b7684", ha="center", va="center",
+                arrowprops=dict(arrowstyle="-", lw=0.5, color="#b0b7bf", shrinkA=0, shrinkB=4))
 
 ax.plot(kof.R_cems, kof.P_cems, c="#2a78d6", lw=1.6, zorder=4)
 ax.scatter(kof.R_cems, kof.P_cems, c="#2a78d6", s=190, marker="s", zorder=5,
@@ -58,7 +88,7 @@ for _, r in kof.iterrows():
     ax.annotate(str(int(r.k)), (r.R_cems, r.P_cems), ha="center", va="center",
                 fontsize=10, color="white", zorder=6)
 
-ax.set_xlabel("recall (CEMS {2,3}, scorecard frame: dual-anchor r = 10 m)", fontsize=12)
+ax.set_xlabel("recall (CEMS {2,3}, core region, r = 10 m)", fontsize=12)
 ax.set_ylabel("precision (CEMS floor, same frame)", fontsize=12)
 ax.tick_params(labelsize=11)
 ax.set_xlim(0, max(1.0, float(df.R_cems.max()) + 0.05))   # data-driven: a fixed 0.85 once clipped 1-of-6 and 2-of-6 (recall .95, .90)
