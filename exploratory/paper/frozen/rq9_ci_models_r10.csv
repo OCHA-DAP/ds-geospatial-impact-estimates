@@ -17,24 +17,24 @@ LIST (as shipped),F1,0.151,0.108,0.198
 UNEP (as shipped),P,0.117,0.066,0.185
 UNEP (as shipped),R,0.317,0.228,0.412
 UNEP (as shipped),F1,0.171,0.105,0.248
-geography null (logistic),P,0.1,0.072,0.131
-geography null (logistic),R,0.622,0.517,0.742
-geography null (logistic),F1,0.172,0.129,0.217
-geography null (rand. forest),P,0.082,0.059,0.109
-geography null (rand. forest),R,0.523,0.449,0.609
-geography null (rand. forest),F1,0.142,0.106,0.181
-weighted fusion,P,0.37,0.276,0.448
-weighted fusion,R,0.372,0.28,0.461
-weighted fusion,F1,0.371,0.289,0.433
+geography null (logistic),P,0.09,0.066,0.115
+geography null (logistic),R,0.676,0.527,0.795
+geography null (logistic),F1,0.159,0.118,0.199
+geography null (rand. forest),P,0.097,0.067,0.129
+geography null (rand. forest),R,0.52,0.424,0.594
+geography null (rand. forest),F1,0.164,0.117,0.21
+weighted fusion,P,0.363,0.264,0.445
+weighted fusion,R,0.352,0.236,0.462
+weighted fusion,F1,0.357,0.261,0.429
 flat k-of-6 voting,P,0.268,0.181,0.354
 flat k-of-6 voting,R,0.406,0.302,0.503
 flat k-of-6 voting,F1,0.323,0.233,0.399
-MS (as shipped) − null (logit),F1_diff,0.019,-0.031,0.075
-IMPACT (as shipped) − null (logit),F1_diff,-0.0,-0.042,0.045
-OSU (as shipped) − null (logit),F1_diff,-0.047,-0.08,-0.013
-UH (as shipped) − null (logit),F1_diff,0.007,-0.043,0.067
-LIST (as shipped) − null (logit),F1_diff,-0.021,-0.055,0.013
-UNEP (as shipped) − null (logit),F1_diff,-0.005,-0.058,0.063
-geography null (rand. forest) − null (logit),F1_diff,-0.03,-0.049,-0.012
-weighted fusion − null (logit),F1_diff,0.194,0.139,0.25
-flat k-of-6 voting − null (logit),F1_diff,0.147,0.081,0.212
+MS (as shipped) − null (logit),F1_diff,0.034,-0.013,0.086
+IMPACT (as shipped) − null (logit),F1_diff,0.013,-0.023,0.058
+OSU (as shipped) − null (logit),F1_diff,-0.033,-0.059,-0.001
+UH (as shipped) − null (logit),F1_diff,0.021,-0.029,0.081
+LIST (as shipped) − null (logit),F1_diff,-0.008,-0.034,0.027
+UNEP (as shipped) − null (logit),F1_diff,0.01,-0.035,0.067
+geography null (rand. forest) − null (logit),F1_diff,0.004,-0.016,0.026
+weighted fusion − null (logit),F1_diff,0.195,0.125,0.255
+flat k-of-6 voting − null (logit),F1_diff,0.16,0.1,0.221

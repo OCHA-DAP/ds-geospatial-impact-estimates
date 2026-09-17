@@ -1,10 +1,10 @@
 predictor,method,precision,recall,f1,n_flags,threshold
-geography null (logistic),"hindsight, one global cut on all scores",0.0998,0.6221,0.172,12864,0.6228
-geography null (logistic),"nested, per-fold cut chosen on training folds",0.0935,0.5291,0.1589,11684,
-geography null (logistic),difference (nested - hindsight),-0.0064,-0.093,-0.0132,-1180,
-weighted fusion,"hindsight, one global cut on all scores",0.3701,0.3721,0.3711,2075,0.8806
-weighted fusion,"nested, per-fold cut chosen on training folds",0.3633,0.3716,0.3674,2111,
-weighted fusion,difference (nested - hindsight),-0.0068,-0.0005,-0.0037,36,
+geography null (logistic),"hindsight, one global cut on all scores",0.0903,0.6759,0.1592,15456,0.622
+geography null (logistic),"nested, per-fold cut chosen on training folds",0.0738,0.4961,0.1285,13873,
+geography null (logistic),difference (nested - hindsight),-0.0164,-0.1797,-0.0307,-1583,
+weighted fusion,"hindsight, one global cut on all scores",0.363,0.3517,0.3573,2000,0.8851
+weighted fusion,"nested, per-fold cut chosen on training folds",0.3489,0.3406,0.3447,2015,
+weighted fusion,difference (nested - hindsight),-0.0141,-0.0111,-0.0126,15,
 flat k-of-6 voting,"hindsight, one global cut on all scores",0.268,0.4055,0.3227,3123,4.0
 flat k-of-6 voting,"nested, per-fold cut chosen on training folds",0.268,0.4055,0.3227,3123,
 flat k-of-6 voting,difference (nested - hindsight),0.0,0.0,0.0,0,

@@ -22,17 +22,19 @@ core buildings through the exact null pipeline:
 
 | null features | building F1 | ranking ρ (res 8) |
 |---|---|---|
-| density alone | 0.086 | 0.54 |
-| density + coast + MMI (v3's null) | 0.127 | 0.65 |
-| density + elevation + MMI | 0.143 | 0.71 |
-| density + slope + elevation + MMI | 0.144 | 0.72 |
-| density + slope + elevation + coast + MMI | 0.151 | 0.72 |
-| density + SoilGrids sand/clay + MMI | 0.085 | 0.54 |
+| density alone | 0.117 | 0.54 |
+| density + coast + MMI (v3's null) | 0.171 | 0.64 |
+| density + elevation + MMI | 0.181 | 0.70 |
+| density + slope + elevation + MMI | 0.176 | 0.70 |
+| density + slope + elevation + coast + MMI | 0.194 | 0.71 |
+| density + SoilGrids sand/clay + MMI | 0.123 | 0.54 |
 
-Coast was never load-bearing: density alone sits at the bottom of the product band, and once slope
-and elevation are in, coast adds ~0.007 F1. A null built only from globally available terrain
-(Copernicus GLO-30) is *stronger* than the published one, so no product was flattered by the
-change. Elevation has named physics here: the low surfaces are the debris-flow fans USGS mapped
+(Values as re-signed under the polygon frame on 2026-09-14, `frozen/rq8d_null_ablation.csv`; the
+2026-09-02 centroid-frame run that prompted the decision read 0.086 / 0.127 / 0.143 / 0.144 / 0.151 /
+0.085 with the same ordering.) Coast was never load-bearing: density alone sits at the bottom of the
+product band, and once slope and elevation are in, coast adds ~0.02 F1. A null built only from globally
+available terrain (Copernicus GLO-30) matches or beats the published one in that pipeline, so no product
+was flattered by the change. Elevation has named physics here: the low surfaces are the debris-flow fans USGS mapped
 after the 1999 Vargas disaster (Wieczorek et al., OFR 01-0144). Global soil products cannot see
 inside a city (86% of core buildings sample SoilGrids no-data); local geology (FUNVISIS
 microzonation, INGEOMIN, the 1999 fan plates) exists only as PDF cartography and is parked.
