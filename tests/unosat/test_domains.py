@@ -1,3 +1,4 @@
+import shutil
 import zipfile
 
 import pandas as pd
@@ -68,14 +69,26 @@ def test_domains_for_gdb_zip_without_gdb(tmp_path):
     p = tmp_path / "x.zip"
     with zipfile.ZipFile(p, "w") as z:
         z.writestr("a.shp", b"x")
-    rows, status = domains.domains_for_gdb_zip("s" * 64, p)
-    assert rows == [] and status == "no_gdb_in_zip"
+    rows, status, error = domains.domains_for_gdb_zip("s" * 64, p)
+    assert rows == [] and status == "no_gdb_in_zip" and error is None
 
 
 def test_ogrinfo_missing_binary_raises(monkeypatch, tmp_path):
     monkeypatch.setenv("PATH", str(tmp_path))  # no ogrinfo here
-    with pytest.raises(RuntimeError, match="ogrinfo"):
+    with pytest.raises(domains.OgrinfoError, match="ogrinfo"):
         domains.ogrinfo_json(tmp_path / "nothing.gdb")
+
+
+def test_domains_for_gdb_zip_records_unreadable_gdb(tmp_path):
+    if shutil.which("ogrinfo") is None:
+        pytest.skip("ogrinfo not on PATH")
+    p = tmp_path / "x.zip"
+    with zipfile.ZipFile(p, "w") as z:
+        z.writestr("X.gdb/junk.txt", b"not a real gdb")
+    rows, status, error = domains.domains_for_gdb_zip("s" * 64, p)
+    assert rows == []
+    assert status == "gdb_unreadable"
+    assert "ogrinfo failed" in error
 
 
 def test_persist_writes_typed_empty_rows_and_one_status_row(tmp_path):
@@ -141,3 +154,21 @@ def test_persist_writes_rows_before_status(tmp_path, monkeypatch):
         domains.persist(tmp_path, [], [domains.status_row("s" * 64, "no_domains", 0)])
     assert (tmp_path / "domains.parquet").exists()
     assert not (tmp_path / "domains_status.parquet").exists()
+
+
+def test_persist_accepts_legacy_status_file_without_error_column(tmp_path):
+    legacy = pd.DataFrame(
+        [
+            {
+                "sha256": "a" * 64,
+                "status": "ok",
+                "n_rows": 1,
+                "processed_at": "2020-01-01T00:00:00+00:00",
+            }
+        ]
+    )
+    legacy.to_parquet(tmp_path / "domains_status.parquet")
+    domains.persist(tmp_path, [], [domains.status_row("b" * 64, "no_domains", 0)])
+    status = pd.read_parquet(tmp_path / "domains_status.parquet")
+    assert len(status.columns) == 5
+    assert len(status) == 2

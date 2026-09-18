@@ -11,6 +11,7 @@ Run:  uv run --group etl --group api python pipelines/unosat/domains.py [--stage
 from __future__ import annotations
 
 import argparse
+import shutil
 from pathlib import Path
 
 import ocha_stratus as stratus
@@ -30,6 +31,9 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--stage", default="dev", choices=["dev", "prod"])
     ap.add_argument("--limit", type=int, default=None)
     args = ap.parse_args(argv)
+
+    if shutil.which("ogrinfo") is None:
+        raise RuntimeError("ogrinfo not found on PATH — install GDAL (brew install gdal)")
 
     led = pd.read_parquet(args.work_dir / "resources.parquet")
     gdbs = led[(led["format"] == "Geodatabase") & led["status"].isin(common.UPLOADED_STATUSES)]
@@ -52,10 +56,12 @@ def main(argv: list[str] | None = None) -> None:
                 r.sha256, r.resource_name,
                 lambda r=r: cc.download_blob(common.blob_path(r.sha256, r.resource_name)).readall(),
             )
-            rows, status = domains.domains_for_gdb_zip(r.sha256, path)
+            rows, status, error = domains.domains_for_gdb_zip(r.sha256, path)
             all_rows.extend(rows)
-            statuses.append(domains.status_row(r.sha256, status, len(rows)))
+            statuses.append(domains.status_row(r.sha256, status, len(rows), error))
             print(f"  [{i}/{len(todo)}] {r.resource_name} {status} ({len(rows)} rows)", flush=True)
+            if status == "gdb_unreadable":
+                print(f"    ** gdb_unreadable: {error}", flush=True)
             if i % CHECKPOINT_EVERY == 0:
                 domains.persist(args.work_dir, all_rows, statuses)
                 all_rows, statuses = [], []

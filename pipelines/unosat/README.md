@@ -14,7 +14,7 @@ global/unosat/bronze/_meta/datasets.parquet        HDX dataset metadata
 global/unosat/bronze/_meta/resources.parquet       THE LEDGER (one row per resource version)
 global/unosat/bronze/_meta/zip_contents.parquet    member inventory per target
 global/unosat/bronze/_meta/domains.parquet         (sha256, layer, field, domain, code, value)
-global/unosat/bronze/_meta/domains_status.parquet  per-GDB: ok | no_domains | no_gdb_in_zip
+global/unosat/bronze/_meta/domains_status.parquet  per-GDB: ok | no_domains | no_gdb_in_zip | gdb_unreadable
 global/unosat/bronze/_meta/transfers.jsonl         append-only journal
 ```
 

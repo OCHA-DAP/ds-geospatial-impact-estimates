@@ -20,16 +20,20 @@ from pathlib import Path
 import pandas as pd
 
 ROWS_COLUMNS = ["sha256", "layer", "field", "domain_name", "code", "value"]
-STATUS_COLUMNS = ["sha256", "status", "n_rows", "processed_at"]
+STATUS_COLUMNS = ["sha256", "status", "n_rows", "processed_at", "error"]
+
+
+class OgrinfoError(RuntimeError):
+    """ogrinfo could not be run, or failed on a given GDB."""
 
 
 def ogrinfo_json(gdb_path: Path) -> dict:
     exe = shutil.which("ogrinfo")
     if exe is None:
-        raise RuntimeError("ogrinfo not found on PATH — install GDAL (brew install gdal)")
+        raise OgrinfoError("ogrinfo not found on PATH — install GDAL (brew install gdal)")
     proc = subprocess.run([exe, "-json", "-ro", str(gdb_path)], capture_output=True, text=True)
     if proc.returncode != 0:
-        raise RuntimeError(f"ogrinfo failed on {gdb_path}: {proc.stderr.strip()[:500]}")
+        raise OgrinfoError(f"ogrinfo failed on {gdb_path}: {proc.stderr.strip()[:500]}")
     return json.loads(proc.stdout)
 
 
@@ -61,29 +65,39 @@ def domain_rows(sha256: str, info: dict) -> list[dict]:
     return rows
 
 
-def domains_for_gdb_zip(sha256: str, zip_path: Path) -> tuple[list[dict], str]:
-    """Extract the zip to a temp dir, run ogrinfo on each .gdb inside, collect rows."""
+def domains_for_gdb_zip(sha256: str, zip_path: Path) -> tuple[list[dict], str, str | None]:
+    """Extract the zip to a temp dir, run ogrinfo on each .gdb inside, collect rows.
+
+    An unreadable GDB (ogrinfo cannot open it) is an upstream property of that
+    archived object, not a bug in our code: it is recorded as ``gdb_unreadable``
+    with the ogrinfo error text, not raised, so one bad geodatabase never kills
+    the rest of the run.
+    """
     with zipfile.ZipFile(zip_path) as z:
         gdb_dirs = sorted({n.split(".gdb/")[0] + ".gdb" for n in z.namelist() if ".gdb/" in n})
         if not gdb_dirs:
-            return [], "no_gdb_in_zip"
+            return [], "no_gdb_in_zip", None
         tmp = Path(tempfile.mkdtemp(prefix="unosat_gdb_"))
         try:
             z.extractall(tmp)
             rows: list[dict] = []
             for g in gdb_dirs:
-                rows.extend(domain_rows(sha256, ogrinfo_json(tmp / g)))
+                try:
+                    rows.extend(domain_rows(sha256, ogrinfo_json(tmp / g)))
+                except OgrinfoError as e:
+                    return [], "gdb_unreadable", str(e)[:500]
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
-    return rows, ("ok" if rows else "no_domains")
+    return rows, ("ok" if rows else "no_domains"), None
 
 
-def status_row(sha256: str, status: str, n_rows: int) -> dict:
+def status_row(sha256: str, status: str, n_rows: int, error: str | None = None) -> dict:
     return {
         "sha256": sha256,
         "status": status,
         "n_rows": n_rows,
         "processed_at": datetime.now(UTC).isoformat(timespec="seconds"),
+        "error": error,
     }
 
 
@@ -107,7 +121,7 @@ def persist(work_dir: Path, new_rows: list[dict], new_status: list[dict]) -> Non
 
     status_path = work_dir / "domains_status.parquet"
     old_status = (
-        pd.read_parquet(status_path)
+        pd.read_parquet(status_path).reindex(columns=STATUS_COLUMNS)
         if status_path.exists()
         else pd.DataFrame(columns=STATUS_COLUMNS)
     )
