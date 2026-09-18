@@ -63,7 +63,8 @@ GDB and GPKG resources (1,516 readable), and 43 full zips downloaded across
 | datasets, all hazards | 1,465 |
 | resources (SHP 621+, GDB 559+, XLSX 151, KMZ 15, GPKG 1) | 2,984 |
 | licences (dataset level) | cc-by-sa 1,119, hdx-other 321, cc-by 23, cc-by-igo 2 |
-| nominal bytes, all resources / uncompressed | 75 GB / 124 GB |
+| bytes: distinct URLs / distinct content / flood+cyclone distinct content | 29.6 GB / 22.3 GB / 19.7 GB (uncompressed members total 124 GB) |
+| silver working set (GDB where present, SHP only where not) | 7.6 GB, 410 zips |
 | zips identical in content to another zip | 515 of 1,516 |
 | zip members appearing in more than one zip | 28,451 of 81,937 |
 | distinct event codes parsed from resource names | 296 (`FL` 1,249 resources, `TC` 536, `CE` 333, `EQ` 221, other 173) |
@@ -161,8 +162,8 @@ blob={sha256}/{basename}`, with `cache_dir` from `GIE_CACHE_DIR` or
 cache is never stale: a file exists at its hash path or it does not. Harvest
 writes through (it holds the bytes to test and hash them anyway); silver
 reads through (local path, else fetch from blob and keep). Blob is the source
-of truth; the cache is disposable; `--no-cache` disables it. Budget ~50 GB
-after dedup.
+of truth; the cache is disposable; `--no-cache` disables it. Budget ~8 GB for the
+silver working set, ~22 GB if the whole bronze is mirrored.
 
 Rejected: `pooch` (static registry of names and hashes; our ledger is the
 registry and the corpus is discovered dynamically), `fsspec` `filecache::`
@@ -358,7 +359,7 @@ sampled zips.
 ## Phasing
 
 1. Discovery + harvest + domains + audit B-rules. Harvest runs unattended
-   (~75 GB nominal, far less after dedup).
+   (~22 GB of distinct content).
 2. Silver + audit S-rules + processing ledger, GDB-first.
 3. Gold v2 + report + audit G-rules; fusion reader in `ds-flood-gfm` updated.
 4. Follow-ups, each its own ADR: CEMS gold v2 rebuild; CEMS hydrography
