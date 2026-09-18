@@ -133,7 +133,8 @@ dropped.
 For each `pending` row: download → `testzip` → inventory members → sha256 →
 if `bronze/blob={sha256}/` already holds the basename with matching size,
 record `uploaded_dedup` without uploading; else upload via `gie.blobio` →
-verify size → record `uploaded`. Journal every attempt in the
+verify size → record `uploaded`. The downloaded file is kept in the local
+cache (§2b). Journal every attempt in the
 `data_transfers.jsonl` record shape with origin URL, host and the dataset's
 stated licence. Terminal upstream states are explicit statuses:
 `unavailable_404`, `corrupt_upstream` (HTTP 200 but not a zip). Neither is
@@ -151,6 +152,31 @@ binding is **per layer and field**, not per GDB: the same GDB binds
 domains coexist (`Sensor_ID` legacy, `SensorID_v2`; VIIRS-NOAA = 53,
 Sentinel-1 = 42, Sentinel-2 = 44, Pleiades = 35, "Combination of Sensors" =
 999).
+
+## 2b. Local cache and download model
+
+**Cache.** A local mirror of the bronze layout, `{cache_dir}/unosat/bronze/
+blob={sha256}/{basename}`, with `cache_dir` from `GIE_CACHE_DIR` or
+`platformdirs.user_cache_dir("gie")`. Because paths are content-addressed the
+cache is never stale: a file exists at its hash path or it does not. Harvest
+writes through (it holds the bytes to test and hash them anyway); silver
+reads through (local path, else fetch from blob and keep). Blob is the source
+of truth; the cache is disposable; `--no-cache` disables it. Budget ~50 GB
+after dedup.
+
+Rejected: `pooch` (static registry of names and hashes; our ledger is the
+registry and the corpus is discovered dynamically), `fsspec` `filecache::`
+(caches by URL; redundant once paths are content-addressed), DVC (a second
+content-addressed store beside the ledger and blob machinery already here).
+
+**Download model.** Thread pool, six workers, as `cems_flood/harvest.py`
+(twelve broke uploads on a home uplink). Asyncio is rejected: the ceiling is
+politeness and uplink, not Python, and each item does CPU work (zip test,
+hash, inventory) that does not belong on an event loop. Differences from
+CEMS: stream to disk (a 337 MB zip exists in the corpus), hash while
+streaming in one pass, and a per-host concurrency cap with back-off since
+five hosts share the pool. External copiers (rclone) are rejected because
+per-file verification into the ledger is the point.
 
 ## 3. Silver (`silver.py`)
 
