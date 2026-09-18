@@ -12,6 +12,22 @@ from typing import Protocol
 from gie import blobio
 
 
+def drop_directory_entries(sizes: dict[str, int]) -> dict[str, int]:
+    """Drop keys that are a strict path-prefix of another key.
+
+    On a hierarchical-namespace (ADLS Gen2) account, listing returns one
+    zero-byte entry per directory in addition to the file entries under it;
+    those directory placeholders aren't objects we archived and must not be
+    counted as such.
+    """
+    keys = list(sizes)
+    return {
+        k: v
+        for k, v in sizes.items()
+        if not any(other.startswith(k + "/") for other in keys if other != k)
+    }
+
+
 class BlobStore(Protocol):
     def exists_size(self, path: str) -> int | None: ...
     def upload(self, path: str, data: bytes) -> None: ...
@@ -56,4 +72,5 @@ class DataLakeStore:
             raise OSError(f"size mismatch after upload: blob={got} local={len(data)}")
 
     def list_sizes(self, prefix: str) -> dict[str, int]:
-        return {b.name: b.size for b in self._cc.list_blobs(name_starts_with=prefix)}
+        sizes = {b.name: b.size for b in self._cc.list_blobs(name_starts_with=prefix)}
+        return drop_directory_entries(sizes)
