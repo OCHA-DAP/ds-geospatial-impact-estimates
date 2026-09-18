@@ -1,6 +1,7 @@
 import hashlib
 import zipfile
 
+import pandas as pd
 import pytest
 import requests
 
@@ -34,6 +35,13 @@ def test_happy_path_uploads_hashes_inventories_and_caches(ledger_row, good_zip):
     assert st.exists_size(path) == len(good_zip)
     assert cache.cache_path(sha, "FL20220424SSD_SHP.zip").read_bytes() == good_zip
     assert updates["attempts"] == 1 and updates["http_status"] == 200
+
+
+def test_attempts_tolerates_pd_na_on_first_attempt(ledger_row, good_zip):
+    row = ledger_row.copy()
+    row["attempts"] = pd.NA
+    updates, _, _ = _run(row, FakeResponse(200, good_zip))
+    assert updates["attempts"] == 1
 
 
 def test_dedup_when_blob_already_holds_content(ledger_row, good_zip):

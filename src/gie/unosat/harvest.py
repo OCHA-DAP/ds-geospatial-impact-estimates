@@ -88,7 +88,9 @@ def process_target(
     use_cache: bool = True,
 ) -> tuple[dict, list[dict]]:
     """One ledger row -> (ledger updates, member inventory rows)."""
-    updates: dict = {"attempts": int(row["attempts"] or 0) + 1, "attempted_at": _now()}
+    prev = row["attempts"]
+    attempts = (int(prev) if pd.notna(prev) else 0) + 1
+    updates: dict = {"attempts": attempts, "attempted_at": _now()}
     basename = row["resource_name"]
     tmpdir = Path(tempfile.mkdtemp(prefix="unosat_"))
     tmp = tmpdir / basename
