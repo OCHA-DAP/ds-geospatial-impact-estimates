@@ -9,6 +9,8 @@ transfer outcomes survive (same model as cems_flood/discovery.py).
 
 from __future__ import annotations
 
+import contextlib
+
 import pandas as pd
 
 from gie.unosat import common
@@ -23,14 +25,12 @@ _TRANSFER_STATUSES = common.UPLOADED_STATUSES | common.RETRYABLE_STATUSES | comm
 def fetch_unosat_datasets(user_agent: str = common.USER_AGENT) -> list[dict]:
     """Every dataset of HDX organisation ``unosat`` with its resources, as plain
     dicts. Live call; not unit-tested (the pure functions below are)."""
-    from hdx.api.configuration import Configuration
+    from hdx.api.configuration import Configuration, ConfigurationError
     from hdx.data.dataset import Dataset
 
-    try:
+    # already configured earlier in this process; read-only either way
+    with contextlib.suppress(ConfigurationError):
         Configuration.create(hdx_site="prod", user_agent=user_agent, hdx_read_only=True)
-    except Exception as e:  # already configured in this process
-        if "already" not in str(e).lower():
-            raise
     datasets = Dataset.search_in_hdx(fq="organization:unosat", page_size=1000)
     out: list[dict] = []
     for ds in datasets:
