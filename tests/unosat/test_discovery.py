@@ -40,6 +40,36 @@ DS = {
 }
 
 
+DS2 = {
+    "id": "ds-2",
+    "name": "satellite-detected-water-extents-south-sudan-followup",
+    "title": "Satellite detected water extents follow-up over South Sudan",
+    "dataset_date": "[2024-12-22T00:00:00 TO 2024-12-22T23:59:59]",
+    "metadata_created": "2024-12-22T10:00:00.000000",
+    "metadata_modified": "2024-12-22T10:00:00.000000",
+    "license_id": "cc-by-sa",
+    "groups": [{"title": "South Sudan", "name": "ssd"}],
+    "tags": [{"name": "flooding"}],
+    "notes": "text",
+    "methodology": "Other",
+    "methodology_other": "SAR + VIIRS",
+    "resources": [
+        {
+            # same URL as DS's r-shp, but a different dataset/resource id
+            "id": "r-shp-2", "name": "FL20220424SSD_SHP.zip", "format": "SHP",
+            "url": "https://unosat.org/static/x/FL20220424SSD_SHP.zip",
+            "size": 56726504, "hash": "abc", "last_modified": "2024-12-22T09:00:00",
+        },
+        {
+            # a distinct URL, unrelated to DS
+            "id": "r-other", "name": "FL20230101KEN_SHP.zip", "format": "SHP",
+            "url": "https://unosat.org/static/y/FL20230101KEN_SHP.zip",
+            "size": 12345, "hash": "xyz", "last_modified": "2024-12-22T09:00:00",
+        },
+    ],
+}
+
+
 def test_datasets_table_flattens_groups_tags_and_licence():
     t = discovery.datasets_table([DS])
     assert len(t) == 1

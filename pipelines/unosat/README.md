@@ -40,6 +40,7 @@ Needs `.env` with `DSCI_AZ_BLOB_DEV_SAS_WRITE` (via `gie.config`) and GDAL's
 | excluded_format | non-archived format (KMZ, PDF, KML), inventoried only | never |
 | uploaded | transferred and size-verified | — |
 | uploaded_dedup | identical content already in bronze; ledger points at it | — |
+| uploaded_untested | valid zip archived but members could not be test-decompressed (unsupported compression); error column says so | — |
 | failed_download / failed_upload | our side or transient upstream | `--retry-failed` |
 | unavailable_404 | upstream says gone (stable across hours) | never |
 | corrupt_upstream | HTTP 200 but not a zip | never |
@@ -60,3 +61,5 @@ Blob is truth: every run reconciles the ledger against a bronze listing.
 Checkpoints every 25 transfers and on exit. Every attempt is journaled.
 Re-running discovery is the backfill: new/re-published resources become
 pending, vanished ones are flagged `missing_upstream`, never dropped.
+Each distinct URL is downloaded once per run; ledger rows sharing a URL are
+settled from the representative's outcome (journaled `via: url_sibling`).

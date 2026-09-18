@@ -202,13 +202,88 @@ def reconcile_with_blob(ledger: pd.DataFrame, store: BlobStore) -> pd.DataFrame:
     return ledger
 
 
+def settle_url_siblings(ledger: pd.DataFrame) -> list[tuple[str, dict]]:
+    """Pending rows whose URL already has an uploaded row (any
+    ``UPLOADED_STATUSES``) with the same ``hdx_size`` (or either ``hdx_size``
+    missing) become ``uploaded_dedup``, copying sha256, size_bytes, n_members,
+    http_status=200, error=None, uploaded_at=now. Returns
+    ``[(target_id, updates)]`` for the caller to apply + journal; does not
+    mutate ``ledger``."""
+    uploaded = ledger[ledger["status"].isin(common.UPLOADED_STATUSES)]
+    rep_by_url = uploaded.drop_duplicates("url", keep="first").set_index("url")
+    now = _now()
+    out: list[tuple[str, dict]] = []
+    pending = ledger[ledger["status"] == "pending"]
+    for _, row in pending.iterrows():
+        url = row["url"]
+        if url not in rep_by_url.index:
+            continue
+        src = rep_by_url.loc[url]
+        p_size, s_size = row["hdx_size"], src["hdx_size"]
+        if pd.notna(p_size) and pd.notna(s_size) and p_size != s_size:
+            continue
+        out.append((
+            row["target_id"],
+            {
+                "status": "uploaded_dedup",
+                "sha256": src["sha256"],
+                "size_bytes": src["size_bytes"],
+                "n_members": src["n_members"],
+                "http_status": 200,
+                "error": None,
+                "uploaded_at": now,
+            },
+        ))
+    return out
+
+
+def representatives(todo: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, list[str]]]:
+    """Group the ``todo`` frame by url. Return (one row per url — the first by
+    target_id —, mapping url -> list of the OTHER target_ids sharing it)."""
+    ordered = todo.reset_index(drop=True).sort_values("target_id")
+    reps = ordered.drop_duplicates("url", keep="first")
+    siblings = {
+        url: group["target_id"].tolist()[1:] for url, group in ordered.groupby("url", sort=False)
+    }
+    return reps, siblings
+
+
+def sibling_updates(updates: dict, members: list[dict], sibling_id: str) -> tuple[dict, list[dict]]:
+    """Derive a sibling row's (updates, member rows) from the representative's
+    outcome. Success (uploaded / uploaded_untested / uploaded_dedup) ->
+    sibling status uploaded_dedup with the same sha256, size_bytes, n_members,
+    http_status, error, uploaded_at=now; member rows re-keyed to
+    ``sibling_id``. Any failure or terminal status -> identical updates (same
+    URL fails the same way). Either way ``attempts``/``attempted_at`` are
+    dropped: no attempt was made for the sibling."""
+    if updates["status"] in common.UPLOADED_STATUSES:
+        sib_updates = {
+            "status": "uploaded_dedup",
+            "sha256": updates.get("sha256"),
+            "size_bytes": updates.get("size_bytes"),
+            "n_members": updates.get("n_members"),
+            "http_status": updates.get("http_status"),
+            "error": updates.get("error"),
+            "uploaded_at": _now(),
+        }
+        sib_members = [{**m, "target_id": sibling_id} for m in members]
+    else:
+        sib_updates = {k: v for k, v in updates.items() if k not in ("attempts", "attempted_at")}
+        sib_members = []
+    return sib_updates, sib_members
+
+
 def journal(work: Path, record: dict) -> None:
     with (work / "transfers.jsonl").open("a") as f:
         f.write(json.dumps(record, default=str) + "\n")
 
 
-def transfer_record(row: pd.Series, stage: str, outcome: str, **extra) -> dict:
-    """Attempt record; field names follow this repo's data_transfers.jsonl."""
+def transfer_record(
+    row: pd.Series, stage: str, outcome: str, *, via: str | None = None, **extra
+) -> dict:
+    """Attempt record; field names follow this repo's data_transfers.jsonl.
+    ``via`` names how the outcome was reached when it wasn't a direct
+    download attempt (e.g. ``"url_sibling"``)."""
     sha = extra.get("sha256") or row.get("sha256")
     return {
         "ts": _now(),
@@ -223,6 +298,7 @@ def transfer_record(row: pd.Series, stage: str, outcome: str, **extra) -> dict:
         "host": row.get("host"),
         "blob_path": common.blob_path(sha, row["resource_name"]) if sha else None,
         "stage": stage,
+        "via": via,
     } | extra
 
 

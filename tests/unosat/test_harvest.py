@@ -8,7 +8,7 @@ import requests
 
 from gie.unosat import cache, common, discovery, harvest, store
 from tests.unosat.conftest import FakeResponse, FakeSession, make_zip
-from tests.unosat.test_discovery import DS
+from tests.unosat.test_discovery import DS, DS2
 
 
 @pytest.fixture(autouse=True)
@@ -245,3 +245,104 @@ def test_apply_updates_clears_stale_http_status_on_retryable_status(ledger_row):
     assert led.loc[tid, "status"] == "failed_download"
     assert led.loc[tid, "attempts"] == 2
     assert pd.isna(led.loc[tid, "http_status"])
+
+
+def _ledger2():
+    return discovery.resources_ledger([DS, DS2]).set_index("target_id", drop=False)
+
+
+_TID_SHP = "r-shp@2024-12-20T09:00:00"  # DS: FL20220424SSD_SHP.zip
+_TID_SHP2 = "r-shp-2@2024-12-22T09:00:00"  # DS2: same URL as _TID_SHP
+_TID_OTHER = "r-other@2024-12-22T09:00:00"  # DS2: a different URL
+_SHARED_URL = "https://unosat.org/static/x/FL20220424SSD_SHP.zip"
+
+
+def test_settle_url_siblings_marks_sibling_uploaded_dedup_with_same_sha():
+    led = _ledger2()
+    sha = "a" * 64
+    led.loc[_TID_SHP, ["status", "sha256", "size_bytes", "n_members"]] = [
+        "uploaded", sha, 56726504, 2,
+    ]
+    settled = dict(harvest.settle_url_siblings(led))
+    assert _TID_SHP2 in settled
+    upd = settled[_TID_SHP2]
+    assert upd["status"] == "uploaded_dedup"
+    assert upd["sha256"] == sha
+    assert upd["size_bytes"] == 56726504
+    assert upd["n_members"] == 2
+    assert upd["http_status"] == 200
+    assert upd["error"] is None
+    assert "uploaded_at" in upd
+
+
+def test_settle_url_siblings_ignores_row_with_different_url():
+    led = _ledger2()
+    led.loc[_TID_SHP, ["status", "sha256", "size_bytes", "n_members"]] = [
+        "uploaded", "a" * 64, 56726504, 2,
+    ]
+    settled = dict(harvest.settle_url_siblings(led))
+    assert _TID_OTHER not in settled
+
+
+def test_settle_url_siblings_ignores_hdx_size_mismatch():
+    led = _ledger2()
+    led.loc[_TID_SHP, ["status", "sha256", "size_bytes", "n_members"]] = [
+        "uploaded", "a" * 64, 56726504, 2,
+    ]
+    led.loc[_TID_SHP2, "hdx_size"] = 999  # differs from the representative's hdx_size
+    settled = dict(harvest.settle_url_siblings(led))
+    assert _TID_SHP2 not in settled
+
+
+def test_representatives_groups_shared_url_into_one_rep_and_one_sibling():
+    led = _ledger2()
+    todo = led[led["status"] == "pending"]
+    reps, siblings = harvest.representatives(todo)
+    rep_ids = set(reps["target_id"])
+    assert (_TID_SHP in rep_ids) != (_TID_SHP2 in rep_ids)  # exactly one is the rep
+    other = _TID_SHP2 if _TID_SHP in rep_ids else _TID_SHP
+    assert siblings[_SHARED_URL] == [other]
+
+
+def test_representatives_unique_url_has_no_siblings():
+    led = _ledger2()
+    todo = led[led["status"] == "pending"]
+    reps, siblings = harvest.representatives(todo)
+    url = "https://unosat.org/static/y/FL20230101KEN_SHP.zip"  # r-other: unique URL
+    assert url in reps["url"].values
+    assert siblings[url] == []
+
+
+def test_sibling_updates_for_success_outcome_is_uploaded_dedup_without_attempts():
+    updates = {
+        "attempts": 1, "attempted_at": "2024-01-01T00:00:00",
+        "status": "uploaded", "http_status": 200, "error": None,
+        "sha256": "a" * 64, "size_bytes": 100, "n_members": 2,
+        "uploaded_at": "2024-01-01T00:00:01",
+    }
+    members = [
+        {"target_id": "rep-1", "sha256": "a" * 64, "event_code": "FL20220424SSD",
+         "member": "a.shp", "file_size": 1, "compress_size": 1},
+    ]
+    sib_updates, sib_members = harvest.sibling_updates(updates, members, "sib-1")
+    assert sib_updates["status"] == "uploaded_dedup"
+    assert sib_updates["sha256"] == "a" * 64
+    assert sib_updates["size_bytes"] == 100
+    assert sib_updates["n_members"] == 2
+    assert "attempts" not in sib_updates
+    assert "attempted_at" not in sib_updates
+    assert sib_members == [{**members[0], "target_id": "sib-1"}]
+
+
+def test_sibling_updates_for_terminal_outcome_is_identical_without_attempts():
+    updates = {
+        "attempts": 1, "attempted_at": "2024-01-01T00:00:00",
+        "status": "unavailable_404", "http_status": 404, "error": "HTTP 404",
+    }
+    sib_updates, sib_members = harvest.sibling_updates(updates, [], "sib-1")
+    assert sib_updates["status"] == "unavailable_404"
+    assert sib_updates["http_status"] == 404
+    assert sib_updates["error"] == "HTTP 404"
+    assert "attempts" not in sib_updates
+    assert "attempted_at" not in sib_updates
+    assert sib_members == []

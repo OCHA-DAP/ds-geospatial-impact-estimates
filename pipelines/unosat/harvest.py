@@ -57,6 +57,20 @@ def main(argv: list[str] | None = None) -> None:
     store = DataLakeStore(fs, cc)
 
     ledger = harvest.reconcile_with_blob(ledger, store)
+
+    settled = harvest.settle_url_siblings(ledger)
+    for target_id, updates in settled:
+        harvest.apply_updates(ledger, target_id, updates)
+        harvest.journal(
+            args.work_dir,
+            harvest.transfer_record(
+                ledger.loc[target_id], args.stage, "uploaded_dedup", via="url_sibling",
+                size_bytes=updates.get("size_bytes"), sha256=updates.get("sha256"),
+                error=updates.get("error"),
+            ),
+        )
+    print(f"settled {len(settled)} pending rows already uploaded under a shared URL")
+
     wanted = ["pending"] + (sorted(common.RETRYABLE_STATUSES) if args.retry_failed else [])
     todo = ledger[ledger["status"].isin(wanted)]
     if args.scope:
@@ -65,6 +79,9 @@ def main(argv: list[str] | None = None) -> None:
     if args.limit:
         todo = todo.head(args.limit)
     print(f"targets to transfer: {len(todo)} ({ledger['status'].value_counts().to_dict()})")
+
+    reps, siblings = harvest.representatives(todo)
+    print(f"targets to transfer: {len(reps)} representative URLs covering {len(todo)} rows")
     if args.dry_run:
         print(todo[["target_id", "resource_name", "format", "host", "status"]].head(30).to_string())
         return
@@ -88,7 +105,7 @@ def main(argv: list[str] | None = None) -> None:
     done = 0
     pool = ThreadPoolExecutor(max_workers=args.workers)
     try:
-        futures = [pool.submit(worker, row) for _, row in todo.iterrows()]
+        futures = [pool.submit(worker, row) for _, row in reps.iterrows()]
         for fut in as_completed(futures):
             target_id, updates, members = fut.result()  # bugs propagate here
             harvest.apply_updates(ledger, target_id, updates)
@@ -106,6 +123,29 @@ def main(argv: list[str] | None = None) -> None:
             ok = outcome in common.UPLOADED_STATUSES
             marker = outcome if ok else f"** {outcome}: {updates.get('error')}"
             print(f"  [{done}/{len(todo)}] {target_id} {marker}", flush=True)
+
+            for sibling_id in siblings.get(ledger.loc[target_id, "url"], []):
+                sib_updates, sib_members = harvest.sibling_updates(updates, members, sibling_id)
+                harvest.apply_updates(ledger, sibling_id, sib_updates)
+                members_buf.extend(sib_members)
+                harvest.journal(
+                    args.work_dir,
+                    harvest.transfer_record(
+                        ledger.loc[sibling_id], args.stage, sib_updates["status"],
+                        via="url_sibling", size_bytes=sib_updates.get("size_bytes"),
+                        sha256=sib_updates.get("sha256"), error=sib_updates.get("error"),
+                    ),
+                )
+                done += 1
+                sib_ok = sib_updates["status"] in common.UPLOADED_STATUSES
+                sib_marker = (
+                    sib_updates["status"]
+                    if sib_ok
+                    else f"** {sib_updates['status']}: {sib_updates.get('error')}"
+                )
+                print(f"  [{done}/{len(todo)}] {sibling_id} {sib_marker} (via {target_id})",
+                      flush=True)
+
             if done % harvest.CHECKPOINT_EVERY == 0:
                 members_buf = harvest.checkpoint(args.work_dir, ledger, members_buf, store)
     finally:
