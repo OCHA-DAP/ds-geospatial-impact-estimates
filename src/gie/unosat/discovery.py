@@ -90,7 +90,7 @@ def resources_ledger(datasets: list[dict]) -> pd.DataFrame:
                     "iso3": code.get("iso3"),
                     "scope": common.scope_for(code.get("hazard_prefix")),
                     "licence": d.get("license_id"),
-                    "status": "pending" if fmt in common.HARVEST_FORMATS else "excluded_kmz",
+                    "status": "pending" if fmt in common.HARVEST_FORMATS else "excluded_format",
                     "attempts": 0,
                     "missing_upstream": False,
                 }

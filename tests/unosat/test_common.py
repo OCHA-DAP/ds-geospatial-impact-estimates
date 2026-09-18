@@ -34,7 +34,7 @@ def test_blob_path_is_content_addressed():
 
 def test_status_vocabularies_are_disjoint_and_complete():
     all_statuses = {
-        "pending", "excluded_kmz", "uploaded", "uploaded_dedup",
+        "pending", "excluded_format", "uploaded", "uploaded_dedup",
         "failed_download", "failed_upload", "unavailable_404", "corrupt_upstream",
     }
     assert all_statuses >= common.TERMINAL_STATUSES

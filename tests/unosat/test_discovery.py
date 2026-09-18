@@ -58,7 +58,7 @@ def test_resources_ledger_one_row_per_resource_with_statuses():
     assert by.loc["r-shp", "status"] == "pending"
     assert by.loc["r-gdb", "status"] == "pending"
     assert by.loc["r-xlsx", "status"] == "pending"
-    assert by.loc["r-kmz", "status"] == "excluded_kmz"
+    assert by.loc["r-kmz", "status"] == "excluded_format"
 
 
 def test_resources_ledger_parses_event_code_scope_and_host():
