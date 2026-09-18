@@ -1,3 +1,4 @@
+import threading
 from pathlib import Path
 
 import pytest
@@ -55,3 +56,34 @@ def test_read_through_writes_atomically(monkeypatch, tmp_path):
     target = cache.cache_path("e" * 64, "A.zip")
     assert not target.exists()
     assert not list(Path(target.parent).glob("*.part")) if target.parent.exists() else True
+
+
+def test_read_through_concurrent_writers_unique_temp_files(monkeypatch, tmp_path):
+    """Concurrent callers for same (sha256, basename) use unique temp files."""
+    monkeypatch.setenv("GIE_CACHE_DIR", str(tmp_path))
+    sha = "f" * 64
+    basename = "concurrent.zip"
+    payload = bytes([42]) * (1 << 20)  # 1 MiB of all 42s
+    num_threads = 4
+    results = []
+
+    def fetch() -> bytes:
+        return payload
+
+    def worker():
+        p = cache.read_through(sha, basename, fetch)
+        results.append(p)
+
+    threads = [threading.Thread(target=worker) for _ in range(num_threads)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    # All threads got the same path
+    assert all(p == results[0] for p in results)
+    # File exists and has correct content
+    assert results[0].read_bytes() == payload
+    # No .part files left behind
+    cache_dir = cache.cache_path(sha, basename).parent
+    assert not list(cache_dir.glob("*.part"))

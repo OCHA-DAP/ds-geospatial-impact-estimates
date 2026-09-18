@@ -43,11 +43,14 @@ def read_through(
     if dest.exists():
         return dest
     dest.parent.mkdir(parents=True, exist_ok=True)
-    part = dest.with_suffix(dest.suffix + ".part")
+    fd, part_str = tempfile.mkstemp(dir=dest.parent, prefix=basename + ".", suffix=".part")
+    part = Path(part_str)
     try:
-        part.write_bytes(fetch())
+        with os.fdopen(fd, "wb") as f:
+            f.write(fetch())
         os.replace(part, dest)
-    finally:
+    except:
         if part.exists():
             part.unlink()
+        raise
     return dest
