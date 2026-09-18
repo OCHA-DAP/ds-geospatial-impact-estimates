@@ -45,7 +45,7 @@ in each product's most favourable region, and although the expert reference miss
 lesser damage, the most generous defensible reading still leaves every product below
 `{python} N["P_upper_max"]`. The products do rank neighbourhoods well enough to triage, within a damage zone
 that is already identified. The practical way to use them is to count agreement between
-independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, ranking neighbourhoods by three- or four-product agreement beats every single product's ranking (at both cell sizes tested), and the method needs no weights, training data or reference, so it can be run as soon as several products are in hand.
+independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product (a paired difference whose 95% interval excludes zero), ranking neighbourhoods by three- or four-product agreement beats every single product's ranking (at both cell sizes tested), and the method needs no weights, training data or reference, so it can be run as soon as several products are in hand.
 
 
 ## The event, the products, and the references
@@ -365,7 +365,9 @@ zone the products contain real information about where to go first (@sec-ranking
 
 Combining them works better. Counting agreement between products outperformed
 every single product both at ranking neighbourhoods (@fig-agreerank) and at
-flagging individual buildings, where the better agreement thresholds roughly doubled the F1 of any product alone (`{python} N["better_rules_F1_range"]` against the best single product's `{python} N["core_F1_best2"]`; @tbl-dial). So do not spend time choosing a product; spend it counting agreement between
+flagging individual buildings, where the better agreement thresholds roughly doubled the F1 of any product alone (`{python} N["better_rules_F1_range"]` against the best single product's `{python} N["core_F1_best2"]`; @tbl-dial). That gain is not sampling noise: scored on the same
+resampled neighbourhoods, the five-of-six rule beats `{python} N["best_single_name"]`, the best single product, by
+`{python} N["k5_minus_best_F1_r10"]` F1 with a 95% interval of `{python} N["k5_minus_best_ci_r10"]` ([intervals](#app-ci)). So do not spend time choosing a product; spend it counting agreement between
 products. Unlike a fitted model, counting requires no weights, no training data
 and no reference, so it can be done as soon as several products are in hand. Two
 products are not enough on their own: in this event the fifteen possible pairs ranged
@@ -1238,6 +1240,31 @@ rows = [{"rule": labels.get(k, k),
              visits="visits/find")
  .tab_options(column_labels_font_weight="bold", table_font_size="12.5px",
               data_row_padding="3px"))
+```
+
+The headline "counting agreement roughly doubles the best single product" rests on the
+paired form of these intervals. The comparator is fixed before the draws as the product
+with the highest frozen F1 at 10 m (`{python} N["best_single_name"]`), and each rule's F1 minus that product's
+F1 is recomputed on every draw. At 10 m the four- and five-of-six rules clear zero by a wide
+margin (`{python} N["k4_minus_best_F1_r10"]`, interval `{python} N["k4_minus_best_ci_r10"]`; `{python} N["k5_minus_best_F1_r10"]`, interval `{python} N["k5_minus_best_ci_r10"]`), three-of-six
+is borderline (`{python} N["k3_minus_best_F1_r10"]`, `{python} N["k3_minus_best_ci_r10"]`), and the unanimous rule is not
+distinguishable from the best product (`{python} N["k6_minus_best_F1_r10"]`, `{python} N["k6_minus_best_ci_r10"]`).
+
+```{python}
+#| label: tbl-ci-paired
+#| tbl-cap: "Core region: each k-of-6 rule's F1 minus the best single product's F1, paired on the same 2,000 cell draws, at 10 m and 30 m (point difference from the frozen values; 95% interval). Positive means the rule beats the product."
+import pandas as pd
+from great_tables import GT
+
+from brief_numbers import ci, N
+best = [r for r in ci["rule"].unique() if " − " in str(r)][0].split(" − ")[1]
+def pcell(k, radius):
+    r = ci[(ci["rule"] == f"{k}-of-6 − {best}") & (ci.radius == radius) & (ci.metric == "F1_diff")].iloc[0]
+    return f"{r['point']:+.3f} ({r['lo']:+.3f} to {r['hi']:+.3f})"
+rows = [{"rule": f"{k}-of-6 − {N['best_single_name']}", "d10": pcell(k, 10), "d30": pcell(k, 30)} for k in range(1, 7)]
+(GT(pd.DataFrame(rows), rowname_col="rule")
+ .cols_label(d10="ΔF1 at 10 m", d30="ΔF1 at 30 m")
+ .tab_options(column_labels_font_weight="bold", table_font_size="12.5px", data_row_padding="3px"))
 ```
 
 ```{python}

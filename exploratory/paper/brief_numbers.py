@@ -351,6 +351,15 @@ def _ci(region, lens="ci", name="rule"):
     return pd.DataFrame(out)
 ci = _ci("core")
 cia = _ci("asd")
+# paired k-of-6 minus best single product (rq9; comparator fixed before the draws = highest frozen F1 at 10 m)
+_best_single = prod.F1_cems.idxmax()
+N["best_single_name"] = LONG[_best_single]
+for _k in range(1, 7):
+    for _r in (10, 30):
+        _d = one(ci, rule=f"{_k}-of-6 − {_best_single}", radius=_r, metric="F1_diff")
+        N[f"k{_k}_minus_best_F1_r{_r}"] = signed(_d.point, f3)   # 3 dp: these are differences read against the interval table
+        N[f"k{_k}_minus_best_ci_r{_r}"] = f"{signed(_d.lo, f3)} to {signed(_d.hi, f3)}"
+        N[f"k{_k}_minus_best_excl0_r{_r}"] = "excludes zero" if _d.lo > 0 else "includes zero"
 ci_models = _ci("core", "ci-labels", name="predictor")  # rq9 model-frame intervals (tbl-ci-models)
 r = one(cia, rule="UH", metric="P")
 N["asd_UH_P_lo"] = f3(r.lo); N["asd_UH_P_hi"] = f3(r.hi)

@@ -1273,6 +1273,9 @@ core,ci,10.0,1-of-6,P_lo,0.035,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,1-of-6,R,0.952,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,1-of-6,R_hi,0.969,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,1-of-6,R_lo,0.926,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,1-of-6 − MS,F1_diff,-0.103,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,1-of-6 − MS,F1_diff_hi,-0.051,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,1-of-6 − MS,F1_diff_lo,-0.161,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,2-of-6,F1,0.155,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,2-of-6,F1_hi,0.201,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,2-of-6,F1_lo,0.107,RQ9-uncertainty/rq9_ci_core.csv
@@ -1285,6 +1288,9 @@ core,ci,10.0,2-of-6,P_lo,0.057,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,2-of-6,R,0.899,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,2-of-6,R_hi,0.927,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,2-of-6,R_lo,0.857,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,2-of-6 − MS,F1_diff,-0.048,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,2-of-6 − MS,F1_diff_hi,-0.002,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,2-of-6 − MS,F1_diff_lo,-0.1,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,F1,0.25,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,F1_hi,0.314,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,F1_lo,0.181,RQ9-uncertainty/rq9_ci_core.csv
@@ -1297,6 +1303,9 @@ core,ci,10.0,3-of-6,P_lo,0.103,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,R,0.781,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,R_hi,0.829,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,3-of-6,R_lo,0.712,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,3-of-6 − MS,F1_diff,0.047,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,3-of-6 − MS,F1_diff_hi,0.099,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,3-of-6 − MS,F1_diff_lo,-0.003,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,4-of-6,F1,0.364,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,4-of-6,F1_hi,0.445,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,4-of-6,F1_lo,0.265,RQ9-uncertainty/rq9_ci_core.csv
@@ -1309,6 +1318,9 @@ core,ci,10.0,4-of-6,P_lo,0.181,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,4-of-6,R,0.566,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,4-of-6,R_hi,0.654,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,4-of-6,R_lo,0.472,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6 − MS,F1_diff,0.161,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6 − MS,F1_diff_hi,0.222,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,4-of-6 − MS,F1_diff_lo,0.101,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,5-of-6,F1,0.388,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,5-of-6,F1_hi,0.47,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,5-of-6,F1_lo,0.282,RQ9-uncertainty/rq9_ci_core.csv
@@ -1321,6 +1333,9 @@ core,ci,10.0,5-of-6,P_lo,0.348,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,5-of-6,R,0.329,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,5-of-6,R_hi,0.43,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,5-of-6,R_lo,0.223,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6 − MS,F1_diff,0.185,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6 − MS,F1_diff_hi,0.256,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,5-of-6 − MS,F1_diff_lo,0.102,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,F1,0.251,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,F1_hi,0.33,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,F1_lo,0.162,RQ9-uncertainty/rq9_ci_core.csv
@@ -1333,6 +1348,9 @@ core,ci,10.0,6-of-6,P_lo,0.722,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,R,0.149,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,R_hi,0.208,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,6-of-6,R_lo,0.09,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,6-of-6 − MS,F1_diff,0.048,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,6-of-6 − MS,F1_diff_hi,0.135,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,10.0,6-of-6 − MS,F1_diff_lo,-0.043,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,IMPACT,F1,0.178,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,IMPACT,F1_hi,0.232,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,10.0,IMPACT,F1_lo,0.119,RQ9-uncertainty/rq9_ci_core.csv
@@ -1414,6 +1432,9 @@ core,ci,20.0,1-of-6,P_lo,0.064,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,R,0.982,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,R_hi,0.992,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,1-of-6,R_lo,0.965,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,1-of-6 − MS,F1_diff,-0.11,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,1-of-6 − MS,F1_diff_hi,-0.046,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,1-of-6 − MS,F1_diff_lo,-0.179,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,F1,0.254,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,F1_hi,0.32,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,F1_lo,0.184,RQ9-uncertainty/rq9_ci_core.csv
@@ -1423,6 +1444,9 @@ core,ci,20.0,2-of-6,P_lo,0.102,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,R,0.948,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,R_hi,0.968,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,2-of-6,R_lo,0.916,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,2-of-6 − MS,F1_diff,-0.027,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,2-of-6 − MS,F1_diff_hi,0.033,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,2-of-6 − MS,F1_diff_lo,-0.09,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,F1,0.374,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,F1_hi,0.457,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,F1_lo,0.279,RQ9-uncertainty/rq9_ci_core.csv
@@ -1432,6 +1456,9 @@ core,ci,20.0,3-of-6,P_lo,0.168,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,R,0.856,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,R_hi,0.891,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,3-of-6,R_lo,0.801,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,3-of-6 − MS,F1_diff,0.093,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,3-of-6 − MS,F1_diff_hi,0.16,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,3-of-6 − MS,F1_diff_lo,0.03,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,4-of-6,F1,0.484,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,4-of-6,F1_hi,0.583,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,4-of-6,F1_lo,0.357,RQ9-uncertainty/rq9_ci_core.csv
@@ -1441,6 +1468,9 @@ core,ci,20.0,4-of-6,P_lo,0.257,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,4-of-6,R,0.653,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,4-of-6,R_hi,0.727,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,4-of-6,R_lo,0.564,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,4-of-6 − MS,F1_diff,0.203,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,4-of-6 − MS,F1_diff_hi,0.279,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,4-of-6 − MS,F1_diff_lo,0.13,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,5-of-6,F1,0.481,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,5-of-6,F1_hi,0.581,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,5-of-6,F1_lo,0.355,RQ9-uncertainty/rq9_ci_core.csv
@@ -1450,6 +1480,9 @@ core,ci,20.0,5-of-6,P_lo,0.436,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,5-of-6,R,0.397,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,5-of-6,R_hi,0.509,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,5-of-6,R_lo,0.282,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6 − MS,F1_diff,0.2,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6 − MS,F1_diff_hi,0.283,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,5-of-6 − MS,F1_diff_lo,0.109,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,F1,0.313,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,F1_hi,0.412,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,F1_lo,0.203,RQ9-uncertainty/rq9_ci_core.csv
@@ -1459,6 +1492,9 @@ core,ci,20.0,6-of-6,P_lo,0.898,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,R,0.188,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,R_hi,0.263,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,6-of-6,R_lo,0.114,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,6-of-6 − MS,F1_diff,0.032,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,6-of-6 − MS,F1_diff_hi,0.147,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,20.0,6-of-6 − MS,F1_diff_lo,-0.085,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,IMPACT,F1,0.285,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,IMPACT,F1_hi,0.359,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,20.0,IMPACT,F1_lo,0.203,RQ9-uncertainty/rq9_ci_core.csv
@@ -1525,6 +1561,9 @@ core,ci,30.0,1-of-6,R_lo,0.972,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,1-of-6,visits_per_find,25.81,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,1-of-6,visits_per_find_hi,39.54,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,1-of-6,visits_per_find_lo,18.68,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,1-of-6 − MS,F1_diff,-0.101,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,1-of-6 − MS,F1_diff_hi,-0.033,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,1-of-6 − MS,F1_diff_lo,-0.176,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,F1,0.341,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,F1_hi,0.422,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,F1_lo,0.255,RQ9-uncertainty/rq9_ci_core.csv
@@ -1537,6 +1576,9 @@ core,ci,30.0,2-of-6,R_lo,0.938,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,visits_per_find,14.69,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,visits_per_find_hi,21.58,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,2-of-6,visits_per_find_lo,10.98,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,2-of-6 − MS,F1_diff,0.001,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,2-of-6 − MS,F1_diff_hi,0.068,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,2-of-6 − MS,F1_diff_lo,-0.067,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,F1,0.472,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,F1_hi,0.563,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,F1_lo,0.365,RQ9-uncertainty/rq9_ci_core.csv
@@ -1549,6 +1591,9 @@ core,ci,30.0,3-of-6,R_lo,0.841,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,visits_per_find,7.0,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,visits_per_find_hi,9.95,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,3-of-6,visits_per_find_lo,5.31,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,3-of-6 − MS,F1_diff,0.132,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,3-of-6 − MS,F1_diff_hi,0.21,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,3-of-6 − MS,F1_diff_lo,0.064,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,F1,0.562,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,F1_hi,0.664,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,F1_lo,0.423,RQ9-uncertainty/rq9_ci_core.csv
@@ -1561,6 +1606,9 @@ core,ci,30.0,4-of-6,R_lo,0.642,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,visits_per_find,2.96,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,visits_per_find_hi,4.24,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,4-of-6,visits_per_find_lo,2.15,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6 − MS,F1_diff,0.222,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6 − MS,F1_diff_hi,0.307,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,4-of-6 − MS,F1_diff_lo,0.143,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,5-of-6,F1,0.548,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,5-of-6,F1_hi,0.649,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,5-of-6,F1_lo,0.417,RQ9-uncertainty/rq9_ci_core.csv
@@ -1573,6 +1621,9 @@ core,ci,30.0,5-of-6,R_lo,0.34,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,5-of-6,visits_per_find,1.36,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,5-of-6,visits_per_find_hi,1.75,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,5-of-6,visits_per_find_lo,1.03,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6 − MS,F1_diff,0.208,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6 − MS,F1_diff_hi,0.299,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,5-of-6 − MS,F1_diff_lo,0.114,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,F1,0.362,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,F1_hi,0.472,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,F1_lo,0.235,RQ9-uncertainty/rq9_ci_core.csv
@@ -1585,6 +1636,9 @@ core,ci,30.0,6-of-6,R_lo,0.134,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,visits_per_find,0.65,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,visits_per_find_hi,0.79,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,6-of-6,visits_per_find_lo,0.45,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,6-of-6 − MS,F1_diff,0.022,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,6-of-6 − MS,F1_diff_hi,0.154,RQ9-uncertainty/rq9_ci_core.csv
+core,ci,30.0,6-of-6 − MS,F1_diff_lo,-0.112,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,IMPACT,F1,0.379,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,IMPACT,F1_hi,0.466,RQ9-uncertainty/rq9_ci_core.csv
 core,ci,30.0,IMPACT,F1_lo,0.278,RQ9-uncertainty/rq9_ci_core.csv
