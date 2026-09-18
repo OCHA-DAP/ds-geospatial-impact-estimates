@@ -128,9 +128,12 @@ domains already seen).
 
 ## 3. Silver (`silver.py`)
 
-Reads bronze only. Unit of work: one distinct **layer content** — a layer is
-identified by `(event_code, layer_name, sha256 of its .shp+.dbf, or of the GDB
-feature class as exported)`; the same layer re-shipped in 35 datasets is
+Reads bronze only. Geometry and attributes come from the SHP resource; the
+GDB is opened only for its domains, and as the geometry source for the 88
+datasets that ship no SHP (`geometry_source` recorded per layer). Unit of
+work: one distinct **layer content** — a layer is identified by
+`(event_code, layer_name, sha256 of its .shp + .dbf members, or of the GDB
+feature class exported to GeoParquet)`; the same layer re-shipped in 35 datasets is
 processed once and the processing ledger lists every `target_id` that carried
 it.
 
@@ -161,7 +164,7 @@ GDB of the same event code, with `class_method` recorded):
 | Flood Water (1), or any polygon from a `FloodExtent` layer | `flood` |
 | Flood-Affected / Possible Flood Water (2, 3, 6) | `flood_possible` |
 | Aquaculture (9), Tsunami-affected (14) | `other_water` |
-| Maximum Flood Water Extent (Cumulative) (99), or `Water_Stat` says cumulative | `cumulative` (excluded from gold snapshots) |
+| Maximum Flood Water Extent (Cumulative) (99) | `cumulative` (excluded from gold snapshots) |
 | null | `water` (a WaterExtent layer without class = satellite-detected water) |
 
 **Canonical columns on `observed_event`** (names shared with CEMS silver):
@@ -219,7 +222,7 @@ clean). Rules: **B1** no pending targets; **B2** blob census equals ledger
 explicit `no_domains` marker; **S1** processing ledger covers every uploaded
 flood/cyclone resource version; **S2** every code with water layers has
 `observed_event` and `coverage` partitions; **S3** acquisition dates plausible
-(2005 ≤ year ≤ now) and inside the dataset's event window ± 1 year; **S4**
+(2005 ≤ year ≤ now) and within one year of the event-code date; **S4**
 vocabularies within the documented sets; **S5** `unclassified` share per code
 below a threshold, else listed; **G1** every gold row has `geom_valid` or
 `valid_basis = none`; **G2** no `cumulative` polygons contribute to gold.
