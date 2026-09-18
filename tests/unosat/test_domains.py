@@ -91,6 +91,46 @@ def test_domains_for_gdb_zip_records_unreadable_gdb(tmp_path):
     assert "ogrinfo failed" in error
 
 
+def test_domains_for_gdb_zip_records_unreadable_zip(tmp_path):
+    p = tmp_path / "not_a_zip.zip"
+    p.write_bytes(b"this is not a zip file at all")
+    rows, status, error = domains.domains_for_gdb_zip("s" * 64, p)
+    assert rows == []
+    assert status == "zip_unreadable"
+    assert "BadZipFile" in error
+
+
+def test_ogrinfo_non_json_stdout_is_ogrinfo_error(monkeypatch, tmp_path):
+    monkeypatch.setattr(domains.shutil, "which", lambda name: "/usr/bin/ogrinfo")
+
+    class FakeProc:
+        returncode = 0
+        stdout = "not json"
+        stderr = ""
+
+    monkeypatch.setattr(domains.subprocess, "run", lambda *a, **kw: FakeProc())
+    with pytest.raises(domains.OgrinfoError, match="non-JSON"):
+        domains.ogrinfo_json(tmp_path / "x.gdb")
+
+
+def test_multi_gdb_zip_keeps_rows_from_readable_gdb(tmp_path, monkeypatch):
+    p = tmp_path / "multi.zip"
+    with zipfile.ZipFile(p, "w") as z:
+        z.writestr("good.gdb/a.gdbtable", b"x")
+        z.writestr("bad.gdb/a.gdbtable", b"x")
+
+    def fake_ogrinfo_json(path):
+        if path.name == "good.gdb":
+            return INFO
+        raise domains.OgrinfoError(f"ogrinfo failed on {path}: boom")
+
+    monkeypatch.setattr(domains, "ogrinfo_json", fake_ogrinfo_json)
+    rows, status, error = domains.domains_for_gdb_zip("s" * 64, p)
+    assert status == "gdb_unreadable"
+    assert rows  # rows from the readable GDB are kept, not discarded
+    assert "bad.gdb" in error
+
+
 def test_persist_writes_typed_empty_rows_and_one_status_row(tmp_path):
     domains.persist(tmp_path, [], [domains.status_row("s" * 64, "no_domains", 0)])
     rows = pd.read_parquet(tmp_path / "domains.parquet")

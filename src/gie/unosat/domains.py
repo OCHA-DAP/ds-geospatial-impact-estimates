@@ -34,7 +34,12 @@ def ogrinfo_json(gdb_path: Path) -> dict:
     proc = subprocess.run([exe, "-json", "-ro", str(gdb_path)], capture_output=True, text=True)
     if proc.returncode != 0:
         raise OgrinfoError(f"ogrinfo failed on {gdb_path}: {proc.stderr.strip()[:500]}")
-    return json.loads(proc.stdout)
+    try:
+        return json.loads(proc.stdout)
+    except json.JSONDecodeError as e:
+        raise OgrinfoError(
+            f"ogrinfo on {gdb_path} returned non-JSON: {proc.stdout[:500]!r}"
+        ) from e
 
 
 def domain_rows(sha256: str, info: dict) -> list[dict]:
@@ -71,23 +76,35 @@ def domains_for_gdb_zip(sha256: str, zip_path: Path) -> tuple[list[dict], str, s
     An unreadable GDB (ogrinfo cannot open it) is an upstream property of that
     archived object, not a bug in our code: it is recorded as ``gdb_unreadable``
     with the ogrinfo error text, not raised, so one bad geodatabase never kills
-    the rest of the run.
+    the rest of the run. Likewise a zip that cannot even be opened/extracted
+    (not a zip at all, or a compression method Python's zipfile cannot
+    decompress — such objects exist in bronze as ``uploaded_untested``) is
+    recorded as ``zip_unreadable``, not raised.
     """
-    with zipfile.ZipFile(zip_path) as z:
-        gdb_dirs = sorted({n.split(".gdb/")[0] + ".gdb" for n in z.namelist() if ".gdb/" in n})
-        if not gdb_dirs:
-            return [], "no_gdb_in_zip", None
-        tmp = Path(tempfile.mkdtemp(prefix="unosat_gdb_"))
-        try:
-            z.extractall(tmp)
-            rows: list[dict] = []
-            for g in gdb_dirs:
-                try:
-                    rows.extend(domain_rows(sha256, ogrinfo_json(tmp / g)))
-                except OgrinfoError as e:
-                    return [], "gdb_unreadable", str(e)[:500]
-        finally:
-            shutil.rmtree(tmp, ignore_errors=True)
+    try:
+        with zipfile.ZipFile(zip_path) as z:
+            gdb_dirs = sorted(
+                {n.split(".gdb/")[0] + ".gdb" for n in z.namelist() if ".gdb/" in n}
+            )
+            if not gdb_dirs:
+                return [], "no_gdb_in_zip", None
+            tmp = Path(tempfile.mkdtemp(prefix="unosat_gdb_"))
+            try:
+                z.extractall(tmp)
+                rows: list[dict] = []
+                errors: list[tuple[str, str]] = []
+                for g in gdb_dirs:
+                    try:
+                        rows.extend(domain_rows(sha256, ogrinfo_json(tmp / g)))
+                    except OgrinfoError as e:
+                        errors.append((g, str(e)[:500]))
+            finally:
+                shutil.rmtree(tmp, ignore_errors=True)
+    except (zipfile.BadZipFile, NotImplementedError) as e:
+        return [], "zip_unreadable", f"{type(e).__name__}: {e}"[:500]
+    if errors:
+        error = "; ".join(f"{g}: {err}" for g, err in errors)[:500]
+        return rows, "gdb_unreadable", error
     return rows, ("ok" if rows else "no_domains"), None
 
 
