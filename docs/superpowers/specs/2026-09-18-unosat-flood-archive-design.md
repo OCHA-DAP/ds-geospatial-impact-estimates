@@ -22,8 +22,9 @@ published in a gold shape the fusion label reader can consume alongside CEMS.
   (`unosat.org` 984, `unosat-maps.web.cern.ch` 436, `cern.ch` 109,
   `data.humdata.org` 11, `floods.unosat.org` 1). All support HTTP range
   requests. Availability is UNOSAT's, not HDX's: 6 advertised zips are not
-  zips and 8 URLs 404 (backslash-encoded paths, a bare `.shp`, a "Kml Link"
-  suffix). These are ledger statuses, never retries.
+  zips and 19 URLs 404 (backslash-encoded paths, a bare `.shp`, a "Kml
+  Link" suffix, and plainly missing files; the 404s were stable across
+  retries hours apart). These are ledger statuses, not retries.
 - **Content-addressed bronze.** HDX datasets are cumulative snapshots: 515 of
   1,516 zips are byte-for-byte identical in member set and sizes to another
   zip; one South Sudan event appears in 35 datasets. One bronze object per
@@ -69,7 +70,7 @@ GDB and GPKG resources (1,516 readable), and 43 full zips downloaded across
 | flood + cyclone event codes | 226 |
 | event codes present in more than one HDX dataset | 204 (max 41) |
 | datasets with GDB but no SHP | 88 |
-| unavailable upstream (not a zip / 404) | 6 / 8 |
+| unavailable upstream (not a zip / 404) | 6 / 19 |
 
 Layer grammar over the 11,842 flood/cyclone shapefile layers (2,600 distinct
 names): 96 % classify by name into water, pre-flood water, flood, aggregate,
@@ -174,8 +175,10 @@ some SHP exports, so it never drives partitioning. Resources without a
 parseable code (16 %, almost all XLSX) fall back to the layer attribute, then
 to `HDX-{dataset_name}`, with `code_method` recorded.
 
-**Layer grammar.** Tokenise on `_`. Sensor = the first token, or its alphabetic
-prefix when fused with a date (`ST20180107`, `RS20180209`, `L820180822`);
+**Layer grammar.** Tokenise on `_`. A leading `UNOSAT` token (2026 products:
+`UNOSAT_Multisensor_20260826_20260828_FloodExtent`) is dropped. Sensor = the
+next token, or its alphabetic prefix when fused with a date (`ST20180107`,
+`RS20180209`, `L820180822`); `Multisensor(s)` → `multiple`;
 `ST`/`ST1` → Sentinel-1, `ST2`/`ST3` → Sentinel-2/3, `PHR` → Pléiades, `PL`
 → Planet, `RS`/`RS2` → RADARSAT-2, `WV2`/`WV3` → WorldView. Dates = every
 8-digit token that parses as a date (one → exact date; two → window; three
