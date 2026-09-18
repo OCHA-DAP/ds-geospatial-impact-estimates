@@ -58,18 +58,22 @@ def main(argv: list[str] | None = None) -> None:
 
     ledger = harvest.reconcile_with_blob(ledger, store)
 
+    # Computed in both modes (for the summary line below), but only applied
+    # and journaled for a real run: --dry-run must not mutate the ledger or
+    # append to transfers.jsonl, or the next real run re-settles and
+    # re-journals the same rows.
     settled = harvest.settle_url_siblings(ledger)
-    for target_id, updates in settled:
-        harvest.apply_updates(ledger, target_id, updates)
-        harvest.journal(
-            args.work_dir,
-            harvest.transfer_record(
-                ledger.loc[target_id], args.stage, "uploaded_dedup", via="url_sibling",
-                size_bytes=updates.get("size_bytes"), sha256=updates.get("sha256"),
-                error=updates.get("error"),
-            ),
-        )
-    print(f"settled {len(settled)} pending rows already uploaded under a shared URL")
+    if not args.dry_run:
+        for target_id, updates in settled:
+            harvest.apply_updates(ledger, target_id, updates)
+            harvest.journal(
+                args.work_dir,
+                harvest.transfer_record(
+                    ledger.loc[target_id], args.stage, "uploaded_dedup", via="url_sibling",
+                    size_bytes=updates.get("size_bytes"), sha256=updates.get("sha256"),
+                    error=updates.get("error"),
+                ),
+            )
 
     wanted = ["pending"] + (sorted(common.RETRYABLE_STATUSES) if args.retry_failed else [])
     todo = ledger[ledger["status"].isin(wanted)]
@@ -78,10 +82,13 @@ def main(argv: list[str] | None = None) -> None:
     todo = todo.sort_values(["scope", "target_id"])
     if args.limit:
         todo = todo.head(args.limit)
-    print(f"targets to transfer: {len(todo)} ({ledger['status'].value_counts().to_dict()})")
 
     reps, siblings = harvest.representatives(todo)
-    print(f"targets to transfer: {len(reps)} representative URLs covering {len(todo)} rows")
+    counts = ledger["status"].value_counts().to_dict()
+    print(
+        f"targets to transfer: {len(reps)} representative URLs covering {len(todo)} rows; "
+        f"{len(settled)} settled from already-uploaded URLs (ledger: {counts})"
+    )
     if args.dry_run:
         print(todo[["target_id", "resource_name", "format", "host", "status"]].head(30).to_string())
         return

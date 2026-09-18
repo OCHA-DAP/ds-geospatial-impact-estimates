@@ -1,6 +1,8 @@
 import hashlib
+import importlib.util
 import json
 import zipfile
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -9,6 +11,16 @@ import requests
 from gie.unosat import cache, common, discovery, harvest, store
 from tests.unosat.conftest import FakeResponse, FakeSession, make_zip
 from tests.unosat.test_discovery import DS, DS2
+
+_CLI_PATH = Path(__file__).resolve().parents[2] / "pipelines" / "unosat" / "harvest.py"
+
+
+def _load_cli_module():
+    """``pipelines/`` is not a package, so load the CLI script by path."""
+    spec = importlib.util.spec_from_file_location("unosat_harvest_cli", _CLI_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 @pytest.fixture(autouse=True)
@@ -346,3 +358,33 @@ def test_sibling_updates_for_terminal_outcome_is_identical_without_attempts():
     assert "attempts" not in sib_updates
     assert "attempted_at" not in sib_updates
     assert sib_members == []
+
+
+def test_cli_dry_run_is_side_effect_free_and_reports_settled_count(tmp_path, monkeypatch, capsys):
+    """--dry-run must not journal or persist settle_url_siblings' results: the
+    representative row is already 'uploaded', its DS2 sibling shares the URL
+    and hdx_size, so settle_url_siblings would settle exactly it — but a dry
+    run only reports the count, it doesn't apply or journal it."""
+    cli = _load_cli_module()
+
+    led = discovery.resources_ledger([DS, DS2])
+    sha = "a" * 64
+    rep_mask = led["target_id"] == "r-shp@2024-12-20T09:00:00"
+    led.loc[rep_mask, ["status", "sha256", "size_bytes", "n_members"]] = [
+        "uploaded", sha, 56726504, 2,
+    ]
+    led = common.coerce_ledger_dtypes(led)
+    led.to_parquet(tmp_path / "resources.parquet")
+
+    st = store.MemoryStore()
+    st.upload(common.blob_path(sha, "FL20220424SSD_SHP.zip"), b"x" * 56726504)
+
+    monkeypatch.setattr(cli.stratus, "get_container_client", lambda **kw: object())
+    monkeypatch.setattr(cli.blobio, "uploader", lambda settings: object())
+    monkeypatch.setattr(cli, "DataLakeStore", lambda fs, cc: st)
+
+    cli.main(["--dry-run", "--work-dir", str(tmp_path)])
+
+    out = capsys.readouterr().out
+    assert "1 settled" in out
+    assert not (tmp_path / "transfers.jsonl").exists()
