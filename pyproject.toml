@@ -42,6 +42,9 @@ api = [
 etl = [
     "ocha-lens",
     "ocha-stratus>=0.1.7",
+    # UNOSAT archive (pipelines/unosat): HDX catalogue client + cache-dir convention
+    "hdx-python-api>=6.3",
+    "platformdirs>=4.0",
 ]
 paper = [
     "contextily>=1.7.1",
