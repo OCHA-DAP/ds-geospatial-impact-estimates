@@ -72,6 +72,7 @@ GDB and GPKG resources (1,516 readable), and 43 full zips downloaded across
 | event codes present in more than one HDX dataset | 204 (max 41) |
 | datasets with GDB but no SHP | 88 |
 | unavailable upstream (not a zip / 404) | 6 / 19 |
+| measured on the full run 2026-09-18 (ledger rows, not URLs) | `corrupt_upstream` 6, `unavailable_404` 48, dead host `floods.unosat.org` 13, malformed `ttps://` URLs 2 |
 
 Layer grammar over the 11,842 flood/cyclone shapefile layers (2,600 distinct
 names): 96 % classify by name into water, pre-flood water, flood, aggregate,
@@ -354,7 +355,14 @@ main thread records.
 
 ## Testing
 
-`pytest` under `pipelines/unosat/tests/`: layer grammar over the 2,600
+Tests live under `tests/unosat/` (the repo's pytest `testpaths`), with library
+code in `src/gie/unosat/` so it is importable. **Phase 1 (bronze) coverage is
+in place**: event-code parsing, status vocabulary, per-host limiter, cache
+atomicity and concurrency, ledger build and merge, harvest worker outcomes
+(404, not-a-zip, untestable zip, network error, upload failure, lost race,
+dedup), URL settlement and representatives, reconcile, journal, checkpoint,
+domains parsing and crash-safe persistence, audit rules. **The remainder of
+this section is phase 2–3 (silver/gold) scope**: layer grammar over the 2,600
 distinct real names (a fixture list, committed) asserting the documented
 classification counts; fused sensor-date tokens; multi-date names; malformed
 dates; `Water_Class` resolution for text, GDB code with domain, code without

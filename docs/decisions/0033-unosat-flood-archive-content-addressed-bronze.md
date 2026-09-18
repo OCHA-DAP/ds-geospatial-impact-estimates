@@ -33,6 +33,13 @@ so nothing is lost, nothing is duplicated, and the codes stay decodable?
 * Archive SHP only (smaller; loses domains and 55 GDB-only feature classes in
   one event) vs SHP + GDB (CHOSEN).
 
+* Local cache for silver: `pooch` (static registry of names+hashes; our
+  ledger already is the registry) vs `fsspec` `filecache::` (keyed by URL;
+  redundant once paths are content-addressed) vs DVC (a second
+  content-addressed store beside the ledger) vs **a plain mirror of the
+  bronze layout under `platformdirs` (CHOSEN)** — content addressing makes
+  the cache never stale, so no library is needed.
+
 ## Decision Outcome
 
 Content-addressed bronze (`blob={sha256}/{basename}`) with a resource-version
