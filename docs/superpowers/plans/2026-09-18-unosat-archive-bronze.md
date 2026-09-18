@@ -16,7 +16,7 @@
 - Run everything with `uv run --group etl --group api python ...` and tests with `uv run pytest tests/unosat -q`. Lint with `uv run ruff check src/gie/unosat pipelines/unosat tests/unosat` (line length 100, rules E F I UP B SIM).
 - Blob: container `global`, stage `dev` by default (`--stage prod` only when promoting). Prefix `unosat/bronze/`. Object path `unosat/bronze/blob={sha256}/{basename}`. Metadata under `unosat/bronze/_meta/`.
 - **Fail loudly.** Three states, never conflated: upstream absence (HTTP 404, HTTP 200 that is not a zip) → explicit terminal ledger status (`unavailable_404`, `corrupt_upstream`), never retried by `--retry-failed`; fetch/upload failure (network, 5xx after retries, upload error) → `failed_download` / `failed_upload`, visible, retried only with `--retry-failed`; empty content is not an error. No `try/except: continue`. Workers raise on bugs; only the enumerated upstream outcomes become recorded statuses.
-- Ledger status vocabulary (exact strings): `pending`, `excluded_kmz`, `uploaded`, `uploaded_dedup`, `failed_download`, `failed_upload`, `unavailable_404`, `corrupt_upstream`.
+- Ledger status vocabulary (exact strings): `pending`, `excluded_format`, `uploaded`, `uploaded_dedup`, `failed_download`, `failed_upload`, `unavailable_404`, `corrupt_upstream`.
 - Politeness: 6 workers total, at most 3 concurrent requests per host, `User-Agent: OCHA-CHD-DS unosat-archive (ds-geospatial-impact-estimates)`, retry/backoff on 429/500/502/503/504.
 - Local cache root: `GIE_CACHE_DIR` env var, else `platformdirs.user_cache_dir("gie")`. Layout mirrors bronze: `{root}/unosat/bronze/blob={sha256}/{basename}`. `--no-cache` disables writes.
 - Work dir (ledger, journal, checkpoints): `--work-dir`, default `/tmp/gie_unosat_archive`.
@@ -522,7 +522,7 @@ git commit -m "unosat: local content-addressed cache with atomic read-through"
 - Consumes: `common.LEDGER_COLS`, `common.parse_event_code`, `common.scope_for`, `common.host_of`, `common.HARVEST_FORMATS`, `common.coerce_ledger_dtypes`.
 - Produces: `fetch_unosat_datasets(user_agent: str) -> list[dict]` (live HDX; each dict has the dataset fields plus `"resources": list[dict]`);
   `datasets_table(datasets: list[dict]) -> pd.DataFrame`;
-  `resources_ledger(datasets: list[dict]) -> pd.DataFrame` (one row per resource version, `LEDGER_COLS`, statuses `pending` / `excluded_kmz`);
+  `resources_ledger(datasets: list[dict]) -> pd.DataFrame` (one row per resource version, `LEDGER_COLS`, statuses `pending` / `excluded_format`);
   `merge_ledgers(fresh, old) -> pd.DataFrame`.
   Ledger `target_id = f"{resource_id}@{last_modified}"`.
 
@@ -833,7 +833,7 @@ Expected: 6 passed, ruff clean.
 - [ ] **Step 6: Run discovery for real**
 
 Run: `uv run --group etl --group api python pipelines/unosat/discovery.py`
-Expected: ~1,465 datasets, ~2,984 resources; statuses `pending` ≈ 2,969 and `excluded_kmz` ≈ 15; hosts list shows `unosat.org`, `unosat-maps.web.cern.ch`, `cern.ch`, `data.humdata.org`, `floods.unosat.org`. If counts differ wildly from the spec's evidence table, stop and investigate before harvesting.
+Expected: ~1,465 datasets, ~2,984 resources; statuses `pending` ≈ 2,969 and `excluded_format` ≈ 15; hosts list shows `unosat.org`, `unosat-maps.web.cern.ch`, `cern.ch`, `data.humdata.org`, `floods.unosat.org`. If counts differ wildly from the spec's evidence table, stop and investigate before harvesting.
 
 - [ ] **Step 7: Commit**
 

@@ -123,7 +123,7 @@ for `FL`/`TC`, `other`, or `unknown` when no code), `status`, `http_status`,
 `error`, `attempts`, `attempted_at`, `uploaded_at`, `sha256`, `size_bytes`,
 `n_members`, `missing_upstream`.
 
-Statuses set here: `pending` (SHP, GDB, XLSX, GPKG), `excluded_kmz`. Re-running
+Statuses set here: `pending` (SHP, GDB, XLSX, GPKG), `excluded_format`. Re-running
 merges onto the existing ledger exactly as CEMS: transfer outcomes survive, a
 resource whose `last_modified` or `hdx_hash` changed becomes a *new* row (new
 version, old kept), vanished resources are flagged `missing_upstream`, never
