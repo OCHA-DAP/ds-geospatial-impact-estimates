@@ -147,6 +147,12 @@ def process_target(
         try:
             store.upload(dest, tmp.read_bytes())
         except Exception as e:  # noqa: BLE001 — recorded as failed_upload, retryable, visible
+            if store.exists_size(dest) == dl.size:
+                # A concurrent writer won the race to this content-addressed path
+                # while our upload failed; the bytes are identical by construction
+                # (same sha256), so this is a dedup, not a failure.
+                won = {"status": "uploaded_dedup", "uploaded_at": _now(), "error": None}
+                return base | won, members
             return base | {"status": "failed_upload", "error": repr(e)[:300]}, []
         return base | {"status": "uploaded", "uploaded_at": _now()}, members
     finally:

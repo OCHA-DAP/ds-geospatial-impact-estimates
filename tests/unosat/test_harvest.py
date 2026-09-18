@@ -85,6 +85,25 @@ def test_upload_error_is_retryable_failed_upload(ledger_row, good_zip):
     assert updates["sha256"] == hashlib.sha256(good_zip).hexdigest()  # hash kept for the retry
 
 
+class _StoreThatLosesTheRace(store.MemoryStore):
+    """Simulates a concurrent writer: the bytes land at ``path`` (a peer's
+    upload won the race) but this call still raises, as a real client would
+    on a conflicting concurrent write to the same path."""
+
+    def upload(self, path: str, data: bytes) -> None:
+        self.uploads[path] = data
+        raise OSError("simulated conflicting concurrent write")
+
+
+def test_lost_upload_race_to_identical_content_is_uploaded_dedup(ledger_row, good_zip):
+    st = _StoreThatLosesTheRace()
+    updates, members, _ = _run(ledger_row, FakeResponse(200, good_zip), st)
+    assert updates["status"] == "uploaded_dedup"
+    assert updates["error"] is None
+    assert updates["sha256"] == hashlib.sha256(good_zip).hexdigest()
+    assert len(members) == 2
+
+
 def test_no_cache_leaves_nothing_under_cache_root(ledger_row, good_zip, tmp_path):
     _run(ledger_row, FakeResponse(200, good_zip), use_cache=False)
     assert not (tmp_path / "cache" / "unosat").exists()
