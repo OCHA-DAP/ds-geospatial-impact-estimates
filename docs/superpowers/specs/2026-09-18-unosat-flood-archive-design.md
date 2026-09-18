@@ -138,7 +138,17 @@ verify size → record `uploaded`. The downloaded file is kept in the local
 cache (§2b). Journal every attempt in the
 `data_transfers.jsonl` record shape with origin URL, host and the dataset's
 stated licence. Terminal upstream states are explicit statuses:
-`unavailable_404`, `corrupt_upstream` (HTTP 200 but not a zip). Neither is
+`unavailable_404`, `corrupt_upstream` (HTTP 200 but not a zip). A valid zip whose
+members use a compression method Python cannot test (seen: one such file on
+the first full run) is archived anyway — bytes hashed, members listed — with
+status `uploaded_untested`, so the untestable state is visible, not a crash.
+
+**Download once per URL.** The same zip URL is listed under many HDX datasets
+(2,925 pending rows map to 1,721 distinct URLs). One representative row per URL
+is fetched; its outcome, sha256, size and member inventory are propagated to
+the sibling rows sharing that URL (journaled as `via_url_sibling`), and rows
+whose URL already has an uploaded row are settled as `uploaded_dedup` before
+any download. Neither is
 retried by `--retry-failed`; both stay in the ledger.
 
 Resume model as CEMS (ADR-0005): blob listing is truth; ledger rows claiming
