@@ -162,6 +162,7 @@ def main():
     rules = [(nm, in_reg & (df[col] == 1)) for nm, col in MEMBERS.items()]
     rules += [(f"{k}-of-6", in_reg & (votes >= k)) for k in range(1, 7)]
     rows = []
+    f1_boot_core = {}   # (rule, radius) -> per-draw F1, kept for the paired rule-minus-best-single intervals
     for nm, sel in rules:
         fl = bld[sel]
         f_cells = np.array([lut[c] for c in h3_cells(bld_rp[sel].to_crs(4326).geometry, RES_CORE)])
@@ -176,6 +177,7 @@ def main():
             P = W @ agg(f_cells, hit, nc) / (W @ flags_c)
             R = W @ agg(cem_idx, rec, nc) / (W @ den_c)
             F1 = np.where((P + R) > 0, 2 * P * R / (P + R), 0.0)
+            f1_boot_core[(nm, r)] = F1
             fz = frozen5[r].loc[nm]
             p0, r0 = float(hit.mean()), float(rec.mean())
             f0 = 2 * p0 * r0 / (p0 + r0) if (p0 + r0) > 0 else 0.0
@@ -206,6 +208,19 @@ def main():
         rows.append(dict(lens="core", rule=nm, radius=10, metric="P_crowd",
                          point=round(float(padj0), 3), lo=round(lo, 3), hi=round(hi, 3)))
         print(f"  core {nm}: done ({len(fl):,} flags)")
+    # Paired differences, k-of-6 rule minus the best single product (Tristan, 2026-09-09 #5): the same
+    # cell draws score both, so the difference's interval is the honest test of "voting doubles the best
+    # product", not the overlap of two marginal intervals. The comparator is FIXED before the draws as the
+    # product with the highest frozen F1 at r = 10 (choosing it per draw would flatter the rules).
+    best = frozen5[10].loc[list(MEMBERS)].F1_cems.idxmax()
+    for k in range(1, 7):
+        for r in (10, 20, 30):
+            d_ = f1_boot_core[(f"{k}-of-6", r)] - f1_boot_core[(best, r)]
+            f0 = float(frozen5[r].loc[f"{k}-of-6"].F1_cems - frozen5[r].loc[best].F1_cems)
+            lo, hi = pct(d_)
+            rows.append(dict(lens="core", rule=f"{k}-of-6 − {best}", radius=r, metric="F1_diff",
+                             point=round(f0, 3), lo=round(lo, 3), hi=round(hi, 3)))
+    print(f"  core: paired rule − best single ({best}) intervals written")
     pd.DataFrame(rows).to_csv(os.path.join(OUT, "rq9_ci_core.csv"), index=False)
     print("wrote rq9_ci_core.csv")
 
