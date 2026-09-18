@@ -746,8 +746,9 @@ quantify how much the recall upper bound overstates.
 ### The geography benchmark: framing for this brief {#app-null-brief .unnumbered}
 
 Every product was compared against a deliberately simple benchmark that uses no satellite
-imagery, the *DEM null*: a model of building density, terrain slope and elevation from the
-open Copernicus 30 m elevation model, and modelled shaking intensity, fitted with hindsight
+imagery, the *shaking-and-vulnerability null*: modelled shaking intensity from the USGS
+ShakeMap, and the vulnerability of the setting proxied by building density and by terrain
+slope and elevation from the open Copernicus 30 m elevation model, fitted with hindsight
 to this event's own damage labels and validated on spatial blocks it never trained on.
 Every input is available on day zero anywhere on Earth; the fitted coefficients were not,
 so it is a benchmark, not an operational alternative, and it is refit per event rather than
@@ -767,7 +768,7 @@ The frozen v3 manuscript used a *coast-distance null* (density, distance to the 
 shaking). Coast distance predicts damage in this event because the damaged strip is a coastal
 fan, and it is not a variable one would carry to another earthquake; the same ablation
 showed terrain does the job at least as well (F1 `{python} N["dem_variant_F1"]` against `{python} N["coast_null_F1"]`, area-ranking ρ `{python} N["dem_variant_rho8"]` against `{python} N["coast_null_rho8"]`),
-so the brief uses the DEM null throughout and the conclusions are unchanged (ADR-0033).
+so the brief uses the shaking-and-vulnerability null throughout and the conclusions are unchanged (ADR-0033).
 
 
 
@@ -775,8 +776,8 @@ so the brief uses the DEM null throughout and the conclusions are unchanged (ADR
 
 *How to read this section next to the previous one.* This section is adapted from the
 frozen v3 manuscript, where the benchmark was reported as a headline result and scored
-across everything each product delivered; its numbers here are the brief's DEM null,
-not v3's coast-distance null. The section above states the brief's position and scores in the
+across everything each product delivered; its numbers here are the brief's
+shaking-and-vulnerability null, not v3's coast-distance null. The section above states the brief's position and scores in the
 core region. The two agree on the facts and differ in emphasis and in frame: across the
 delivered footprints the benchmark also carries the shaking estimate, which is why it
 looks stronger here than in the core-region comparison above.

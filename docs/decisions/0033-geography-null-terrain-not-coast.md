@@ -5,7 +5,7 @@ deciders: zackarno
 amends: 0025-damage-product-evaluation-method
 ---
 
-# The geography null is the "DEM null" (building density, terrain slope and elevation, shaking); the coast-distance null is retired to v3
+# The geography null is the "shaking-and-vulnerability null" (ShakeMap intensity; building density, terrain slope and elevation); the coast-distance null is retired to v3
 
 ## Context and Problem Statement
 
@@ -54,9 +54,13 @@ numbers still came from the coast model, and carried a TBD marker for the unreso
 
 ## Decision Outcome
 
-Option 2. Naming: the brief calls the benchmark the **DEM null** and v3's the **coast-distance
-null**; the pipeline's predictor id stays `geography null (logistic|rand. forest)` so keys, figures
-and the oracle keep addressing the same row.
+Option 2. Naming: the brief calls the benchmark the **shaking-and-vulnerability null** (hazard from
+the ShakeMap; the setting's vulnerability proxied by built density and terrain) and v3's the
+**coast-distance null**. The name follows what the model represents, not its data source ("DEM null"
+was considered and dropped for that reason). Strictly, building density is *exposure* rather than
+vulnerability in risk vocabulary; "shaking-and-setting null" is the fallback if a reviewer objects.
+The pipeline's predictor id stays `geography null (logistic|rand. forest)` so keys, figures and the
+oracle keep addressing the same row.
 
 - **One definition.** `exploratory/paper/pipeline/context.py` computes the context features
   (`NULL_FEATURES = density9, slope, elev, mmi`); the ranking module and the archived fusion and
