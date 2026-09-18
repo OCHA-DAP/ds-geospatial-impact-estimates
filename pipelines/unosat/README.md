@@ -32,6 +32,10 @@ uv run --group etl --group api python pipelines/unosat/audit.py               # 
 Needs `.env` with `DSCI_AZ_BLOB_DEV_SAS_WRITE` (via `gie.config`) and GDAL's
 `ogrinfo` on PATH (`brew install gdal`). Default stage dev.
 
+`harvest.py` flags: `--scope`, `--limit`, `--workers` (default 6), `--per-host`
+(default 3), `--sleep`, `--no-cache`, `--dry-run`, `--retry-failed`; the full
+run used `--workers 8 --per-host 6`.
+
 ## Statuses
 
 | status | meaning | retried? |
@@ -63,3 +67,8 @@ Re-running discovery is the backfill: new/re-published resources become
 pending, vanished ones are flagged `missing_upstream`, never dropped.
 Each distinct (URL, declared size) is downloaded once per run; ledger rows
 sharing both are settled from the representative's outcome.
+The settle step (rows whose URL is already uploaded) runs on the whole
+ledger before `--scope`/`--limit` filtering, so a scoped run may settle rows
+outside its scope.
+Uploads pass the whole file through memory (`gie.blobio.upload` takes bytes);
+peak RSS ≈ workers × largest file (337 MB in this corpus).

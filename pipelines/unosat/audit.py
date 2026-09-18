@@ -35,6 +35,7 @@ def main(argv: list[str] | None = None) -> None:
 
     print("bronze:")
     ok = audit.run_bronze_checks(ledger, store, status_df)
+    print(f"domains status breakdown: {status_df.status.value_counts().to_dict()}")
     print("\nledger statuses:", ledger["status"].value_counts().to_dict())
     if not ok:
         sys.exit(1)

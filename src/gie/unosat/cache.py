@@ -49,7 +49,7 @@ def read_through(
         with os.fdopen(fd, "wb") as f:
             f.write(fetch())
         os.replace(part, dest)
-    except:
+    except BaseException:
         if part.exists():
             part.unlink()
         raise
