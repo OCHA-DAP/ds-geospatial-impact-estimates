@@ -21,6 +21,7 @@ from pathlib import Path
 
 import pandas as pd
 import requests
+from azure.core.exceptions import AzureError
 
 from gie.unosat import cache, common
 from gie.unosat.store import BlobStore
@@ -151,14 +152,16 @@ def process_target(
         existing = store.exists_size(dest)
         if existing == dl.size:
             return base | {"status": "uploaded_dedup", "uploaded_at": _now()}, members
+        data = tmp.read_bytes()
         try:
-            store.upload(dest, tmp.read_bytes())
-        except Exception as e:  # noqa: BLE001 — recorded as failed_upload, retryable, visible
+            store.upload(dest, data)
+        except (AzureError, OSError) as e:
             if store.exists_size(dest) == dl.size:
                 # A concurrent writer won the race to this content-addressed path
                 # while our upload failed; the bytes are identical by construction
-                # (same sha256), so this is a dedup, not a failure.
-                won = {"status": "uploaded_dedup", "uploaded_at": _now(), "error": None}
+                # (same sha256), so this is a dedup, not a failure. Keep base's
+                # own error (e.g. a zip_test note) rather than clobbering it.
+                won = {"status": "uploaded_dedup", "uploaded_at": _now(), "error": base["error"]}
                 return base | won, members
             return base | {"status": "failed_upload", "error": repr(e)[:300]}, []
         status = "uploaded" if tested else "uploaded_untested"
@@ -238,12 +241,17 @@ def settle_url_siblings(ledger: pd.DataFrame) -> list[tuple[str, dict]]:
 
 
 def representatives(todo: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, list[str]]]:
-    """Group the ``todo`` frame by url. Return (one row per url — the first by
-    target_id —, mapping url -> list of the OTHER target_ids sharing it)."""
-    ordered = todo.reset_index(drop=True).sort_values("target_id")
-    reps = ordered.drop_duplicates("url", keep="first")
+    """Group the ``todo`` frame by (url, hdx_size) — a missing hdx_size is its
+    own group, never merged with a row that declares a known size. Return
+    (one row per group — the first by target_id —, mapping the
+    representative's target_id -> list of the OTHER target_ids in its
+    group)."""
+    ordered = todo.reset_index(drop=True).sort_values("target_id").copy()
+    ordered["_size_key"] = ordered["hdx_size"].apply(lambda v: str(v) if pd.notna(v) else "na")
+    reps = ordered.drop_duplicates(["url", "_size_key"], keep="first").drop(columns="_size_key")
     siblings = {
-        url: group["target_id"].tolist()[1:] for url, group in ordered.groupby("url", sort=False)
+        group["target_id"].iloc[0]: group["target_id"].tolist()[1:]
+        for _, group in ordered.groupby(["url", "_size_key"], sort=False)
     }
     return reps, siblings
 

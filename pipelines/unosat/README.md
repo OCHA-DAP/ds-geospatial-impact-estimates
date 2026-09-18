@@ -61,5 +61,5 @@ Blob is truth: every run reconciles the ledger against a bronze listing.
 Checkpoints every 25 transfers and on exit. Every attempt is journaled.
 Re-running discovery is the backfill: new/re-published resources become
 pending, vanished ones are flagged `missing_upstream`, never dropped.
-Each distinct URL is downloaded once per run; ledger rows sharing a URL are
-settled from the representative's outcome (journaled `via: url_sibling`).
+Each distinct (URL, declared size) is downloaded once per run; ledger rows
+sharing both are settled from the representative's outcome.

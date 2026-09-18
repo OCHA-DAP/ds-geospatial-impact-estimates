@@ -110,6 +110,14 @@ def main(argv: list[str] | None = None) -> None:
 
     members_buf: list[dict] = []
     done = 0
+    since_checkpoint = 0
+
+    def checkpoint_if_due() -> None:
+        nonlocal members_buf, since_checkpoint
+        if since_checkpoint >= harvest.CHECKPOINT_EVERY:
+            members_buf = harvest.checkpoint(args.work_dir, ledger, members_buf, store)
+            since_checkpoint = 0
+
     pool = ThreadPoolExecutor(max_workers=args.workers)
     try:
         futures = [pool.submit(worker, row) for _, row in reps.iterrows()]
@@ -127,11 +135,13 @@ def main(argv: list[str] | None = None) -> None:
                 ),
             )
             done += 1
+            since_checkpoint += 1
             ok = outcome in common.UPLOADED_STATUSES
             marker = outcome if ok else f"** {outcome}: {updates.get('error')}"
             print(f"  [{done}/{len(todo)}] {target_id} {marker}", flush=True)
+            checkpoint_if_due()
 
-            for sibling_id in siblings.get(ledger.loc[target_id, "url"], []):
+            for sibling_id in siblings.get(target_id, []):
                 sib_updates, sib_members = harvest.sibling_updates(updates, members, sibling_id)
                 harvest.apply_updates(ledger, sibling_id, sib_updates)
                 members_buf.extend(sib_members)
@@ -144,6 +154,7 @@ def main(argv: list[str] | None = None) -> None:
                     ),
                 )
                 done += 1
+                since_checkpoint += 1
                 sib_ok = sib_updates["status"] in common.UPLOADED_STATUSES
                 sib_marker = (
                     sib_updates["status"]
@@ -152,9 +163,7 @@ def main(argv: list[str] | None = None) -> None:
                 )
                 print(f"  [{done}/{len(todo)}] {sibling_id} {sib_marker} (via {target_id})",
                       flush=True)
-
-            if done % harvest.CHECKPOINT_EVERY == 0:
-                members_buf = harvest.checkpoint(args.work_dir, ledger, members_buf, store)
+                checkpoint_if_due()
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
         harvest.checkpoint(args.work_dir, ledger, members_buf, store)

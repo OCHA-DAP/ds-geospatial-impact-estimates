@@ -116,6 +116,31 @@ def test_lost_upload_race_to_identical_content_is_uploaded_dedup(ledger_row, goo
     assert len(members) == 2
 
 
+def test_lost_upload_race_keeps_zip_test_note_when_untested(ledger_row, good_zip, monkeypatch):
+    """An uploaded_untested object (unsupported compression method) that loses
+    the upload race must keep its zip_test note, not have it clobbered by the
+    lost-race branch's own (unrelated) error."""
+    monkeypatch.setattr(zipfile.ZipFile, "testzip", _raise_unsupported_compression)
+    st = _StoreThatLosesTheRace()
+    updates, _, _ = _run(ledger_row, FakeResponse(200, good_zip), st)
+    assert updates["status"] == "uploaded_dedup"
+    assert updates["error"] == "zip_test: unsupported compression method"
+
+
+class _StoreWithBuggyUpload(store.MemoryStore):
+    """A KeyError here is a bug in our own code, not an upstream/store failure
+    — it must propagate, not be recorded as failed_upload."""
+
+    def upload(self, path: str, data: bytes) -> None:
+        raise KeyError("bug")
+
+
+def test_upload_bug_propagates(ledger_row, good_zip):
+    st = _StoreWithBuggyUpload()
+    with pytest.raises(KeyError, match="bug"):
+        _run(ledger_row, FakeResponse(200, good_zip), st)
+
+
 def test_no_cache_leaves_nothing_under_cache_root(ledger_row, good_zip, tmp_path):
     _run(ledger_row, FakeResponse(200, good_zip), use_cache=False)
     assert not (tmp_path / "cache" / "unosat").exists()
@@ -266,7 +291,6 @@ def _ledger2():
 _TID_SHP = "r-shp@2024-12-20T09:00:00"  # DS: FL20220424SSD_SHP.zip
 _TID_SHP2 = "r-shp-2@2024-12-22T09:00:00"  # DS2: same URL as _TID_SHP
 _TID_OTHER = "r-other@2024-12-22T09:00:00"  # DS2: a different URL
-_SHARED_URL = "https://unosat.org/static/x/FL20220424SSD_SHP.zip"
 
 
 def test_settle_url_siblings_marks_sibling_uploaded_dedup_with_same_sha():
@@ -312,17 +336,30 @@ def test_representatives_groups_shared_url_into_one_rep_and_one_sibling():
     reps, siblings = harvest.representatives(todo)
     rep_ids = set(reps["target_id"])
     assert (_TID_SHP in rep_ids) != (_TID_SHP2 in rep_ids)  # exactly one is the rep
-    other = _TID_SHP2 if _TID_SHP in rep_ids else _TID_SHP
-    assert siblings[_SHARED_URL] == [other]
+    rep_id = _TID_SHP if _TID_SHP in rep_ids else _TID_SHP2
+    other = _TID_SHP2 if rep_id == _TID_SHP else _TID_SHP
+    assert siblings[rep_id] == [other]
 
 
 def test_representatives_unique_url_has_no_siblings():
     led = _ledger2()
     todo = led[led["status"] == "pending"]
     reps, siblings = harvest.representatives(todo)
-    url = "https://unosat.org/static/y/FL20230101KEN_SHP.zip"  # r-other: unique URL
-    assert url in reps["url"].values
-    assert siblings[url] == []
+    assert _TID_OTHER in reps["target_id"].values  # r-other: unique URL
+    assert siblings[_TID_OTHER] == []
+
+
+def test_representatives_splits_same_url_on_hdx_size_mismatch():
+    """A missing hdx_size must not be treated as a wildcard that merges with a
+    row that declares a known size: each is its own representative."""
+    led = _ledger2()
+    led.loc[_TID_SHP2, "hdx_size"] = pd.NA
+    todo = led[led["status"] == "pending"]
+    reps, siblings = harvest.representatives(todo)
+    rep_ids = set(reps["target_id"])
+    assert _TID_SHP in rep_ids and _TID_SHP2 in rep_ids  # both are representatives now
+    assert siblings[_TID_SHP] == []
+    assert siblings[_TID_SHP2] == []
 
 
 def test_sibling_updates_for_success_outcome_is_uploaded_dedup_without_attempts():
