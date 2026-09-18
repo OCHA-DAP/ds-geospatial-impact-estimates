@@ -60,13 +60,20 @@ def stream_download(session, url: str, dest: Path, limiter: common.HostLimiter) 
     return DownloadResult(200, h.hexdigest(), size)
 
 
-def inspect_zip(path: Path) -> list[zipfile.ZipInfo]:
-    """Member list, or raise BadZipFile (also for a corrupt member)."""
+def inspect_zip(path: Path) -> tuple[list[zipfile.ZipInfo], bool]:
+    """Member list and whether ``testzip()`` actually verified them, or raise
+    BadZipFile (also for a corrupt member). ``tested`` is False when the
+    archive uses a compression method Python's zipfile cannot decompress
+    (Deflate64, PPMd, ...): the zip itself is still valid and its members are
+    still listed via ``infolist()``, they just could not be test-decompressed."""
     with zipfile.ZipFile(path) as zf:
-        bad = zf.testzip()
+        try:
+            bad = zf.testzip()
+        except NotImplementedError:
+            return zf.infolist(), False
         if bad is not None:
             raise zipfile.BadZipFile(f"corrupt member {bad}")
-        return zf.infolist()
+        return zf.infolist(), True
 
 
 def member_rows(row: pd.Series, sha256: str, infos: list[zipfile.ZipInfo]) -> list[dict]:
@@ -117,7 +124,7 @@ def process_target(
                 "error": f"HTTP {dl.status_code}",
             }, []
         try:
-            infos = inspect_zip(tmp)
+            infos, tested = inspect_zip(tmp)
         except zipfile.BadZipFile as e:
             return updates | {
                 "status": "corrupt_upstream",
@@ -130,7 +137,7 @@ def process_target(
         dest = common.blob_path(sha, basename)
         base = updates | {
             "http_status": 200,
-            "error": None,
+            "error": None if tested else "zip_test: unsupported compression method",
             "sha256": sha,
             "size_bytes": dl.size,
             "n_members": len(infos),
@@ -154,7 +161,8 @@ def process_target(
                 won = {"status": "uploaded_dedup", "uploaded_at": _now(), "error": None}
                 return base | won, members
             return base | {"status": "failed_upload", "error": repr(e)[:300]}, []
-        return base | {"status": "uploaded", "uploaded_at": _now()}, members
+        status = "uploaded" if tested else "uploaded_untested"
+        return base | {"status": status, "uploaded_at": _now()}, members
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 

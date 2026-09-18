@@ -118,6 +118,38 @@ def test_inspect_zip_raises_on_corrupt_member(tmp_path):
         harvest.inspect_zip(p)
 
 
+def _raise_unsupported_compression(self):
+    raise NotImplementedError("That compression method is not supported")
+
+
+def test_inspect_zip_reports_untested_for_unsupported_compression(tmp_path, good_zip, monkeypatch):
+    p = tmp_path / "untested.zip"
+    p.write_bytes(good_zip)
+    monkeypatch.setattr(zipfile.ZipFile, "testzip", _raise_unsupported_compression)
+    infos, tested = harvest.inspect_zip(p)
+    assert tested is False
+    assert len(infos) == 2
+
+
+def test_good_zip_is_tested(good_zip, tmp_path):
+    p = tmp_path / "good.zip"
+    p.write_bytes(good_zip)
+    infos, tested = harvest.inspect_zip(p)
+    assert tested is True
+    assert len(infos) == 2
+
+
+def test_unsupported_compression_is_uploaded_untested(ledger_row, good_zip, monkeypatch):
+    monkeypatch.setattr(zipfile.ZipFile, "testzip", _raise_unsupported_compression)
+    updates, members, st = _run(ledger_row, FakeResponse(200, good_zip))
+    assert updates["status"] == "uploaded_untested"
+    assert updates["error"] == "zip_test: unsupported compression method"
+    assert updates["sha256"] == hashlib.sha256(good_zip).hexdigest()
+    assert updates["n_members"] == 2 and len(members) == 2
+    path = common.blob_path(updates["sha256"], "FL20220424SSD_SHP.zip")
+    assert st.exists_size(path) == len(good_zip)
+
+
 def test_stream_download_hashes_while_streaming(tmp_path, good_zip):
     session = FakeSession({"https://unosat.org/a.zip": FakeResponse(200, good_zip)})
     res = harvest.stream_download(

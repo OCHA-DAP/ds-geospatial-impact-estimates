@@ -35,7 +35,7 @@ HARVEST_FORMATS = ("SHP", "Geodatabase", "XLSX", "Geopackage")
 TERMINAL_STATUSES = frozenset({"unavailable_404", "corrupt_upstream"})
 # Our side or transient upstream: retried only with --retry-failed.
 RETRYABLE_STATUSES = frozenset({"failed_download", "failed_upload"})
-UPLOADED_STATUSES = frozenset({"uploaded", "uploaded_dedup"})
+UPLOADED_STATUSES = frozenset({"uploaded", "uploaded_dedup", "uploaded_untested"})
 
 LEDGER_COLS = [
     "target_id",
