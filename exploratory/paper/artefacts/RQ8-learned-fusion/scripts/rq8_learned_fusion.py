@@ -24,7 +24,9 @@ from sklearn.model_selection import GroupKFold
 from sklearn.metrics import average_precision_score, precision_recall_curve
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "lib"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "pipeline"))
 import gie_paper as gp  # noqa: E402
+import context as ctx  # noqa: E402  (the null's / fusion's context features: one definition, ADR-0033)
 
 HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "figs")
@@ -106,28 +108,10 @@ def main():
     d["ms_pct"] = np.where(near, ms_all.damage_pct_10m.to_numpy()[mi], 0.0)
     d["ms_nobs"] = np.where(near, ms_all.num_observations.to_numpy()[mi], 0)
 
-    # ---- context features ----
+    # ---- context features: ONE definition shared with the null (pipeline/context.py, ADR-0033) ----
+    d = ctx.context_features(d)
     ll = gpd.GeoSeries(d_rp, crs=gp.METRIC_CRS).to_crs(4326)
     d["cell7"] = [h3.latlng_to_cell(p.y, p.x, 7) for p in ll]
-    cell9 = pd.Series([h3.latlng_to_cell(p.y, p.x, 9) for p in ll])
-    d["density9"] = cell9.map(cell9.value_counts())
-    adm0 = gp.codab(0)
-    coast = gp.to_metric(adm0).geometry.make_valid().union_all().boundary
-    d["dist_coast"] = d.geometry.distance(coast) / 1000.0
-    # MMI: nearest contour, max over events
-    frames = []
-    for ev in ("us6000t7zp", "us6000t7zc"):
-        raw = json.loads(stratus.load_blob_data(
-            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json", event=None),
-            stage="dev", container_name=gp.S.container))
-        g = gpd.GeoDataFrame.from_features(raw["features"], crs=4326).to_crs(gp.METRIC_CRS)
-        frames.append(g[["value", "geometry"]])
-    mmi = np.full(len(d), np.nan)
-    for g in frames:
-        j = gpd.sjoin_nearest(d[["geometry"]], g, how="left")
-        j = j[~j.index.duplicated()]
-        mmi = np.fmax(mmi, j["value"].to_numpy())
-    d["mmi"] = np.nan_to_num(mmi, nan=np.nanmedian(mmi))
 
     for c in CLASSES:
         d[c] = pd.to_numeric(d[c], errors="coerce").fillna(0)
@@ -140,7 +124,7 @@ def main():
     print(f"region buildings {len(d):,} | positives {d.y.sum():,} ({d.y.mean():.1%}) | "
           f"crowd-gap weight-0 negatives {int(crowd_gap.sum()):,}")
 
-    FEATS = ([*FLAGS.values()] + CLASSES + ["ms_pct", "ms_nobs", "density9", "dist_coast", "mmi"])
+    FEATS = ([*FLAGS.values()] + CLASSES + ["ms_pct", "ms_nobs", *ctx.NULL_FEATURES])
     X = d[FEATS].astype(float).fillna(0.0).to_numpy()
     y = d.y.to_numpy()
     groups = d.cell7.to_numpy()
@@ -174,7 +158,7 @@ def main():
             oof[name][te] = mdl.predict_proba((X[te] - mu) / sd)[:, 1]
 
     # ---- ablation: is the skill products or geography? ----
-    CONTEXT = ["density9", "dist_coast", "mmi"]
+    CONTEXT = list(ctx.NULL_FEATURES)
     PRODUCTS = [f for f in FEATS if f not in CONTEXT]
     # Feature-subset refits ("ablations"): refit on a SUBSET of the columns to see how much
     # that subset alone carries. context-only = the geography null; products-only = its mirror.
@@ -320,7 +304,7 @@ def main():
     plt.colorbar(sc, ax=axm, shrink=0.75, pad=0.01, label="predicted damage risk")
     axm.legend(loc="lower left", fontsize=11)
     axm.set_title("What the day-zero variables alone predict — no satellite input\n"
-                  "(coast distance + building density + ShakeMap intensity)", fontsize=13)
+                  "(building density + slope + elevation + ShakeMap intensity)", fontsize=13)
 
     # geo_bin: the day-zero score frozen to a single flag list of median product size —
     # used as the reference diamond in the PR plane below (and the printed diagnostic).

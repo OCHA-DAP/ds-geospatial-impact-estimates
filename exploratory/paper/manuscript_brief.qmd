@@ -696,7 +696,7 @@ ways: for whether it bunches together on the map rather than scattering (Moran's
 standard score for exactly this, with its significance judged by reshuffling the values
 across the same cells many times, which controls for the shape of the built-up area
 itself), and for correlation with variables that would corrupt a ranking, namely building
-density, distance to the coast, and modelled shaking intensity.
+density, terrain (slope and elevation), and modelled shaking intensity.
 
 Two further tests use the same cell lattice. The first checks whether a product's reliability in an area can be predicted from its flag pattern alone (its flag rate, how
 tightly its flags cluster, how much it agrees with the other products), by correlating
@@ -745,43 +745,51 @@ quantify how much the recall upper bound overstates.
 
 ### The geography benchmark: framing for this brief {#app-null-brief .unnumbered}
 
-Every product was compared against a deliberately simple benchmark model that uses no
-satellite imagery: a logistic model of building density and terrain, fitted with
-hindsight to this event's own damage labels and validated on spatial blocks it never
-trained on. Its inputs were available on day zero; its fitted coefficients were not, so
-it is a benchmark, not an operational alternative. At building level it falls inside
-the six products' performance band (F1 `{python} N["null_F1_2"]` against the products' `{python} N["prod_F1_range_r10"]`), and at
-area ranking it performs comparably to the better single products; only the combinations
-exceed it by a wide margin (flat voting `{python} N["vote_over_null"]` F1, fitted fusion `{python} N["fusion_over_null"]`). A covariate
-ablation confirmed the benchmark's strength does not depend on any event-specific
-feature choice: building density alone comes `{python} N["dens_vs_band"]` (F1 `{python} N["dens_only_F1"]` against the weakest product's `{python} N["prod_F1_min_r10"]`), and a
-fully generalizable terrain-based variant (open Copernicus DEM elevation) is slightly
-stronger than the version reported in v3 (F1 `{python} N["dem_variant_F1"]`).
+Every product was compared against a deliberately simple benchmark that uses no satellite
+imagery, the *shaking-and-vulnerability null*: modelled shaking intensity from the USGS
+ShakeMap, and the vulnerability of the setting proxied by building density and by terrain
+slope and elevation from the open Copernicus 30 m elevation model, fitted with hindsight
+to this event's own damage labels and validated on spatial blocks it never trained on.
+Every input is available on day zero anywhere on Earth; the fitted coefficients were not,
+so it is a benchmark, not an operational alternative, and it is refit per event rather than
+carried between them. At building level it falls inside the six products' performance band
+(F1 `{python} N["null_F1"]` with the logistic learner, `{python} N["null_rf_F1"]` with the random forest, against the products' `{python} N["prod_F1_range_r10"]`; the
+logistic is the one reported, so that every paired comparison in this brief rests on one
+model), and at area ranking it performs comparably to the better single products. Only
+the combinations exceed it by a wide margin (flat voting `{python} N["vote_over_null"]` F1, fitted fusion `{python} N["fusion_over_null"]`).
+Two checks stand behind it. A covariate ablation (frozen, 2 September) showed that building
+density alone already comes `{python} N["dens_vs_band"]` (F1 `{python} N["dens_only_F1"]` against the weakest product's `{python} N["prod_F1_min_r10"]`), so the benchmark's
+strength does not hinge on any one covariate. And because a smooth covariate is where
+spatial blocks can leak structure across their edges, the model was refit with a 500 m
+buffer between training and test buildings: the null's F1 moves from `{python} N["null_F1"]` to `{python} N["null_F1_buf500"]` and the
+fusion's from `{python} N["fusion_F1"]` to `{python} N["fusion_F1_buf500"]`, so leakage is not what makes it strong.
 
-*TBD: the framing of the benchmark comparison is being reworked for this document
-(what it does and does not imply about using satellites); until then, the full
-construction, fairness analysis and results are in the v3 record ("A hindsight
-geography model", its appendix "The geography null model and weighted fusion, in full",
-and "Was the model-versus-product comparison fair?").*
+The frozen v3 manuscript used a *coast-distance null* (density, distance to the coastline,
+shaking). Coast distance predicts damage in this event because the damaged strip is a coastal
+fan, and it is not a variable one would carry to another earthquake; the same ablation
+showed terrain does the job at least as well (F1 `{python} N["dem_variant_F1"]` against `{python} N["coast_null_F1"]`, area-ranking ρ `{python} N["dem_variant_rho8"]` against `{python} N["coast_null_rho8"]`),
+so the brief uses the shaking-and-vulnerability null throughout and the conclusions are unchanged (ADR-0033).
 
 
 
 ### The geography null model and weighted fusion, in full {#app-null .unnumbered}
 
-*How to read this section next to the previous one.* This section is imported from the
+*How to read this section next to the previous one.* This section is adapted from the
 frozen v3 manuscript, where the benchmark was reported as a headline result and scored
-across everything each product delivered. The section above states the brief's position
-and scores in the core region. The two agree on the facts and differ in emphasis and in
-frame: across the delivered footprints the benchmark also carries the shaking estimate,
-which is why it looks stronger here than in the core-region comparison above.
+across everything each product delivered; its numbers here are the brief's
+shaking-and-vulnerability null, not v3's coast-distance null. The section above states the brief's position and scores in the
+core region. The two agree on the facts and differ in emphasis and in frame: across the
+delivered footprints the benchmark also carries the shaking estimate, which is why it
+looks stronger here than in the core-region comparison above.
 
 Two of this paper's constructions are models rather than products, and both are built the
 same way. The *geography null model* exists to calibrate what the accuracy numbers mean:
 it estimates how much of the damage pattern could be recovered from coarse spatial structure
 and shaking alone, so that a product's score can be read against something other than
-zero. It uses three context variables computed per building, all available within hours
-of any earthquake: distance to the coastline, local building density, and the shaking
-intensity estimated by the USGS ShakeMap. From these it predicts which buildings have CEMS-recorded damage. It is validated by *spatial blocking*: the map is cut into ~`{python} N["h3_res7_km2"]` km²
+zero. It uses four context variables computed per building, all available within hours
+of any earthquake anywhere: local building density, terrain slope and elevation from the
+open Copernicus 30 m elevation model, and the shaking intensity estimated by the USGS
+ShakeMap. From these it predicts which buildings have CEMS-recorded damage. It is validated by *spatial blocking*: the map is cut into ~`{python} N["h3_res7_km2"]` km²
 zones and the model is always scored on zones it was not trained on, because neighbouring
 buildings resemble each other in both their features and their damage, and an ordinary
 random split would leak that resemblance into an inflated score (@fig-dayzero-build).
@@ -843,8 +851,8 @@ hindsight in a second, deliberate way: it is fitted to this event's reference la
 upper bound on geography-only skill for this event, and the claim it supports is
 about information content (the products add little beyond what three context variables already explain), never the operational claim that responders held such a model on day zero. We return to this in the Limitations.
 
-![How the geography null model is built. Three context variables known within hours of the
-earthquake (coast distance, building density, and ShakeMap intensity) feed one
+![How the geography null model is built. Four context variables known within hours of the
+earthquake (building density, terrain slope and elevation, and ShakeMap intensity) feed one
 spatially-blocked model whose target is CEMS damage; both learners are fitted and the
 stronger one is reported (the logistic here, the forest across the larger delivered
 footprints of @sec-flags). Its output is a *continuous* per-building risk, so every
@@ -879,7 +887,8 @@ and a negative rank correlation for `{python} N["asd_neg_7"]` means an ordering 
 
 That comparison spans all five mapped areas, however, and `{python} N["cara_share_pct"]` of the reference damage sits in
 one of them. Much of what it rewards is therefore the coarse discrimination of Caraballeda from
-four quiet AOIs, a task coastline distance and building density solve almost by definition. The
+four quiet AOIs, a task building density and terrain solve almost by definition (the damaged
+strip is the dense, low-lying coastal fan). The
 sharper question is whether the products can out-rank geography *within* the damage zone, and
 there the result is different. Re-running the test in the core region, the brief's
 within-damage-zone frame, at resolution 8 cells, `{python} N["core8_n_above"]` of the six beat the null (@tbl-nullrank-core): `{python} N["core8_above_null"]`;
@@ -1015,7 +1024,7 @@ lower, and unmeasurably so.
 
 We also re-ran this paper's harshest benchmark in the as-delivered frame (the second of the
 three product-versus-geography comparisons of the null-comparison table in the v3 record). We trained the
-geography null model (coast distance, building density, and ShakeMap intensity,
+geography null model (building density, terrain slope and elevation, and ShakeMap intensity,
 constructed as described in the [geography benchmark](#app-null-brief)) on each product's full delivered footprint
 under the same spatially blocked validation, then had it flag exactly as many buildings
 as that product shipped, taking its highest-risk buildings first. Compared this way,

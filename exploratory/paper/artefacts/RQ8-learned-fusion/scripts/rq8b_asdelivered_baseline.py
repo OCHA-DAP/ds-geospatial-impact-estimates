@@ -29,7 +29,9 @@ from sklearn.model_selection import GroupKFold
 from sklearn.metrics import average_precision_score
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "lib"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "pipeline"))
 import gie_paper as gp  # noqa: E402
+import context as ctx  # noqa: E402  (the null's context features: one definition, ADR-0033)
 
 HERE = os.path.dirname(__file__)
 POS = (2, 3)
@@ -66,26 +68,11 @@ def main():
     cems = cems[cems.damage_class.isin(POS)]
     d["y"] = gp.within_r(d, cems, LABEL_R).astype(int)
 
-    # day-zero features, built once on the superset
+    # day-zero features, built once on the superset: ONE definition shared with rq8 and the
+    # ranking null (pipeline/context.py, ADR-0033)
+    d = ctx.context_features(d)
     ll = gpd.GeoSeries(d_rp, crs=gp.METRIC_CRS).to_crs(4326)
     d["cell7"] = [h3.latlng_to_cell(p.y, p.x, 7) for p in ll]
-    cell9 = pd.Series([h3.latlng_to_cell(p.y, p.x, 9) for p in ll])
-    d["density9"] = cell9.map(cell9.value_counts())
-    coast = gp.to_metric(gp.codab(0)).geometry.make_valid().union_all().boundary
-    d["dist_coast"] = d.geometry.distance(coast) / 1000.0
-    frames = []
-    for ev in ("us6000t7zp", "us6000t7zc"):
-        raw = json.loads(stratus.load_blob_data(
-            gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json", event=None),
-            stage="dev", container_name=gp.S.container))
-        g = gpd.GeoDataFrame.from_features(raw["features"], crs=4326).to_crs(gp.METRIC_CRS)
-        frames.append(g[["value", "geometry"]])
-    mmi = np.full(len(d), np.nan)
-    for g in frames:
-        j = gpd.sjoin_nearest(d[["geometry"]], g, how="left")
-        j = j[~j.index.duplicated()]
-        mmi = np.fmax(mmi, j["value"].to_numpy())
-    d["mmi"] = np.nan_to_num(mmi, nan=np.nanmedian(mmi))
 
     prod_aois = {"MS": gp.dissolve_union(gp.microsoft_aoi()),
                  "IMPACT": gp.dissolve_union(gp.impact_v2_aoi()),
@@ -95,7 +82,7 @@ def main():
                                                        "analysed_extent.parquet")),
                  "UNEP": None}
 
-    CONTEXT = ["density9", "dist_coast", "mmi"]
+    CONTEXT = list(ctx.NULL_FEATURES)
     rows = []
     for nm, col in MEMBERS.items():
         sel = (np.ones(len(d), bool) if prod_aois[nm] is None
@@ -128,8 +115,8 @@ def main():
         m_full.fit((X - mu_f) / sd_f, y)
         imp = dict(zip(CONTEXT, m_full.feature_importances_.round(3)))
         print(f"  {nm:7s} day-zero feature importances: "
-              f"density {imp['density9']:.3f}  coast {imp['dist_coast']:.3f}  "
-              f"MMI {imp['mmi']:.3f}   (MMI = the only event-specific input)")
+              + "  ".join(f"{k} {v:.3f}" for k, v in imp.items())
+              + "   (MMI = the only event-specific input)")
 
         ap_geo = average_precision_score(y, oof)
         ap_prod = average_precision_score(y, flags)

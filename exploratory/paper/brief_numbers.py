@@ -304,9 +304,14 @@ N["dens_only_F1"] = f2(_abl.loc["dens", "F1"]); N["prod_F1_min_r10"] = f2(d10.lo
 _gap = d10.loc[PRODUCTS, "f1"].min() - _abl.loc["dens", "F1"]
 N["dens_vs_band"] = ("inside the six products' performance band" if _gap <= 0
                      else f"within {_gap:.2f} of the bottom of the six products' performance band")
-N["dem_variant_F1"] = f2(_abl.loc["dens+elev+mmi", "F1"])
+N["dem_variant_F1"] = f2(_abl.loc["dens+slope+elev+mmi", "F1"])          # the brief's null, as the ablation measured it (2026-09-02, coast-anchored run)
+N["coast_null_F1"] = f2(_abl.loc["dens+coast+mmi (paper)", "F1"])       # v3's null in the same ablation
+N["dem_variant_rho8"] = f2(_abl.loc["dens+slope+elev+mmi", "rho_res8"]); N["coast_null_rho8"] = f2(_abl.loc["dens+coast+mmi (paper)", "rho_res8"])
+# leakage check (rq8_buf, frozen): the r = 10 fusion/null refit with a 500 m train/test buffer
+_buf = W("core", "labels-buf500", 10)
+N["null_F1_buf500"] = f3(_buf.loc["geography null (logistic)", "F1"]); N["fusion_F1_buf500"] = f3(_buf.loc["weighted fusion", "F1"])
 N["null_P"] = f3(d10.loc["geography null (logistic)", "precision"]); N["null_R"] = f2(d10.loc["geography null (logistic)", "recall"])
-N["null_rf_F1"] = f3(d10.loc["geography null (rand. forest)", "f1"])
+N["null_rf_F1"] = f3(d10.loc["geography null (rand. forest)", "f1"]); N["null_rf_F1_2"] = f2(d10.loc["geography null (rand. forest)", "f1"])
 N["vote_F1"] = N["vote_F1_r10"]; N["fusion_F1"] = N["fusion_F1_r10"]
 N["vote_over_null"] = signed(d10.loc["flat k-of-6 voting", "f1"] - d10.loc["geography null (logistic)", "f1"])     # was +0.16
 N["fusion_over_null"] = signed(d10.loc["weighted fusion", "f1"] - d10.loc["geography null (logistic)", "f1"])      # was +0.21

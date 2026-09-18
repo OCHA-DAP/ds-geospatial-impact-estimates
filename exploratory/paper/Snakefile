@@ -98,6 +98,8 @@
 P = "pipeline"
 A = "artefacts"                                     # the archive; only `heavy` and `vendor` touch it
 LIB = [f"{P}/paperlib.py", "lib/gie_paper.py"]      # definitions + data loaders/pins
+CONTEXT = f"{P}/context.py"                          # the geography null's features (ADR-0033): an input ONLY to the
+                                                     # rules that fit a null, so a feature change never reruns scorecards/facts
 IDS = ["lib/ms_1to1_ids.csv", "lib/unep_1to1_ids.csv", "lib/uh_1to1_ids.csv", "lib/footprint_map_manifest.csv"]
 
 
@@ -125,7 +127,7 @@ rule scorecards:
 
 rule ranking:
     # area ranking on H3 cells: each product vs the geography null (3 scopes), and the agreement rules
-    input: LIB, IDS, f"{P}/ranking.py"
+    input: LIB, IDS, CONTEXT, f"{P}/ranking.py"
     output: f"{P}/results_ranking.csv"
     shell: f"python {P}/ranking.py"
 
@@ -152,7 +154,8 @@ rule legacy_csvs:
 FROZEN = [f"frozen/{n}" for n in [
     "rq2h_osu_v0_v1.csv", "rq2p_osu_v1_tiers.csv", "rq2_density_null.csv", "rq2_ms_confidence_curve.csv",
     "rq3g_frac_vs_count.csv", "rq3b_per_area_moran.csv", "rq3d_lisa_summary.csv",
-    "rq8_best_f1_r10.csv", "rq8_best_f1_r20.csv", "rq8_best_f1_r30.csv", "rq8b_asdelivered_baseline_r10.csv", "rq8b_asdelivered_baseline_r20.csv",
+    "rq8_best_f1_r10.csv", "rq8_best_f1_r20.csv", "rq8_best_f1_r30.csv", "rq8_best_f1_r10_buf500.csv",
+    "rq8b_asdelivered_baseline_r10.csv", "rq8b_asdelivered_baseline_r20.csv",
     "rq8c_basis_pr_r10.csv", "rq8d_null_ablation.csv", "rq8e_threshold_bias_r10.csv", "rq9_ci_core.csv", "rq9_ci_asdelivered_r10.csv", "rq9_ci_models_r10.csv",
     "rq7_round2_padj_sensitivity.csv", "rq7_round2_replication.csv", "shared_base_polygon_core.csv",
 ]]
@@ -258,6 +261,7 @@ rule story:
 rule heavy:
     input:
         expand(f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", r=[10, 20, 30]),
+        f"{A}/RQ8-learned-fusion/rq8_best_f1_r10_buf500.csv",
         expand(f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv", r=[10, 20]),
         f"{A}/RQ8-learned-fusion/rq8c_basis_pr_r10.csv", f"{A}/RQ8-learned-fusion/rq8d_null_ablation.csv",
         f"{A}/RQ8-learned-fusion/rq8e_threshold_bias_r10.csv",
@@ -305,14 +309,22 @@ rule archive_inputs:
 
 rule rq8:
     # RQ8 learned fusion (labels lens); dumps the out-of-fold parquet. Feeds @fig-bestf1, the null and radius appendices.
-    input: f"{A}/RQ8-learned-fusion/scripts/rq8_learned_fusion.py"
+    input: f"{A}/RQ8-learned-fusion/scripts/rq8_learned_fusion.py", CONTEXT
     output: f"{A}/RQ8-learned-fusion/rq8_best_f1_r{{r}}.csv", f"{A}/RQ8-learned-fusion/rq8_summary_r{{r}}.csv", f"{A}/RQ8-learned-fusion/rq8_oof_scores_r{{r}}.parquet"
     wildcard_constraints: r="10|20|30"
     shell: art("RQ8-learned-fusion/scripts/rq8_learned_fusion.py", env="GIE_LABEL_R={wildcards.r} GIE_DUMP_OOF=1")
 
+rule rq8_buf:
+    # Leakage check for the smooth-covariate null (OPEN-ITEMS item 1, ADR-0033): the r = 10 fusion/null
+    # refit with training buildings within 500 m of any test building dropped from each fold. Its own
+    # _buf500 suffix, so it never overwrites the paper's run. Feeds the fairness paragraph.
+    input: f"{A}/RQ8-learned-fusion/scripts/rq8_learned_fusion.py", CONTEXT
+    output: f"{A}/RQ8-learned-fusion/rq8_best_f1_r10_buf500.csv", f"{A}/RQ8-learned-fusion/rq8_summary_r10_buf500.csv"
+    shell: art("RQ8-learned-fusion/scripts/rq8_learned_fusion.py", env="GIE_LABEL_R=10 GIE_CV_BUFFER_M=500")
+
 rule rq8b:
     # RQ8 as-delivered 'day zero' baseline (labels lens). Feeds @fig-bestf1 and the null appendix's list comparison.
-    input: f"{A}/RQ8-learned-fusion/scripts/rq8b_asdelivered_baseline.py"
+    input: f"{A}/RQ8-learned-fusion/scripts/rq8b_asdelivered_baseline.py", CONTEXT
     output: f"{A}/RQ8-learned-fusion/rq8b_asdelivered_baseline_r{{r}}.csv"
     wildcard_constraints: r="10|20|30"
     shell: art("RQ8-learned-fusion/scripts/rq8b_asdelivered_baseline.py", env="GIE_LABEL_R={wildcards.r}")

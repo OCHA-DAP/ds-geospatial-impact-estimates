@@ -5,27 +5,27 @@ destroyed,OSU,25882,957,0.033,0.886,0.063
 destroyed,UH,5443,957,0.085,0.482,0.144
 destroyed,LIST,15906,957,0.042,0.7,0.079
 destroyed,UNEP,5605,957,0.08,0.469,0.137
-destroyed,geography null (logistic),12864,957,0.05,0.675,0.093
-destroyed,geography null (rand. forest),13112,957,0.039,0.531,0.072
+destroyed,geography null (logistic),15456,957,0.044,0.718,0.084
+destroyed,geography null (rand. forest),11055,957,0.049,0.568,0.091
 destroyed,flat k-of-6 voting,3123,957,0.184,0.6,0.281
-destroyed,weighted fusion,2075,957,0.262,0.567,0.358
+destroyed,weighted fusion,2000,957,0.263,0.55,0.356
 dmg+destroyed,MS,7878,2064,0.122,0.465,0.193
 dmg+destroyed,IMPACT,10787,2064,0.104,0.542,0.174
 dmg+destroyed,OSU,25882,2064,0.068,0.851,0.126
 dmg+destroyed,UH,5443,2064,0.124,0.327,0.18
 dmg+destroyed,LIST,15906,2064,0.086,0.659,0.151
 dmg+destroyed,UNEP,5605,2064,0.117,0.317,0.171
-dmg+destroyed,geography null (logistic),12864,2064,0.1,0.622,0.172
-dmg+destroyed,geography null (rand. forest),13112,2064,0.082,0.523,0.142
+dmg+destroyed,geography null (logistic),15456,2064,0.09,0.676,0.159
+dmg+destroyed,geography null (rand. forest),11055,2064,0.097,0.52,0.164
 dmg+destroyed,flat k-of-6 voting,3123,2064,0.268,0.406,0.323
-dmg+destroyed,weighted fusion,2075,2064,0.37,0.372,0.371
+dmg+destroyed,weighted fusion,2000,2064,0.363,0.352,0.357
 incl_possibly,MS,7878,3960,0.187,0.373,0.249
 incl_possibly,IMPACT,10787,3960,0.173,0.471,0.253
 incl_possibly,OSU,25882,3960,0.123,0.806,0.214
 incl_possibly,UH,5443,3960,0.169,0.232,0.196
 incl_possibly,LIST,15906,3960,0.152,0.611,0.244
 incl_possibly,UNEP,5605,3960,0.178,0.252,0.209
-incl_possibly,geography null (logistic),12864,3960,0.17,0.553,0.26
-incl_possibly,geography null (rand. forest),13112,3960,0.146,0.484,0.224
+incl_possibly,geography null (logistic),15456,3960,0.159,0.621,0.253
+incl_possibly,geography null (rand. forest),11055,3960,0.174,0.485,0.256
 incl_possibly,flat k-of-6 voting,3123,3960,0.381,0.301,0.336
-incl_possibly,weighted fusion,2075,3960,0.504,0.264,0.347
+incl_possibly,weighted fusion,2000,3960,0.494,0.249,0.332
