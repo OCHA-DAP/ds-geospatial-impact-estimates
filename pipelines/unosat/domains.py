@@ -19,6 +19,10 @@ import pandas as pd
 from gie import blobio
 from gie.unosat import cache, common, domains
 
+# Checkpoint frequency: persist every N GDBs so a kill mid-batch loses at most
+# this many GDBs' worth of re-work, never silently drops already-done work.
+CHECKPOINT_EVERY = 25
+
 
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__)
@@ -31,7 +35,6 @@ def main(argv: list[str] | None = None) -> None:
     gdbs = led[(led["format"] == "Geodatabase") & led["status"].isin(common.UPLOADED_STATUSES)]
     gdbs = gdbs.drop_duplicates("sha256")
     status_path = args.work_dir / "domains_status.parquet"
-    rows_path = args.work_dir / "domains.parquet"
     done = (
         pd.read_parquet(status_path) if status_path.exists() else pd.DataFrame(columns=["sha256"])
     )
@@ -41,24 +44,29 @@ def main(argv: list[str] | None = None) -> None:
     print(f"distinct GDBs: {len(gdbs)}, to process: {len(todo)}")
 
     cc = stratus.get_container_client(container_name=common.CONTAINER, stage=args.stage)
-    fs = blobio.uploader(common.global_settings(args.stage))
     all_rows: list[dict] = []
     statuses: list[dict] = []
-    for i, r in enumerate(todo.itertuples(), 1):
-        path = cache.read_through(
-            r.sha256, r.resource_name,
-            lambda r=r: cc.download_blob(common.blob_path(r.sha256, r.resource_name)).readall(),
-        )
-        rows, status = domains.domains_for_gdb_zip(r.sha256, path)
-        all_rows.extend(rows)
-        statuses.append(domains.status_row(r.sha256, status, len(rows)))
-        print(f"  [{i}/{len(todo)}] {r.resource_name} {status} ({len(rows)} rows)", flush=True)
+    try:
+        for i, r in enumerate(todo.itertuples(), 1):
+            path = cache.read_through(
+                r.sha256, r.resource_name,
+                lambda r=r: cc.download_blob(common.blob_path(r.sha256, r.resource_name)).readall(),
+            )
+            rows, status = domains.domains_for_gdb_zip(r.sha256, path)
+            all_rows.extend(rows)
+            statuses.append(domains.status_row(r.sha256, status, len(rows)))
+            print(f"  [{i}/{len(todo)}] {r.resource_name} {status} ({len(rows)} rows)", flush=True)
+            if i % CHECKPOINT_EVERY == 0:
+                domains.persist(args.work_dir, all_rows, statuses)
+                all_rows, statuses = [], []
+    finally:
+        # Persists whatever completed before a Ctrl-C or an exception, so
+        # interrupted runs never lose already-processed GDBs.
+        if statuses or all_rows:
+            domains.persist(args.work_dir, all_rows, statuses)
 
-    if statuses:
-        new_status = pd.concat([done, pd.DataFrame(statuses)], ignore_index=True)
-        new_status.to_parquet(status_path)
-        old_rows = pd.read_parquet(rows_path) if rows_path.exists() else pd.DataFrame()
-        pd.concat([old_rows, pd.DataFrame(all_rows)], ignore_index=True).to_parquet(rows_path)
+    if len(todo):
+        fs = blobio.uploader(common.global_settings(args.stage))
         for name in ("domains.parquet", "domains_status.parquet"):
             blobio.upload(fs, (args.work_dir / name).read_bytes(), f"{common.META}/{name}")
     if status_path.exists():
