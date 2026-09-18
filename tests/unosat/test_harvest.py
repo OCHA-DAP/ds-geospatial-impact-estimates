@@ -1,12 +1,14 @@
 import hashlib
+import json
 import zipfile
 
 import pandas as pd
 import pytest
 import requests
 
-from gie.unosat import cache, common, harvest, store
+from gie.unosat import cache, common, discovery, harvest, store
 from tests.unosat.conftest import FakeResponse, FakeSession, make_zip
+from tests.unosat.test_discovery import DS
 
 
 @pytest.fixture(autouse=True)
@@ -105,3 +107,90 @@ def test_stream_download_hashes_while_streaming(tmp_path, good_zip):
     assert res.status_code == 200
     assert res.sha256 == hashlib.sha256(good_zip).hexdigest()
     assert res.size == len(good_zip) == (tmp_path / "a.zip").stat().st_size
+
+
+def _ledger():
+    return discovery.resources_ledger([DS]).set_index("target_id", drop=False)
+
+
+def test_reconcile_marks_rows_whose_content_is_in_blob(good_zip):
+    led = _ledger()
+    sha = hashlib.sha256(good_zip).hexdigest()
+    tid = "r-shp@2024-12-20T09:00:00"
+    led.loc[tid, ["status", "sha256", "size_bytes"]] = ["failed_upload", sha, len(good_zip)]
+    st = store.MemoryStore()
+    st.upload(common.blob_path(sha, "FL20220424SSD_SHP.zip"), good_zip)
+    led = harvest.reconcile_with_blob(led, st)
+    assert led.loc[tid, "status"] == "uploaded"
+
+
+def test_reconcile_demotes_uploaded_rows_whose_blob_is_missing(good_zip):
+    led = _ledger()
+    tid = "r-shp@2024-12-20T09:00:00"
+    led.loc[tid, ["status", "sha256", "size_bytes"]] = ["uploaded", "9" * 64, len(good_zip)]
+    led = harvest.reconcile_with_blob(led, store.MemoryStore())
+    assert led.loc[tid, "status"] == "pending"
+
+
+def test_reconcile_demotes_size_mismatch(good_zip):
+    led = _ledger()
+    sha = hashlib.sha256(good_zip).hexdigest()
+    tid = "r-shp@2024-12-20T09:00:00"
+    led.loc[tid, ["status", "sha256", "size_bytes"]] = ["uploaded", sha, len(good_zip)]
+    st = store.MemoryStore()
+    st.upload(common.blob_path(sha, "FL20220424SSD_SHP.zip"), good_zip[:-5])  # truncated copy
+    led = harvest.reconcile_with_blob(led, st)
+    assert led.loc[tid, "status"] == "pending"
+
+
+def test_reconcile_leaves_terminal_and_pending_rows_alone():
+    led = _ledger()
+    led.loc["r-gdb@2024-12-20T09:00:00", "status"] = "unavailable_404"
+    led = harvest.reconcile_with_blob(led, store.MemoryStore())
+    assert led.loc["r-gdb@2024-12-20T09:00:00", "status"] == "unavailable_404"
+    assert led.loc["r-shp@2024-12-20T09:00:00", "status"] == "pending"
+
+
+def test_journal_and_transfer_record_shape(tmp_path, ledger_row):
+    rec = harvest.transfer_record(ledger_row, "dev", "uploaded", sha256="x" * 64, size_bytes=5)
+    for key in ("ts", "outcome", "target_id", "source", "dataset", "provider", "licence",
+                "origin_url", "host", "blob_path", "stage"):
+        assert key in rec
+    assert rec["source"] == "unosat" and rec["licence"] == "cc-by-sa"
+    assert rec["blob_path"] == common.blob_path("x" * 64, "FL20220424SSD_SHP.zip")
+    harvest.journal(tmp_path, rec)
+    lines = (tmp_path / "transfers.jsonl").read_text().splitlines()
+    assert len(lines) == 1 and json.loads(lines[0])["outcome"] == "uploaded"
+
+
+def test_checkpoint_writes_ledger_members_and_uploads_meta(tmp_path):
+    led = _ledger()
+    st = store.MemoryStore()
+    (tmp_path / "datasets.parquet").write_bytes(b"")  # exists -> should be uploaded
+    members = [{"target_id": "t", "sha256": "s", "event_code": "E", "member": "a.shp",
+                "file_size": 1, "compress_size": 1}]
+    left = harvest.checkpoint(tmp_path, led, members, st)
+    assert left == []
+    assert (tmp_path / "resources.parquet").exists()
+    assert len(pd.read_parquet(tmp_path / "zip_contents.parquet")) == 1
+    assert f"{common.META}/resources.parquet" in st.uploads
+    assert f"{common.META}/zip_contents.parquet" in st.uploads
+    # second checkpoint merges member rows per target_id instead of duplicating
+    harvest.checkpoint(tmp_path, led, members, st)
+    assert len(pd.read_parquet(tmp_path / "zip_contents.parquet")) == 1
+
+
+def test_apply_updates_clears_stale_http_status_on_retryable_status(ledger_row):
+    led = pd.DataFrame([ledger_row]).set_index("target_id", drop=False)
+    tid = ledger_row["target_id"]
+    led.loc[tid, "http_status"] = 500
+    updates = {
+        "status": "failed_download",
+        "error": "ConnectionError",
+        "attempts": 2,
+        "attempted_at": "2024-12-20T09:00:00",
+    }
+    harvest.apply_updates(led, tid, updates)
+    assert led.loc[tid, "status"] == "failed_download"
+    assert led.loc[tid, "attempts"] == 2
+    assert pd.isna(led.loc[tid, "http_status"])

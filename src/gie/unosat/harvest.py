@@ -11,6 +11,7 @@ propagate.
 from __future__ import annotations
 
 import hashlib
+import json
 import shutil
 import tempfile
 import zipfile
@@ -26,6 +27,9 @@ from gie.unosat.store import BlobStore
 
 _CHUNK = 1 << 20  # 1 MiB
 _TIMEOUT = 300
+
+META_FILES = ("datasets.parquet", "resources.parquet", "zip_contents.parquet")
+CHECKPOINT_EVERY = 25
 
 
 def _now() -> str:
@@ -147,3 +151,97 @@ def process_target(
         return base | {"status": "uploaded", "uploaded_at": _now()}, members
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def reconcile_with_blob(ledger: pd.DataFrame, store: BlobStore) -> pd.DataFrame:
+    """Blob listing is truth. Rows that carry a sha256 are checked against the
+    census: present with matching size -> uploaded; uploaded-in-ledger but
+    absent or wrong size -> pending (loudly). Rows without a sha256 (never
+    downloaded) and terminal rows are untouched."""
+    sizes = store.list_sizes(f"{common.BRONZE}/blob=")
+    has_sha = ledger["sha256"].notna()
+    expected = ledger.loc[has_sha].apply(
+        lambda r: common.blob_path(r["sha256"], r["resource_name"]), axis=1
+    )
+    got = expected.map(sizes.get)
+    in_blob = got.notna()
+    size_ok = in_blob & (got == ledger.loc[has_sha, "size_bytes"].astype("float"))
+    status = ledger.loc[has_sha, "status"]
+
+    already_settled = status.isin(common.UPLOADED_STATUSES) | status.isin(common.TERMINAL_STATUSES)
+    to_mark = size_ok & ~already_settled
+    if to_mark.any():
+        ids = to_mark[to_mark].index
+        print(f"reconcile: {len(ids)} targets already in blob -> uploaded")
+        ledger.loc[ids, "status"] = "uploaded"
+        ledger.loc[ids, "error"] = "reconciled: found in blob"
+
+    demote = status.isin(common.UPLOADED_STATUSES) & ~size_ok
+    if demote.any():
+        ids = demote[demote].index
+        print(
+            f"WARNING reconcile: {len(ids)} ledger rows say uploaded but blob is missing "
+            f"or has a different size -> pending: {list(ids)[:10]}{'...' if len(ids) > 10 else ''}"
+        )
+        ledger.loc[ids, "status"] = "pending"
+        ledger.loc[ids, "error"] = "reconcile: blob missing/size mismatch"
+    return ledger
+
+
+def journal(work: Path, record: dict) -> None:
+    with (work / "transfers.jsonl").open("a") as f:
+        f.write(json.dumps(record, default=str) + "\n")
+
+
+def transfer_record(row: pd.Series, stage: str, outcome: str, **extra) -> dict:
+    """Attempt record; field names follow this repo's data_transfers.jsonl."""
+    sha = extra.get("sha256") or row.get("sha256")
+    return {
+        "ts": _now(),
+        "outcome": outcome,
+        "target_id": row["target_id"],
+        "source": "unosat",
+        "category": "reference",
+        "dataset": f"UNOSAT {row.get('event_code') or row.get('dataset_name')} {row.get('format')}",
+        "provider": common.PROVIDER,
+        "licence": row.get("licence"),
+        "origin_url": row["url"],
+        "host": row.get("host"),
+        "blob_path": common.blob_path(sha, row["resource_name"]) if sha else None,
+        "stage": stage,
+    } | extra
+
+
+def checkpoint(
+    work: Path, ledger: pd.DataFrame, members: list[dict], store: BlobStore
+) -> list[dict]:
+    """Persist ledger + member inventory + journal, locally and to blob _meta."""
+    ledger.reset_index(drop=True).to_parquet(work / "resources.parquet")
+    contents_path = work / "zip_contents.parquet"
+    if members:
+        new = pd.DataFrame(members)
+        if contents_path.exists():
+            old = pd.read_parquet(contents_path)
+            old = old[~old["target_id"].isin(new["target_id"].unique())]
+            new = pd.concat([old, new], ignore_index=True)
+        new.to_parquet(contents_path)
+    for name in META_FILES + ("transfers.jsonl",):
+        p = work / name
+        if p.exists():
+            store.upload(f"{common.META}/{name}", p.read_bytes())
+    return []
+
+
+def apply_updates(ledger: pd.DataFrame, target_id, updates: dict) -> None:
+    """Write ``process_target``'s updates onto ``ledger`` in place. On the
+    network-exception branch ``process_target`` omits ``http_status``,
+    which would otherwise leave a stale value from an earlier attempt on
+    the same row; clear it explicitly for any recorded retryable/terminal
+    outcome that doesn't supply its own."""
+    for col, val in updates.items():
+        ledger.loc[target_id, col] = val
+    if (
+        updates["status"] in (common.RETRYABLE_STATUSES | common.TERMINAL_STATUSES)
+        and "http_status" not in updates
+    ):
+        ledger.loc[target_id, "http_status"] = pd.NA
