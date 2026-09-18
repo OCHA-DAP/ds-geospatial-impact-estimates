@@ -5,7 +5,7 @@ deciders: zackarno
 amends: 0025-damage-product-evaluation-method
 ---
 
-# The geography null uses building density, terrain and shaking; coast distance is dropped
+# The geography null is the "DEM null" (building density, terrain slope and elevation, shaking); the coast-distance null is retired to v3
 
 ## Context and Problem Statement
 
@@ -54,7 +54,9 @@ numbers still came from the coast model, and carried a TBD marker for the unreso
 
 ## Decision Outcome
 
-Option 2.
+Option 2. Naming: the brief calls the benchmark the **DEM null** and v3's the **coast-distance
+null**; the pipeline's predictor id stays `geography null (logistic|rand. forest)` so keys, figures
+and the oracle keep addressing the same row.
 
 - **One definition.** `exploratory/paper/pipeline/context.py` computes the context features
   (`NULL_FEATURES = density9, slope, elev, mmi`); the ranking module and the archived fusion and

@@ -745,33 +745,29 @@ quantify how much the recall upper bound overstates.
 
 ### The geography benchmark: framing for this brief {#app-null-brief .unnumbered}
 
-Every product was compared against a deliberately simple benchmark model that uses no
-satellite imagery: a logistic model of building density, terrain slope and elevation, and
-modelled shaking intensity, fitted with hindsight to this event's own damage labels and
-validated on spatial blocks it never trained on. Every input is available on day zero
-anywhere on Earth; the fitted coefficients were not, so it is a benchmark, not an
-operational alternative, and it is refit per event rather than carried between them. At building level it falls inside
-the six products' performance band (F1 `{python} N["null_F1"]` logistic, `{python} N["null_rf_F1"]` random forest, against the products' `{python} N["prod_F1_range_r10"]`), and at
-area ranking it performs comparably to the better single products; only the combinations
-exceed it by a wide margin (flat voting `{python} N["vote_over_null"]` F1, fitted fusion `{python} N["fusion_over_null"]`).
+Every product was compared against a deliberately simple benchmark that uses no satellite
+imagery, the *DEM null*: a model of building density, terrain slope and elevation from the
+open Copernicus 30 m elevation model, and modelled shaking intensity, fitted with hindsight
+to this event's own damage labels and validated on spatial blocks it never trained on.
+Every input is available on day zero anywhere on Earth; the fitted coefficients were not,
+so it is a benchmark, not an operational alternative, and it is refit per event rather than
+carried between them. At building level it falls inside the six products' performance band
+(F1 `{python} N["null_F1"]` with the logistic learner, `{python} N["null_rf_F1"]` with the random forest, against the products' `{python} N["prod_F1_range_r10"]`; the
+logistic is the one reported, so that every paired comparison in this brief rests on one
+model), and at area ranking it performs comparably to the better single products. Only
+the combinations exceed it by a wide margin (flat voting `{python} N["vote_over_null"]` F1, fitted fusion `{python} N["fusion_over_null"]`).
+Two checks stand behind it. A covariate ablation (frozen, 2 September) showed that building
+density alone already comes `{python} N["dens_vs_band"]` (F1 `{python} N["dens_only_F1"]` against the weakest product's `{python} N["prod_F1_min_r10"]`), so the benchmark's
+strength does not hinge on any one covariate. And because a smooth covariate is where
+spatial blocks can leak structure across their edges, the model was refit with a 500 m
+buffer between training and test buildings: the null's F1 moves from `{python} N["null_F1"]` to `{python} N["null_F1_buf500"]` and the
+fusion's from `{python} N["fusion_F1"]` to `{python} N["fusion_F1_buf500"]`, so leakage is not what makes it strong.
 
-This is not the benchmark the frozen v3 manuscript used. That one replaced terrain with
-distance to the coastline, a variable that predicts damage in this event because the
-damaged strip is a coastal fan, and that a reviewer rightly called event-specific. A
-covariate ablation (frozen, 2 September) settled the question: coast distance was never
-load-bearing, building density alone comes `{python} N["dens_vs_band"]` (F1 `{python} N["dens_only_F1"]` against the weakest product's `{python} N["prod_F1_min_r10"]`),
-and in that ablation a null built only from globally available terrain matched or beat
-the coast version (F1 `{python} N["dem_variant_F1"]` against `{python} N["coast_null_F1"]`; area-ranking ρ `{python} N["dem_variant_rho8"]` against `{python} N["coast_null_rho8"]`). The brief therefore reports the
-terrain null throughout; v3 keeps its coast null as the frozen record (ADR-0033). Refit
-in the fusion pipeline, the terrain null is stronger than v3's at ranking areas and across
-the delivered footprints, and at the building level it lands at F1 `{python} N["null_F1"]` under the
-logistic learner and `{python} N["null_rf_F1"]` under the forest; the logistic is kept as the reported
-null so that the paired intervals and the threshold check below stay on one model, and
-the forest value is given wherever the null is quoted. The
-one concern a smoother covariate raises, that spatial blocks can leak structure across
-their edges and flatter a smooth model, was tested by refitting with a 500 m buffer
-between training and test buildings: the null's F1 moves from `{python} N["null_F1"]` to `{python} N["null_F1_buf500"]`, the
-fusion's from `{python} N["fusion_F1"]` to `{python} N["fusion_F1_buf500"]`.
+The frozen v3 manuscript used a *coast-distance null* (density, distance to the coastline,
+shaking). Coast distance predicts damage in this event because the damaged strip is a coastal
+fan, and it is not a variable one would carry to another earthquake; the same ablation
+showed terrain does the job at least as well (F1 `{python} N["dem_variant_F1"]` against `{python} N["coast_null_F1"]`, area-ranking ρ `{python} N["dem_variant_rho8"]` against `{python} N["coast_null_rho8"]`),
+so the brief uses the DEM null throughout and the conclusions are unchanged (ADR-0033).
 
 
 
@@ -779,8 +775,8 @@ fusion's from `{python} N["fusion_F1"]` to `{python} N["fusion_F1_buf500"]`.
 
 *How to read this section next to the previous one.* This section is adapted from the
 frozen v3 manuscript, where the benchmark was reported as a headline result and scored
-across everything each product delivered; its numbers here are the brief's terrain null,
-not v3's coast null. The section above states the brief's position and scores in the
+across everything each product delivered; its numbers here are the brief's DEM null,
+not v3's coast-distance null. The section above states the brief's position and scores in the
 core region. The two agree on the facts and differ in emphasis and in frame: across the
 delivered footprints the benchmark also carries the shaking estimate, which is why it
 looks stronger here than in the core-region comparison above.
