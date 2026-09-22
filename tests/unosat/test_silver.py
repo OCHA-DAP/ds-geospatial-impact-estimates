@@ -8,7 +8,7 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import pytest
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, Point, Polygon
 
 from gie.unosat import common, domains, grammar, layers, silver
 from gie.unosat.store import MemoryStore
@@ -471,6 +471,48 @@ def test_prescreen_decides_what_it_can_before_a_read():
     assert silver.prescreen(grammar.parse(FLOOD_LAYER), "Polygon") is None
     # unknown geometry type (a shapefile member) must be read, not assumed
     assert silver.prescreen(grammar.parse(FLOOD_LAYER), None) is None
+
+
+def test_null_geometry_type_is_unknown_not_a_string():
+    """The inventory's null geometry type comes back from parquet as float NaN,
+    not None — 8,436 SHP rows and 2,264 GDB tables carry one. Treating it as a
+    string crashed the first real run."""
+    assert silver.is_polygon_type(float("nan")) is None
+    assert silver.is_polygon_type(None) is None
+    assert silver.is_polygon_type("Polygon") is True
+    assert silver.is_polygon_type("Point") is False
+
+
+def test_a_nan_geometry_type_is_decided_after_reading_not_prescreened():
+    nan = float("nan")
+    # nothing is decided up front ...
+    assert silver.prescreen(grammar.parse(FLOOD_LAYER), nan) is None
+    assert silver.prescreen(grammar.parse(COVERAGE_LAYER), nan) is None
+
+    # ... and the geometry itself then decides, on the shapefile path too
+    points = gpd.GeoDataFrame({"Water_Clas": [1]}, geometry=[Point(0, 0)], crs="EPSG:4326")
+    rows, table, record = build(FLOOD_LAYER, points, source="shp", domain_lookup=None)
+    assert (rows, table) == (None, None)
+    assert record["status"] == "skipped_non_water"
+
+    rows, table, record = build(
+        FLOOD_LAYER, make_gdf({"Water_Clas": [1, 1]}), source="shp", domain_lookup=None
+    )
+    assert table == "observed_event"
+    assert record["status"] == "ok"
+
+
+def test_inventory_null_geometry_type_survives_a_parquet_round_trip(tmp_path):
+    """The crash came from the parquet round trip, so assert on a value that
+    has actually been through one."""
+    path = tmp_path / "layers.parquet"
+    pd.DataFrame(
+        [{"layer": "L1", "geometry_type": None}, {"layer": "L2", "geometry_type": "Polygon"}]
+    ).to_parquet(path)
+    rows = list(pd.read_parquet(path).itertuples())
+    assert silver.is_polygon_type(rows[0].geometry_type) is None
+    assert silver.is_polygon_type(rows[1].geometry_type) is True
+    assert silver.prescreen(grammar.parse(FLOOD_LAYER), rows[0].geometry_type) is None
 
 
 def test_merge_processing_replaces_rows_for_the_same_layer():

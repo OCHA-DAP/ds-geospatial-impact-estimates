@@ -222,14 +222,20 @@ SENSOR_DATE_ALIASES = ("Sensor_Date", "Sensor_Dat", "SensorDate")
 def is_polygon_type(geometry_type: str | None) -> bool | None:
     """Whether an inventory ``geometry_type`` names a polygonal layer.
 
-    ``None`` (the inventory records no geometry type for shapefile members)
-    means *unknown*, not *not polygonal*: the caller must read the layer and
-    let `build_layer` decide. Kept deliberately loose about the exact spelling
-    so "Polygon", "MultiPolygon" and "3D Polygon" all match.
+    A missing value means *unknown*, not *not polygonal*: the caller must read
+    the layer and let `build_layer` decide from the geometry itself. The
+    inventory records no geometry type for shapefile members, and some GDB
+    tables carry none either — and both come back from parquet as a float
+    ``NaN``, not ``None``, so this tests `pd.isna` rather than identity.
+    Testing `is None` crashed the first real run (``.casefold()`` on a float)
+    on the 8,436 SHP rows and 2,264 GDB tables that have no geometry type.
+
+    Kept deliberately loose about the exact spelling so "Polygon",
+    "MultiPolygon" and "3D Polygon" all match.
     """
-    if geometry_type is None:
+    if geometry_type is None or pd.isna(geometry_type):
         return None
-    return "polygon" in geometry_type.casefold()
+    return "polygon" in str(geometry_type).casefold()
 
 
 def prescreen(ln: grammar.LayerName, geometry_type: str | None) -> str | None:
