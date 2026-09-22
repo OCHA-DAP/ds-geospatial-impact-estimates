@@ -102,8 +102,10 @@ unosat/bronze/_meta/resources.parquet                  THE LEDGER: one row per r
 unosat/bronze/_meta/zip_contents.parquet               member inventory per sha256
 unosat/bronze/_meta/transfers.jsonl                    append-only journal
 unosat/bronze/_meta/domains.parquet                    (sha256, layer, field, domain, code, value) from every GDB
-unosat/silver/{observed_event,coverage,sources}/code={EventCode}/data.parquet
-unosat/silver/_meta/processing.parquet                 one row per distinct layer content
+unosat/silver/{observed_event,coverage}/code={EventCode}/layer={content_hash}.parquet
+unosat/silver/sources/code={EventCode}/data.parquet
+unosat/silver/_meta/{layers,layers_status}.parquet     layer inventory per (sha256, layer)
+unosat/silver/_meta/processing.parquet                 one row per (sha256, layer)
 unosat/gold/label_index.parquet                        v2 schema (shared with CEMS)
 unosat/gold/labels/code={EventCode}/data.parquet
 ```
@@ -209,6 +211,14 @@ members or of the GDB feature class exported to GeoParquet. A layer re-shipped
 in 35 datasets is processed once; the processing ledger lists every
 `target_id` that carried it.
 
+**Storage: one file per layer content**, `{observed_event,coverage}/code={EventCode}/layer={content_hash}.parquet`,
+not one `data.parquet` per code. The content hash is the file name, so a
+re-shipped layer lands on a path that already exists and the write is skipped
+— the pass is idempotent and deduplicates by construction rather than by
+rewriting a whole code partition from an accumulated in-memory list, which a
+partial or resumed run would silently truncate. `sources` stays one
+`data.parquet` per code (it is a small per-code summary, not layer content).
+
 **Event code.** The resource-name code is the partition key (`code`). The
 per-polygon `EventCode` attribute is recorded as `event_code_attr`; it is
 more specific inside long monitoring activations (South Sudan's 2022 code
@@ -230,11 +240,15 @@ or more, as in multi-sensor names like `ST3_..._ST2_..._ICEYE_..._FloodExtent`
 in the vocabulary below (order matters: `PreFlood` before `Flood`,
 `MaximumFlood` before `Flood`). Everything else is area text. Unmatched
 layers land in the processing ledger as `unclassified` with their names.
+`aoi`/`areaofinterest` match a whole `_`-delimited token only: the coverage
+rules sit ahead of the water rules, so substring matching filed every real
+water layer carrying a numbered zone suffix
+(`ST1_20191105_WaterExtent_BasseKotto_CAF_AOI1`) as a coverage footprint.
 
 | name contains (casefolded) | table | role / `layer_kind` |
 |---|---|---|
 | `cloudobstruction` | coverage | `not_analysed` |
-| `analysisextent`, `analysis_extent`, `areaofinterest`, `aoi`, trailing `extent` alone | coverage | `footprint` |
+| `analysisextent`, `analysis_extent`, trailing `extent` alone (substring); `areaofinterest`, `aoi` (**whole token only**) | coverage | `footprint` |
 | `permanentwater`, `prefloodwater`, `preflood`, `archivewater` | observed_event | `water_pre` |
 | `maximumflood`, `maxflood`, `cumulative` | observed_event | `aggregate_max` |
 | `minimumflood` | observed_event | `aggregate_min` |
@@ -292,11 +306,15 @@ are `acq_precision = none` and excluded from gold.
 `sensor`, `acq_*` as above, `attrs_json`, `geometry`. `sources`: one row per
 distinct `(code, sensor, acq_datetime)` seen across layers.
 
-Processing ledger `silver/_meta/processing.parquet`: one row per layer
-content, `status` ∈ {`ok`, `unclassified`, `skipped_non_water`, `no_date`,
-`error`}, `geometry_source`, carrying `target_ids`, polygon counts by
+Processing ledger `silver/_meta/processing.parquet`: one row per `(sha256,
+layer)` — the resumable unit, one per encounter of a layer content rather
+than one per content, so every zip that shipped it is accounted for —
+`status` ∈ {`ok`, `unclassified`, `skipped_non_water`, `no_date`,
+`unreadable`}, `geometry_source`, carrying `target_ids`, polygon counts by
 `layer_kind`, `shp_gdb_mismatch`. Absence of water polygons in a layer is
-`ok` with zero rows, never an error.
+`ok` with zero rows, never an error. A layer whose content was already
+written under this code is `ok` with `reused = true` and no polygon counts:
+the counts sit on the row that wrote the file.
 
 ## 4. Gold (`gold.py`) — schema v2, shared with CEMS
 
