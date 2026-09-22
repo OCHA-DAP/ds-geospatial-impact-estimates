@@ -209,15 +209,34 @@ def test_reprojected_layer_records_its_source_crs():
     assert list(rows["source_crs"]) == ["EPSG:32636"]
 
 
-def test_silver_layer_path_partitions_by_code_and_content():
-    path = silver.silver_layer_path("observed_event", "FL20190314MOZ", "b" * 64)
-    assert path == f"unosat/silver/observed_event/code=FL20190314MOZ/layer={'b' * 64}.parquet"
+def test_silver_layer_path_partitions_by_code_content_and_layer_name():
+    path = silver.silver_layer_path("observed_event", "FL20190314MOZ", "b" * 64, FLOOD_LAYER)
+    key = silver.layer_file_key("b" * 64, FLOOD_LAYER)
+    assert path == f"unosat/silver/observed_event/code=FL20190314MOZ/layer={key}.parquet"
+    assert key.startswith("b" * 64 + "-") and len(key) == 64 + 1 + 8
+
+
+def test_identical_content_under_two_layer_names_gets_two_files():
+    """Two acquisition dates over one analysis footprint are two layers;
+    keying the file on content alone silently dropped the second."""
+    store = MemoryStore()
+    keys = []
+    for layer in (COVERAGE_LAYER, "ST1_20190402_AnalysisExtent_Beira_MOZ"):
+        rows, table, record = build(layer, make_gdf({"a": [1, 2]}))
+        path = silver.silver_layer_path(table, "FL20190314MOZ", record["content_hash"], layer)
+        keys.append(path.split("layer=")[1])
+        silver.write_layer(store, path, rows)
+
+    assert len(store.uploads) == 2
+    # identical content, different name: the hash half matches, the name half does not
+    assert keys[0][:64] == keys[1][:64]
+    assert keys[0] != keys[1]
 
 
 def test_write_layer_is_idempotent_for_identical_content():
     store = MemoryStore()
     rows, table, record = build(FLOOD_LAYER, make_gdf({"Water_Class": [1, 5]}))
-    path = silver.silver_layer_path(table, "FL20190314MOZ", record["content_hash"])
+    path = silver.silver_layer_path(table, "FL20190314MOZ", record["content_hash"], FLOOD_LAYER)
     assert store.exists_size(path) is None
     silver.write_layer(store, path, rows)
     assert store.exists_size(path) is not None
@@ -225,7 +244,9 @@ def test_write_layer_is_idempotent_for_identical_content():
     # the same layer re-shipped in another zip hashes the same, so it lands on
     # the same path and the exists-check skips the second write entirely
     rows2, table2, record2 = build(FLOOD_LAYER, make_gdf({"Water_Class": [1, 5]}))
-    path2 = silver.silver_layer_path(table2, "FL20190314MOZ", record2["content_hash"])
+    path2 = silver.silver_layer_path(
+        table2, "FL20190314MOZ", record2["content_hash"], FLOOD_LAYER
+    )
     assert path2 == path
     assert store.exists_size(path2) is not None
     assert len(store.uploads) == 1
@@ -239,7 +260,7 @@ def test_write_layer_round_trips_an_empty_layer():
     store = MemoryStore()
     gdf = gpd.GeoDataFrame({"Water_Class": []}, geometry=[], crs="EPSG:4326")
     rows, table, record = build(FLOOD_LAYER, gdf)
-    path = silver.silver_layer_path(table, "FL20190314MOZ", record["content_hash"])
+    path = silver.silver_layer_path(table, "FL20190314MOZ", record["content_hash"], FLOOD_LAYER)
     silver.write_layer(store, path, rows)
     back = gpd.read_parquet(io.BytesIO(store.uploads[path]))
     assert len(back) == 0
@@ -254,15 +275,74 @@ def test_source_rows_are_distinct_per_sensor_and_acquisition():
         }
     )
     ln = grammar.parse(UNDATED_FLOOD_LAYER)
-    acqs = [acq for acq, _ in silver.layer_acquisitions(ln, gdf)]
-    rows = silver.source_rows("FL20190314MOZ", ln, acqs)
+    groups = silver.layer_acquisitions(ln, gdf)
+    rows = silver.source_rows("FL20190314MOZ", ln, groups, domain_lookup=None)
     assert len(rows) == 2
     assert {r["sensor"] for r in rows} == {"Sentinel-1"}
+    assert {r["sensor_method"] for r in rows} == {"filename"}
     assert sorted(r["acq_datetime"] for r in rows) == [
         datetime(2019, 3, 30),
         datetime(2019, 4, 2),
     ]
     assert list(silver.sources_frame(rows).columns) == silver.SOURCES_COLUMNS
+
+
+SENSORLESS_FLOOD_LAYER = "Beira_20190330_FloodExtent_MOZ"
+SENSOR_ID_DOMAIN = {"Water_Class": {"1": "Flood Water"}, "Sensor_ID": {"3": "COSMO-SkyMed"}}
+
+
+def test_sensor_comes_from_the_filename_when_the_name_carries_one():
+    rows, _, _ = build(FLOOD_LAYER, make_gdf({"Water_Class": [1, 1], "Sensor_ID": [3, 3]}),
+                       domain_lookup=SENSOR_ID_DOMAIN)
+    assert list(rows["sensor"]) == ["Sentinel-1", "Sentinel-1"]
+    assert list(rows["sensor_method"]) == ["filename", "filename"]
+
+
+def test_sensor_falls_back_to_the_polygon_attribute_and_says_so():
+    """The filename grammar never sees COSMO-SkyMed; the Sensor_ID domain does.
+    Without `sensor_method` a consumer could not tell the two paths apart."""
+    gdf = make_gdf({"Water_Class": [1, 1], "Sensor_ID": [3, 3]})
+    rows, _, _ = build(SENSORLESS_FLOOD_LAYER, gdf, domain_lookup=SENSOR_ID_DOMAIN)
+    assert list(rows["sensor"]) == ["COSMO-SkyMed", "COSMO-SkyMed"]
+    assert list(rows["sensor_method"]) == ["attribute", "attribute"]
+
+    ln = grammar.parse(SENSORLESS_FLOOD_LAYER)
+    groups = silver.layer_acquisitions(ln, gdf)
+    srcs = silver.source_rows("FL20190314MOZ", ln, groups, domain_lookup=SENSOR_ID_DOMAIN)
+    assert [(r["sensor"], r["sensor_method"]) for r in srcs] == [("COSMO-SkyMed", "attribute")]
+
+
+def test_sensor_method_is_none_when_neither_side_names_one():
+    rows, _, _ = build(SENSORLESS_FLOOD_LAYER, make_gdf({"Water_Class": [1, 1]}))
+    assert list(rows["sensor"]) == [None, None]
+    assert list(rows["sensor_method"]) == ["none", "none"]
+
+
+def test_coverage_rows_carry_sensor_provenance_too():
+    gdf = make_gdf({"SensorDate": [pd.Timestamp("2019-03-30")] * 2, "Sensor_ID": [3, 3]})
+    rows, _, _ = build("Beira_20190330_AnalysisExtent_MOZ", gdf, domain_lookup=SENSOR_ID_DOMAIN)
+    assert list(rows["sensor"]) == ["COSMO-SkyMed", "COSMO-SkyMed"]
+    assert list(rows["sensor_method"]) == ["attribute", "attribute"]
+
+
+def test_sibling_check_reports_a_real_comparison():
+    layers_df = pd.DataFrame(
+        [{"sha256": "g1", "layer": "A"}, {"sha256": "g1", "layer": "B"},
+         {"sha256": "s1", "layer": "A"}, {"sha256": "s1", "layer": "C"}]
+    )
+    status_df = pd.DataFrame([{"sha256": "s1", "status": "ok"}])
+    assert silver.sibling_check(layers_df, status_df, "g1", ["s1"]) == (["B", "C"], "ok")
+
+
+def test_sibling_check_refuses_to_claim_agreement_when_the_shp_was_never_listed():
+    layers_df = pd.DataFrame([{"sha256": "g1", "layer": "A"}])
+    status_df = pd.DataFrame([{"sha256": "s1", "status": "zip_unreadable"}])
+    assert silver.sibling_check(layers_df, status_df, "g1", ["s1"]) == (None, "zip_unreadable")
+    # no status row at all is its own state, not "they agree"
+    assert silver.sibling_check(layers_df, pd.DataFrame(columns=["sha256", "status"]), "g1",
+                                ["s1"]) == (None, "absent")
+    # and no sibling at all means there was nothing to compare
+    assert silver.sibling_check(layers_df, status_df, "g1", []) == (None, None)
 
 
 def test_processing_frame_has_the_documented_columns():
@@ -326,14 +406,56 @@ def test_select_units_ignores_other_scopes_and_unuploaded_resources():
     assert silver.select_units(ledger) == []
 
 
-def test_select_units_refuses_one_content_under_two_event_codes():
+def _two_code_ledger() -> pd.DataFrame:
+    """One content listed under two event codes — the real FL20250812CPV /
+    FL20250812COD case (an ISO3 typo), with the CPV listing the newer one."""
+    return ledger_rows(
+        {"dataset_id": "d1", "sha256": "g1", "resource_name": "a_COD_GDB.zip",
+         "format": "Geodatabase", "target_id": "t1", "event_code": "FL20250812COD",
+         "last_modified": "2025-08-13T09:00:00"},
+        {"dataset_id": "d2", "sha256": "g1", "resource_name": "a_CPV_GDB.zip",
+         "format": "Geodatabase", "target_id": "t2", "event_code": "FL20250812CPV",
+         "last_modified": "2025-08-13T09:28:00"},
+    )
+
+
+def test_select_units_takes_the_latest_listing_when_a_content_has_two_codes():
+    (unit,) = silver.select_units(_two_code_ledger())
+    assert unit["code"] == "FL20250812CPV"
+    assert unit["codes_listed"] == ["FL20250812COD", "FL20250812CPV"]
+
+
+def test_select_units_honours_a_checked_code_override(monkeypatch):
+    # the override wins over the timestamp, so a checked decision is not undone
+    # by a later re-listing of the wrong code
+    monkeypatch.setitem(silver.CODE_OVERRIDES, "g1", "FL20250812COD")
+    (unit,) = silver.select_units(_two_code_ledger())
+    assert unit["code"] == "FL20250812COD"
+    assert unit["codes_listed"] == ["FL20250812COD", "FL20250812CPV"]
+
+
+def test_the_seeded_override_covers_the_content_the_real_run_tripped_on():
+    sha = "09ab92a146c0cf431ddb84241db45ecbb6de03f5718c5c52b52c44757c616a07"
+    assert silver.CODE_OVERRIDES[sha] == "FL20250812CPV"
+
+
+def test_processing_rows_carry_every_listed_code():
+    _, _, record = build(
+        FLOOD_LAYER, make_gdf({"Water_Class": [1, 1]}),
+        codes_listed=["FL20250812COD", "FL20250812CPV"],
+    )
+    assert record["codes_listed"] == ["FL20250812COD", "FL20250812CPV"]
+    # with nothing passed, the chosen code is the only one that was listed
+    _, _, plain = build(FLOOD_LAYER, make_gdf({"Water_Class": [1, 1]}))
+    assert plain["codes_listed"] == ["FL20190314MOZ"]
+
+
+def test_select_units_rejects_a_content_with_no_event_code():
     ledger = ledger_rows(
         {"dataset_id": "d1", "sha256": "g1", "resource_name": "a_GDB.zip",
-         "format": "Geodatabase", "target_id": "t1"},
-        {"dataset_id": "d2", "sha256": "g1", "resource_name": "a_GDB.zip",
-         "format": "Geodatabase", "target_id": "t2", "event_code": "FL20200101SSD"},
+         "format": "Geodatabase", "target_id": "t1", "event_code": None},
     )
-    with pytest.raises(ValueError, match="two event codes"):
+    with pytest.raises(ValueError, match="no event code"):
         silver.select_units(ledger)
 
 
@@ -527,3 +649,21 @@ def test_cli_force_revisits_done_layers_without_rewriting_their_files(cli_env):
     assert silver.sources_path("FL20190314MOZ") in store.uploads
     proc = pd.read_parquet(work / silver.PROCESSING_FILE)
     assert len(proc) == 2
+
+
+def test_cli_raises_when_the_layer_inventory_is_missing(cli_env):
+    """An absent inventory is a prerequisite we failed to run, not "no layers":
+    silently processing nothing would look like a clean run."""
+    module, _, work = cli_env
+    (work / "layers.parquet").unlink()
+    with pytest.raises(FileNotFoundError, match="run pipelines/unosat/layers.py first"):
+        module.main(["--work-dir", str(work)])
+
+
+def test_cli_records_that_there_was_no_shp_sibling_to_compare(cli_env):
+    module, _, work = cli_env
+    module.main(["--work-dir", str(work)])
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    # this fixture is SHP-sourced, so no GDB/SHP cross-check applies at all
+    assert proc["shp_gdb_mismatch"].isna().all()
+    assert proc["sibling_status"].isna().all()

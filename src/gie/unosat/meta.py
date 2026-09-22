@@ -26,25 +26,38 @@ META_FILES = (
     "domains_status.parquet",
 )
 
+# The silver stage keeps its own durable `_meta` copies: the layer inventory
+# silver iterates over and the processing ledger it resumes from. They restore
+# the same way, so a wiped work dir costs a silver run nothing either —
+# without this a missing layers.parquet just looked like "no layers to do".
+# File names are identical locally and in blob, as for the bronze set.
+SILVER_META_FILES = (
+    "layers.parquet",
+    "layers_status.parquet",
+    "processing.parquet",
+)
+
 
 def bootstrap_work_dir(work_dir: Path, fetch: Callable[[str], bytes | None]) -> list[str]:
-    """For each ``META_FILES`` name missing locally, call
-    ``fetch(f"{common.META}/{name}")``; when it returns bytes, write them to
+    """For each ``META_FILES`` and ``SILVER_META_FILES`` name missing locally,
+    call ``fetch`` on its blob path (under ``common.META`` and
+    ``common.SILVER_META`` respectively); when it returns bytes, write them to
     ``work_dir/name`` atomically (temp file + ``os.replace``). Never
     overwrite a file that already exists locally. ``fetch`` returning
     ``None`` (blob absent, a normal state on a first-ever run) restores
     nothing for that name; any other exception propagates. Returns the
     names actually restored."""
     restored: list[str] = []
-    for name in META_FILES:
-        dest = work_dir / name
-        if dest.exists():
-            continue
-        data = fetch(f"{common.META}/{name}")
-        if data is None:
-            continue
-        common.atomic_write(dest, data)
-        restored.append(name)
+    for prefix, names in ((common.META, META_FILES), (common.SILVER_META, SILVER_META_FILES)):
+        for name in names:
+            dest = work_dir / name
+            if dest.exists():
+                continue
+            data = fetch(f"{prefix}/{name}")
+            if data is None:
+                continue
+            common.atomic_write(dest, data)
+            restored.append(name)
     return restored
 
 

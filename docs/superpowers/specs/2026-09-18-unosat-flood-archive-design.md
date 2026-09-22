@@ -102,7 +102,7 @@ unosat/bronze/_meta/resources.parquet                  THE LEDGER: one row per r
 unosat/bronze/_meta/zip_contents.parquet               member inventory per sha256
 unosat/bronze/_meta/transfers.jsonl                    append-only journal
 unosat/bronze/_meta/domains.parquet                    (sha256, layer, field, domain, code, value) from every GDB
-unosat/silver/{observed_event,coverage}/code={EventCode}/layer={content_hash}.parquet
+unosat/silver/{observed_event,coverage}/code={EventCode}/layer={content_hash}-{name8}.parquet
 unosat/silver/sources/code={EventCode}/data.parquet
 unosat/silver/_meta/{layers,layers_status}.parquet     layer inventory per (sha256, layer)
 unosat/silver/_meta/processing.parquet                 one row per (sha256, layer)
@@ -211,13 +211,25 @@ members or of the GDB feature class exported to GeoParquet. A layer re-shipped
 in 35 datasets is processed once; the processing ledger lists every
 `target_id` that carried it.
 
-**Storage: one file per layer content**, `{observed_event,coverage}/code={EventCode}/layer={content_hash}.parquet`,
-not one `data.parquet` per code. The content hash is the file name, so a
-re-shipped layer lands on a path that already exists and the write is skipped
-— the pass is idempotent and deduplicates by construction rather than by
-rewriting a whole code partition from an accumulated in-memory list, which a
-partial or resumed run would silently truncate. `sources` stays one
+**Storage: one file per layer content and name**,
+`{observed_event,coverage}/code={EventCode}/layer={content_hash}-{name8}.parquet`
+(`name8` = first 8 hex of `sha256(layer_name)`), not one `data.parquet` per
+code. The key is the file name, so a re-shipped layer lands on a path that
+already exists and the write is skipped — the pass is idempotent and
+deduplicates by construction rather than by rewriting a whole code partition
+from an accumulated in-memory list, which a partial or resumed run would
+silently truncate. The layer name is part of the key because identical
+geometry under two names is real and meaningful (the same analysis footprint
+shipped for two acquisition dates); hashing content alone collapsed such
+layers onto one path and dropped the second. `sources` stays one
 `data.parquet` per code (it is a small per-code summary, not layer content).
+
+**One partition per content.** A content listed under two event codes (an
+ISO3 typo in one of UNOSAT's resource names — seen once, Cabo Verde listed as
+both `FL20250812CPV` and `FL20250812COD`) is assigned one code: a checked
+entry in `silver.CODE_OVERRIDES`, else the code of the most recently listed
+resource version. Every listed code is carried on the processing rows as
+`codes_listed`, so the choice is inspectable rather than implicit.
 
 **Event code.** The resource-name code is the partition key (`code`). The
 per-polygon `EventCode` attribute is recorded as `event_code_attr`; it is
@@ -289,6 +301,14 @@ only the layer name carries a date; `window` for composites), `acq_conflict`,
 `water_status`, `confidence`, `field_validation`, `staff_id`, `notes`,
 `geometry_source`, `source_crs`, `attrs_json` (everything raw, verbatim),
 `geometry` (EPSG:4326).
+
+Silver adds `sensor_method` ∈ {`filename`, `attribute`, `none`} next to
+`sensor` on both `observed_event` and `coverage`. The layer name is
+authoritative when it names a sensor; otherwise the per-polygon `Sensor_ID`
+text is used, which carries sensors the filename grammar never sees
+(COSMO-SkyMed, SkySat, SPOT, Kompsat). Without the column a consumer could
+not tell the two apart, and `sensor_class` in gold would silently mix them.
+The same resolution builds `sources.sensor`, so the tables agree.
 
 **Acquisition.** Filename date(s) and the per-polygon sensor date are both
 kept. Agreement (equal, or the attribute inside the filename window) gives

@@ -7,13 +7,15 @@ geodatabase, and any disagreement is recorded as `shp_gdb_mismatch` on the
 dataset's processing rows (no shapefile geometry is read in that case).
 
 Each layer is hashed (`readers.content_hash`) and written to
-`unosat/silver/{observed_event,coverage}/code={EventCode}/layer={hash}.parquet`.
-The path already existing is the idempotency check: a layer re-shipped
-identically across many HDX zips is written once and every later encounter is
-recorded `ok` with `reused=True`. `sources` is written per code, and the
-processing ledger is checkpointed every 25 layers to {work_dir} and to
-unosat/silver/_meta/processing.parquet. Resumable: (sha256, layer) pairs
-already in the processing ledger are skipped.
+`unosat/silver/{observed_event,coverage}/code={EventCode}/layer={hash}-{name8}.parquet`,
+where `name8` is a short digest of the layer name — two differently-named
+layers with identical geometry (the same footprint under two acquisition
+dates) are two layers, not one. The path already existing is the idempotency
+check: a layer re-shipped identically across many HDX zips is written once and
+every later encounter is recorded `ok` with `reused=True`. `sources` is
+written per code, and the processing ledger is checkpointed every 25 layers to
+{work_dir} and to unosat/silver/_meta/processing.parquet. Resumable: (sha256,
+layer) pairs already in the processing ledger are skipped.
 
 Statuses: ok | unclassified | skipped_non_water | no_date | unreadable. Only a
 GDAL failure on a single layer becomes `unreadable` (recorded with its error
@@ -117,7 +119,14 @@ def main(argv: list[str] | None = None) -> None:
         wanted = {c.strip() for c in args.codes.split(",")}
         units = [u for u in units if u["code"] in wanted]
 
-    layers_df, _ = layers.load_frames(args.work_dir)
+    # An absent inventory is our failure to run a prerequisite, not "nothing to
+    # do": without this the run would report zero layers and exit 0.
+    if not (args.work_dir / "layers.parquet").exists():
+        raise FileNotFoundError(
+            "layers.parquet missing — run pipelines/unosat/layers.py first "
+            "(it is restored from unosat/silver/_meta when present)"
+        )
+    layers_df, status_df = layers.load_frames(args.work_dir)
     domain_rows, _ = domains.load_frames(args.work_dir)
     contents = pd.read_parquet(args.work_dir / "zip_contents.parquet")
 
@@ -161,6 +170,18 @@ def main(argv: list[str] | None = None) -> None:
     new_rows: list[dict] = []
     src_rows: dict[str, list[dict]] = {}
     processed_by_code: dict[str, int] = {}
+    listed_partitions: dict[tuple[str, str], set[str]] = {}
+
+    def partition_keys(table: str, code: str) -> set[str]:
+        """The layer files already in one silver partition, listed once per
+        (table, code) and cached. One LIST beats one HEAD per layer: a code
+        with 300 layers across 35 re-shipped zips would otherwise cost
+        thousands of round trips to learn what one listing says."""
+        key = (table, code)
+        if key not in listed_partitions:
+            prefix = f"{common.SILVER}/{table}/code={code}/"
+            listed_partitions[key] = set(blob_store.list_sizes(prefix))
+        return listed_partitions[key]
 
     def checkpoint() -> None:
         nonlocal proc_df, new_rows
@@ -174,7 +195,7 @@ def main(argv: list[str] | None = None) -> None:
         )
         new_rows = []
 
-    def process_layer(unit: dict, inv_row, zip_path: Path, gdb_paths, members, lookups, mismatch):
+    def process_layer(unit, inv_row, zip_path: Path, gdb_paths, members, lookups, cross_check):
         """One layer end-to-end. Appends its processing record; writes the
         layer file BEFORE the record exists, so a crash between the two leaves
         the pair looking undone and it is simply redone."""
@@ -185,9 +206,10 @@ def main(argv: list[str] | None = None) -> None:
             "layer": layer,
             "code": unit["code"],
             "code_method": unit["code_method"],
+            "codes_listed": unit["codes_listed"],
             "geometry_source": unit["geometry_source"],
             "target_ids": unit["target_ids"],
-            "shp_gdb_mismatch": mismatch,
+            **cross_check,
         }
         prescreened = silver.prescreen(ln, inv_row.geometry_type)
         if prescreened is not None:
@@ -222,7 +244,7 @@ def main(argv: list[str] | None = None) -> None:
             return
 
         chash = readers.content_hash(gdf)
-        path = silver.silver_layer_path(ln.table, unit["code"], chash)
+        path = silver.silver_layer_path(ln.table, unit["code"], chash, layer)
         groups = silver.layer_acquisitions(ln, gdf)
         acqs = [acq for acq, _ in groups]
 
@@ -231,13 +253,15 @@ def main(argv: list[str] | None = None) -> None:
             so a code's summary describes all of its layers and not only the
             ones this run happened to write."""
             src_rows.setdefault(unit["code"], []).extend(
-                silver.source_rows(unit["code"], ln, acqs)
+                silver.source_rows(
+                    unit["code"], ln, groups, domain_lookup=lookups.get(layer)
+                )
             )
 
-        if blob_store.exists_size(path) is not None:
-            # Identical content already in silver under this code: nothing to
-            # write. `reused` rows carry no kind counts — the authoritative
-            # counts sit on the row that first wrote this content.
+        if path in partition_keys(ln.table, unit["code"]):
+            # This layer's content is already in silver under this code and
+            # name: nothing to write. `reused` rows carry no kind counts — the
+            # authoritative counts sit on the row that wrote the file.
             new_rows.append(
                 silver.processing_row(
                     **common_kw,
@@ -261,14 +285,16 @@ def main(argv: list[str] | None = None) -> None:
             target_ids=unit["target_ids"],
             domain_lookup=lookups.get(layer),
             content_hash=chash,
+            codes_listed=unit["codes_listed"],
         )
         if frame is not None:
             # File first, ledger second: a crash between the two leaves the
             # (sha256, layer) pair looking undone, so it is simply redone.
-            silver.write_layer(blob_store, silver.silver_layer_path(table, unit["code"], chash),
-                               frame)
+            written = silver.silver_layer_path(table, unit["code"], chash, layer)
+            silver.write_layer(blob_store, written, frame)
+            partition_keys(table, unit["code"]).add(written)
             add_sources()
-        new_rows.append(record | {"shp_gdb_mismatch": mismatch})
+        new_rows.append(record | cross_check)
 
     try:
         for i, unit in enumerate(todo, 1):
@@ -281,13 +307,10 @@ def main(argv: list[str] | None = None) -> None:
                     common.blob_path(u["sha256"], u["resource_name"])
                 ).readall(),
             )
-            mismatch: list[str] = []
-            if unit["geometry_source"] == "gdb" and unit["sibling_shp_sha256s"]:
-                shp_inv = layers_df[layers_df["sha256"].isin(unit["sibling_shp_sha256s"])]
-                mismatch = silver.layer_mismatch(
-                    set(layers_df.loc[layers_df["sha256"] == sha, "layer"]),
-                    set(shp_inv["layer"]),
-                )
+            mismatch, sibling_status = silver.sibling_check(
+                layers_df, status_df, sha, unit["sibling_shp_sha256s"]
+            )
+            cross_check = {"shp_gdb_mismatch": mismatch, "sibling_status": sibling_status}
             lookups = domain_lookups(domain_rows, sha)
             members = contents.loc[contents["sha256"] == sha, "member"].tolist()
 
@@ -296,12 +319,12 @@ def main(argv: list[str] | None = None) -> None:
                     gdb_paths = gdb_layer_paths(gdbs)
                     for inv_row in inv_rows:
                         process_layer(unit, inv_row, zip_path, gdb_paths, members, lookups,
-                                      mismatch)
+                                      cross_check)
                         if len(new_rows) >= CHECKPOINT_EVERY:
                             checkpoint()
             else:
                 for inv_row in inv_rows:
-                    process_layer(unit, inv_row, zip_path, {}, members, lookups, mismatch)
+                    process_layer(unit, inv_row, zip_path, {}, members, lookups, cross_check)
                     if len(new_rows) >= CHECKPOINT_EVERY:
                         checkpoint()
 
@@ -333,7 +356,8 @@ def main(argv: list[str] | None = None) -> None:
         print(
             f"  {len(partial)} codes were only partly processed in this run, so their sources "
             "table was NOT written (it would describe only part of the code). Rebuild with:\n"
-            f"    --force --codes {','.join(sorted(partial)[:20])}"
+            f"    --stage {args.stage} --work-dir {args.work_dir} --force "
+            f"--codes {','.join(sorted(partial)[:20])}"
             + (" (first 20)" if len(partial) > 20 else "")
         )
 

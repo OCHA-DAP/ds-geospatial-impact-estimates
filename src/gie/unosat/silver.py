@@ -8,10 +8,14 @@ polygon rows plus the processing-ledger record describing what happened to
 it. No I/O beyond the blob write helper at the bottom: the CLI
 (`pipelines/unosat/silver.py`) owns downloads, extraction and checkpointing.
 
-**Unit of work** is one distinct layer *content*: `(code, content_hash)`.
-Silver stores one GeoParquet file per distinct content under its event-code
-partition (`silver_layer_path`), so a layer re-shipped identically in 35 HDX
-zips is written once and every later encounter is a cheap path-exists skip.
+**Unit of work** is one distinct layer *content under its name*: `(code,
+content_hash, layer_name)`. Silver stores one GeoParquet file per such unit
+under its event-code partition (`silver_layer_path`), so a layer re-shipped
+identically in 35 HDX zips is written once and every later encounter is a
+cheap path-exists skip. The layer name is part of the file key because two
+differently-named layers legitimately carry identical geometry (the same
+analysis footprint under two acquisition dates); keying on content alone
+silently dropped the second.
 
 **Three states, never conflated** (global constraints): a layer we chose not
 to ingest (`skipped_non_water`), one we could not classify (`unclassified`)
@@ -22,6 +26,7 @@ Only the CLI adds `unreadable`, for a GDAL failure on one layer.
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 from collections import Counter
@@ -43,6 +48,7 @@ __all__ = [
     "acq_status",
     "select_units",
     "layer_mismatch",
+    "sibling_check",
     "layer_acquisitions",
     "load_processing",
     "merge_processing",
@@ -50,9 +56,11 @@ __all__ = [
     "sources_frame",
     "processing_row",
     "processing_frame",
+    "layer_file_key",
     "silver_layer_path",
     "write_layer",
     "is_polygon_type",
+    "sensor_for",
 ]
 
 # Spec §3 "Canonical columns on observed_event", plus the three provenance
@@ -71,6 +79,7 @@ OBSERVED_COLUMNS = [
     "class_conflict",
     "area_label",
     "sensor",
+    "sensor_method",
     "sensor_raw",
     "acq_datetime",
     "acq_window_start",
@@ -92,14 +101,15 @@ OBSERVED_COLUMNS = [
 ]
 
 # Spec §3's coverage list (`code`, `layer_name`, `role`, `sensor`, `acq_*`,
-# `attrs_json`, `geometry`) plus the same provenance trio and the
-# `geometry_source`/`source_crs` pair the spec requires "on every row".
+# `attrs_json`, `geometry`) plus the same provenance trio, `sensor_method`, and
+# the `geometry_source`/`source_crs` pair the spec requires "on every row".
 COVERAGE_COLUMNS = [
     "code",
     "target_ids",
     "layer_name",
     "role",
     "sensor",
+    "sensor_method",
     "acq_datetime",
     "acq_window_start",
     "acq_window_end",
@@ -121,6 +131,7 @@ COVERAGE_COLUMNS = [
 SOURCES_COLUMNS = [
     "code",
     "sensor",
+    "sensor_method",
     "acq_datetime",
     "acq_window_start",
     "acq_window_end",
@@ -137,6 +148,7 @@ PROCESSING_COLUMNS = [
     "layer",
     "code",
     "code_method",
+    "codes_listed",
     "status",
     "table",
     "geometry_source",
@@ -145,6 +157,7 @@ PROCESSING_COLUMNS = [
     "n_polygons",
     "kind_counts_json",
     "shp_gdb_mismatch",
+    "sibling_status",
     "source_crs",
     "reused",
     "error",
@@ -152,6 +165,28 @@ PROCESSING_COLUMNS = [
 ]
 
 STATUSES = ("ok", "unclassified", "skipped_non_water", "no_date", "unreadable")
+SENSOR_METHODS = ("filename", "attribute", "none")
+
+# Layer-inventory statuses that mean a dataset's shapefile sibling could not be
+# listed at all, so the GDB/SHP layer-name cross-check was never performed
+# (recorded as `shp_gdb_mismatch = None`, not as an empty "they agree" list).
+UNCOMPARABLE_SIBLING_STATUSES = frozenset(
+    {"zip_unreadable", "gdb_unreadable", "missing_from_inventory"}
+)
+
+# One content listed under two event codes: UNOSAT shipped the same zip under
+# two HDX resource names whose ISO3 disagrees. The rule is one silver partition
+# per content, so a code must be chosen; the default is the most recently
+# listed resource version, and these entries override that where we have
+# checked which code is right.
+#
+# 09ab92a1…: listed as both FL20250812CPV and FL20250812COD. Both datasets are
+# Cabo Verde and the per-polygon EventCode attribute says COD, so COD is the
+# typo inside the product; the CPV listing is also the newer of the two, but
+# it is pinned here rather than left to the timestamp.
+CODE_OVERRIDES: dict[str, str] = {
+    "09ab92a146c0cf431ddb84241db45ecbb6de03f5718c5c52b52c44757c616a07": "FL20250812CPV",
+}
 # How `code` was obtained. Only `resource_name` is produced today: silver
 # processes flood/cyclone resources, and that scope is itself derived from a
 # parseable event code in the resource name (`common.parse_event_code` ->
@@ -160,9 +195,10 @@ STATUSES = ("ok", "unclassified", "skipped_non_water", "no_date", "unreadable")
 # selected row ever turns up without one.
 CODE_METHODS = ("resource_name", "attribute", "dataset_name")
 
-# Local name of the processing ledger under the work dir; in blob it is
-# `{SILVER_META}/processing.parquet`, alongside the layer inventory.
-PROCESSING_FILE = "silver_processing.parquet"
+# The processing ledger's file name. Deliberately the same locally and in blob
+# (`{SILVER_META}/processing.parquet`) so `meta.bootstrap_work_dir` can restore
+# it by name like every other `_meta` table.
+PROCESSING_FILE = "processing.parquet"
 
 # Attribute names differ between the geodatabase exports and the shapefile
 # exports (DBF truncates field names to 10 characters), and across eras. Each
@@ -229,6 +265,56 @@ def layer_mismatch(gdb_layers: set[str], shp_layers: set[str]) -> list[str]:
     return sorted(set(gdb_layers) ^ set(shp_layers))
 
 
+def sibling_check(
+    layers_df: pd.DataFrame,
+    status_df: pd.DataFrame,
+    sha256: str,
+    siblings: list[str],
+) -> tuple[list[str] | None, str | None]:
+    """``(shp_gdb_mismatch, sibling_status)`` for one GDB content.
+
+    The cross-check needs the sibling shapefile zip's layer inventory. When
+    that zip could not be inventoried at all (`zip_unreadable`,
+    `gdb_unreadable`, `missing_from_inventory`, or no status row), the check
+    did not happen: the mismatch is ``None`` and `sibling_status` says why.
+    Returning an empty list there would claim the two exports agree when they
+    were never compared. A sibling that *was* inventoried gives a real list
+    (possibly empty) and `sibling_status = "ok"`.
+
+    ``(None, None)`` means there is no shapefile sibling to compare against.
+    """
+    if not siblings:
+        return None, None
+    inventoried = [s for s in siblings if (layers_df["sha256"] == s).any()]
+    if not inventoried:
+        statuses = status_df.loc[status_df["sha256"].isin(siblings), "status"]
+        blocked = sorted({s for s in statuses if s in UNCOMPARABLE_SIBLING_STATUSES})
+        return None, (blocked[0] if blocked else "absent")
+    shp_layers = set(layers_df.loc[layers_df["sha256"].isin(inventoried), "layer"])
+    gdb_layers = set(layers_df.loc[layers_df["sha256"] == sha256, "layer"])
+    return layer_mismatch(gdb_layers, shp_layers), "ok"
+
+
+def _codes_for(rows: pd.DataFrame) -> tuple[str | None, list[str]]:
+    """``(chosen code, every code this content was listed under)`` for one
+    sha256's ledger rows.
+
+    The choice is `CODE_OVERRIDES` first, then the code of the most recently
+    listed resource version (`last_modified`; rows without one sort first, so
+    a dated listing always beats an undated one). Ties fall back to the
+    resource name, so the result never depends on row order.
+    """
+    listed = sorted({c for c in rows["event_code"].dropna().unique()})
+    sha = rows["sha256"].iloc[0]
+    if sha in CODE_OVERRIDES:
+        return CODE_OVERRIDES[sha], listed
+    if len(listed) <= 1:
+        return (listed[0] if listed else None), listed
+    order = rows.assign(_lm=pd.to_datetime(rows.get("last_modified"), errors="coerce", utc=True))
+    order = order.sort_values(["_lm", "resource_name"], na_position="first")
+    return order["event_code"].iloc[-1], listed
+
+
 def select_units(ledger: pd.DataFrame) -> list[dict]:
     """The zips silver reads, one per distinct bronze content, GDB-first.
 
@@ -239,9 +325,15 @@ def select_units(ledger: pd.DataFrame) -> list[dict]:
 
     Units are keyed by sha256 because bronze is content-addressed: the same
     zip shipped under several datasets is read once, carrying every
-    `target_id` that delivered it. Raises if one content ever carries two
-    different event codes — the partition key would be ambiguous and guessing
-    one would put polygons under the wrong event.
+    `target_id` that delivered it.
+
+    One content occasionally appears under two event codes (an ISO3 typo in
+    one of UNOSAT's HDX resource names). One partition per content is the
+    rule, so a code is chosen — from `CODE_OVERRIDES` where we have checked
+    which one is right, otherwise from the most recently listed resource
+    version — and *every* listed code is carried on the unit as `codes_listed`
+    and onto its processing rows, so the choice is visible rather than
+    implicit.
     """
     up = ledger[
         (ledger["scope"] == "flood")
@@ -250,6 +342,7 @@ def select_units(ledger: pd.DataFrame) -> list[dict]:
         & ledger["sha256"].notna()
     ]
     targets = up.groupby("sha256")["target_id"].apply(lambda s: sorted(s.dropna().unique()))
+    codes = {sha: _codes_for(grp) for sha, grp in up.groupby("sha256")}
 
     chosen: dict[str, dict] = {}
     for _, rows in up.groupby("dataset_id"):
@@ -257,30 +350,28 @@ def select_units(ledger: pd.DataFrame) -> list[dict]:
         source_rows_, source = (gdbs, "gdb") if len(gdbs) else (rows, "shp")
         siblings = sorted(rows.loc[rows["format"] == "SHP", "sha256"].dropna().unique())
         for r in source_rows_.drop_duplicates("sha256").itertuples():
+            code, codes_listed = codes[r.sha256]
             unit = chosen.setdefault(
                 r.sha256,
                 {
                     "sha256": r.sha256,
                     "resource_name": r.resource_name,
                     "geometry_source": source,
-                    "code": r.event_code,
+                    "code": code,
                     "code_method": "resource_name",
+                    "codes_listed": codes_listed,
                     "target_ids": list(targets.loc[r.sha256]),
                     "sibling_shp_sha256s": [],
                 },
             )
-            if unit["code"] != r.event_code:
-                raise ValueError(
-                    f"content {r.sha256} carries two event codes "
-                    f"({unit['code']!r}, {r.event_code!r}); the silver partition key "
-                    "would be ambiguous"
-                )
             if source == "gdb":
                 unit["sibling_shp_sha256s"] = sorted(
                     set(unit["sibling_shp_sha256s"]) | set(siblings)
                 )
 
-    missing = sorted(u["sha256"] for u in chosen.values() if not u["code"])
+    missing = sorted(
+        u["sha256"] for u in chosen.values() if pd.isna(u["code"]) or not u["code"]
+    )
     if missing:
         raise ValueError(
             f"{len(missing)} flood/cyclone contents have no event code in the ledger "
@@ -362,7 +453,7 @@ def _decoded(row: pd.Series, bound: tuple) -> str | None:
     return _text(row[col]) if col is not None else None
 
 
-def _attr_text(row: pd.Series, bound: tuple) -> str | None:
+def _attr_value(raw: object, decoded: str | None, lookup: dict[str, str] | None) -> str | None:
     """One non-class coded attribute as text: the decoded column when present,
     else the domain value for the code, else the raw value verbatim.
 
@@ -371,17 +462,45 @@ def _attr_text(row: pd.Series, bound: tuple) -> str | None:
     (spec §3: "Confidence 0 is not in the Confidence domain"). The raw code is
     never lost: it is in `attrs_json` verbatim.
     """
-    decoded = _decoded(row, bound)
     if decoded is not None:
         return decoded
-    col, lookup, _ = bound
-    if col is None:
+    if raw is None:
         return None
-    raw = readers.json_scalar(row[col])
     if lookup is not None:
         key = classes.code_key(raw)
         return lookup.get(key) if key is not None else None
     return _text(raw)
+
+
+def _attr_text(row: pd.Series, bound: tuple) -> str | None:
+    return _attr_value(_raw(row, bound), _decoded(row, bound), bound[1])
+
+
+def _attr_column(frame: pd.DataFrame, bound: tuple) -> list[str | None]:
+    """`_attr_text` over a whole frame, column-wise. Used where only the set of
+    distinct values matters (the `sources` table), so a second `iterrows` pass
+    over every polygon is not needed."""
+    col, lookup, dcol = bound
+    n = len(frame)
+    raws = [readers.json_scalar(v) for v in frame[col]] if col is not None else [None] * n
+    decs = [_text(v) for v in frame[dcol]] if dcol is not None else [None] * n
+    return [_attr_value(r, d, lookup) for r, d in zip(raws, decs, strict=True)]
+
+
+def sensor_for(ln: grammar.LayerName, attr_sensor: str | None) -> tuple[str | None, str]:
+    """``(sensor, sensor_method)`` for one polygon.
+
+    The layer name is authoritative when it names a sensor. Otherwise the
+    per-polygon `Sensor_ID` text is used, which carries sensors the filename
+    grammar never sees (COSMO-SkyMed, SkySat, SPOT, Kompsat — see
+    `classes.sensor_class`); `sensor_method` says which of the two it was, so
+    a consumer never has to guess whether a sensor came from the file name.
+    """
+    if ln.sensor is not None:
+        return ln.sensor, "filename"
+    if attr_sensor is not None:
+        return attr_sensor, "attribute"
+    return None, "none"
 
 
 def _class_text(method: str, raw: object, lookup: dict[str, str] | None, decoded: str | None):
@@ -460,6 +579,7 @@ def _observed_row(row: pd.Series, ln: grammar.LayerName, bound: dict, base: dict
         class_text = None
     else:
         class_text = _class_text(method, raw_class, lookup, decoded_class)
+    sensor, sensor_method = sensor_for(ln, _attr_text(row, bound["sensor"]))
     return base | {
         "event_code_attr": _attr_text(row, bound["event_code_attr"]),
         "layer_kind": kind,
@@ -467,7 +587,8 @@ def _observed_row(row: pd.Series, ln: grammar.LayerName, bound: dict, base: dict
         "class_method": method,
         "class_conflict": conflict,
         "area_label": ln.area,
-        "sensor": ln.sensor or _attr_text(row, bound["sensor"]),
+        "sensor": sensor,
+        "sensor_method": sensor_method,
         "sensor_raw": ln.sensor_raw,
         "water_status": _attr_text(row, bound["water_status"]),
         "confidence": _attr_text(row, bound["confidence"]),
@@ -480,9 +601,11 @@ def _observed_row(row: pd.Series, ln: grammar.LayerName, bound: dict, base: dict
 
 
 def _coverage_row(row: pd.Series, ln: grammar.LayerName, bound: dict, base: dict) -> dict:
+    sensor, sensor_method = sensor_for(ln, _attr_text(row, bound["sensor"]))
     return base | {
         "role": ln.kind,
-        "sensor": ln.sensor or _attr_text(row, bound["sensor"]),
+        "sensor": sensor,
+        "sensor_method": sensor_method,
         "attrs_json": readers.attrs_json(row),
         "geometry": row.geometry,
     }
@@ -517,16 +640,24 @@ def processing_row(
     status: str,
     geometry_source: str,
     target_ids: list[str],
+    codes_listed: list[str] | None = None,
     table: str | None = None,
     content_hash: str | None = None,
     n_polygons: int = 0,
     kind_counts: dict[str, int] | None = None,
     shp_gdb_mismatch: list[str] | None = None,
+    sibling_status: str | None = None,
     source_crs: str | None = None,
     reused: bool = False,
     error: str | None = None,
 ) -> dict:
-    """One processing-ledger record, with every column spelled once."""
+    """One processing-ledger record, with every column spelled once.
+
+    ``shp_gdb_mismatch`` keeps the three states apart: a list (possibly empty)
+    means the GDB/SHP layer-name cross-check ran, ``None`` means it could not
+    (no shapefile sibling, or one that could not be inventoried —
+    ``sibling_status`` then says which).
+    """
     if status not in STATUSES:
         raise ValueError(f"unknown processing status {status!r}; expected one of {STATUSES}")
     return {
@@ -534,6 +665,7 @@ def processing_row(
         "layer": layer,
         "code": code,
         "code_method": code_method,
+        "codes_listed": list(codes_listed) if codes_listed is not None else [code],
         "status": status,
         "table": table,
         "geometry_source": geometry_source,
@@ -541,7 +673,8 @@ def processing_row(
         "target_ids": list(target_ids),
         "n_polygons": n_polygons,
         "kind_counts_json": json.dumps(kind_counts or {}, sort_keys=True),
-        "shp_gdb_mismatch": list(shp_gdb_mismatch or []),
+        "shp_gdb_mismatch": None if shp_gdb_mismatch is None else list(shp_gdb_mismatch),
+        "sibling_status": sibling_status,
         "source_crs": source_crs,
         "reused": reused,
         "error": error,
@@ -564,6 +697,7 @@ def build_layer(
     target_ids: list[str],
     domain_lookup: dict[str, dict[str, str]] | None,
     content_hash: str | None = None,
+    codes_listed: list[str] | None = None,
 ) -> tuple[gpd.GeoDataFrame | None, str | None, dict]:
     """One archived layer -> (rows, table, processing record).
 
@@ -586,23 +720,25 @@ def build_layer(
     the rows carry ``acq_precision = "none"`` and gold excludes them on that,
     so the fact is visible rather than the polygons silently discarded.
     """
-    chash = readers.content_hash(gdf) if content_hash is None else content_hash
     base = {
         "sha256": sha256,
         "layer": ln.raw,
         "code": code,
         "code_method": code_method,
+        "codes_listed": codes_listed,
         "geometry_source": source,
-        "content_hash": chash,
         "target_ids": list(target_ids),
         "n_polygons": len(gdf),
     }
 
+    # Hashing is an iterrows pass over every polygon, so it happens only for a
+    # layer that will actually produce a file.
     prescreened = prescreen(ln, None)
     if prescreened is not None:
         return None, None, processing_row(**base, status=prescreened)
     if len(gdf) and not gdf.geometry.geom_type.isin(("Polygon", "MultiPolygon")).all():
         return None, None, processing_row(**base, status="skipped_non_water")
+    chash = readers.content_hash(gdf) if content_hash is None else content_hash
 
     if len(gdf):
         gdf, source_crs = readers.to_wgs84(gdf, ln.raw)
@@ -638,27 +774,52 @@ def build_layer(
         **base,
         status=acq_status([acq for acq, _ in groups]),
         table=table,
+        content_hash=chash,
         source_crs=source_crs,
         kind_counts=dict(counts),
     )
     return frame, table, record
 
 
-def source_rows(code: str, ln: grammar.LayerName, acqs: list[dict]) -> list[dict]:
-    """The `sources` rows one layer contributes: its sensor crossed with each
-    distinct acquisition the layer resolved to."""
-    return [
-        {
-            "code": code,
-            "sensor": ln.sensor,
-            "acq_datetime": acq["acq_datetime"],
-            "acq_window_start": acq["acq_window_start"],
-            "acq_window_end": acq["acq_window_end"],
-            "acq_precision": acq["acq_precision"],
-            "n_layers": 1,
-        }
-        for acq in acqs
-    ]
+def source_rows(
+    code: str,
+    ln: grammar.LayerName,
+    groups: list[tuple[dict, gpd.GeoDataFrame]],
+    *,
+    domain_lookup: dict[str, dict[str, str]] | None,
+) -> list[dict]:
+    """The `sources` rows one layer contributes: each acquisition the layer
+    resolved to, crossed with the sensors its polygons were acquired by.
+
+    The sensor is resolved through `sensor_for`, exactly as on the
+    `observed_event`/`coverage` rows, so the two tables never disagree about
+    which sensor an acquisition belongs to. Resolution is column-wise rather
+    than row-wise: only the distinct values matter here.
+    """
+    rows = []
+    for acq, sub in groups:
+        if ln.sensor is not None:
+            sensors = [sensor_for(ln, None)]
+        else:
+            bound = _bind(sub, domain_lookup)
+            sensors = sorted(
+                {sensor_for(ln, value) for value in _attr_column(sub, bound["sensor"])},
+                key=lambda s: (s[0] is None, s[0] or ""),
+            )
+        for sensor, sensor_method in sensors:
+            rows.append(
+                {
+                    "code": code,
+                    "sensor": sensor,
+                    "sensor_method": sensor_method,
+                    "acq_datetime": acq["acq_datetime"],
+                    "acq_window_start": acq["acq_window_start"],
+                    "acq_window_end": acq["acq_window_end"],
+                    "acq_precision": acq["acq_precision"],
+                    "n_layers": 1,
+                }
+            )
+    return rows
 
 
 def sources_frame(rows: list[dict]) -> pd.DataFrame:
@@ -672,9 +833,26 @@ def sources_frame(rows: list[dict]) -> pd.DataFrame:
     return grouped[SOURCES_COLUMNS]
 
 
-def silver_layer_path(table: str, code: str, content_hash: str) -> str:
-    """One file per distinct layer content under its event-code partition."""
-    return f"{common.SILVER}/{table}/code={code}/layer={content_hash}.parquet"
+def layer_file_key(content_hash: str, layer_name: str) -> str:
+    """The file key for one layer: its content hash plus a short digest of its
+    name.
+
+    The name is part of the key because identical content under two different
+    names is real and meaningful — the same analysis footprint shipped as
+    `…_20190330_AnalysisExtent_…` and `…_20190402_AnalysisExtent_…` describes
+    two acquisitions. Keying on content alone collapsed them onto one path and
+    silently dropped the second as already-written.
+    """
+    return f"{content_hash}-{hashlib.sha256(layer_name.encode()).hexdigest()[:8]}"
+
+
+def silver_layer_path(table: str, code: str, content_hash: str, layer_name: str) -> str:
+    """One file per distinct (layer content, layer name) under its event-code
+    partition."""
+    return (
+        f"{common.SILVER}/{table}/code={code}/"
+        f"layer={layer_file_key(content_hash, layer_name)}.parquet"
+    )
 
 
 def sources_path(code: str) -> str:
