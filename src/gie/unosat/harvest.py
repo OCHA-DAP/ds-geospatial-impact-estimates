@@ -32,9 +32,48 @@ _TIMEOUT = 300
 META_FILES = ("datasets.parquet", "resources.parquet", "zip_contents.parquet")
 CHECKPOINT_EVERY = 25
 
+# Every ledger column a transfer outcome may set. Each outcome carries all of
+# them, with None where that branch has nothing to say, so applying an outcome
+# never leaves a stale value from an earlier attempt on the same row.
+OUTCOME_KEYS = (
+    "status",
+    "http_status",
+    "error",
+    "sha256",
+    "size_bytes",
+    "n_members",
+    "uploaded_at",
+    "attempts",
+    "attempted_at",
+)
+
 
 def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
+
+
+def _outcome(**fields) -> dict:
+    """Build a full outcome dict: the fields given, every other
+    ``OUTCOME_KEYS`` entry None. An unknown field is a bug, not a new column."""
+    unknown = sorted(set(fields) - set(OUTCOME_KEYS))
+    if unknown:
+        raise ValueError(f"not outcome keys: {unknown}")
+    return {k: fields.get(k) for k in OUTCOME_KEYS}
+
+
+def content_key(row) -> tuple[str, str]:
+    """The identity of the content a ledger row points at: ``(url, size
+    bucket)``.
+
+    Two rows are the same content iff their URL AND their declared HDX size
+    match. A row with no declared size gets the bucket ``"na"``, which matches
+    only another undeclared size — never a row that declares one, because
+    nothing then says the bytes are the same. This one rule is what both
+    ``representatives`` (download once per distinct content) and
+    ``settle_url_siblings`` (settle a pending row from an uploaded one) use.
+    """
+    size = row["hdx_size"]
+    return row["url"], str(int(size)) if pd.notna(size) else "na"
 
 
 @dataclass(frozen=True)
@@ -99,10 +138,15 @@ def process_target(
     limiter: common.HostLimiter,
     use_cache: bool = True,
 ) -> tuple[dict, list[dict]]:
-    """One ledger row -> (ledger updates, member inventory rows)."""
+    """One ledger row -> (ledger updates, member inventory rows). The updates
+    always carry the full ``OUTCOME_KEYS`` set (see ``_outcome``)."""
     prev = row["attempts"]
     attempts = (int(prev) if pd.notna(prev) else 0) + 1
-    updates: dict = {"attempts": attempts, "attempted_at": _now()}
+    attempted_at = _now()
+
+    def outcome(**fields) -> dict:
+        return _outcome(attempts=attempts, attempted_at=attempted_at, **fields)
+
     basename = row["resource_name"]
     tmpdir = Path(tempfile.mkdtemp(prefix="unosat_"))
     tmp = tmpdir / basename
@@ -111,32 +155,28 @@ def process_target(
             dl = stream_download(session, row["url"], tmp, limiter)
         except requests.RequestException as e:
             err = f"{type(e).__name__}: {e}"[:300]
-            return updates | {"status": "failed_download", "error": err}, []
+            return outcome(status="failed_download", error=err), []
         if dl.status_code == 404:
-            return updates | {
-                "status": "unavailable_404",
-                "http_status": 404,
-                "error": "HTTP 404",
-            }, []
+            return outcome(status="unavailable_404", http_status=404, error="HTTP 404"), []
         if dl.status_code != 200:
-            return updates | {
-                "status": "failed_download",
-                "http_status": dl.status_code,
-                "error": f"HTTP {dl.status_code}",
-            }, []
+            return outcome(
+                status="failed_download",
+                http_status=dl.status_code,
+                error=f"HTTP {dl.status_code}",
+            ), []
         try:
             infos, tested = inspect_zip(tmp)
         except zipfile.BadZipFile as e:
-            return updates | {
-                "status": "corrupt_upstream",
-                "http_status": 200,
-                "error": f"BadZipFile: {e}",
-                "size_bytes": dl.size,
-            }, []
+            return outcome(
+                status="corrupt_upstream",
+                http_status=200,
+                error=f"BadZipFile: {e}",
+                size_bytes=dl.size,
+            ), []
         sha = dl.sha256
         members = member_rows(row, sha, infos)
         dest = common.blob_path(sha, basename)
-        base = updates | {
+        base = {
             "http_status": 200,
             "error": None if tested else "zip_test: unsupported compression method",
             "sha256": sha,
@@ -151,7 +191,7 @@ def process_target(
             tmp = final
         existing = store.exists_size(dest)
         if existing == dl.size:
-            return base | {"status": "uploaded_dedup", "uploaded_at": _now()}, members
+            return outcome(**base, status="uploaded_dedup", uploaded_at=_now()), members
         data = tmp.read_bytes()
         try:
             store.upload(dest, data)
@@ -159,13 +199,13 @@ def process_target(
             if store.exists_size(dest) == dl.size:
                 # A concurrent writer won the race to this content-addressed path
                 # while our upload failed; the bytes are identical by construction
-                # (same sha256), so this is a dedup, not a failure. Keep base's
-                # own error (e.g. a zip_test note) rather than clobbering it.
-                won = {"status": "uploaded_dedup", "uploaded_at": _now(), "error": base["error"]}
-                return base | won, members
-            return base | {"status": "failed_upload", "error": repr(e)[:300]}, []
+                # (same sha256), so this is a dedup, not a failure. base's own
+                # error (e.g. a zip_test note) stands; the upload error is not
+                # recorded because nothing failed for this content.
+                return outcome(**base, status="uploaded_dedup", uploaded_at=_now()), members
+            return outcome(**base | {"error": repr(e)[:300]}, status="failed_upload"), []
         status = "uploaded" if tested else "uploaded_untested"
-        return base | {"status": status, "uploaded_at": _now()}, members
+        return outcome(**base, status=status, uploaded_at=_now()), members
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
@@ -206,24 +246,21 @@ def reconcile_with_blob(ledger: pd.DataFrame, store: BlobStore) -> pd.DataFrame:
 
 
 def settle_url_siblings(ledger: pd.DataFrame) -> list[tuple[str, dict]]:
-    """Pending rows whose URL already has an uploaded row (any
-    ``UPLOADED_STATUSES``) with the same ``hdx_size`` (or either ``hdx_size``
-    missing) become ``uploaded_dedup``, copying sha256, size_bytes, n_members,
-    http_status=200, error=None, uploaded_at=now. Returns
-    ``[(target_id, updates)]`` for the caller to apply + journal; does not
-    mutate ``ledger``."""
+    """Pending rows whose ``content_key`` already has an uploaded row (any
+    ``UPLOADED_STATUSES``) become ``uploaded_dedup``, copying sha256,
+    size_bytes, n_members, http_status=200, error=None, uploaded_at=now.
+    Returns ``[(target_id, updates)]`` for the caller to apply + journal; does
+    not mutate ``ledger``."""
     uploaded = ledger[ledger["status"].isin(common.UPLOADED_STATUSES)]
-    rep_by_url = uploaded.drop_duplicates("url", keep="first").set_index("url")
+    donors: dict[tuple[str, str], pd.Series] = {}
+    for _, row in uploaded.iterrows():
+        donors.setdefault(content_key(row), row)
     now = _now()
     out: list[tuple[str, dict]] = []
     pending = ledger[ledger["status"] == "pending"]
     for _, row in pending.iterrows():
-        url = row["url"]
-        if url not in rep_by_url.index:
-            continue
-        src = rep_by_url.loc[url]
-        p_size, s_size = row["hdx_size"], src["hdx_size"]
-        if pd.notna(p_size) and pd.notna(s_size) and p_size != s_size:
+        src = donors.get(content_key(row))
+        if src is None:
             continue
         out.append((
             row["target_id"],
@@ -241,17 +278,17 @@ def settle_url_siblings(ledger: pd.DataFrame) -> list[tuple[str, dict]]:
 
 
 def representatives(todo: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, list[str]]]:
-    """Group the ``todo`` frame by (url, hdx_size) — a missing hdx_size is its
-    own group, never merged with a row that declares a known size. Return
-    (one row per group — the first by target_id —, mapping the
-    representative's target_id -> list of the OTHER target_ids in its
-    group)."""
+    """Group the ``todo`` frame by ``content_key``. Return (one row per group —
+    the first by target_id —, mapping the representative's target_id -> list
+    of the OTHER target_ids in its group)."""
     ordered = todo.reset_index(drop=True).sort_values("target_id").copy()
-    ordered["_size_key"] = ordered["hdx_size"].apply(lambda v: str(v) if pd.notna(v) else "na")
-    reps = ordered.drop_duplicates(["url", "_size_key"], keep="first").drop(columns="_size_key")
+    ordered["_content_key"] = pd.Series(
+        [content_key(row) for _, row in ordered.iterrows()], index=ordered.index, dtype=object
+    )
+    reps = ordered.drop_duplicates("_content_key", keep="first").drop(columns="_content_key")
     siblings = {
         group["target_id"].iloc[0]: group["target_id"].tolist()[1:]
-        for _, group in ordered.groupby(["url", "_size_key"], sort=False)
+        for _, group in ordered.groupby("_content_key", sort=False)
     }
     return reps, siblings
 
@@ -264,19 +301,11 @@ def sibling_updates(updates: dict, members: list[dict], sibling_id: str) -> tupl
     ``sibling_id``. Any failure or terminal status -> identical updates (same
     URL fails the same way). Either way ``attempts``/``attempted_at`` are
     dropped: no attempt was made for the sibling."""
+    sib_updates = {k: v for k, v in updates.items() if k not in ("attempts", "attempted_at")}
     if updates["status"] in common.UPLOADED_STATUSES:
-        sib_updates = {
-            "status": "uploaded_dedup",
-            "sha256": updates.get("sha256"),
-            "size_bytes": updates.get("size_bytes"),
-            "n_members": updates.get("n_members"),
-            "http_status": updates.get("http_status"),
-            "error": updates.get("error"),
-            "uploaded_at": _now(),
-        }
+        sib_updates |= {"status": "uploaded_dedup", "uploaded_at": _now()}
         sib_members = [{**m, "target_id": sibling_id} for m in members]
     else:
-        sib_updates = {k: v for k, v in updates.items() if k not in ("attempts", "attempted_at")}
         sib_members = []
     return sib_updates, sib_members
 
@@ -331,15 +360,9 @@ def checkpoint(
 
 
 def apply_updates(ledger: pd.DataFrame, target_id, updates: dict) -> None:
-    """Write ``process_target``'s updates onto ``ledger`` in place. On the
-    network-exception branch ``process_target`` omits ``http_status``,
-    which would otherwise leave a stale value from an earlier attempt on
-    the same row; clear it explicitly for any recorded retryable/terminal
-    outcome that doesn't supply its own."""
+    """Write an outcome onto ``ledger`` in place. Every key present is
+    applied, None included: a ``process_target`` outcome carries the whole
+    ``OUTCOME_KEYS`` set, so a branch that has no http_status writes None and
+    thereby clears a stale value from an earlier attempt on the same row."""
     for col, val in updates.items():
         ledger.loc[target_id, col] = val
-    if (
-        updates["status"] in (common.RETRYABLE_STATUSES | common.TERMINAL_STATUSES)
-        and "http_status" not in updates
-    ):
-        ledger.loc[target_id, "http_status"] = pd.NA

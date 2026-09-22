@@ -68,7 +68,8 @@ Checkpoints every 25 transfers and on exit. Every attempt is journaled.
 Re-running discovery is the backfill: new/re-published resources become
 pending, vanished ones are flagged `missing_upstream`, never dropped.
 Each distinct (URL, declared size) is downloaded once per run; ledger rows
-sharing both are settled from the representative's outcome.
+with the same URL and declared size are settled from the representative's
+outcome; an unknown declared size only matches another unknown size.
 The settle step (rows whose URL is already uploaded) runs on the whole
 ledger before `--scope`/`--limit` filtering, so a scoped run may settle rows
 outside its scope.

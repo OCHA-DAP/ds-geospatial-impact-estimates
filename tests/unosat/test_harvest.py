@@ -88,6 +88,23 @@ def test_network_error_is_retryable_failed_download(ledger_row):
     updates, _, _ = _run(ledger_row, requests.ConnectionError("boom"))
     assert updates["status"] == "failed_download"
     assert "ConnectionError" in updates["error"]
+    assert updates["http_status"] is None  # no response, so nothing to record
+
+
+def test_every_outcome_carries_every_outcome_key(ledger_row, good_zip):
+    """Whatever the branch, the updates dict has the full key set — that is
+    what lets ``apply_updates`` clear stale values without special cases."""
+    st = store.MemoryStore(fail_upload=True)
+    for resp_or_exc, store_ in (
+        (FakeResponse(200, good_zip), None),  # uploaded
+        (FakeResponse(404), None),  # unavailable_404
+        (FakeResponse(500), None),  # failed_download (HTTP)
+        (requests.ConnectionError("boom"), None),  # failed_download (network)
+        (FakeResponse(200, b"not a zip"), None),  # corrupt_upstream
+        (FakeResponse(200, good_zip), st),  # failed_upload
+    ):
+        updates, _, _ = _run(ledger_row, resp_or_exc, store_)
+        assert set(updates) == set(harvest.OUTCOME_KEYS), updates["status"]
 
 
 def test_upload_error_is_retryable_failed_upload(ledger_row, good_zip):
@@ -269,11 +286,14 @@ def test_checkpoint_writes_ledger_members_and_uploads_meta(tmp_path):
 
 
 def test_apply_updates_clears_stale_http_status_on_retryable_status(ledger_row):
+    """The network-exception branch has no HTTP status, so its outcome carries
+    http_status=None; applying it must clear the 500 an earlier attempt left."""
     led = pd.DataFrame([ledger_row]).set_index("target_id", drop=False)
     tid = ledger_row["target_id"]
     led.loc[tid, "http_status"] = 500
     updates = {
         "status": "failed_download",
+        "http_status": None,
         "error": "ConnectionError",
         "attempts": 2,
         "attempted_at": "2024-12-20T09:00:00",
@@ -328,6 +348,28 @@ def test_settle_url_siblings_ignores_hdx_size_mismatch():
     led.loc[_TID_SHP2, "hdx_size"] = 999  # differs from the representative's hdx_size
     settled = dict(harvest.settle_url_siblings(led))
     assert _TID_SHP2 not in settled
+
+
+def test_settle_url_siblings_does_not_settle_unknown_size_from_known_size():
+    """An undeclared hdx_size is not a wildcard: nothing says the pending row's
+    bytes are the uploaded row's bytes, so it is downloaded, not settled."""
+    led = _ledger2()
+    led.loc[_TID_SHP, ["status", "sha256", "size_bytes", "n_members"]] = [
+        "uploaded", "a" * 64, 56726504, 2,
+    ]
+    led.loc[_TID_SHP2, "hdx_size"] = pd.NA
+    settled = dict(harvest.settle_url_siblings(led))
+    assert _TID_SHP2 not in settled
+
+
+def test_settle_url_siblings_settles_unknown_size_from_unknown_size():
+    led = _ledger2()
+    led.loc[[_TID_SHP, _TID_SHP2], "hdx_size"] = pd.NA
+    led.loc[_TID_SHP, ["status", "sha256", "size_bytes", "n_members"]] = [
+        "uploaded", "a" * 64, 56726504, 2,
+    ]
+    settled = dict(harvest.settle_url_siblings(led))
+    assert settled[_TID_SHP2]["sha256"] == "a" * 64
 
 
 def test_representatives_groups_shared_url_into_one_rep_and_one_sibling():
