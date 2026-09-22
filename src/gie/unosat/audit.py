@@ -20,7 +20,7 @@ def check_b2_census(ledger: pd.DataFrame, store: BlobStore) -> tuple[bool, str]:
     expected = {
         common.blob_path(r.sha256, r.resource_name): int(r.size_bytes) for r in up.itertuples()
     }
-    got = store.list_sizes(f"{common.BRONZE}/blob=")
+    got = store.list_sizes(common.BLOB_LISTING_PREFIX)
     missing = sorted(set(expected) - set(got))
     extra = sorted(set(got) - set(expected))
     wrong = sorted(p for p in set(expected) & set(got) if expected[p] != got[p])

@@ -12,9 +12,7 @@ from __future__ import annotations
 
 import argparse
 import shutil
-from pathlib import Path
 
-import ocha_stratus as stratus
 import pandas as pd
 
 from gie import blobio
@@ -27,19 +25,14 @@ CHECKPOINT_EVERY = 25
 
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--work-dir", default=common.default_work_dir(), type=Path)
-    ap.add_argument("--stage", default="dev", choices=["dev", "prod"])
+    common.add_common_args(ap)
     ap.add_argument("--limit", type=int, default=None)
     args = ap.parse_args(argv)
-    args.work_dir.mkdir(parents=True, exist_ok=True)
 
     if shutil.which("ogrinfo") is None:
         raise RuntimeError("ogrinfo not found on PATH — install GDAL (brew install gdal)")
 
-    cc = stratus.get_container_client(container_name=common.CONTAINER, stage=args.stage)
-    restored = meta.bootstrap_work_dir(args.work_dir, meta.blob_fetcher(cc))
-    if restored:
-        print(f"bootstrapped from blob: {restored}")
+    cc = meta.bootstrap(args.work_dir, args.stage)
 
     led = pd.read_parquet(args.work_dir / "resources.parquet")
     gdbs = led[(led["format"] == "Geodatabase") & led["status"].isin(common.UPLOADED_STATUSES)]

@@ -215,7 +215,7 @@ def reconcile_with_blob(ledger: pd.DataFrame, store: BlobStore) -> pd.DataFrame:
     census: present with matching size -> uploaded; uploaded-in-ledger but
     absent or wrong size -> pending (loudly). Rows without a sha256 (never
     downloaded) and terminal rows are untouched."""
-    sizes = store.list_sizes(f"{common.BRONZE}/blob=")
+    sizes = store.list_sizes(common.BLOB_LISTING_PREFIX)
     has_sha = ledger["sha256"].notna()
     expected = ledger.loc[has_sha].apply(
         lambda r: common.blob_path(r["sha256"], r["resource_name"]), axis=1

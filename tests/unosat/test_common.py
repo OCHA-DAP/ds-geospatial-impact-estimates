@@ -1,5 +1,9 @@
+import argparse
 import threading
 import time
+from pathlib import Path
+
+import pytest
 
 from gie.unosat import common
 
@@ -72,6 +76,33 @@ def test_host_limiter_is_per_host():
             lim.acquire("https://unosat-maps.web.cern.ch/b.zip"):
         # a different host is not blocked by the first host's slot
         pass
+
+
+def test_atomic_write_puts_the_bytes_at_the_destination(tmp_path: Path):
+    dest = tmp_path / "x.parquet"
+    common.atomic_write(dest, b"payload")
+    assert dest.read_bytes() == b"payload"
+    assert list(tmp_path.glob("*.part")) == []
+
+
+def test_atomic_write_leaves_no_temp_file_and_no_destination_when_the_write_fails(tmp_path: Path):
+    """A failed write must leave the directory as it found it: no truncated
+    destination, no orphan .part file for the next run to trip over."""
+    dest = tmp_path / "x.parquet"
+    with pytest.raises(TypeError):
+        common.atomic_write(dest, "not bytes")  # str has no buffer interface
+    assert not dest.exists()
+    assert list(tmp_path.glob("*.part")) == []
+
+
+def test_add_common_args_gives_work_dir_and_stage():
+    ap = argparse.ArgumentParser()
+    common.add_common_args(ap)
+    args = ap.parse_args([])
+    assert args.work_dir == common.default_work_dir()
+    assert args.stage == "dev"
+    args = ap.parse_args(["--work-dir", "/elsewhere/gie", "--stage", "prod"])
+    assert args.work_dir == Path("/elsewhere/gie") and args.stage == "prod"
 
 
 def test_session_has_user_agent_and_retries():

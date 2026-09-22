@@ -9,11 +9,10 @@ anything reads a local file, so a lost work dir costs nothing.
 
 from __future__ import annotations
 
-import os
-import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
+import ocha_stratus as stratus
 from azure.core.exceptions import ResourceNotFoundError
 
 from gie.unosat import common
@@ -44,17 +43,22 @@ def bootstrap_work_dir(work_dir: Path, fetch: Callable[[str], bytes | None]) -> 
         data = fetch(f"{common.META}/{name}")
         if data is None:
             continue
-        fd, tmp = tempfile.mkstemp(dir=work_dir, prefix=name + ".", suffix=".part")
-        try:
-            with os.fdopen(fd, "wb") as f:
-                f.write(data)
-            os.replace(tmp, dest)
-        except BaseException:
-            if os.path.exists(tmp):
-                os.unlink(tmp)
-            raise
+        common.atomic_write(dest, data)
         restored.append(name)
     return restored
+
+
+def bootstrap(work_dir: Path, stage: str):
+    """What every unosat CLI does before it reads a local file: make the work
+    dir, open the ``global`` container, restore whatever ``_meta/`` files are
+    missing locally, and report what came back. Returns the container client,
+    which the callers also use for downloads and listings."""
+    work_dir.mkdir(parents=True, exist_ok=True)
+    cc = stratus.get_container_client(container_name=common.CONTAINER, stage=stage)
+    restored = bootstrap_work_dir(work_dir, blob_fetcher(cc))
+    if restored:
+        print(f"bootstrapped from blob: {restored}")
+    return cc
 
 
 def blob_fetcher(container_client) -> Callable[[str], bytes | None]:

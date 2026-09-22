@@ -535,7 +535,10 @@ class _NoMetaContainerClient:
 
 
 def _patch_cli_blob(cli, monkeypatch, st):
-    monkeypatch.setattr(cli.stratus, "get_container_client", lambda **kw: _NoMetaContainerClient())
+    # meta.bootstrap is what opens the container client for every unosat CLI.
+    monkeypatch.setattr(
+        cli.meta.stratus, "get_container_client", lambda **kw: _NoMetaContainerClient()
+    )
     monkeypatch.setattr(cli.blobio, "uploader", lambda settings: object())
     monkeypatch.setattr(cli, "DataLakeStore", lambda fs, cc: st)
 

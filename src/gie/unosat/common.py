@@ -9,9 +9,11 @@ re-ship the same zip many times (spec §Decisions).
 
 from __future__ import annotations
 
+import argparse
 import dataclasses
 import os
 import re
+import tempfile
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -28,6 +30,8 @@ from gie.config import Settings, load_settings
 CONTAINER = "global"
 BRONZE = "unosat/bronze"
 META = f"{BRONZE}/_meta"
+# What a bronze census lists: the content-addressed objects, not `_meta/`.
+BLOB_LISTING_PREFIX = f"{BRONZE}/blob="
 USER_AGENT = "OCHA-CHD-DS unosat-archive (ds-geospatial-impact-estimates)"
 PROVIDER = "United Nations Satellite Centre (UNOSAT), via HDX"
 
@@ -100,6 +104,29 @@ def default_work_dir() -> Path:
     ``/tmp`` so the local work dir survives a reboot."""
     env = os.getenv("GIE_WORK_DIR")
     return Path(env) if env else Path(platformdirs.user_data_dir("gie")) / "unosat_archive"
+
+
+def add_common_args(parser: argparse.ArgumentParser) -> None:
+    """The two arguments every unosat CLI takes, spelled once."""
+    parser.add_argument("--work-dir", default=default_work_dir(), type=Path)
+    parser.add_argument("--stage", default="dev", choices=["dev", "prod"])
+
+
+def atomic_write(dest: Path, data: bytes) -> None:
+    """Write ``data`` to ``dest`` via a temp file in the same directory and
+    ``os.replace``, so a killed or failed write never leaves a truncated file
+    at ``dest``. The temp file is removed and the failure re-raised, including
+    on KeyboardInterrupt. ``dest.parent`` must exist."""
+    fd, tmp_str = tempfile.mkstemp(dir=dest.parent, prefix=dest.name + ".", suffix=".part")
+    tmp = Path(tmp_str)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        os.replace(tmp, dest)
+    except BaseException:
+        if tmp.exists():
+            tmp.unlink()
+        raise
 
 
 def global_settings(stage: str) -> Settings:
