@@ -34,6 +34,7 @@ uv run --group etl --group api python pipelines/unosat/harvest.py             # 
 uv run --group etl --group api python pipelines/unosat/harvest.py --retry-failed
 uv run --group etl --group api python pipelines/unosat/domains.py             # GDB domains
 uv run --group etl --group api python pipelines/unosat/layers.py              # layer inventory (silver)
+uv run --group etl --group api python pipelines/unosat/silver.py              # normalised polygons
 uv run --group etl --group api python pipelines/unosat/audit.py               # invariants
 ```
 
@@ -68,6 +69,27 @@ failure; it is never retried.
 Downloads are kept at `$GIE_CACHE_DIR` (default `platformdirs.user_cache_dir("gie")`)
 mirroring the bronze layout, so silver reads them without re-downloading.
 Content-addressed, therefore never stale; delete freely. `--no-cache` disables.
+
+## Silver mirror
+
+`silver.py` writes every layer file to `{work_dir}/silver/…` first — the same
+relative layout as `unosat/silver/` — and uploads it from there in the
+background (6 threads, 60 s socket timeout, against bronze's 300 s: these are
+tens-of-KB files, and one stalled socket must not halt the run). The
+processing ledger's `uploaded` flag says whether the push is confirmed; a
+checkpoint drains in-flight uploads before persisting, so a killed run leaves
+`uploaded=False` rows whose files are already built and only need pushing —
+the next run does that without re-reading a single zip.
+
+**The mirror is disposable; blob is truth.** Delete `{work_dir}/silver/`
+whenever you like: gold reads through `silver.iter_layer_files`, which fetches
+back whatever the mirror lacks. Read a layer file with
+`silver.read_layer_file`, not a bare `geopandas.read_parquet` — the files sit
+under `code={EventCode}/` and also carry a `code` column, which pyarrow's
+hive-partition inference refuses to merge.
+
+`silver.py` flags: `--codes`, `--limit`, `--workers` (default 3; zips are
+processed in worker processes, `1` runs them in-process), `--force`.
 
 ## Guarantees
 

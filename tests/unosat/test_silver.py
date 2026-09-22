@@ -1,7 +1,9 @@
 import importlib.util
+import inspect
 import io
 import json
 import zipfile
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
@@ -10,7 +12,8 @@ import pandas as pd
 import pytest
 from shapely.geometry import LineString, Point, Polygon
 
-from gie.unosat import common, domains, grammar, layers, silver
+from gie import blobio
+from gie.unosat import common, domains, grammar, layers, readers, silver
 from gie.unosat.store import MemoryStore
 
 _CLI_PATH = Path(__file__).resolve().parents[2] / "pipelines" / "unosat" / "silver.py"
@@ -664,9 +667,21 @@ def cli_env(tmp_path, monkeypatch):
     store = MemoryStore()
     monkeypatch.setattr(module.meta, "bootstrap", lambda work_dir, stage: object())
     monkeypatch.setattr(module.common, "global_settings", lambda stage: None)
-    monkeypatch.setattr(module.blobio, "uploader", lambda settings: None)
+    monkeypatch.setattr(module.blobio, "uploader", lambda settings, **kw: None)
     monkeypatch.setattr(module.store, "DataLakeStore", lambda fs, cc: store)
     monkeypatch.setattr(module.cache, "read_through", lambda sha, name, fetch: zip_path)
+
+    # These tests monkeypatch module-level functions and inspect a MemoryStore,
+    # neither of which crosses a process boundary, so they drive the in-process
+    # worker path. The pool path is covered separately, by running the real
+    # `silver.process_unit` through a ProcessPoolExecutor.
+    real_main = module.main
+
+    def main(argv=None):
+        argv = list(argv or [])
+        return real_main(argv if "--workers" in argv else argv + ["--workers", "1"])
+
+    monkeypatch.setattr(module, "main", main)
     return module, store, work
 
 
@@ -786,8 +801,8 @@ def test_cli_never_reads_a_gdb_table(cli_env, monkeypatch):
     def boom(*a, **kw):
         raise AssertionError("a GDB lookup table must not be read")
 
-    monkeypatch.setattr(module.readers, "read_gdb_layer", boom)
-    monkeypatch.setattr(module.readers, "read_shp_member", boom)
+    monkeypatch.setattr(readers, "read_gdb_layer", boom)
+    monkeypatch.setattr(readers, "read_shp_member", boom)
     # re-inventory the fixture's zip as a geodatabase whose entries have no
     # geometry type: every layer is then a table and nothing is read
     inv = pd.read_parquet(work / "layers.parquet")
@@ -815,3 +830,177 @@ def test_cli_records_the_format_label_and_its_disagreement(cli_env):
     assert set(proc["geometry_source"]) == {"shp"}
     assert set(proc["format_label"]) == {"Geodatabase"}
     assert proc["format_mismatch"].all()
+
+
+# --- mirror, uploads, parallelism ------------------------------------------
+
+
+def _mirror_path(work: Path, blob_path: str) -> Path:
+    """The mirror file a blob path corresponds to — the layouts are identical
+    below their roots, which is the point of the mirror."""
+    return work / "silver" / blob_path.split(f"{common.SILVER}/", 1)[1]
+
+
+def test_local_layer_path_mirrors_the_blob_layout():
+    key = silver.layer_file_key("d" * 64, FLOOD_LAYER)
+    blob = silver.silver_layer_path("observed_event", "FL20190314MOZ", "d" * 64, FLOOD_LAYER)
+    local = silver.local_layer_path(Path("/w"), "observed_event", "FL20190314MOZ", key)
+    assert local == Path("/w") / "silver" / "observed_event" / "code=FL20190314MOZ" / (
+        f"layer={key}.parquet"
+    )
+    assert _mirror_path(Path("/w"), blob) == local
+
+
+def test_cli_writes_the_mirror_before_it_uploads(cli_env):
+    """Every upload reads a file that is already on disk, so a stalled or
+    killed upload never loses work that was already built."""
+    module, store, work = cli_env
+    on_disk_at_upload = []
+    store.on_upload = lambda path, data: on_disk_at_upload.append(
+        (path, _mirror_path(work, path).exists())
+    )
+
+    module.main(["--work-dir", str(work)])
+
+    layer_uploads = [(p, ok) for p, ok in on_disk_at_upload if "/layer=" in p]
+    assert layer_uploads and all(ok for _, ok in layer_uploads)
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    assert proc.loc[proc["layer"] == FLOOD_LAYER, "uploaded"].all()
+
+
+def test_a_failed_upload_keeps_the_file_local_and_the_row_unuploaded(cli_env):
+    module, store, work = cli_env
+
+    def stall(path, data):
+        if "/layer=" in path:
+            raise OSError("simulated upload stall")
+
+    store.on_upload = stall
+    module.main(["--work-dir", str(work)])
+
+    assert _layer_blobs(store) == []
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    row = proc[proc["layer"] == FLOOD_LAYER].iloc[0]
+    assert bool(row["uploaded"]) is False
+    assert "upload failed" in row["error"]
+    # the built file is still on disk, which is what makes the retry cheap
+    key = silver.layer_file_key(row["content_hash"], FLOOD_LAYER)
+    assert silver.local_layer_path(work, row["table"], row["code"], key).exists()
+    assert len(silver.unuploaded(proc)) == 1
+
+
+def test_resume_reuploads_from_the_mirror_without_reading_the_zip_again(cli_env, monkeypatch):
+    module, store, work = cli_env
+
+    def stall(path, data):
+        if "/layer=" in path:
+            raise OSError("simulated upload stall")
+
+    store.on_upload = stall
+    module.main(["--work-dir", str(work)])
+    assert _layer_blobs(store) == []
+
+    # second run: uploads work again, but any GDAL read would be a bug — the
+    # file is already built and only needs pushing
+    store.on_upload = None
+
+    def boom(*a, **kw):
+        raise AssertionError("resume must not re-read the source zip")
+
+    monkeypatch.setattr(readers, "read_shp_member", boom)
+    monkeypatch.setattr(readers, "read_gdb_layer", boom)
+
+    module.main(["--work-dir", str(work)])
+
+    assert len(_layer_blobs(store)) == 1
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    assert proc.loc[proc["layer"] == FLOOD_LAYER, "uploaded"].all()
+    assert silver.unuploaded(proc).empty
+
+
+def test_a_ledger_without_the_uploaded_column_is_reconciled_against_blob(cli_env):
+    """Rows written before `uploaded` existed read back as null. Null is not
+    False: the file may well be in blob, and the listing is what settles it."""
+    module, store, work = cli_env
+    module.main(["--work-dir", str(work)])
+
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    proc["uploaded"] = None
+    proc.to_parquet(work / silver.PROCESSING_FILE)
+    assert len(silver.unuploaded(proc)) == 1
+
+    module.main(["--work-dir", str(work)])
+
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    assert proc.loc[proc["layer"] == FLOOD_LAYER, "uploaded"].all()
+
+
+def test_process_unit_is_picklable_and_runs_in_a_worker_process(tmp_path):
+    """The pool pickles the task by import path, so the worker lives in the
+    library, not in the CLI script. This is the only test of that path: the
+    other CLI tests monkeypatch, which does not cross a process boundary."""
+    zip_path, members = _shp_zip(tmp_path)
+    work = tmp_path / "work"
+    work.mkdir()
+    unit = {
+        "sha256": SHA,
+        "resource_name": ZIP_NAME,
+        "geometry_source": "shp",
+        "format_label": "SHP",
+        "format_mismatch": False,
+        "code": "FL20190314MOZ",
+        "code_method": "resource_name",
+        "codes_listed": ["FL20190314MOZ"],
+        "target_ids": ["t1"],
+        "sibling_shp_sha256s": [],
+    }
+    job = {
+        "unit": unit,
+        "inv_rows": [{"layer": FLOOD_LAYER, "geometry_type": None, "source": "shp"}],
+        "zip_path": zip_path,
+        "work_dir": work,
+        "lookups": {},
+        "unit_fields": {"shp_gdb_mismatch": None, "sibling_status": None,
+                        "format_label": "SHP", "format_mismatch": False},
+        "members": members,
+        "known": set(),
+    }
+    with ProcessPoolExecutor(max_workers=1) as pool:
+        rows, files, sources = pool.submit(silver.process_unit, **job).result()
+
+    assert [r["status"] for r in rows] == ["ok"]
+    assert len(files) == 1 and files[0]["local_path"].exists()
+    assert files[0]["blob_path"].startswith(f"{common.SILVER}/observed_event/")
+    assert sources and sources[0]["code"] == "FL20190314MOZ"
+
+
+def test_iter_layer_files_prefers_the_mirror_and_fetches_the_rest(tmp_path):
+    """Gold's entry point: read from disk, fetching whatever only blob has."""
+    store = MemoryStore()
+    work = tmp_path / "work"
+    rows, table, record = build(FLOOD_LAYER, make_gdf({"Water_Class": [1, 1]}))
+    local = silver.local_layer_path(
+        work, table, "FL20190314MOZ", silver.layer_file_key(record["content_hash"], FLOOD_LAYER)
+    )
+    silver.write_layer_local(local, rows)
+
+    other = "ST1_20190402_FloodExtent_Beira_MOZ"
+    rows2, _, record2 = build(other, make_gdf({"Water_Class": [5, 5]}))
+    blob_only = silver.silver_layer_path(table, "FL20190314MOZ", record2["content_hash"], other)
+    silver.write_layer(store, blob_only, rows2)
+
+    got = list(silver.iter_layer_files(work, store, table, "FL20190314MOZ"))
+    assert len(got) == 2
+    assert all(p.exists() for p in got)
+    # the blob-only file was pulled into the mirror, so a second pass is free
+    assert _mirror_path(work, blob_only).exists()
+    assert {len(silver.read_layer_file(p)) for p in got} == {2}
+    # a bare geopandas.read_parquet would trip over the code= partition directory
+    with pytest.raises(Exception, match="code"):
+        gpd.read_parquet(got[0])
+
+
+def test_uploader_keeps_the_bronze_default_socket_timeout():
+    """Silver passes 60 s; bronze's single large uploads must keep the 300 s
+    default they were tuned for."""
+    assert inspect.signature(blobio.uploader).parameters["read_timeout"].default == 300

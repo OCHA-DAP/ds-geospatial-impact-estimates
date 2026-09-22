@@ -236,6 +236,27 @@ shipped for two acquisition dates); hashing content alone collapsed such
 layers onto one path and dropped the second. `sources` stays one
 `data.parquet` per code (it is a small per-code summary, not layer content).
 
+**Local mirror first, blob in the background.** Every file is written to
+`{work_dir}/silver/…` — the same relative layout — and uploaded from there by
+a small thread pool with a short socket timeout (60 s, against bronze's 300 s:
+the median upload is 0.5 s and observed stalls ran to 470 s and made up half a
+real run's wall time). The processing ledger's `uploaded` flag says whether
+that push is confirmed; a checkpoint drains the in-flight uploads first, so a
+persisted row never claims an upload that is still in the air, and a killed
+run leaves `uploaded=False` rows whose files are already built and need only
+pushing. `uploaded` null (a ledger written before the flag existed) is
+reconciled against the blob listing, not assumed either way. The mirror is
+disposable: blob is the truth, and gold reads through
+`silver.iter_layer_files`, which fetches whatever the mirror lacks. Zips are
+processed in parallel worker processes (`--workers`, default 3) by the pure
+`silver.process_unit`; the ledger, the uploads and the printing stay on the
+main thread.
+
+Note for readers of these files: they live under a `code={EventCode}/`
+directory *and* carry a `code` column, so pyarrow's hive-partition inference
+collides with the data. Read them with `silver.read_layer_file`, which turns
+that inference off.
+
 **One partition per content.** A content listed under two event codes (an
 ISO3 typo in one of UNOSAT's resource names — seen once, Cabo Verde listed as
 both `FL20250812CPV` and `FL20250812COD`) is assigned one code: a checked

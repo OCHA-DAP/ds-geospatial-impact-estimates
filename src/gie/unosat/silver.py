@@ -5,8 +5,17 @@ Composes the five pure modules built before it — `grammar` (layer names),
 WGS84, content hash) and `acquisition` (filename vs attribute dates) — into
 one function, `build_layer`, that turns one archived layer into normalised
 polygon rows plus the processing-ledger record describing what happened to
-it. No I/O beyond the blob write helper at the bottom: the CLI
+it. No I/O beyond the file/blob helpers at the bottom: the CLI
 (`pipelines/unosat/silver.py`) owns downloads, extraction and checkpointing.
+
+**Local mirror, then blob.** Every layer file is written first to
+`{work_dir}/silver/...` (`local_layer_path`, the same relative layout as blob)
+and uploaded from there in the background. Building is CPU work and uploading
+is a stalling network; coupling them made half a real run's wall time
+upload stalls. The mirror is disposable — blob is the truth — but it is also
+what makes a killed run cheap to resume: `uploaded=False` rows on the
+processing ledger name files that exist locally and only need pushing, with
+no re-read or rebuild.
 
 **Unit of work** is one distinct layer *content under its name*: `(code,
 content_hash, layer_name)`. Silver stores one GeoParquet file per such unit
@@ -30,10 +39,14 @@ import hashlib
 import io
 import json
 from collections import Counter
+from collections.abc import Iterator
 from datetime import UTC, datetime
+from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
+import pyogrio
+from pyogrio.errors import DataLayerError, DataSourceError
 
 from gie.unosat import acquisition, classes, common, grammar, readers
 from gie.unosat.store import BlobStore
@@ -58,9 +71,21 @@ __all__ = [
     "processing_frame",
     "layer_file_key",
     "silver_layer_path",
+    "local_layer_path",
+    "local_sources_path",
     "write_layer",
+    "write_layer_local",
+    "upload_file",
+    "iter_layer_files",
+    "read_layer_file",
+    "unuploaded",
     "is_polygon_type",
     "sensor_for",
+    "process_unit",
+    "domain_lookups",
+    "shp_member_for",
+    "gdb_layer_paths",
+    "read_layer",
 ]
 
 # Spec §3 "Canonical columns on observed_event", plus the three provenance
@@ -162,6 +187,7 @@ PROCESSING_COLUMNS = [
     "sibling_status",
     "source_crs",
     "reused",
+    "uploaded",
     "error",
     "processed_at",
 ]
@@ -723,6 +749,7 @@ def processing_row(
     sibling_status: str | None = None,
     source_crs: str | None = None,
     reused: bool = False,
+    uploaded: bool = False,
     error: str | None = None,
 ) -> dict:
     """One processing-ledger record, with every column spelled once.
@@ -753,6 +780,7 @@ def processing_row(
         "sibling_status": sibling_status,
         "source_crs": source_crs,
         "reused": reused,
+        "uploaded": uploaded,
         "error": error,
         "processed_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
@@ -937,6 +965,26 @@ def sources_path(code: str) -> str:
     return f"{common.SILVER}/sources/code={code}/data.parquet"
 
 
+def local_mirror(work_dir) -> Path:
+    """Root of the local mirror of `unosat/silver/` under the work dir.
+
+    Disposable: blob is the truth. It exists so building and uploading can be
+    decoupled, and so a killed run can resume by pushing what is already built
+    instead of rebuilding it.
+    """
+    return Path(work_dir) / "silver"
+
+
+def local_layer_path(work_dir, table: str, code: str, key: str) -> Path:
+    """Where `silver_layer_path`'s blob object is mirrored locally — the same
+    relative layout, so the two can be compared name for name."""
+    return local_mirror(work_dir) / table / f"code={code}" / f"layer={key}.parquet"
+
+
+def local_sources_path(work_dir, code: str) -> Path:
+    return local_mirror(work_dir) / "sources" / f"code={code}" / "data.parquet"
+
+
 def write_layer(store: BlobStore, path: str, frame: pd.DataFrame) -> int:
     """Serialise one layer's rows and upload them. Returns the bytes written."""
     buf = io.BytesIO()
@@ -944,3 +992,294 @@ def write_layer(store: BlobStore, path: str, frame: pd.DataFrame) -> int:
     data = buf.getvalue()
     store.upload(path, data)
     return len(data)
+
+
+def write_layer_local(path: Path, frame: pd.DataFrame) -> int:
+    """Serialise one layer's rows to the mirror. Returns the bytes written.
+
+    The write is atomic (`common.atomic_write`), so a killed run never leaves a
+    truncated file that a later run would happily upload.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    buf = io.BytesIO()
+    frame.to_parquet(buf, compression="zstd")
+    data = buf.getvalue()
+    common.atomic_write(path, data)
+    return len(data)
+
+
+def upload_file(store: BlobStore, blob_path: str, local_path: Path) -> int:
+    """Push one mirror file to blob. Returns the bytes uploaded."""
+    data = Path(local_path).read_bytes()
+    store.upload(blob_path, data)
+    return len(data)
+
+
+def unuploaded(proc_df: pd.DataFrame) -> pd.DataFrame:
+    """Ledger rows that wrote a file but cannot show it reached blob.
+
+    A killed run, a failed upload, or a ledger written before the `uploaded`
+    column existed (which reads back as null) all land here. The caller decides
+    what each one means by looking for the file — locally, then in blob — which
+    is the only evidence that settles it.
+    """
+    if proc_df.empty:
+        return proc_df
+    wrote_a_file = proc_df["table"].notna() & proc_df["content_hash"].notna()
+    return proc_df[wrote_a_file & (proc_df["uploaded"] != True)]  # noqa: E712 — NaN must match
+
+
+def read_layer_file(path: Path) -> gpd.GeoDataFrame:
+    """Read one silver layer file.
+
+    Use this rather than a bare `geopandas.read_parquet(path)`: the file sits
+    under a `code={EventCode}/` directory, so pyarrow infers a hive partition
+    field named `code` and then refuses to merge it with the `code` column the
+    file already carries (`ArrowTypeError: Field code has incompatible types`).
+    Disabling partition inference is the fix — the partition value is already
+    in the data, which is why the columns collide in the first place.
+    """
+    return gpd.read_parquet(path, partitioning=None)
+
+
+def iter_layer_files(work_dir, store: BlobStore, table: str, code: str) -> Iterator[Path]:
+    """Every layer file of one silver partition, as local paths.
+
+    Mirror files are yielded as they are; anything that exists only in blob is
+    fetched into the mirror first and then yielded, so a consumer (gold) always
+    reads from disk and a second pass over the same partition costs nothing.
+    Blob remains the authority on what the partition contains — the listing,
+    not the directory, decides.
+    """
+    local_dir = local_mirror(work_dir) / table / f"code={code}"
+    seen: set[str] = set()
+    if local_dir.exists():
+        for path in sorted(local_dir.glob("layer=*.parquet")):
+            seen.add(path.name)
+            yield path
+    for blob_path in sorted(store.list_sizes(f"{common.SILVER}/{table}/code={code}/")):
+        name = blob_path.rsplit("/", 1)[-1]
+        if name in seen or not name.startswith("layer="):
+            continue
+        dest = local_dir / name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        common.atomic_write(dest, store.download(blob_path))
+        yield dest
+
+
+# --- the per-zip worker ----------------------------------------------------
+# `process_unit` lives here rather than in the CLI because a ProcessPoolExecutor
+# pickles a task by import path: a function defined in a script the parent
+# loaded by file path cannot be reconstructed in a spawned child. Keeping it in
+# the library also keeps the CLI to orchestration — this function touches only
+# the bronze zip it is handed and the local mirror, never blob, the ledger or
+# stdout, so it is safe to run in a worker process.
+
+
+def domain_lookups(domain_rows: pd.DataFrame, sha256: str) -> dict[str, dict[str, dict[str, str]]]:
+    """``{layer: {field: {code: value}}}`` for one geodatabase content.
+
+    The binding is per layer AND field (see `domains.py`): the same GDB binds
+    `Water_Class` on its 2014 layers and `Water_Class2` on its 2021 ones.
+    """
+    sub = domain_rows[domain_rows["sha256"] == sha256]
+    out: dict[str, dict[str, dict[str, str]]] = {}
+    for (layer, field), grp in sub.groupby(["layer", "field"]):
+        out.setdefault(layer, {})[field] = dict(zip(grp["code"], grp["value"], strict=True))
+    return out
+
+
+def shp_member_for(members: list[str], layer: str) -> str | None:
+    """The zip member path whose basename is ``layer``.shp, or None."""
+    for m in members:
+        if m.lower().endswith(".shp") and m.split("/")[-1][:-4] == layer:
+            return m
+    return None
+
+
+def gdb_layer_paths(gdbs: list[tuple[str, Path]]) -> dict[str, Path]:
+    """``{feature class name: extracted .gdb path}`` across every geodatabase in
+    one zip. First writer wins if two geodatabases in the same zip use the same
+    layer name — the processing ledger is keyed on (sha256, layer), so the pair
+    must resolve to exactly one read."""
+    out: dict[str, Path] = {}
+    for _, path in gdbs:
+        for name in pyogrio.list_layers(path)[:, 0]:
+            out.setdefault(name, path)
+    return out
+
+
+def read_layer(source: str, path: Path, layer: str, member: str | None):
+    """One layer as a GeoDataFrame. Raises `DataSourceError`/`DataLayerError`
+    for a GDAL failure, which the caller records as `unreadable`.
+
+    A shapefile layer with no member path is not a GDAL failure but a
+    contradiction — the SHP inventory is built *from* the member list — so it
+    raises rather than being recorded as an unreadable layer.
+    """
+    if source == "gdb":
+        return readers.read_gdb_layer(path, layer)
+    if member is None:
+        raise RuntimeError(
+            f"layer {layer!r} is inventoried for {Path(path).name} but no .shp member of "
+            "that name is in zip_contents.parquet"
+        )
+    return readers.read_shp_member(path, member)
+
+
+def _process_one_layer(inv_row, ctx: dict, out: dict) -> None:
+    """One layer of one zip, appending to ``out``'s accumulators."""
+    unit, work_dir, known = ctx["unit"], ctx["work_dir"], ctx["known"]
+    layer = inv_row["layer"]
+    ln = grammar.parse(layer)
+    base = {
+        "sha256": unit["sha256"],
+        "layer": layer,
+        "code": unit["code"],
+        "code_method": unit["code_method"],
+        "codes_listed": unit["codes_listed"],
+        "geometry_source": unit["geometry_source"],
+        "target_ids": unit["target_ids"],
+        **ctx["unit_fields"],
+    }
+
+    # A null geometry type means "a geodatabase lookup table" for a GDB row and
+    # "not recorded yet" for a shapefile member, so the row's own source decides.
+    prescreened = prescreen(ln, inv_row.get("geometry_type"), inv_row.get("source"))
+    if prescreened is not None:
+        out["rows"].append(processing_row(**base, status=prescreened))
+        return
+
+    if unit["geometry_source"] == "gdb" and layer not in ctx["gdb_paths"]:
+        # ogrinfo inventoried it but GDAL cannot open it through pyogrio now:
+        # our side failing on one layer, recorded, the run continues.
+        out["rows"].append(
+            processing_row(
+                **base,
+                status="unreadable",
+                error=f"inventoried layer {layer!r} not found in any .gdb in this zip",
+            )
+        )
+        return
+
+    try:
+        gdf = read_layer(
+            unit["geometry_source"],
+            ctx["gdb_paths"][layer] if unit["geometry_source"] == "gdb" else ctx["zip_path"],
+            layer,
+            shp_member_for(ctx["members"], layer),
+        )
+    except (DataSourceError, DataLayerError) as e:
+        out["rows"].append(
+            processing_row(**base, status="unreadable", error=f"{type(e).__name__}: {e}"[:500])
+        )
+        return
+
+    chash = readers.content_hash(gdf)
+    key = layer_file_key(chash, layer)
+    blob_path = silver_layer_path(ln.table, unit["code"], chash, layer)
+    local_path = local_layer_path(work_dir, ln.table, unit["code"], key)
+    groups = layer_acquisitions(ln, gdf)
+    acqs = [acq for acq, _ in groups]
+
+    def remember_file() -> None:
+        out["files"].append(
+            {
+                "sha256": unit["sha256"],
+                "layer": layer,
+                "blob_path": blob_path,
+                "local_path": local_path,
+            }
+        )
+
+    def add_sources() -> None:
+        """`sources` is accumulated even for a layer whose file is reused, so a
+        code's summary describes all of its layers and not only the ones this
+        run happened to write."""
+        out["sources"].extend(
+            source_rows(unit["code"], ln, groups, domain_lookup=ctx["lookups"].get(layer))
+        )
+
+    in_blob = blob_path in known
+    if in_blob or local_path.exists():
+        # Already built under this code and name. `reused` rows carry no kind
+        # counts — the authoritative counts sit on the row that built the file.
+        if not in_blob:
+            remember_file()  # built locally but never pushed: still needs an upload
+        out["rows"].append(
+            processing_row(
+                **base,
+                status=acq_status(acqs),
+                table=ln.table,
+                content_hash=chash,
+                n_polygons=len(gdf),
+                reused=True,
+                uploaded=in_blob,
+            )
+        )
+        add_sources()
+        return
+
+    frame, table, record = build_layer(
+        unit["code"],
+        unit["code_method"],
+        ln,
+        gdf,
+        source=unit["geometry_source"],
+        sha256=unit["sha256"],
+        target_ids=unit["target_ids"],
+        domain_lookup=ctx["lookups"].get(layer),
+        content_hash=chash,
+        codes_listed=unit["codes_listed"],
+    )
+    if frame is not None:
+        # File first, ledger second: a crash between the two leaves the
+        # (sha256, layer) pair looking undone, so it is simply redone.
+        write_layer_local(local_layer_path(work_dir, table, unit["code"], key), frame)
+        remember_file()
+        add_sources()
+    out["rows"].append(record | ctx["unit_fields"])
+
+
+def process_unit(
+    unit: dict,
+    inv_rows: list[dict],
+    zip_path: Path,
+    work_dir: Path,
+    lookups: dict,
+    unit_fields: dict,
+    members: list[str],
+    known: set[str],
+) -> tuple[list[dict], list[dict], list[dict]]:
+    """One bronze zip -> ``(processing rows, files written, sources rows)``.
+
+    Pure with respect to everything shared: it reads the zip it is handed,
+    writes layer files into the local mirror, and returns what it did. No blob,
+    no ledger, no printing — so it can run in a worker process, and every
+    argument and return value is picklable.
+
+    ``known`` is the set of blob paths already present in this code's
+    partitions, snapshotted by the caller: a layer already there is recorded
+    `reused` and not rebuilt.
+    """
+    out: dict[str, list] = {"rows": [], "files": [], "sources": []}
+    ctx = {
+        "unit": unit,
+        "zip_path": zip_path,
+        "work_dir": work_dir,
+        "lookups": lookups,
+        "unit_fields": unit_fields,
+        "members": members,
+        "known": known,
+        "gdb_paths": {},
+    }
+    if unit["geometry_source"] == "gdb":
+        with readers.extract_gdbs(zip_path) as gdbs:
+            ctx["gdb_paths"] = gdb_layer_paths(gdbs)
+            for inv_row in inv_rows:
+                _process_one_layer(inv_row, ctx, out)
+    else:
+        for inv_row in inv_rows:
+            _process_one_layer(inv_row, ctx, out)
+    return out["rows"], out["files"], out["sources"]
