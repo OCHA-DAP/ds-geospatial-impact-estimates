@@ -44,6 +44,7 @@ Run:  uv run --group etl --group api python pipelines/unosat/silver.py \
 from __future__ import annotations
 
 import argparse
+import io
 from concurrent.futures import FIRST_COMPLETED, Future, ProcessPoolExecutor, ThreadPoolExecutor
 from concurrent.futures import wait as wait_futures
 
@@ -170,7 +171,15 @@ def main(argv: list[str] | None = None) -> None:
             for key in waiters.pop(blob_path, []):
                 row = row_index.get(key)
                 if row is None:
-                    continue
+                    # Every waiter was registered from a row this run built, and
+                    # `row_index` is only cleared by `checkpoint` *after* this
+                    # function has drained it. A miss therefore means the two
+                    # have gone out of step, and carrying on would persist a
+                    # ledger row silently claiming an upload nobody confirmed.
+                    raise KeyError(
+                        f"upload {blob_path} has no processing row for {key}: "
+                        "the upload queue and the ledger rows are out of step"
+                    )
                 row["uploaded"] = error is None
                 if error:
                     row["error"] = error
@@ -184,11 +193,15 @@ def main(argv: list[str] | None = None) -> None:
         # Coerced before writing so the persisted schema is stable run to run
         # and the next run can assign flags into it.
         proc_df = silver.coerce_processing_dtypes(silver.merge_processing(proc_df, new_rows))
-        proc_df.to_parquet(args.work_dir / silver.PROCESSING_FILE)
-        blob_store.upload(
-            f"{common.SILVER_META}/processing.parquet",
-            (args.work_dir / silver.PROCESSING_FILE).read_bytes(),
-        )
+        # Serialised once, then written atomically and uploaded from the same
+        # bytes: a kill mid-write leaves the previous ledger intact rather than
+        # a truncated file the next run would read as the record of what is
+        # done, and blob is guaranteed the same content as the mirror.
+        buf = io.BytesIO()
+        proc_df.to_parquet(buf)
+        data = buf.getvalue()
+        common.atomic_write(args.work_dir / silver.PROCESSING_FILE, data)
+        blob_store.upload(f"{common.SILVER_META}/processing.parquet", data)
         new_rows.clear()
         row_index.clear()
 

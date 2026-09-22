@@ -1090,25 +1090,24 @@ def read_layer_file(path: Path) -> gpd.GeoDataFrame:
 def iter_layer_files(work_dir, store: BlobStore, table: str, code: str) -> Iterator[Path]:
     """Every layer file of one silver partition, as local paths.
 
-    Mirror files are yielded as they are; anything that exists only in blob is
-    fetched into the mirror first and then yielded, so a consumer (gold) always
-    reads from disk and a second pass over the same partition costs nothing.
-    Blob remains the authority on what the partition contains — the listing,
-    not the directory, decides.
+    Blob is the authority on what the partition contains — the listing, not the
+    directory, decides. Every listed file is yielded as a local path: straight
+    from the mirror when it is already there (the mirror is a cache, so a
+    second pass over the same partition costs nothing), fetched into the mirror
+    first when it is not. A mirror file the listing does not name is NOT
+    yielded: it is a leftover from an interrupted or superseded run, and
+    letting it through would make gold's output depend on which machine built
+    it and on what that machine happened to keep.
     """
     local_dir = local_mirror(work_dir) / table / f"code={code}"
-    seen: set[str] = set()
-    if local_dir.exists():
-        for path in sorted(local_dir.glob("layer=*.parquet")):
-            seen.add(path.name)
-            yield path
     for blob_path in sorted(store.list_sizes(f"{common.SILVER}/{table}/code={code}/")):
         name = blob_path.rsplit("/", 1)[-1]
-        if name in seen or not name.startswith("layer="):
+        if not name.startswith("layer="):
             continue
         dest = local_dir / name
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        common.atomic_write(dest, store.download(blob_path))
+        if not dest.exists():
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            common.atomic_write(dest, store.download(blob_path))
         yield dest
 
 

@@ -974,15 +974,28 @@ def test_process_unit_is_picklable_and_runs_in_a_worker_process(tmp_path):
     assert sources and sources[0]["code"] == "FL20190314MOZ"
 
 
-def test_iter_layer_files_prefers_the_mirror_and_fetches_the_rest(tmp_path):
-    """Gold's entry point: read from disk, fetching whatever only blob has."""
-    store = MemoryStore()
+class CountingStore(MemoryStore):
+    """A MemoryStore that remembers what was downloaded, so a test can tell a
+    mirror hit from a refetch."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.downloads: list[str] = []
+
+    def download(self, path: str) -> bytes:
+        self.downloads.append(path)
+        return super().download(path)
+
+
+def test_iter_layer_files_serves_the_listing_using_the_mirror_as_a_cache(tmp_path):
+    """Gold's entry point: every file the blob listing names, read from disk,
+    downloading only the ones the mirror does not already hold."""
+    store = CountingStore()
     work = tmp_path / "work"
     rows, table, record = build(FLOOD_LAYER, make_gdf({"Water_Class": [1, 1]}))
-    local = silver.local_layer_path(
-        work, table, "FL20190314MOZ", silver.layer_file_key(record["content_hash"], FLOOD_LAYER)
-    )
-    silver.write_layer_local(local, rows)
+    cached = silver.silver_layer_path(table, "FL20190314MOZ", record["content_hash"], FLOOD_LAYER)
+    silver.write_layer(store, cached, rows)
+    silver.write_layer_local(_mirror_path(work, cached), rows)
 
     other = "ST1_20190402_FloodExtent_Beira_MOZ"
     rows2, _, record2 = build(other, make_gdf({"Water_Class": [5, 5]}))
@@ -992,12 +1005,30 @@ def test_iter_layer_files_prefers_the_mirror_and_fetches_the_rest(tmp_path):
     got = list(silver.iter_layer_files(work, store, table, "FL20190314MOZ"))
     assert len(got) == 2
     assert all(p.exists() for p in got)
-    # the blob-only file was pulled into the mirror, so a second pass is free
+    # only the file the mirror lacked was fetched; the other came off disk
+    assert store.downloads == [blob_only]
     assert _mirror_path(work, blob_only).exists()
     assert {len(silver.read_layer_file(p)) for p in got} == {2}
     # a bare geopandas.read_parquet would trip over the code= partition directory
     with pytest.raises(Exception, match="code"):
         gpd.read_parquet(got[0])
+
+
+def test_iter_layer_files_ignores_a_mirror_file_the_listing_does_not_name(tmp_path):
+    """Blob decides what a partition holds. A mirror file no listing names is a
+    leftover from an interrupted or superseded run — yielding it would put rows
+    into gold that another machine's build would not have, and would hide the
+    fact that the upload never landed."""
+    store = MemoryStore()
+    work = tmp_path / "work"
+    rows, table, record = build(FLOOD_LAYER, make_gdf({"Water_Class": [1, 1]}))
+    orphan = silver.local_layer_path(
+        work, table, "FL20190314MOZ", silver.layer_file_key(record["content_hash"], FLOOD_LAYER)
+    )
+    silver.write_layer_local(orphan, rows)
+
+    assert list(silver.iter_layer_files(work, store, table, "FL20190314MOZ")) == []
+    assert orphan.exists()  # left where it is; this is not a cleanup pass
 
 
 def test_uploader_keeps_the_bronze_default_socket_timeout():
