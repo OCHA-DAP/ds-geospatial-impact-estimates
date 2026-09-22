@@ -286,6 +286,7 @@ def test_label_coverage_summary_reports_distributions():
             "sensor_class": ["sar", "sar"],
             "acq_precision": ["date", "window"],
             "valid_basis": ["none", "footprint"],
+            "valid_match": [None, "product"],
             "countries": ["MOZ", "MOZ; ZWE"],
         }
     )
@@ -293,6 +294,9 @@ def test_label_coverage_summary_reports_distributions():
     assert out["n_label_sets"] == 2
     assert out["by_country"]["MOZ"] == 2
     assert out["by_sensor_class_acq_precision"] == {"sar/date": 1, "sar/window": 1}
+    # how a mask that exists was matched: on the acquisition interval too, or
+    # on source product and area alone
+    assert out["by_valid_match"]["product"] == 1
 
 
 def test_stale_codes_collects_codes_from_any_failing_rule():

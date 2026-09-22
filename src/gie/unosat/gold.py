@@ -22,12 +22,14 @@ acquisition, and `other_water` is aquaculture, swamp, snow. All three are
 dropped from the dissolves and counted in `excluded_aggregate_n`, so the
 exclusion is visible per label set rather than implicit in a row count.
 
-**The mask.** `geom_valid` is the analysis footprint for the *same area and
-interval* minus what was not analysed (cloud), with `valid_basis` naming
-which of the three states produced it. A footprint from another area or
-another acquisition is a different observation, so it never stands in: the
-honest answer there is `valid_basis = "none"`, not a mask that would call
-unobserved ground observed.
+**The mask.** `geom_valid` is the analysis footprint minus what was not
+analysed (cloud), with `valid_basis` naming which of the three states produced
+it. Coverage is matched to a label set by **shared source product and same
+area** (CEMS gold's `target_id` rule), with the acquisition interval as a
+refinement recorded in `valid_match` ∈ {`interval`, `product`} — see
+`_valid_mask` for the measurement behind that. A footprint from another area
+never stands in: the honest answer there is `valid_basis = "none"`, not a mask
+that would call unobserved ground observed.
 
 CEMS gold is rebuilt to this schema in a follow-up, which is why `INDEX_COLUMNS`
 carries `label_source` and the CEMS-only `sensor_gsd` / `det_methods`.
@@ -78,6 +80,10 @@ POSSIBLE_KINDS = ("flood_possible",)
 EXCLUDED_KINDS = ("aggregate_max", "aggregate_min", "other_water")
 
 ACQ_PRECISIONS = ("date", "window", "none")
+# Silver's vocabularies, checked on the way in: a value outside them means
+# silver changed under us, and every rule below sorts rows by these strings.
+LAYER_KINDS = (*WATER_KINDS, *POSSIBLE_KINDS, *EXCLUDED_KINDS)
+COVERAGE_ROLES = ("footprint", "not_analysed")
 
 GEOMETRY_COLUMNS = ("geom_water", "geom_flood", "geom_possible", "geom_valid")
 
@@ -89,6 +95,7 @@ LABEL_COLUMNS = [
     "acq_end",
     "label_day",
     "valid_basis",
+    "valid_match",
     *GEOMETRY_COLUMNS,
 ]
 
@@ -118,6 +125,7 @@ INDEX_COLUMNS = [
     "flood_area_km2",
     "possible_area_km2",
     "valid_basis",
+    "valid_match",
     "valid_area_km2",
     "minx",
     "miny",
@@ -154,6 +162,24 @@ def _area_labels(frame: pd.DataFrame) -> pd.Series:
     return frame["layer_name"].map(lambda name: grammar.parse(str(name)).area)
 
 
+def _check_vocabulary(
+    frame: pd.DataFrame, column: str, vocabulary: tuple[str, ...], *, code: str, table: str
+) -> None:
+    """Raise unless every value of ``column`` is one of ``vocabulary``.
+
+    Every rule below sorts rows by these strings — which kind is water, which
+    coverage row is a footprint. An unrecognised value would not raise on its
+    own; it would quietly fall out of every `isin` and leave a label set
+    missing polygons nobody counted.
+    """
+    unknown = sorted(set(frame[column].dropna().unique()) - set(vocabulary))
+    if unknown or frame[column].isna().any():
+        raise ValueError(
+            f"{code}/{table}: {column} outside the vocabulary {vocabulary}: "
+            f"{unknown or ['<null>']}"
+        )
+
+
 def _prepare(frame: gpd.GeoDataFrame, *, code: str, table: str) -> gpd.GeoDataFrame:
     """Silver rows to gold's grain: valid geometry, an acquisition interval,
     an area label, and no undated rows.
@@ -171,12 +197,11 @@ def _prepare(frame: gpd.GeoDataFrame, *, code: str, table: str) -> gpd.GeoDataFr
         out["area_label"] = pd.Series([], dtype="object")
         return out
 
-    unknown = sorted(set(out["acq_precision"].dropna().unique()) - set(ACQ_PRECISIONS))
-    if unknown or out["acq_precision"].isna().any():
-        raise ValueError(
-            f"{code}/{table}: acq_precision outside the vocabulary {ACQ_PRECISIONS}: "
-            f"{unknown or ['<null>']}"
-        )
+    _check_vocabulary(out, "acq_precision", ACQ_PRECISIONS, code=code, table=table)
+    if table == "observed_event":
+        _check_vocabulary(out, "layer_kind", LAYER_KINDS, code=code, table=table)
+    else:
+        _check_vocabulary(out, "role", COVERAGE_ROLES, code=code, table=table)
     out["area_label"] = _area_labels(out)
     for col, window in (("acq_start", "acq_window_start"), ("acq_end", "acq_window_end")):
         out[col] = pd.to_datetime(out[window]).fillna(pd.to_datetime(out["acq_datetime"]))
@@ -211,21 +236,45 @@ def _separates_flood(group: pd.DataFrame) -> bool:
     return any(grammar.parse(str(name)).kind == "flood" for name in group["layer_name"].unique())
 
 
-def _valid_mask(cov: gpd.GeoDataFrame, aoi, start, end):
-    """The footprint for this (area, interval) minus what was not analysed."""
-    same = cov[
-        (cov["area_label"] == aoi) & (cov["acq_start"] == start) & (cov["acq_end"] == end)
-    ]
-    footprint = same[same["role"] == "footprint"]
+def _valid_mask(cov: gpd.GeoDataFrame, aoi, start, end, target_ids: set[str]):
+    """The analysis footprint for this label set minus what was not analysed.
+
+    Coverage belongs to a label set when it came out of the **same source
+    product** — a shared `target_id`, the rule CEMS gold uses — **and**
+    describes the same area. Measured against the real silver output, matching
+    on the acquisition interval instead left 46 % of label sets with any mask
+    at all, against 73 % for product-and-area: a footprint layer usually
+    carries only its filename's date, while the observed layer's per-polygon
+    sensor dates widen its interval, so two layers out of one product rarely
+    share an interval exactly. Area is never crossed. Dropping it would reach
+    84 %, but the extra 11 points are a neighbouring AOI's footprint calling
+    unobserved ground observed, which is exactly the claim the mask exists to
+    prevent.
+
+    The interval is a refinement, not a gate: where the matched coverage does
+    contain a footprint with the identical interval, only that subset is used
+    and `valid_match = "interval"`; otherwise the product-and-area match
+    stands with `valid_match = "product"`, so a consumer can tier the two.
+    """
+    if not len(cov):
+        return None, "none", None
+    same = cov[(cov["area_label"] == aoi) & _shares_target(cov, target_ids)]
+    exact = same[(same["acq_start"] == start) & (same["acq_end"] == end)]
+    # Refine only when the exact-interval subset actually carries a footprint;
+    # otherwise refining would throw away the only mask the set has.
+    refined = len(exact[exact["role"] == "footprint"]) > 0
+    pool = exact if refined else same
+    footprint = pool[pool["role"] == "footprint"]
     if not len(footprint):
         # `not_analysed` alone says what was NOT looked at, which is no
         # evidence at all about what was.
-        return None, "none"
+        return None, "none", None
+    match = "interval" if refined else "product"
     valid = footprint.geometry.union_all()
-    masked = same[same["role"] == "not_analysed"]
+    masked = pool[pool["role"] == "not_analysed"]
     if not len(masked):
-        return valid, "footprint"
-    return valid.difference(masked.geometry.union_all()), "footprint_minus_cloud"
+        return valid, "footprint", match
+    return valid.difference(masked.geometry.union_all()), "footprint_minus_cloud", match
 
 
 def _values(series: pd.Series) -> list[str]:
@@ -250,13 +299,18 @@ def _joined(series: pd.Series) -> str | None:
     return "; ".join(distinct) if distinct else None
 
 
-def _target_ids(series: pd.Series) -> str | None:
-    ids: set[str] = set()
-    for value in series:
-        if value is None or isinstance(value, float):
-            continue
-        ids.update(str(t) for t in value)
-    return "; ".join(sorted(ids)) if ids else None
+def _id_set(value) -> set[str]:
+    """One row's `target_ids` as a set. The column holds a list from a freshly
+    built frame and a numpy array after a parquet round-trip; a null row
+    (float NaN) names no product."""
+    if value is None or isinstance(value, float):
+        return set()
+    return {str(t) for t in value}
+
+
+def _shares_target(frame: pd.DataFrame, wanted: set[str]) -> pd.Series:
+    """Rows that came out of at least one of the same source products."""
+    return frame["target_ids"].map(lambda ids: not wanted.isdisjoint(_id_set(ids)))
 
 
 def _label_set(code: str, aoi, start, end, group: gpd.GeoDataFrame, cov, meta: dict) -> dict:
@@ -264,9 +318,17 @@ def _label_set(code: str, aoi, start, end, group: gpd.GeoDataFrame, cov, meta: d
     flood = _union(contributing, FLOOD_KINDS)
     if flood is None and _separates_flood(group):
         flood = MultiPolygon()
-    valid, basis = _valid_mask(cov, aoi, start, end)
+    ids: set[str] = set()
+    for value in group["target_ids"]:
+        ids |= _id_set(value)
+    valid, basis, match = _valid_mask(cov, aoi, start, end, ids)
     same_day = start.date() == end.date()
     sensor = _most_common(group["sensor"])
+    # A set built from two sensors is not a Sentinel-1 label with a footnote:
+    # the modal sensor stays for provenance, but the class says `multiple` so
+    # a consumer never tiers it as though one instrument produced it.
+    distinct_sensors = set(_values(contributing["sensor"]))
+    sensor_cls = "multiple" if len(distinct_sensors) > 1 else classes.sensor_class(sensor)
     return {
         "label_source": LABEL_SOURCE,
         "code": code,
@@ -283,7 +345,7 @@ def _label_set(code: str, aoi, start, end, group: gpd.GeoDataFrame, cov, meta: d
         # conflicts out must not keep a set that contains one.
         "acq_conflict": bool(group["acq_conflict"].fillna(False).any()),
         "sensor": sensor,
-        "sensor_class": classes.sensor_class(sensor),
+        "sensor_class": sensor_cls,
         "sensor_gsd": None,  # CEMS-only; UNOSAT publishes no ground sample distance
         "det_methods": None,  # CEMS-only
         # What the geometries are made of. The excluded kinds are reported by
@@ -293,7 +355,8 @@ def _label_set(code: str, aoi, start, end, group: gpd.GeoDataFrame, cov, meta: d
         "water_status": _joined(contributing["water_status"]),
         "n_polygons": len(contributing),
         "valid_basis": basis,
-        "target_ids": _target_ids(group["target_ids"]),
+        "valid_match": match,
+        "target_ids": "; ".join(sorted(ids)) if ids else None,
         "excluded_aggregate_n": int(len(group) - len(contributing)),
         "geom_water": _union(contributing, WATER_KINDS),
         "geom_flood": flood,
@@ -460,23 +523,46 @@ def built_codes(store: BlobStore) -> set[str]:
 
 def iter_index_parts(work_dir, store: BlobStore):
     """Every index part in blob, as local paths, mirroring as it goes — the
-    same contract as `silver.iter_layer_files`: the listing decides."""
-    local_dir = local_mirror(work_dir) / "_index_parts"
-    for blob_path in sorted(store.list_sizes(f"{common.GOLD}/_index_parts/code=")):
+    same contract as `silver.iter_layer_files`: the listing decides.
+
+    Unlike a silver layer file, an index part is **mutable**: rebuilding one
+    code rewrites `_index_parts/code=X.parquet` in place, so existence alone
+    is not evidence that the mirrored copy is the one in blob. The size is
+    compared against the listing (which already carries it, at no extra call)
+    and a disagreement re-downloads; otherwise a run on a machine that built
+    an earlier version would publish that stale part into `label_index`.
+    """
+    sizes = store.list_sizes(f"{common.GOLD}/_index_parts/code=")
+    for blob_path in sorted(sizes):
         dest = local_path(work_dir, blob_path)
-        if not dest.exists():
-            local_dir.mkdir(parents=True, exist_ok=True)
+        if not (dest.exists() and dest.stat().st_size == sizes[blob_path]):
+            dest.parent.mkdir(parents=True, exist_ok=True)
             common.atomic_write(dest, store.download(blob_path))
         yield dest
 
 
 def concat_index(paths) -> pd.DataFrame:
-    """The whole label index from its parts, in a stable order."""
-    frames = [pd.read_parquet(path) for path in paths]
+    """The whole label index from its parts, in a stable order.
+
+    A part that does not carry every `INDEX_COLUMNS` column was written by an
+    older gold schema and is raised on, naming the file. Reindexing it into
+    shape instead would fill the columns it lacks with nulls, and the published
+    index would then claim, say, that those label sets have no `valid_match` —
+    indistinguishable from a real null, and wrong.
+    """
+    frames = []
+    for path in paths:
+        frame = pd.read_parquet(path)
+        missing = [c for c in INDEX_COLUMNS if c not in frame.columns]
+        if missing:
+            raise ValueError(
+                f"{path}: index part is missing {missing} — it was written by an older gold "
+                "schema; rebuild that code with --force --codes <code>"
+            )
+        frames.append(frame[INDEX_COLUMNS])
     index = (
         pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=INDEX_COLUMNS)
     )
-    index = index.reindex(columns=INDEX_COLUMNS)
     for col in ("acq_start", "acq_end"):
         index[col] = pd.to_datetime(index[col])
     return index.sort_values(["code", "aoi", "acq_start"]).reset_index(drop=True)

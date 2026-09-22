@@ -404,8 +404,10 @@ def run_gold_checks(index: pd.DataFrame, observed_by_code: dict[str, pd.DataFram
 
 def label_coverage_summary(index: pd.DataFrame) -> dict:
     """Report only, not a pass/fail rule: the shape of the label archive.
-    `valid_basis == "none"` (no exact-interval footprint match) is expected to
-    be common — a property of the archive, not a defect."""
+    `valid_basis == "none"` (no footprint shares a source product and area with
+    the label set) is expected to be common — a property of the archive, not a
+    defect — and `valid_match` says whether a mask that does exist was matched
+    on the acquisition interval too, or on product and area alone."""
     if index.empty:
         return {"n_label_sets": 0}
     by_sensor_precision = index.groupby(["sensor_class", "acq_precision"], dropna=False).size()
@@ -413,6 +415,7 @@ def label_coverage_summary(index: pd.DataFrame) -> dict:
     return {
         "n_label_sets": int(len(index)),
         "by_valid_basis": index["valid_basis"].value_counts(dropna=False).to_dict(),
+        "by_valid_match": index["valid_match"].value_counts(dropna=False).to_dict(),
         "by_sensor_class_acq_precision": {
             f"{sensor}/{precision}": int(n)
             for (sensor, precision), n in by_sensor_precision.items()

@@ -178,6 +178,7 @@ def test_valid_mask_is_the_footprint_minus_the_clouds():
     )
     (row,) = labels.itertuples()
     assert row.valid_basis == "footprint_minus_cloud"
+    assert row.valid_match == "interval"
     assert row.geom_valid.equals(BIG.difference(D))
     assert not row.geom_valid.intersects(D.centroid)
     _, unmasked = build(observed({"geometry": A}), coverage({"geometry": BIG}))
@@ -204,18 +205,73 @@ def test_no_footprint_for_the_interval_is_valid_basis_none():
 
 
 def test_a_footprint_for_another_area_does_not_mask_this_one():
-    """Coverage is matched on (area, interval). A different AOI's footprint is
-    a different observation and would claim unobserved ground as observed."""
+    """Area is never crossed, however the products relate: a different AOI's
+    footprint would claim unobserved ground as observed."""
     elsewhere = FOOTPRINT_LAYER.replace("Beira_MOZ", "Buzi_MOZ")
     labels, _ = build(observed(), coverage({"layer_name": elsewhere, "geometry": BIG}))
     (row,) = labels.itertuples()
     assert row.valid_basis == "none"
 
 
-def test_a_footprint_for_another_interval_does_not_mask_this_one():
-    labels, _ = build(observed(), coverage({"acq_datetime": datetime(2019, 4, 2)}))
+def test_a_footprint_from_another_product_does_not_mask_this_one():
+    """No shared `target_id` means the footprint describes a different
+    delivery; nothing links it to these polygons."""
+    labels, _ = build(observed(), coverage({"target_ids": ["r-99@2020-01-01T00:00:00"]}))
     (row,) = labels.itertuples()
     assert row.valid_basis == "none"
+
+
+def test_a_footprint_from_the_same_product_masks_a_different_interval():
+    """The interval is a refinement, not a gate. A footprint layer usually
+    carries only its filename's date while the observed layer's per-polygon
+    dates widen its interval, so demanding equal intervals leaves most real
+    label sets with no mask at all; `valid_match` records which it was."""
+    labels, index = build(observed(), coverage({"acq_datetime": datetime(2019, 4, 2)}))
+    (row,) = labels.itertuples()
+    assert row.valid_basis == "footprint"
+    assert row.valid_match == "product"
+    assert index["valid_area_km2"].iloc[0] > 0
+
+
+def test_an_exact_interval_footprint_wins_over_a_product_only_one():
+    """Where the finer match exists, it is the one used."""
+    labels, _ = build(
+        observed(),
+        coverage(
+            {"geometry": BIG, "acq_datetime": datetime(2019, 4, 2)},
+            {"geometry": A, "acq_datetime": datetime(2019, 3, 30)},
+        ),
+    )
+    (row,) = labels.itertuples()
+    assert row.valid_match == "interval"
+    assert row.geom_valid.equals(A)
+
+
+def test_refining_never_throws_away_the_only_footprint():
+    """An exact-interval subset that holds nothing but cloud is not a better
+    mask — it is no mask. The product-and-area match still stands."""
+    labels, _ = build(
+        observed(),
+        coverage(
+            {"geometry": BIG, "acq_datetime": datetime(2019, 4, 2)},
+            {
+                "layer_name": CLOUD_LAYER,
+                "role": "not_analysed",
+                "geometry": D,
+                "acq_datetime": datetime(2019, 3, 30),
+            },
+        ),
+    )
+    (row,) = labels.itertuples()
+    assert row.valid_basis == "footprint_minus_cloud"
+    assert row.valid_match == "product"
+    assert row.geom_valid.equals(BIG.difference(D))
+
+
+def test_valid_match_is_null_when_there_is_no_mask():
+    labels, index = build(observed(), coverage({"target_ids": ["r-99@t"]}))
+    assert pd.isna(labels["valid_match"].iloc[0])
+    assert pd.isna(index["valid_match"].iloc[0])
 
 
 # --- the grain -------------------------------------------------------------
@@ -300,6 +356,19 @@ def test_an_unknown_acquisition_precision_raises():
         build(observed({"acq_precision": "approximate"}))
 
 
+def test_an_unknown_layer_kind_raises():
+    """An unrecognised kind would not raise on its own: it would fall out of
+    every `isin` above and leave a label set quietly missing polygons that no
+    count mentions."""
+    with pytest.raises(ValueError, match="layer_kind"):
+        build(observed({"layer_kind": "damp"}))
+
+
+def test_an_unknown_coverage_role_raises():
+    with pytest.raises(ValueError, match="role"):
+        build(observed(), coverage({"role": "partial"}))
+
+
 def test_a_date_precision_row_with_no_date_raises():
     with pytest.raises(ValueError, match="no acquisition date"):
         build(observed({"acq_datetime": None}))
@@ -320,7 +389,10 @@ def test_index_has_the_spec_columns_and_the_shared_label_source():
     assert pd.isna(index["sensor_gsd"].iloc[0]) and pd.isna(index["det_methods"].iloc[0])
 
 
-def test_sensor_is_the_most_common_in_the_group_with_its_class():
+def test_a_label_set_built_from_two_sensors_is_classed_multiple():
+    """`sensor` keeps the modal value for provenance, but calling a set built
+    from a SAR pass and a VHR digitisation `sar` would tell a consumer one
+    thing about a label that is two."""
     _, index = build(
         observed(
             {"sensor": "Sentinel-1", "geometry": A},
@@ -329,6 +401,11 @@ def test_sensor_is_the_most_common_in_the_group_with_its_class():
         )
     )
     assert index["sensor"].iloc[0] == "Sentinel-1"
+    assert index["sensor_class"].iloc[0] == "multiple"
+
+
+def test_one_sensor_throughout_keeps_its_own_class():
+    _, index = build(observed({"sensor": "Sentinel-1", "geometry": A}, {"geometry": B}))
     assert index["sensor_class"].iloc[0] == "sar"
 
 
@@ -398,6 +475,40 @@ def test_the_labels_file_round_trips_all_four_geometry_columns(tmp_path):
         assert back[col].crs == "EPSG:4326"
         assert back[col].iloc[0].equals(labels[col].iloc[0]), col
     assert back["label_source"].iloc[0] == "unosat"
+
+
+def test_a_stale_mirrored_index_part_is_refetched(tmp_path):
+    """Unlike a silver layer file, an index part is rewritten in place when its
+    code is rebuilt, so existence alone does not prove the mirror holds what
+    blob holds — a stale part would be published into `label_index`."""
+    blob_store = MemoryStore()
+    work = tmp_path / "work"
+    blob_path = gold.index_part_path(CODE)
+
+    _, first = build(observed({"geometry": A}))
+    silver.write_layer(blob_store, blob_path, first)
+    (mirrored,) = gold.iter_index_parts(work, blob_store)
+    assert len(pd.read_parquet(mirrored)) == 1
+
+    # the code is rebuilt elsewhere: same path, different bytes
+    _, rebuilt = build(observed({"geometry": A}, {"geometry": B, "area_label": "Buzi_MOZ"}))
+    silver.write_layer(blob_store, blob_path, rebuilt)
+    assert blob_store.exists_size(blob_path) != mirrored.stat().st_size
+
+    (refetched,) = gold.iter_index_parts(work, blob_store)
+    assert len(pd.read_parquet(refetched)) == 2
+
+
+def test_concat_index_raises_on_a_part_from_an_older_schema(tmp_path):
+    """Reindexing it into shape would fill the columns it lacks with nulls, and
+    the published index would then assert something about those label sets
+    that nobody measured."""
+    _, index = build(observed())
+    stale = tmp_path / "code=OLD.parquet"
+    index.drop(columns=["valid_match"]).to_parquet(stale)
+
+    with pytest.raises(ValueError, match=r"valid_match.*older gold schema"):
+        gold.concat_index([stale])
 
 
 def test_gold_paths_mirror_each_other():

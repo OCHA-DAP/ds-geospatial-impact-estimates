@@ -138,11 +138,16 @@ def main(argv: list[str] | None = None) -> None:
     print(f"\nlabel_index: {len(index):,} label sets -> {gold.INDEX_PATH}")
     if len(index):
         print(f"  with label_day: {int(index['label_day'].notna().sum()):,}")
-        for column in ("sensor_class", "acq_precision", "valid_basis"):
+        for column in ("sensor_class", "acq_precision", "valid_basis", "valid_match"):
             counts = index[column].value_counts(dropna=False).to_dict()
             print(f"  by {column}: {counts}")
+        # Separable and non-empty are different states: a set whose flood layer
+        # looked and found none carries an empty geometry of area 0, and would
+        # be indistinguishable from a real flood label under one count.
         separable = int(index["flood_area_km2"].notna().sum())
+        non_empty = int((index["flood_area_km2"] > 0).sum())
         print(f"  label sets with a separable flood geometry: {separable:,}")
+        print(f"  label sets with a non-empty flood geometry: {non_empty:,}")
 
 
 if __name__ == "__main__":

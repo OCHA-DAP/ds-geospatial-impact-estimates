@@ -379,7 +379,7 @@ Per row up to three dissolved geometries and one valid mask:
 | `geom_water` | dissolve of `water`, `water_pre`, `flood` (all water present at acquisition); null if none |
 | `geom_flood` | dissolve of `flood`; null if not separable |
 | `geom_possible` | dissolve of `flood_possible`; null if none |
-| `geom_valid` | `footprint` for that acquisition minus `not_analysed`; `valid_basis` ∈ {`footprint_minus_cloud`, `footprint`, `none`} |
+| `geom_valid` | the matched `footprint` minus `not_analysed`; `valid_basis` ∈ {`footprint_minus_cloud`, `footprint`, `none`}, `valid_match` ∈ {`interval`, `product`} |
 
 `aggregate_max`, `aggregate_min` and `other_water` never enter gold
 geometries; their counts ride along. Rows with `acq_conflict = true` are kept
@@ -393,7 +393,7 @@ geometries; their counts ride along. Rows with `acq_conflict = true` are kept
 (null for UNOSAT), `det_methods` (null for UNOSAT), `product_classes`
 (layer kinds present), `confidence`, `water_status`, `n_polygons`,
 `water_area_km2`, `flood_area_km2`, `possible_area_km2`, `valid_basis`,
-`valid_area_km2`, `minx`, `miny`, `maxx`, `maxy`, `target_ids`,
+`valid_match`, `valid_area_km2`, `minx`, `miny`, `maxx`, `maxy`, `target_ids`,
 `excluded_aggregate_n`. Areas in EPSG:6933 as CEMS gold does. `sensor_class`
 exists because 1,829 of the label layers are VIIRS (375 m, automated), and a
 consumer must be able to tier them differently from a Pléiades digitisation.
@@ -403,18 +403,34 @@ CEMS gold is rebuilt to v2 in a follow-up (`geom_flood` = today's `geometry`,
 hydrography extension lands, `label_source = cems`). Until then the fusion
 reader accepts v1 by column presence and says which it got.
 
-Three rules settled while building it (Task 7), recorded here because they
-are the difference between a missing label and a negative one:
+Rules settled while building it (Tasks 7-8), recorded here because they are
+the difference between a missing label and a negative one:
 
 - **`geom_flood` null vs empty.** Null where no layer in the set set out to
   map flood extent (a `WaterExtent` layer says "water here", not "flood
   here"); an **empty** geometry, area 0, where a flood-kind layer looked and
   its polygons all resolved to something else. Unknown and none are not the
   same claim.
-- **The coverage area label is derived, not stored.** `coverage` carries no
+- **Coverage is matched to a label set by source product and area**, following
+  CEMS gold's `target_id` rule: a coverage row belongs to the set when it
+  shares at least one `target_id` with it *and* carries the same area label.
+  Measured against the real silver output (285 label sets, 185 footprint
+  rows), exact `(area, interval)` matching gives a mask for 46 % of sets and
+  interval overlap 51 %, against 73 % for product-and-area: a footprint layer
+  usually carries only its filename's date while the observed layer's
+  per-polygon sensor dates widen its interval, so two layers out of one
+  product rarely share an interval exactly. `target_id` alone reaches 84 %,
+  and the extra 11 points are one AOI's footprint masking another's — never
+  matched across areas. The interval survives as a refinement, not a gate:
+  `valid_match = "interval"` when the matched coverage also carried the
+  identical `(acq_start, acq_end)`, `"product"` when the link was product and
+  area alone, so a consumer can tier the two. `coverage` carries no
   `area_label` (§3's column list), so gold re-derives it from the layer name
-  with the same grammar that produced the observed one. Matching on the
-  interval alone would let one AOI's footprint mask another's.
+  with the same grammar that produced the observed one.
+- **A set built from more than one sensor is `sensor_class = "multiple"`.**
+  `sensor` keeps the modal value for provenance, but classing a set built
+  from a SAR pass and a VHR digitisation as `sar` would tell a consumer one
+  thing about a label that is two.
 - **A label set whose every polygon was an excluded kind keeps its row**,
   with null geometries and `excluded_aggregate_n` set. Dropping it would
   erase the only record that those polygons existed.
@@ -424,7 +440,10 @@ Gold is written per code — `gold/labels/code={EventCode}/data.parquet` and
 `label_index.parquet` is concatenated from *every* part in blob at the end of
 each run, not from what that run rebuilt. That is what makes the stage
 resumable per code without ever publishing an index that covers only part of
-the corpus.
+the corpus. An index part is mutable (rebuilding a code rewrites it in place),
+so the mirror is trusted only when its size matches the blob listing's, and a
+part that lacks any `label_index` column was written by an older schema and
+raises rather than being reindexed into shape with nulls.
 
 ## 5. Audit (`audit.py`) and report
 

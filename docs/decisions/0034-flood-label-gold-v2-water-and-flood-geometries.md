@@ -49,7 +49,9 @@ Chosen option: **gold v2 shared by both corpora**. One row per
 acquisition), `geom_flood` (the dissolve of `flood` alone), `geom_possible`
 and the `geom_valid` mask, with `label_source` ∈ {`unosat`, `cems`} and
 `sensor_class` ∈ {`sar`, `optical_vhr`, `optical_hr`, `optical_coarse`,
-`multiple`, `unknown`} on the index. `aggregate_max`, `aggregate_min` and
+`multiple`, `unknown`} on the index — `multiple` whenever the contributing
+rows carry more than one distinct sensor, so a set built from two instruments
+is never tiered as though one produced it. `aggregate_max`, `aggregate_min` and
 `other_water` never enter a geometry and are counted in
 `excluded_aggregate_n`. CEMS gold is rebuilt to v2 in a follow-up
 (`geom_flood` = today's `geometry`, `geom_valid` = today's `valid_geometry`,
@@ -61,10 +63,13 @@ Three nullability rules carry most of the meaning:
   flood extent (a `WaterExtent` layer with no per-polygon class says "water
   here", not "flood here"), and an **empty geometry** where a flood layer
   looked and found none. Unknown and zero are different states.
-* `geom_valid` is the footprint for that *same area and interval* minus what
-  was not analysed, with `valid_basis` ∈ {`footprint_minus_cloud`,
-  `footprint`, `none`}. A footprint from another area or acquisition is a
-  different observation and never stands in; `none` is the honest answer.
+* `geom_valid` is the matched footprint minus what was not analysed, with
+  `valid_basis` ∈ {`footprint_minus_cloud`, `footprint`, `none`}. Coverage is
+  matched to a label set **by shared source product (`target_id`) and same
+  area**, following the precedent CEMS gold set, with the acquisition interval
+  kept as a refinement recorded in `valid_match` ∈ {`interval`, `product`}
+  rather than as a gate. A footprint from another area never stands in; `none`
+  is the honest answer there.
 * A label set whose every polygon was an excluded kind keeps its row, with
   null geometries and `excluded_aggregate_n` set, rather than vanishing.
 
@@ -76,6 +81,18 @@ Three nullability rules carry most of the meaning:
   provenance of every row explicit in the data rather than in the file path.
 * Good, because the exclusions are visible per label set instead of being an
   unexplained gap between a silver polygon count and a gold one.
+* Good, because matching coverage the way CEMS gold does — by source product,
+  not by acquisition interval — is what makes the mask exist at all for most
+  of the archive. Measured on the real silver output (285 label sets, 185
+  footprint rows): exact `(area, interval)` matching yields a mask for 46 % of
+  sets, interval overlap 51 %, product-and-area 73 %. Two layers out of one
+  product rarely share an interval exactly, because a footprint layer usually
+  carries only its filename's date while the observed layer's per-polygon
+  sensor dates widen its interval.
+* Bad, because `target_id` alone would reach 84 % and we deliberately leave
+  those 11 points on the table: they are a neighbouring AOI's footprint
+  masking this one, which is the precise claim the mask exists to prevent.
+  `valid_match` is what lets a consumer decide how much to trust the rest.
 * Bad, because the labels file now has four geometry columns, which needs
   GeoParquet multi-geometry support (geopandas ≥ 1.0) and a reader that asks
   for the column it wants rather than `.geometry`.
@@ -113,8 +130,11 @@ Three nullability rules carry most of the meaning:
 
 ## More Information
 
-Supersedes the gold shape recorded in ADR-0029 (CEMS flood archive); the
-silver decisions there stand. Implementation: `src/gie/unosat/gold.py` and
+Supersedes the gold shape recorded in
+[ADR-0029](0029-cems-flood-archive-and-silver-schema.md) (CEMS flood archive);
+the silver decisions there stand. The coverage-matching rule follows that
+archive's own precedent — CEMS gold selects a label set's coverage with
+`cov[cov.target_id.isin(tids)]` — rather than inventing a second rule. Implementation: `src/gie/unosat/gold.py` and
 `pipelines/unosat/gold.py`; spec §4 of
 `docs/superpowers/specs/2026-09-18-unosat-flood-archive-design.md` is the
 authority on the column list. Revisit when CEMS gold is rebuilt to v2, and
