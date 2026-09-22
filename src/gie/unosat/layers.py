@@ -17,6 +17,7 @@ from gie.unosat import domains
 LAYERS_COLUMNS = ["sha256", "zip_basename", "source", "layer", "geometry_type",
                   "feature_count", "fields", "field_domains"]
 STATUS_COLUMNS = ["sha256", "status", "error"]
+# status vocabulary: ok | no_layers | gdb_unreadable | zip_unreadable | missing_from_inventory
 
 
 def layers_from_ogrinfo(sha256: str, zip_basename: str, info: dict) -> list[dict]:
@@ -60,21 +61,46 @@ def layers_for_gdb_zip(
     error.
     """
     try:
-        with domains.extract_gdbs(zip_path) as gdb_paths:
-            if not gdb_paths:
+        with domains.extract_gdbs(zip_path) as gdbs:
+            if not gdbs:
                 return [], "no_layers", None
             rows: list[dict] = []
             errors: list[tuple[str, str]] = []
-            for g in gdb_paths:
+            for name, path in gdbs:
                 try:
-                    rows.extend(layers_from_ogrinfo(sha256, zip_basename, domains.ogrinfo_json(g)))
+                    info = domains.ogrinfo_json(path)
+                    rows.extend(layers_from_ogrinfo(sha256, zip_basename, info))
                 except domains.OgrinfoError as e:
-                    errors.append((g.name, str(e)[:500]))
+                    errors.append((name, str(e)[:500]))
     except (zipfile.BadZipFile, NotImplementedError) as e:
         return [], "zip_unreadable", f"{type(e).__name__}: {e}"[:500]
     if errors:
         error = "; ".join(f"{g}: {err}" for g, err in errors)[:500]
         return rows, "gdb_unreadable", error
+    return rows, ("ok" if rows else "no_layers"), None
+
+
+def layers_for_shp_zip(
+    sha256: str,
+    zip_basename: str,
+    contents_sha256s: set[str],
+    members: list[str],
+) -> tuple[list[dict], str, str | None]:
+    """Layer rows for an uploaded SHP zip, from its already-known bronze
+    member inventory (``zip_contents.parquet``).
+
+    A sha256 entirely absent from that inventory is ``missing_from_inventory``
+    — a recorded per-item state, not a run-ending failure: harvest's
+    ``failed_upload`` branch records the ledger outcome (sha256, size,
+    n_members) without member rows, and a later reconcile can flip such a row
+    to ``uploaded`` without re-inspecting the zip, so an uploaded resource with
+    zero rows in the member inventory is a real, reachable state. A sha256
+    present in the inventory but with no ``.shp`` member is ``no_layers`` —
+    genuine content absence, not a failure.
+    """
+    if sha256 not in contents_sha256s:
+        return [], "missing_from_inventory", f"{sha256} not present in zip_contents.parquet"
+    rows = layers_from_zip_members(sha256, zip_basename, members)
     return rows, ("ok" if rows else "no_layers"), None
 
 

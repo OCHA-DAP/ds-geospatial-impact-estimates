@@ -93,6 +93,45 @@ def test_layers_for_gdb_zip_keeps_rows_from_readable_gdb(tmp_path, monkeypatch):
     assert "bad.gdb" in error
 
 
+def test_layers_for_gdb_zip_reports_nested_gdb_name(tmp_path, monkeypatch):
+    p = tmp_path / "nested.zip"
+    with zipfile.ZipFile(p, "w") as z:
+        z.writestr("sub/bad.gdb/a.gdbtable", b"x")
+
+    from gie.unosat import domains
+
+    def fake_ogrinfo_json(path):
+        raise domains.OgrinfoError(f"ogrinfo failed on {path}: boom")
+
+    monkeypatch.setattr(domains, "ogrinfo_json", fake_ogrinfo_json)
+    rows, status, error = layers.layers_for_gdb_zip("s" * 64, "nested.zip", p)
+    assert status == "gdb_unreadable"
+    assert "sub/bad.gdb" in error
+
+
+def test_layers_for_shp_zip_missing_from_inventory_is_recorded_not_raised():
+    sha = "s" * 64
+    rows, status, error = layers.layers_for_shp_zip(sha, "X_SHP.zip", set(), [])
+    assert rows == []
+    assert status == "missing_from_inventory"
+    assert sha in error
+
+
+def test_layers_for_shp_zip_present_with_shp_members_is_ok():
+    sha = "s" * 64
+    rows, status, error = layers.layers_for_shp_zip(
+        sha, "X_SHP.zip", {sha}, ["a/b.shp", "a/b.dbf"]
+    )
+    assert status == "ok" and error is None
+    assert len(rows) == 1 and rows[0]["layer"] == "b"
+
+
+def test_layers_for_shp_zip_present_with_no_shp_members_is_no_layers():
+    sha = "s" * 64
+    rows, status, error = layers.layers_for_shp_zip(sha, "X.zip", {sha}, ["a/readme.txt"])
+    assert rows == [] and status == "no_layers" and error is None
+
+
 def test_load_frames_returns_typed_empty_frames_when_nothing_is_written_yet(tmp_path):
     rows, status = layers.load_frames(tmp_path)
     assert list(rows.columns) == layers.LAYERS_COLUMNS and len(rows) == 0

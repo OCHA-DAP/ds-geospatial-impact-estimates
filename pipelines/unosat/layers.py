@@ -4,7 +4,11 @@ GDB feature classes come from ogrinfo (extracted through domains.extract_gdbs);
 SHP members come from the bronze zip inventory (zip_contents.parquet). Writes
 {work_dir}/layers.parquet and layers_status.parquet, uploads both to
 unosat/silver/_meta/. Resumable: sha256 values already in layers_status are
-skipped.
+skipped. layers_status.status is one of: ok | no_layers | gdb_unreadable |
+zip_unreadable | missing_from_inventory (an uploaded SHP sha256 with no rows
+in zip_contents.parquet — reachable via harvest's failed_upload path plus a
+later reconcile that flips the ledger row to uploaded without re-inspecting
+the zip; recorded, not raised).
 
 Run:  uv run --group etl --group api python pipelines/unosat/layers.py [--stage dev] [--limit N]
 """
@@ -26,9 +30,9 @@ CHECKPOINT_EVERY = 25
 
 def shp_members_for(sha256: str, contents: pd.DataFrame) -> list[str]:
     """Distinct member paths recorded for ``sha256`` in the bronze zip
-    inventory. A sha256 with no rows at all there (an uploaded resource that
-    was never inventoried) is a bronze-stage bug, not a content property —
-    the caller does not swallow that into a status."""
+    inventory (empty when ``sha256`` has no rows there at all — the caller
+    tells that apart from "present but no .shp member" via ``contents_shas``,
+    see ``layers.layers_for_shp_zip``)."""
     return contents.loc[contents["sha256"] == sha256, "member"].drop_duplicates().tolist()
 
 
@@ -48,6 +52,7 @@ def main(argv: list[str] | None = None) -> None:
     zips = zips[zips["format"].isin(("Geodatabase", "SHP"))].drop_duplicates("sha256")
 
     contents = pd.read_parquet(args.work_dir / "zip_contents.parquet")
+    contents_shas = set(contents["sha256"].unique())
 
     # Read once; every checkpoint folds its batch into these frames and writes
     # them, instead of re-reading both parquet files each time.
@@ -75,20 +80,16 @@ def main(argv: list[str] | None = None) -> None:
             if r.format == "Geodatabase":
                 rows, status, error = layers.layers_for_gdb_zip(r.sha256, r.resource_name, path)
             else:
-                if r.sha256 not in contents["sha256"].values:
-                    raise RuntimeError(
-                        f"{r.sha256} ({r.resource_name}) is uploaded but has no "
-                        "zip_contents rows — bronze member inventory is incomplete"
-                    )
                 members = shp_members_for(r.sha256, contents)
-                rows = layers.layers_from_zip_members(r.sha256, r.resource_name, members)
-                status, error = ("ok" if rows else "no_layers"), None
+                rows, status, error = layers.layers_for_shp_zip(
+                    r.sha256, r.resource_name, contents_shas, members
+                )
             all_rows.extend(rows)
             statuses.append(layers.status_row(r.sha256, status, error))
             print(
                 f"  [{i}/{len(todo)}] {r.resource_name} {status} ({len(rows)} layers)", flush=True
             )
-            if status in ("gdb_unreadable", "zip_unreadable"):
+            if status in ("gdb_unreadable", "zip_unreadable", "missing_from_inventory"):
                 print(f"    ** {status}: {error}", flush=True)
             if i % CHECKPOINT_EVERY == 0:
                 checkpoint()

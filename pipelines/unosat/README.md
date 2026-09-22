@@ -17,8 +17,13 @@ global/unosat/bronze/_meta/domains.parquet         (sha256, layer, field, domain
 global/unosat/bronze/_meta/domains_status.parquet  per-GDB: ok | no_domains | no_gdb_in_zip | gdb_unreadable | zip_unreadable
 global/unosat/bronze/_meta/transfers.jsonl         append-only journal
 global/unosat/silver/_meta/layers.parquet          (sha256, zip_basename, source, layer, geometry_type, feature_count, fields, field_domains)
-global/unosat/silver/_meta/layers_status.parquet   per-zip: ok | no_layers | gdb_unreadable | zip_unreadable
+global/unosat/silver/_meta/layers_status.parquet   per-zip: ok | no_layers | gdb_unreadable | zip_unreadable | missing_from_inventory
 ```
+
+`missing_from_inventory`: an uploaded SHP sha256 with zero rows in
+`zip_contents.parquet` — reachable when harvest's `failed_upload` branch
+recorded the ledger outcome without member rows and a later reconcile flipped
+it to `uploaded` without re-inspecting the zip. Recorded, never raised.
 
 ## Run
 
