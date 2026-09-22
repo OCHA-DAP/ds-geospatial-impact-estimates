@@ -42,7 +42,6 @@ b = rq2r.loc[PRODUCTS].sort_values("P_floor", ascending=False)
 bounds = ",".join(f'["{LONG[p]}",{100 * r.P_floor:.1f},{100 * r.P_upper:.1f}]' for p, r in b.iterrows())
 sub1(r"const BOUNDS = \[.*?\];", f"const BOUNDS = [{bounds}];")
 sub1(r"no assessment does better than about one in \w+", f"no assessment does better than about one in {words(round(1 / rq2r.loc[PRODUCTS, 'P_floor'].max()))}")
-sub1(r"crediting crowd-confirmed sites, about one in \w+", f"crediting crowd-confirmed sites, about one in {words(round(1 / rq2r.P_upper.max()))}")
 prod = core.loc[PRODUCTS]
 visits = 1 / rq2r.loc[PRODUCTS, "P_floor"]  # same basis as the leading "one in N": Copernicus-confirmed precision
 sub1(r"roughly \d+ to \d+ site visits", f"roughly {visits.min():.0f} to {visits.max():.0f} site visits")
