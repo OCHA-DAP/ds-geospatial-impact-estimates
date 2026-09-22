@@ -403,6 +403,29 @@ CEMS gold is rebuilt to v2 in a follow-up (`geom_flood` = today's `geometry`,
 hydrography extension lands, `label_source = cems`). Until then the fusion
 reader accepts v1 by column presence and says which it got.
 
+Three rules settled while building it (Task 7), recorded here because they
+are the difference between a missing label and a negative one:
+
+- **`geom_flood` null vs empty.** Null where no layer in the set set out to
+  map flood extent (a `WaterExtent` layer says "water here", not "flood
+  here"); an **empty** geometry, area 0, where a flood-kind layer looked and
+  its polygons all resolved to something else. Unknown and none are not the
+  same claim.
+- **The coverage area label is derived, not stored.** `coverage` carries no
+  `area_label` (§3's column list), so gold re-derives it from the layer name
+  with the same grammar that produced the observed one. Matching on the
+  interval alone would let one AOI's footprint mask another's.
+- **A label set whose every polygon was an excluded kind keeps its row**,
+  with null geometries and `excluded_aggregate_n` set. Dropping it would
+  erase the only record that those polygons existed.
+
+Gold is written per code — `gold/labels/code={EventCode}/data.parquet` and
+`gold/_index_parts/code={EventCode}.parquet` — and the whole
+`label_index.parquet` is concatenated from *every* part in blob at the end of
+each run, not from what that run rebuilt. That is what makes the stage
+resumable per code without ever publishing an index that covers only part of
+the corpus.
+
 ## 5. Audit (`audit.py`) and report
 
 Same defect-fix loop as CEMS. Rules: **B1** no pending targets; **B2** blob
