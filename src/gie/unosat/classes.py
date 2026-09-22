@@ -68,7 +68,7 @@ CLASS_TEXT_TO_KIND: dict[str, str] = {
 }
 
 
-def _code_key(raw_value: object) -> str | None:
+def code_key(raw_value: object) -> str | None:
     """Coerce a domain code to the string form used as a ``domain_lookup``
     key (``domains.py`` stores codes as ``str(code)`` of an integer, e.g.
     "0", "2", "99"). Handles int, numpy-style numeric types, and integral
@@ -112,7 +112,7 @@ def resolve_class(
             return CLASS_TEXT_TO_KIND.get(normalised), "decoded_column"
 
     if domain_lookup is not None:
-        key = _code_key(raw_value)
+        key = code_key(raw_value)
         text = domain_lookup.get(key) if key is not None else None
         if text is None:
             return None, "unresolved_code"

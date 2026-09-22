@@ -31,6 +31,7 @@ __all__ = [
     "read_shp_member",
     "to_wgs84",
     "attrs_json",
+    "json_scalar",
     "content_hash",
     "HASH_EXCLUDE",
 ]
@@ -74,7 +75,7 @@ def to_wgs84(gdf: gpd.GeoDataFrame, layer: str) -> tuple[gpd.GeoDataFrame, str]:
     return gdf.to_crs(epsg=4326), source_crs
 
 
-def _json_scalar(v: object) -> object:
+def json_scalar(v: object) -> object:
     """Normalise one attribute value for JSON: missing values (NaN, NaT, None)
     all become `None` so they serialise as valid JSON `null` — plain
     `json.dumps` defaults instead emit bare `NaN`/`NaT` tokens, which are not
@@ -93,14 +94,14 @@ def attrs_json(row: pd.Series) -> str:
     """JSON-serialise every non-geometry column of one feature row.
 
     Keys are sorted so the same attributes always produce the same string
-    regardless of column order. Values are normalised through `_json_scalar`
+    regardless of column order. Values are normalised through `json_scalar`
     first so NaN/NaT become `null`; `default=str` then covers whatever `json`
     still cannot natively serialise — timestamps (GDB fields come back
     tz-aware UTC; SHP dates may be plain datetimes or strings already) and
     numpy scalar types alike. `allow_nan=False` makes any NaN that slips past
     normalisation raise loudly instead of emitting invalid JSON.
     """
-    attrs = {k: _json_scalar(v) for k, v in row.items() if k != "geometry"}
+    attrs = {k: json_scalar(v) for k, v in row.items() if k != "geometry"}
     return json.dumps(attrs, default=str, sort_keys=True, allow_nan=False)
 
 

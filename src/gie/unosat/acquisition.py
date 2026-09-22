@@ -23,10 +23,10 @@ import pandas as pd
 
 from gie.unosat.grammar import LayerName
 
-__all__ = ["resolve_acq"]
+__all__ = ["normalise_date", "resolve_acq"]
 
 
-def _normalise(value: object) -> date | None:
+def normalise_date(value: object) -> date | None:
     """One raw per-polygon sensor-date value -> a naive-UTC `date`, or `None`
     for anything missing.
 
@@ -56,7 +56,7 @@ def _resolve_attr_date(sensor_dates: pd.Series) -> date | None:
     date before calling `resolve_acq`, so seeing several here means that
     split did not happen.
     """
-    distinct = {d for d in (_normalise(v) for v in sensor_dates) if d is not None}
+    distinct = {d for d in (normalise_date(v) for v in sensor_dates) if d is not None}
     if len(distinct) > 1:
         raise ValueError(
             "resolve_acq received sensor_dates with more than one distinct date "
