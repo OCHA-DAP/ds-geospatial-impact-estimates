@@ -16,6 +16,8 @@ global/unosat/bronze/_meta/zip_contents.parquet    member inventory per target
 global/unosat/bronze/_meta/domains.parquet         (sha256, layer, field, domain, code, value)
 global/unosat/bronze/_meta/domains_status.parquet  per-GDB: ok | no_domains | no_gdb_in_zip | gdb_unreadable | zip_unreadable
 global/unosat/bronze/_meta/transfers.jsonl         append-only journal
+global/unosat/silver/_meta/layers.parquet          (sha256, zip_basename, source, layer, geometry_type, feature_count, fields, field_domains)
+global/unosat/silver/_meta/layers_status.parquet   per-zip: ok | no_layers | gdb_unreadable | zip_unreadable
 ```
 
 ## Run
@@ -26,6 +28,7 @@ uv run --group etl --group api python pipelines/unosat/harvest.py --dry-run   # 
 uv run --group etl --group api python pipelines/unosat/harvest.py             # transfer (resumable)
 uv run --group etl --group api python pipelines/unosat/harvest.py --retry-failed
 uv run --group etl --group api python pipelines/unosat/domains.py             # GDB domains
+uv run --group etl --group api python pipelines/unosat/layers.py              # layer inventory (silver)
 uv run --group etl --group api python pipelines/unosat/audit.py               # invariants
 ```
 

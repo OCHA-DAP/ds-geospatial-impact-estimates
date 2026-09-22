@@ -32,6 +32,8 @@ BRONZE = "unosat/bronze"
 META = f"{BRONZE}/_meta"
 # What a bronze census lists: the content-addressed objects, not `_meta/`.
 BLOB_LISTING_PREFIX = f"{BRONZE}/blob="
+SILVER = "unosat/silver"
+SILVER_META = f"{SILVER}/_meta"
 USER_AGENT = "OCHA-CHD-DS unosat-archive (ds-geospatial-impact-estimates)"
 PROVIDER = "United Nations Satellite Centre (UNOSAT), via HDX"
 
