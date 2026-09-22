@@ -35,7 +35,9 @@ uv run --group etl --group api python pipelines/unosat/harvest.py --retry-failed
 uv run --group etl --group api python pipelines/unosat/domains.py             # GDB domains
 uv run --group etl --group api python pipelines/unosat/layers.py              # layer inventory (silver)
 uv run --group etl --group api python pipelines/unosat/silver.py              # normalised polygons
-uv run --group etl --group api python pipelines/unosat/audit.py               # invariants
+uv run --group etl --group api python pipelines/unosat/audit.py               # invariants (bronze+silver+gold)
+uv run --group etl --group api python pipelines/unosat/audit.py --silver      # silver only (S1-S7)
+uv run --group etl --group api python pipelines/unosat/audit.py --gold       # gold only (G1-G2)
 ```
 
 Needs `.env` with `DSCI_AZ_BLOB_DEV_SAS_WRITE` (via `gie.config`) and GDAL's
@@ -90,6 +92,38 @@ hive-partition inference refuses to merge.
 
 `silver.py` flags: `--codes`, `--limit`, `--workers` (default 3; zips are
 processed in worker processes, `1` runs them in-process), `--force`.
+
+## Audit
+
+`audit.py` flags: `--silver` (only S1-S7), `--gold` (only G1-G2); with
+neither, all three sections run. A section whose inputs are missing (no
+`processing.parquet`/`layers.parquet` yet, no `label_index.parquet` yet, a
+gold code whose silver partition is not cached locally) prints `[SKIP]` with
+the reason and counts against the exit code — it is never rendered as a pass.
+Writes `audit_stale_codes.txt` (every code touched by a failing rule, the
+defect-fix loop's reprocessing list).
+
+| rule | checks |
+|---|---|
+| B1 | no pending targets left in the bronze ledger |
+| B2 | blob census matches the ledger, both directions (paths + sizes) |
+| B3 | every uploaded GDB has a domains status |
+| S1 | processing covers every `(sha256, layer)` the silver selector chose |
+| S2 | every code with an `ok` layer has its `observed_event`/`coverage` partition |
+| S3 | acquisition dates fall in `[2005, now]` and within a year of their event code's date |
+| S4 | `layer_kind`/`role`/`status`/`geometry_source`/`acq_precision` stay within their documented vocabularies |
+| S5 | `unclassified` share per code is at most 4% |
+| S6 | `shp_gdb_mismatch`/`sibling_status` are recorded consistently |
+| S7 | every layer file the ledger says it built is confirmed uploaded |
+| G1 | every gold label set has `geom_valid` or is explicit that it has none |
+| G2 | `excluded_aggregate_n` matches the actual count of excluded-kind polygons in silver |
+
+`format_mismatch` (an HDX `format` label disagreeing with what the zip turned
+out to be) and content listed under more than one event code (`codes_listed`)
+are reported alongside the S-rules, not failed — they are real properties of
+the archive, not defects. S4 does not check `class_method`/`acq_method`:
+those are per-polygon columns that live only in the raw silver files, and
+checking them would mean reading every layer in the corpus for this one rule.
 
 ## Guarantees
 
