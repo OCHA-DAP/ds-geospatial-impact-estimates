@@ -43,7 +43,7 @@ bounds = ",".join(f'["{LONG[p]}",{100 * r.P_floor:.1f},{100 * r.P_upper:.1f}]' f
 sub1(r"const BOUNDS = \[.*?\];", f"const BOUNDS = [{bounds}];")
 sub1(r"no assessment does better than about one in \w+", f"no assessment does better than about one in {words(round(1 / rq2r.P_upper.max()))}")
 prod = core.loc[PRODUCTS]
-visits = prod.flagged / (rq5b[30].loc[PRODUCTS, "R_cems"] * N_CEMS_CORE)
+visits = 1 / rq2r.loc[PRODUCTS, "P_upper"]  # same basis as "one in N" above: most generous reading
 sub1(r"roughly \d+ to \d+ site visits", f"roughly {visits.min():.0f} to {visits.max():.0f} site visits")
 # --- arrivals: total flags per product on the shared base (rq2s)
 tot = W("all", "flags", None).total_flags.loc[list(PRODUCTS)].astype(int)
@@ -51,10 +51,15 @@ sub1(r"<strong>[\d,]+ buildings</strong> in the coastal strip", f"<strong>{tot['
 sub1(r"It flags <strong>[\d,]+ buildings</strong>\.", f"It flags <strong>{tot['IMPACT']:,} buildings</strong>.")
 sub1(r"a different area of interest:\s+<strong>[\d,]+ buildings</strong>", f"a different area of interest:\n    <strong>{tot['OSU']:,} buildings</strong>")
 sub1(r"debris tonnage \(<strong>[\d,]+</strong> buildings\)", f"debris tonnage (<strong>{tot['UNEP']:,}</strong> buildings)")
-sub1(r"WFP, LIST and CERN\s+\(<strong>[\d,]+</strong>\)", f"WFP, LIST and CERN\n    (<strong>{tot['LIST']:,}</strong>)")
+sub1(r"\(LIST\) and CERN\s+\(<strong>[\d,]+</strong>\)", f"(LIST) and CERN\n    (<strong>{tot['LIST']:,}</strong>)")
 sub1(r"<strong>[\d,]+ buildings flagged</strong>\. Two further", f"<strong>{tot['UH']:,} buildings flagged</strong>. Two further")
-sub1(r"answers from <strong>[\d,]+ to [\d,]+</strong>", f"answers from <strong>{tot.min():,} to {tot.max():,}</strong>")
-sub1(r"a factor of \w+\.", f"a factor of {words(round(tot.max() / tot.min()))}.")
+sub1(r"ranging from\s+<strong>[\d,]+ to [\d,]+</strong>", f"ranging from\n    <strong>{tot.min():,} to {tot.max():,}</strong>")
+sub1(r"a factor of \w+,", f"a factor of {words(round(tot.max() / tot.min()))},")
+# --- timeline strip: the same per-product totals as the prose
+for name, key in [("Microsoft AI4G", "MS"), ("IMPACT", "IMPACT"), ("OSU / NASA", "OSU"), ("UNEP/OCHA", "UNEP"), ("WFP/LIST/CERN", "LIST"), ("UH SAIL", "UH")]:
+    pat = rf'(name:"{re.escape(name)}",[^\n]*?n:)\d+'
+    if len(re.findall(pat, t)) != 1: raise SystemExit(f"timeline row for {name!r} not found exactly once")
+    t = re.sub(pat, lambda m: m.group(1) + str(int(tot[key])), t, count=1)
 sub1(r"the six count anywhere from [\d,]+ to [\d,]+ damaged", f"the six count anywhere from {int(prod.flagged.min()):,} to {int(prod.flagged.max()):,} damaged")
 # --- core labels and 4-of-6 count
 meta = re.search(r'"expert": (\d+)', (pathlib.Path(__file__).parent / "data.js").read_text()).group(1)
