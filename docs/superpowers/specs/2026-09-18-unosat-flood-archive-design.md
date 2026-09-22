@@ -484,18 +484,35 @@ in place**: event-code parsing, status vocabulary, per-host limiter, cache
 atomicity and concurrency, ledger build and merge, harvest worker outcomes
 (404, not-a-zip, untestable zip, network error, upload failure, lost race,
 dedup), URL settlement and representatives, reconcile, journal, checkpoint,
-domains parsing and crash-safe persistence, audit rules. **The remainder of
-this section is phase 2–3 (silver/gold) scope**: layer grammar over the 2,600
-distinct real names (a fixture list, committed) asserting the documented
-classification counts; fused sensor-date tokens; multi-date names; malformed
-dates; `Water_Class` resolution for text, GDB code with domain, code without
-domain entry (must resolve to null with method `unresolved_code`), unfilled
-records (must fall back to layer name); content deduplication (two ledger
-rows, one blob); acquisition cross-check (agree, in-window, disagree,
-filename-only, none); reprojection from EPSG:32636; gold dissolve with and
-without cloud obstruction; v1/v2 gold reader compatibility. Fixtures are
-small synthetic shapefiles and trimmed `ogrinfo -json` dumps, not the
-sampled zips.
+domains parsing and crash-safe persistence, audit rules.
+
+**Phase 2–3 (silver/gold) coverage is in place as well.** Done:
+
+- layer grammar over the 2,600 distinct real names (the committed fixture
+  `tests/unosat/fixtures/layer_names_flood.txt`) asserting the documented
+  classification counts, with every unmatched name listed in the sibling
+  fixture — `test_grammar.py::test_fixture_coverage_counts`;
+- fused sensor-date tokens, multi-date names, malformed dates
+  (`test_grammar.py`);
+- `Water_Class` resolution for text, for a GDB code with a domain, for a code
+  with no domain entry (resolves to null with method `unresolved_code`) and
+  for unfilled records (falls back to the layer name) — `test_classes.py`;
+- content deduplication, two ledger rows and one blob object
+  (`test_silver.py::test_cli_skips_a_layer_whose_content_is_already_in_silver`);
+- the acquisition cross-check in all five states — agree, in-window,
+  disagree, filename-only, none (`test_acquisition.py`);
+- reprojection from a non-4326 source CRS, and the raise when a populated
+  layer carries none (`test_readers.py`);
+- the gold dissolve with and without cloud obstruction, both `valid_basis`
+  and both `valid_match` values, and the multi-geometry GeoParquet round-trip
+  (`test_gold.py`).
+
+Genuinely outstanding: **v1/v2 gold reader compatibility**, which belongs to
+the fusion reader in `ds-flood-gfm` rather than to this repo and lands with
+the CEMS rebuild to gold v2.
+
+Fixtures are small synthetic shapefiles and trimmed `ogrinfo -json` dumps,
+not the sampled zips.
 
 ## Phasing
 
