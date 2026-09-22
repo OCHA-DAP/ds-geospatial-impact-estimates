@@ -323,7 +323,12 @@ def _label_set(code: str, aoi, start, end, group: gpd.GeoDataFrame, cov, meta: d
         ids |= _id_set(value)
     valid, basis, match = _valid_mask(cov, aoi, start, end, ids)
     same_day = start.date() == end.date()
-    sensor = _most_common(group["sensor"])
+    # Both the sensor and its class describe the rows that produced the
+    # geometries, not every row filed under this acquisition: an excluded
+    # cumulative layer's instrument made none of this label. A set whose every
+    # row was an excluded kind therefore has no sensor at all — there is no
+    # geometry to attribute to one.
+    sensor = _most_common(contributing["sensor"])
     # A set built from two sensors is not a Sentinel-1 label with a footnote:
     # the modal sensor stays for provenance, but the class says `multiple` so
     # a consumer never tiers it as though one instrument produced it.

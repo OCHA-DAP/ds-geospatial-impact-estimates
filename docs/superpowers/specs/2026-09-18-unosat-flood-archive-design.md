@@ -430,7 +430,10 @@ the difference between a missing label and a negative one:
 - **A set built from more than one sensor is `sensor_class = "multiple"`.**
   `sensor` keeps the modal value for provenance, but classing a set built
   from a SAR pass and a VHR digitisation as `sar` would tell a consumer one
-  thing about a label that is two.
+  thing about a label that is two. Both are taken over the rows that
+  contributed geometry, never the excluded ones: a cumulative layer's
+  instrument produced none of the label, and a set whose every row was an
+  excluded kind has no sensor at all.
 - **A label set whose every polygon was an excluded kind keeps its row**,
   with null geometries and `excluded_aggregate_n` set. Dropping it would
   erase the only record that those polygons existed.

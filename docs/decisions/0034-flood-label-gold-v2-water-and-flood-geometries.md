@@ -51,7 +51,9 @@ and the `geom_valid` mask, with `label_source` ∈ {`unosat`, `cems`} and
 `sensor_class` ∈ {`sar`, `optical_vhr`, `optical_hr`, `optical_coarse`,
 `multiple`, `unknown`} on the index — `multiple` whenever the contributing
 rows carry more than one distinct sensor, so a set built from two instruments
-is never tiered as though one produced it. `aggregate_max`, `aggregate_min` and
+is never tiered as though one produced it. `sensor` and `sensor_class` are
+both taken over the rows that contributed geometry, so an excluded cumulative
+layer never lends its instrument to a label it did not produce. `aggregate_max`, `aggregate_min` and
 `other_water` never enter a geometry and are counted in
 `excluded_aggregate_n`. CEMS gold is rebuilt to v2 in a follow-up
 (`geom_flood` = today's `geometry`, `geom_valid` = today's `valid_geometry`,

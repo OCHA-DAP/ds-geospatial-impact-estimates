@@ -163,6 +163,10 @@ def test_a_group_of_only_excluded_rows_keeps_a_row_with_no_geometry():
     assert row.geom_water is None and row.geom_flood is None and row.geom_possible is None
     assert index["n_polygons"].iloc[0] == 0
     assert index["excluded_aggregate_n"].iloc[0] == 1
+    # and no sensor: `sensor` names the instrument behind the label geometries,
+    # and this set produced none, so there is nothing to attribute to one
+    assert pd.isna(index["sensor"].iloc[0])
+    assert index["sensor_class"].iloc[0] == "unknown"
 
 
 # --- the valid mask --------------------------------------------------------
@@ -407,6 +411,20 @@ def test_a_label_set_built_from_two_sensors_is_classed_multiple():
 def test_one_sensor_throughout_keeps_its_own_class():
     _, index = build(observed({"sensor": "Sentinel-1", "geometry": A}, {"geometry": B}))
     assert index["sensor_class"].iloc[0] == "sar"
+
+
+def test_an_excluded_row_never_supplies_the_sensor():
+    """The cumulative layer's instrument produced none of this label's
+    geometry, so it must not end up named as the label's sensor."""
+    _, index = build(
+        observed(
+            {"sensor": "VIIRS", "geometry": A},
+            {"layer_name": MAX_LAYER, "layer_kind": "aggregate_max", "sensor": "Sentinel-1"},
+            {"layer_name": MAX_LAYER, "layer_kind": "aggregate_max", "sensor": "Sentinel-1"},
+        )
+    )
+    assert index["sensor"].iloc[0] == "VIIRS"
+    assert index["sensor_class"].iloc[0] == "optical_coarse"
 
 
 def test_sensor_class_tiers_a_coarse_automated_product_apart():
