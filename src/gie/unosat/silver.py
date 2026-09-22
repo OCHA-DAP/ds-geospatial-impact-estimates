@@ -152,6 +152,8 @@ PROCESSING_COLUMNS = [
     "status",
     "table",
     "geometry_source",
+    "format_label",
+    "format_mismatch",
     "content_hash",
     "target_ids",
     "n_polygons",
@@ -218,6 +220,11 @@ ATTR_ALIASES: dict[str, tuple[str, ...]] = {
 # `Sensor_Dat` in a shapefile, `SensorDate` on the coverage layers.
 SENSOR_DATE_ALIASES = ("Sensor_Date", "Sensor_Dat", "SensorDate")
 
+# What an HDX `format` label claims a zip is. The label is not trusted — the
+# layer inventory says what the zip turned out to be — but the claim is kept so
+# a disagreement is visible (`format_label`, `format_mismatch`).
+_SOURCE_FOR_FORMAT = {"Geodatabase": "gdb", "SHP": "shp"}
+
 
 def is_polygon_type(geometry_type: str | None) -> bool | None:
     """Whether an inventory ``geometry_type`` names a polygonal layer.
@@ -238,19 +245,37 @@ def is_polygon_type(geometry_type: str | None) -> bool | None:
     return "polygon" in str(geometry_type).casefold()
 
 
-def prescreen(ln: grammar.LayerName, geometry_type: str | None) -> str | None:
+def prescreen(
+    ln: grammar.LayerName, geometry_type: str | None = None, source: str | None = None
+) -> str | None:
     """The processing status decidable before the layer is read, or ``None``
     when it must be read to be decided.
 
     The CLI uses this to avoid GDAL reads it will throw away (roughly a
     quarter of the inventory is impact/admin or non-polygonal); `build_layer`
     uses the same function so the rule has exactly one definition.
+
+    A null ``geometry_type`` means different things per source, which is why
+    ``source`` is part of the decision:
+
+    - ``gdb``: ogrinfo reported no geometry field at all, so the entry is one
+      of the geodatabase's lookup tables (`Water_Class`, `Water_StatusID`, …),
+      not a feature class — ``skipped_non_water``, with no read.
+    - ``shp``: the inventory simply records no geometry type for shapefile
+      members, so nothing is known yet and the layer must be read.
+
+    ``source=None`` means the caller already holds the layer and will decide
+    from its geometry — that is how `build_layer` calls this, and it must not
+    pass a source, or every geodatabase layer would prescreen as a table.
     """
     if ln.kind == "skip":
         return "skipped_non_water"
     if ln.kind is None:
         return "unclassified"
-    if is_polygon_type(geometry_type) is False:
+    polygonal = is_polygon_type(geometry_type)
+    if polygonal is False:
+        return "skipped_non_water"
+    if polygonal is None and source == "gdb":
         return "skipped_non_water"
     return None
 
@@ -321,13 +346,46 @@ def _codes_for(rows: pd.DataFrame) -> tuple[str | None, list[str]]:
     return order["event_code"].iloc[-1], listed
 
 
-def select_units(ledger: pd.DataFrame) -> list[dict]:
+def _inventory_sources(layers_df: pd.DataFrame) -> dict[str, str]:
+    """``{sha256: "gdb" | "shp"}`` from the layer inventory — what each zip
+    actually turned out to be when it was opened.
+
+    ``layers.py`` inventories each distinct content once, through either its
+    geodatabase branch or its shapefile branch, so a sha has exactly one
+    source; the ``any gdb`` reduction is belt-and-braces.
+    """
+    if layers_df is None or layers_df.empty:
+        return {}
+    sub = layers_df[["sha256", "source"]].dropna()
+    return {
+        sha: ("gdb" if (grp == "gdb").any() else "shp")
+        for sha, grp in sub.groupby("sha256")["source"]
+    }
+
+
+def _format_source(labels: list[str]) -> str:
+    """The source an HDX ``format`` label claims, GDB-first for a content
+    listed under both. Only a fallback: used where the inventory has nothing
+    to say about a sha (it could not be opened), never over the inventory."""
+    return "gdb" if "Geodatabase" in labels else "shp"
+
+
+def select_units(ledger: pd.DataFrame, layers_df: pd.DataFrame) -> list[dict]:
     """The zips silver reads, one per distinct bronze content, GDB-first.
 
-    Per dataset: if any uploaded Geodatabase resource exists, its zips are the
-    geometry source and the dataset's SHP zips are used only to cross-check
-    layer names (`layer_mismatch`); a dataset with no GDB falls back to its
-    SHP zips. Only flood/cyclone scope, only uploaded resources.
+    **The inventory is authoritative for what a zip is.** `geometry_source`
+    comes from `layers.parquet` (`source`), not from the ledger's HDX `format`
+    label: the same content is sometimes listed as `Geodatabase` in one
+    dataset and `SHP` in two others (seen: `FL20140910PAK_gdb.zip`), and
+    believing the label made silver look for `.shp` members inside a
+    geodatabase zip. The label is kept as `format_label`, and
+    `format_mismatch` flags any listing that disagrees with the zip, so the
+    HDX metadata defect stays visible instead of being quietly corrected.
+
+    Per dataset: if any of its contents is a geodatabase *by inventory*, those
+    are the geometry source and its shapefile zips are used only to cross-check
+    layer names (`sibling_check`); a dataset with no geodatabase falls back to
+    its shapefile zips. Only flood/cyclone scope, only uploaded resources.
 
     Units are keyed by sha256 because bronze is content-addressed: the same
     zip shipped under several datasets is read once, carrying every
@@ -349,20 +407,28 @@ def select_units(ledger: pd.DataFrame) -> list[dict]:
     ]
     targets = up.groupby("sha256")["target_id"].apply(lambda s: sorted(s.dropna().unique()))
     codes = {sha: _codes_for(grp) for sha, grp in up.groupby("sha256")}
+    inventoried = _inventory_sources(layers_df)
+    labels = {sha: sorted(set(grp.dropna())) for sha, grp in up.groupby("sha256")["format"]}
+    sources = {sha: inventoried.get(sha) or _format_source(ls) for sha, ls in labels.items()}
 
     chosen: dict[str, dict] = {}
     for _, rows in up.groupby("dataset_id"):
-        gdbs = rows[rows["format"] == "Geodatabase"]
-        source_rows_, source = (gdbs, "gdb") if len(gdbs) else (rows, "shp")
-        siblings = sorted(rows.loc[rows["format"] == "SHP", "sha256"].dropna().unique())
-        for r in source_rows_.drop_duplicates("sha256").itertuples():
+        shas = list(dict.fromkeys(rows["sha256"]))
+        gdb_shas = [s for s in shas if sources[s] == "gdb"]
+        chosen_shas, source = (gdb_shas, "gdb") if gdb_shas else (shas, "shp")
+        siblings = sorted({s for s in shas if sources[s] == "shp"})
+        for r in rows[rows["sha256"].isin(chosen_shas)].drop_duplicates("sha256").itertuples():
             code, codes_listed = codes[r.sha256]
             unit = chosen.setdefault(
                 r.sha256,
                 {
                     "sha256": r.sha256,
                     "resource_name": r.resource_name,
-                    "geometry_source": source,
+                    "geometry_source": sources[r.sha256],
+                    "format_label": ",".join(labels[r.sha256]),
+                    "format_mismatch": any(
+                        _SOURCE_FOR_FORMAT[f] != sources[r.sha256] for f in labels[r.sha256]
+                    ),
                     "code": code,
                     "code_method": "resource_name",
                     "codes_listed": codes_listed,
@@ -647,6 +713,8 @@ def processing_row(
     geometry_source: str,
     target_ids: list[str],
     codes_listed: list[str] | None = None,
+    format_label: str | None = None,
+    format_mismatch: bool = False,
     table: str | None = None,
     content_hash: str | None = None,
     n_polygons: int = 0,
@@ -675,6 +743,8 @@ def processing_row(
         "status": status,
         "table": table,
         "geometry_source": geometry_source,
+        "format_label": format_label,
+        "format_mismatch": format_mismatch,
         "content_hash": content_hash,
         "target_ids": list(target_ids),
         "n_polygons": n_polygons,
@@ -739,7 +809,9 @@ def build_layer(
 
     # Hashing is an iterrows pass over every polygon, so it happens only for a
     # layer that will actually produce a file.
-    prescreened = prescreen(ln, None)
+    # No geometry_type and no source: the layer is in hand, so only the
+    # name-based rules apply here and the geometry check below decides the rest.
+    prescreened = prescreen(ln)
     if prescreened is not None:
         return None, None, processing_row(**base, status=prescreened)
     if len(gdf) and not gdf.geometry.geom_type.isin(("Polygon", "MultiPolygon")).all():

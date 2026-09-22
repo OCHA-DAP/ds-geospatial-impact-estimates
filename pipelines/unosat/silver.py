@@ -113,14 +113,10 @@ def main(argv: list[str] | None = None) -> None:
     cc = meta.bootstrap(args.work_dir, args.stage)
     blob_store = store.DataLakeStore(blobio.uploader(common.global_settings(args.stage)), cc)
 
-    ledger = pd.read_parquet(args.work_dir / "resources.parquet")
-    units = silver.select_units(ledger)
-    if args.codes:
-        wanted = {c.strip() for c in args.codes.split(",")}
-        units = [u for u in units if u["code"] in wanted]
-
     # An absent inventory is our failure to run a prerequisite, not "nothing to
-    # do": without this the run would report zero layers and exit 0.
+    # do": without this the run would report zero layers and exit 0. It is also
+    # what decides whether each zip is a geodatabase or a shapefile, so it is
+    # loaded before the units are selected.
     if not (args.work_dir / "layers.parquet").exists():
         raise FileNotFoundError(
             "layers.parquet missing — run pipelines/unosat/layers.py first "
@@ -129,6 +125,12 @@ def main(argv: list[str] | None = None) -> None:
     layers_df, status_df = layers.load_frames(args.work_dir)
     domain_rows, _ = domains.load_frames(args.work_dir)
     contents = pd.read_parquet(args.work_dir / "zip_contents.parquet")
+
+    ledger = pd.read_parquet(args.work_dir / "resources.parquet")
+    units = silver.select_units(ledger, layers_df)
+    if args.codes:
+        wanted = {c.strip() for c in args.codes.split(",")}
+        units = [u for u in units if u["code"] in wanted]
 
     proc_df = silver.load_processing(args.work_dir)
     done = set(zip(proc_df["sha256"], proc_df["layer"], strict=True))
@@ -195,7 +197,7 @@ def main(argv: list[str] | None = None) -> None:
         )
         new_rows = []
 
-    def process_layer(unit, inv_row, zip_path: Path, gdb_paths, members, lookups, cross_check):
+    def process_layer(unit, inv_row, zip_path: Path, gdb_paths, members, lookups, unit_fields):
         """One layer end-to-end. Appends its processing record; writes the
         layer file BEFORE the record exists, so a crash between the two leaves
         the pair looking undone and it is simply redone."""
@@ -209,9 +211,13 @@ def main(argv: list[str] | None = None) -> None:
             "codes_listed": unit["codes_listed"],
             "geometry_source": unit["geometry_source"],
             "target_ids": unit["target_ids"],
-            **cross_check,
+            # the cross-check result and the HDX format claim, both per unit
+            **unit_fields,
         }
-        prescreened = silver.prescreen(ln, inv_row.geometry_type)
+        # The inventory row's own source: a null geometry type means "a
+        # geodatabase lookup table" there and "not recorded yet" for a
+        # shapefile member.
+        prescreened = silver.prescreen(ln, inv_row.geometry_type, inv_row.source)
         if prescreened is not None:
             new_rows.append(silver.processing_row(**common_kw, status=prescreened))
             return
@@ -294,7 +300,7 @@ def main(argv: list[str] | None = None) -> None:
             silver.write_layer(blob_store, written, frame)
             partition_keys(table, unit["code"]).add(written)
             add_sources()
-        new_rows.append(record | cross_check)
+        new_rows.append(record | unit_fields)
 
     try:
         for i, unit in enumerate(todo, 1):
@@ -310,7 +316,12 @@ def main(argv: list[str] | None = None) -> None:
             mismatch, sibling_status = silver.sibling_check(
                 layers_df, status_df, sha, unit["sibling_shp_sha256s"]
             )
-            cross_check = {"shp_gdb_mismatch": mismatch, "sibling_status": sibling_status}
+            unit_fields = {
+                "shp_gdb_mismatch": mismatch,
+                "sibling_status": sibling_status,
+                "format_label": unit["format_label"],
+                "format_mismatch": unit["format_mismatch"],
+            }
             lookups = domain_lookups(domain_rows, sha)
             members = contents.loc[contents["sha256"] == sha, "member"].tolist()
 
@@ -319,12 +330,12 @@ def main(argv: list[str] | None = None) -> None:
                     gdb_paths = gdb_layer_paths(gdbs)
                     for inv_row in inv_rows:
                         process_layer(unit, inv_row, zip_path, gdb_paths, members, lookups,
-                                      cross_check)
+                                      unit_fields)
                         if len(new_rows) >= CHECKPOINT_EVERY:
                             checkpoint()
             else:
                 for inv_row in inv_rows:
-                    process_layer(unit, inv_row, zip_path, {}, members, lookups, cross_check)
+                    process_layer(unit, inv_row, zip_path, {}, members, lookups, unit_fields)
                     if len(new_rows) >= CHECKPOINT_EVERY:
                         checkpoint()
 

@@ -205,6 +205,18 @@ disagreements are recorded per layer (`shp_gdb_mismatch`). `geometry_source`
 ∈ {`gdb`, `shp`} on every row. Geometry is reprojected to EPSG:4326 when the
 source is not (seen: EPSG:32636); the source CRS is recorded.
 
+**The layer inventory decides what a zip is, not the HDX `format` label**, and
+the GDB-first preference is applied to that. The same content is sometimes
+listed as `Geodatabase` in one dataset and `SHP` in others
+(`FL20140910PAK_gdb.zip`); trusting the label made silver look for `.shp`
+members inside a geodatabase. The label rides along as `format_label` with a
+`format_mismatch` flag, so the HDX metadata defect stays visible rather than
+being quietly corrected. A geodatabase entry `ogrinfo` reports with no
+geometry field is one of the coded-value lookup tables (`Water_Class`,
+`Water_StatusID`, …), not a feature class: `skipped_non_water`, never read.
+The same null geometry type on a shapefile member means only that the
+inventory records none, so that layer is read and its geometry decides.
+
 **Unit of work** is one distinct **layer content**: `(event_code, layer_name,
 content hash)` where the content hash is the sha256 of the `.shp`+`.dbf`
 members or of the GDB feature class exported to GeoParquet. A layer re-shipped

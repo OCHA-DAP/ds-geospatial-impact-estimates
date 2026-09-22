@@ -359,6 +359,16 @@ def ledger_rows(*rows: dict) -> pd.DataFrame:
     return pd.DataFrame([defaults | r for r in rows])
 
 
+def inventory_rows(**sources: str) -> pd.DataFrame:
+    """A minimal `layers.parquet`: what each sha turned out to be when opened."""
+    return pd.DataFrame(
+        [{"sha256": sha, "source": src, "layer": f"L_{sha}"} for sha, src in sources.items()]
+    )
+
+
+NO_INVENTORY = pd.DataFrame(columns=["sha256", "source", "layer"])
+
+
 def test_select_units_prefers_the_geodatabase_and_notes_its_shp_sibling():
     ledger = ledger_rows(
         {"dataset_id": "d1", "sha256": "g1", "resource_name": "a_GDB.zip",
@@ -366,11 +376,12 @@ def test_select_units_prefers_the_geodatabase_and_notes_its_shp_sibling():
         {"dataset_id": "d1", "sha256": "s1", "resource_name": "a_SHP.zip",
          "format": "SHP", "target_id": "t2"},
     )
-    (unit,) = silver.select_units(ledger)
+    (unit,) = silver.select_units(ledger, inventory_rows(g1="gdb", s1="shp"))
     assert unit["sha256"] == "g1"
     assert unit["geometry_source"] == "gdb"
     assert unit["sibling_shp_sha256s"] == ["s1"]
     assert unit["code_method"] == "resource_name"
+    assert (unit["format_label"], unit["format_mismatch"]) == ("Geodatabase", False)
 
 
 def test_select_units_falls_back_to_shp_when_a_dataset_has_no_gdb():
@@ -378,9 +389,52 @@ def test_select_units_falls_back_to_shp_when_a_dataset_has_no_gdb():
         {"dataset_id": "d2", "sha256": "s2", "resource_name": "b_SHP.zip",
          "format": "SHP", "target_id": "t3"},
     )
-    (unit,) = silver.select_units(ledger)
+    (unit,) = silver.select_units(ledger, inventory_rows(s2="shp"))
     assert (unit["sha256"], unit["geometry_source"]) == ("s2", "shp")
     assert unit["sibling_shp_sha256s"] == []
+
+
+def test_the_inventory_decides_what_a_zip_is_not_the_hdx_format_label():
+    """The real FL20140910PAK_gdb.zip: one content listed as Geodatabase in one
+    dataset and SHP in two others. Believing the label sent the reader looking
+    for .shp members inside a geodatabase."""
+    ledger = ledger_rows(
+        {"dataset_id": "d1", "sha256": "z1", "resource_name": "pak_gdb.zip",
+         "format": "Geodatabase", "target_id": "t1"},
+        {"dataset_id": "d2", "sha256": "z1", "resource_name": "pak_gdb.zip",
+         "format": "SHP", "target_id": "t2"},
+        {"dataset_id": "d3", "sha256": "z1", "resource_name": "pak_gdb.zip",
+         "format": "SHP", "target_id": "t3"},
+    )
+    (unit,) = silver.select_units(ledger, inventory_rows(z1="gdb"))
+    assert unit["geometry_source"] == "gdb"
+    assert unit["format_label"] == "Geodatabase,SHP"
+    assert unit["format_mismatch"] is True
+    # the zip is not its own shapefile sibling
+    assert unit["sibling_shp_sha256s"] == []
+
+
+def test_a_dataset_whose_only_shp_labelled_zip_is_really_a_gdb_still_uses_it():
+    """The GDB-first choice is made on what the zips are, not what they claim."""
+    ledger = ledger_rows(
+        {"dataset_id": "d9", "sha256": "z1", "resource_name": "pak_gdb.zip",
+         "format": "SHP", "target_id": "t1"},
+    )
+    (unit,) = silver.select_units(ledger, inventory_rows(z1="gdb"))
+    assert unit["geometry_source"] == "gdb"
+    assert unit["format_mismatch"] is True
+
+
+def test_select_units_falls_back_to_the_format_label_without_an_inventory():
+    """A zip that could not be inventoried keeps the label-derived source; it is
+    reported separately as having no inventoried layers."""
+    ledger = ledger_rows(
+        {"dataset_id": "d1", "sha256": "g1", "resource_name": "a_GDB.zip",
+         "format": "Geodatabase", "target_id": "t1"},
+    )
+    (unit,) = silver.select_units(ledger, NO_INVENTORY)
+    assert unit["geometry_source"] == "gdb"
+    assert unit["format_mismatch"] is False
 
 
 def test_select_units_collects_every_target_that_shipped_one_content():
@@ -390,7 +444,7 @@ def test_select_units_collects_every_target_that_shipped_one_content():
         {"dataset_id": "d3", "sha256": "g1", "resource_name": "a_GDB.zip",
          "format": "Geodatabase", "target_id": "t9"},
     )
-    (unit,) = silver.select_units(ledger)
+    (unit,) = silver.select_units(ledger, inventory_rows(g1="gdb"))
     assert unit["target_ids"] == ["t1", "t9"]
 
 
@@ -403,7 +457,7 @@ def test_select_units_ignores_other_scopes_and_unuploaded_resources():
         {"dataset_id": "d3", "sha256": "x1", "resource_name": "d.xlsx",
          "format": "XLSX", "target_id": "t3"},
     )
-    assert silver.select_units(ledger) == []
+    assert silver.select_units(ledger, NO_INVENTORY) == []
 
 
 def _two_code_ledger() -> pd.DataFrame:
@@ -420,7 +474,7 @@ def _two_code_ledger() -> pd.DataFrame:
 
 
 def test_select_units_takes_the_latest_listing_when_a_content_has_two_codes():
-    (unit,) = silver.select_units(_two_code_ledger())
+    (unit,) = silver.select_units(_two_code_ledger(), inventory_rows(g1="gdb"))
     assert unit["code"] == "FL20250812CPV"
     assert unit["codes_listed"] == ["FL20250812COD", "FL20250812CPV"]
 
@@ -429,7 +483,7 @@ def test_select_units_honours_a_checked_code_override(monkeypatch):
     # the override wins over the timestamp, so a checked decision is not undone
     # by a later re-listing of the wrong code
     monkeypatch.setitem(silver.CODE_OVERRIDES, "g1", "FL20250812COD")
-    (unit,) = silver.select_units(_two_code_ledger())
+    (unit,) = silver.select_units(_two_code_ledger(), inventory_rows(g1="gdb"))
     assert unit["code"] == "FL20250812COD"
     assert unit["codes_listed"] == ["FL20250812COD", "FL20250812CPV"]
 
@@ -456,7 +510,7 @@ def test_select_units_rejects_a_content_with_no_event_code():
          "format": "Geodatabase", "target_id": "t1", "event_code": None},
     )
     with pytest.raises(ValueError, match="no event code"):
-        silver.select_units(ledger)
+        silver.select_units(ledger, inventory_rows(g1="gdb"))
 
 
 def test_layer_mismatch_reports_names_missing_from_either_side():
@@ -709,3 +763,55 @@ def test_cli_records_that_there_was_no_shp_sibling_to_compare(cli_env):
     # this fixture is SHP-sourced, so no GDB/SHP cross-check applies at all
     assert proc["shp_gdb_mismatch"].isna().all()
     assert proc["sibling_status"].isna().all()
+
+
+def test_a_gdb_entry_with_no_geometry_field_is_a_lookup_table_not_a_layer():
+    """ogrinfo reports no geometry type for a geodatabase's coded-value lookup
+    tables (Water_Class, Water_StatusID, ...). For a GDB that means "not a
+    feature class"; for a shapefile member it only means "not recorded"."""
+    water_table = grammar.parse("Water_Class")
+    assert silver.prescreen(water_table, float("nan"), "gdb") == "skipped_non_water"
+    # a water-named GDB entry with no geometry field is still a table
+    assert silver.prescreen(grammar.parse(FLOOD_LAYER), float("nan"), "gdb") == (
+        "skipped_non_water"
+    )
+    # the same null on the shapefile path means "read it and see"
+    assert silver.prescreen(grammar.parse(FLOOD_LAYER), float("nan"), "shp") is None
+
+
+def test_cli_never_reads_a_gdb_table(cli_env, monkeypatch):
+    """The prescreen must happen before any GDAL call, not after."""
+    module, store, work = cli_env
+
+    def boom(*a, **kw):
+        raise AssertionError("a GDB lookup table must not be read")
+
+    monkeypatch.setattr(module.readers, "read_gdb_layer", boom)
+    monkeypatch.setattr(module.readers, "read_shp_member", boom)
+    # re-inventory the fixture's zip as a geodatabase whose entries have no
+    # geometry type: every layer is then a table and nothing is read
+    inv = pd.read_parquet(work / "layers.parquet")
+    inv["source"] = "gdb"
+    inv["geometry_type"] = None
+    inv.to_parquet(work / "layers.parquet")
+
+    module.main(["--work-dir", str(work)])
+
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    assert set(proc["status"]) == {"skipped_non_water"}
+    assert _layer_blobs(store) == []
+
+
+def test_cli_records_the_format_label_and_its_disagreement(cli_env):
+    module, _, work = cli_env
+    # the fixture zip is inventoried as shp but HDX labels it Geodatabase
+    ledger = pd.read_parquet(work / "resources.parquet")
+    ledger["format"] = "Geodatabase"
+    ledger.to_parquet(work / "resources.parquet")
+
+    module.main(["--work-dir", str(work)])
+
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    assert set(proc["geometry_source"]) == {"shp"}
+    assert set(proc["format_label"]) == {"Geodatabase"}
+    assert proc["format_mismatch"].all()
