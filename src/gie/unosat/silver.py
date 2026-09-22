@@ -64,6 +64,7 @@ __all__ = [
     "sibling_check",
     "layer_acquisitions",
     "load_processing",
+    "coerce_processing_dtypes",
     "merge_processing",
     "source_rows",
     "sources_frame",
@@ -194,6 +195,12 @@ PROCESSING_COLUMNS = [
 
 STATUSES = ("ok", "unclassified", "skipped_non_water", "no_date", "unreadable")
 SENSOR_METHODS = ("filename", "attribute", "none")
+
+# Processing-ledger columns that need a dtype pinned on load. Flags use the
+# nullable `boolean` dtype because a ledger written before a flag existed has
+# no value for it, and "unknown" is a different claim from False.
+_BOOL_COLUMNS = ("reused", "uploaded", "format_mismatch")
+_INT_COLUMNS = ("n_polygons",)
 
 # Layer-inventory statuses that mean a dataset's shapefile sibling could not be
 # listed at all, so the GDB/SHP layer-name cross-check was never performed
@@ -478,27 +485,60 @@ def select_units(ledger: pd.DataFrame, layers_df: pd.DataFrame) -> list[dict]:
     return sorted(chosen.values(), key=lambda u: (u["code"], u["resource_name"], u["sha256"]))
 
 
+def coerce_processing_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    """Stabilise the processing ledger's column dtypes (same reasoning as
+    `common.coerce_ledger_dtypes` for the bronze ledger).
+
+    A ledger written before a column existed gains it on `reindex` as an
+    all-NaN **float64** column, and pandas >= 2 refuses to assign `True` or a
+    string into one (`LossySetitemError: Invalid value 'True' for dtype
+    'float64'`) — which is exactly how a real run died on a work dir that
+    predated `uploaded`. Flags therefore become the nullable `boolean` dtype,
+    where null means *unknown* and is reconciled against blob rather than
+    guessed; counts become `Int64`; everything else becomes object holding
+    `None`, so lists and strings can be written back into it.
+    """
+    for col in _BOOL_COLUMNS:
+        if col in df and str(df[col].dtype) != "boolean":
+            df[col] = df[col].astype("boolean")
+    for col in _INT_COLUMNS:
+        if col in df and str(df[col].dtype) != "Int64":
+            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+    for col in PROCESSING_COLUMNS:
+        if col in _BOOL_COLUMNS or col in _INT_COLUMNS:
+            continue
+        if col in df and not str(df[col].dtype).startswith(("object", "str")):
+            df[col] = df[col].astype(object).where(df[col].notna(), None)
+    return df
+
+
 def load_processing(work_dir) -> pd.DataFrame:
     """The accumulated processing ledger under ``work_dir``; a typed empty
-    frame before the first run."""
+    frame before the first run. Columns a older ledger does not have are added
+    as nulls with a usable dtype (`coerce_processing_dtypes`)."""
     path = work_dir / PROCESSING_FILE
     if path.exists():
-        return pd.read_parquet(path).reindex(columns=PROCESSING_COLUMNS)
-    return pd.DataFrame(columns=PROCESSING_COLUMNS)
+        return coerce_processing_dtypes(pd.read_parquet(path).reindex(columns=PROCESSING_COLUMNS))
+    return coerce_processing_dtypes(pd.DataFrame(columns=PROCESSING_COLUMNS))
 
 
 def merge_processing(proc_df: pd.DataFrame, new_rows: list[dict]) -> pd.DataFrame:
     """Fold one batch into the processing ledger: rows for a ``(sha256,
-    layer)`` already present are replaced, not appended to. Pure."""
+    layer)`` already present are replaced, not appended to. Pure.
+
+    The result is re-coerced because concatenating typed old rows with fresh
+    ones built from dicts otherwise widens the flag columns back to object.
+    """
     new = processing_frame(new_rows)
     if proc_df.empty:
-        return new
+        return coerce_processing_dtypes(new)
     if new.empty:
-        return proc_df[PROCESSING_COLUMNS]
+        return coerce_processing_dtypes(proc_df[PROCESSING_COLUMNS])
     old_idx = pd.MultiIndex.from_frame(proc_df[["sha256", "layer"]])
     new_idx = pd.MultiIndex.from_frame(new[["sha256", "layer"]])
     kept = proc_df[~old_idx.isin(new_idx)]
-    return pd.concat([kept, new], ignore_index=True)[PROCESSING_COLUMNS]
+    merged = pd.concat([kept, new], ignore_index=True)[PROCESSING_COLUMNS]
+    return coerce_processing_dtypes(merged)
 
 
 def _first_present(gdf: gpd.GeoDataFrame, names: tuple[str, ...]) -> str | None:
@@ -1027,7 +1067,11 @@ def unuploaded(proc_df: pd.DataFrame) -> pd.DataFrame:
     if proc_df.empty:
         return proc_df
     wrote_a_file = proc_df["table"].notna() & proc_df["content_hash"].notna()
-    return proc_df[wrote_a_file & (proc_df["uploaded"] != True)]  # noqa: E712 — NaN must match
+    # `fillna(False)` is the "unknown counts as not confirmed" step, and it is
+    # also what keeps this usable as a mask: a nullable boolean column compared
+    # directly would yield NA and pandas refuses to index on that.
+    confirmed = proc_df["uploaded"].fillna(False).astype(bool)
+    return proc_df[wrote_a_file & ~confirmed]
 
 
 def read_layer_file(path: Path) -> gpd.GeoDataFrame:

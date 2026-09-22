@@ -1004,3 +1004,120 @@ def test_uploader_keeps_the_bronze_default_socket_timeout():
     """Silver passes 60 s; bronze's single large uploads must keep the 300 s
     default they were tuned for."""
     assert inspect.signature(blobio.uploader).parameters["read_timeout"].default == 300
+
+
+# --- ledgers written by an older version -----------------------------------
+
+
+def test_coerce_processing_dtypes_makes_absent_columns_writable():
+    """A reindex over a ledger that predates a column yields all-NaN float64,
+    and pandas >= 2 refuses to assign True or a string into that."""
+    legacy = pd.DataFrame([{"sha256": "a", "layer": "L", "status": "ok"}])
+    frame = silver.coerce_processing_dtypes(legacy.reindex(columns=silver.PROCESSING_COLUMNS))
+
+    assert str(frame["uploaded"].dtype) == "boolean"
+    assert str(frame["format_mismatch"].dtype) == "boolean"
+    assert str(frame["reused"].dtype) == "boolean"
+    assert str(frame["n_polygons"].dtype) == "Int64"
+    assert frame["uploaded"].isna().all()  # unknown, not False
+    # the assignments that crashed the real run
+    frame.loc[0, "uploaded"] = True
+    frame.loc[0, "error"] = "upload failed: OSError"
+    frame.loc[0, "target_ids"] = [["t1"]]
+    assert bool(frame.loc[0, "uploaded"]) is True
+
+
+def test_unuploaded_treats_unknown_as_not_confirmed():
+    frame = silver.coerce_processing_dtypes(
+        pd.DataFrame(
+            [
+                {"sha256": "a", "layer": "L1", "table": "observed_event", "content_hash": "h1"},
+                {"sha256": "a", "layer": "L2", "table": "observed_event", "content_hash": "h2",
+                 "uploaded": True},
+                {"sha256": "a", "layer": "L3", "status": "skipped_non_water"},
+            ]
+        ).reindex(columns=silver.PROCESSING_COLUMNS)
+    )
+    # L1 is unknown (needs checking), L2 is confirmed, L3 never wrote a file
+    assert list(silver.unuploaded(frame)["layer"]) == ["L1"]
+
+
+def _legacy_ledger(work: Path, row: dict) -> None:
+    """A processing.parquet as an older build wrote it: no `uploaded`, no
+    `format_mismatch`, no `sibling_status`."""
+    old_columns = [
+        c
+        for c in silver.PROCESSING_COLUMNS
+        if c not in ("uploaded", "format_mismatch", "format_label", "sibling_status")
+    ]
+    pd.DataFrame([row]).reindex(columns=old_columns).to_parquet(work / silver.PROCESSING_FILE)
+
+
+def test_cli_starts_from_a_ledger_that_predates_the_uploaded_column(cli_env):
+    """The real --limit 60 run died here: the work dir's ledger had no
+    `uploaded` column, so reconciling it tried to write True into float64."""
+    module, store, work = cli_env
+    # a first run to learn the real content hash and blob path of one layer
+    module.main(["--work-dir", str(work)])
+    done = pd.read_parquet(work / silver.PROCESSING_FILE)
+    built = done[done["layer"] == FLOOD_LAYER].iloc[0]
+    (blob_path,) = _layer_blobs(store)
+
+    # now rewind to a legacy ledger carrying only that layer, and drop the
+    # mirror so the blob listing is the only evidence the file exists
+    _legacy_ledger(work, {c: built[c] for c in done.columns if c in built})
+    legacy = pd.read_parquet(work / silver.PROCESSING_FILE)
+    assert "uploaded" not in legacy.columns
+    key = silver.layer_file_key(built["content_hash"], FLOOD_LAYER)
+    silver.local_layer_path(work, built["table"], built["code"], key).unlink()
+
+    module.main(["--work-dir", str(work)])
+
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    assert str(proc["uploaded"].dtype) == "boolean"
+    # reconciled from the store, which is where the file actually is
+    assert bool(proc.loc[proc["layer"] == FLOOD_LAYER, "uploaded"].iloc[0]) is True
+    assert silver.unuploaded(proc).empty
+    # and the rest of the zip was still processed
+    assert set(proc["layer"]) == {FLOOD_LAYER, SKIP_LAYER}
+    assert blob_path in store.uploads
+
+
+def test_cli_reports_a_legacy_row_whose_file_is_nowhere(cli_env, capsys):
+    """Unknown plus no file anywhere is neither "uploaded" nor a silent pass:
+    it is named, so it can be rebuilt with --force."""
+    module, store, work = cli_env
+    module.main(["--work-dir", str(work)])
+    done = pd.read_parquet(work / silver.PROCESSING_FILE)
+    built = done[done["layer"] == FLOOD_LAYER].iloc[0]
+
+    _legacy_ledger(work, {c: built[c] for c in done.columns if c in built})
+    key = silver.layer_file_key(built["content_hash"], FLOOD_LAYER)
+    silver.local_layer_path(work, built["table"], built["code"], key).unlink()
+    store.uploads.clear()
+
+    module.main(["--work-dir", str(work)])
+
+    out = capsys.readouterr().out
+    assert "have no file anywhere" in out
+    assert FLOOD_LAYER in out
+
+
+def test_a_checked_missing_file_is_recorded_false_not_left_unknown(cli_env):
+    """Once the mirror and the listing have both been checked, "not uploaded"
+    is a fact worth writing down, not a question to re-ask every run."""
+    module, store, work = cli_env
+    module.main(["--work-dir", str(work)])
+    done = pd.read_parquet(work / silver.PROCESSING_FILE)
+    built = done[done["layer"] == FLOOD_LAYER].iloc[0]
+
+    _legacy_ledger(work, {c: built[c] for c in done.columns if c in built})
+    key = silver.layer_file_key(built["content_hash"], FLOOD_LAYER)
+    silver.local_layer_path(work, built["table"], built["code"], key).unlink()
+    store.uploads.clear()
+
+    module.main(["--work-dir", str(work), "--codes", "NOPE"])  # reconcile only
+
+    proc = pd.read_parquet(work / silver.PROCESSING_FILE)
+    row = proc[proc["layer"] == FLOOD_LAYER].iloc[0]
+    assert row["uploaded"] is not pd.NA and bool(row["uploaded"]) is False

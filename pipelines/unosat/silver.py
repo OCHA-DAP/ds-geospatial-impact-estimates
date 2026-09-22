@@ -181,7 +181,9 @@ def main(argv: list[str] | None = None) -> None:
         drain_uploads()
         if not new_rows:
             return
-        proc_df = silver.merge_processing(proc_df, new_rows)
+        # Coerced before writing so the persisted schema is stable run to run
+        # and the next run can assign flags into it.
+        proc_df = silver.coerce_processing_dtypes(silver.merge_processing(proc_df, new_rows))
         proc_df.to_parquet(args.work_dir / silver.PROCESSING_FILE)
         blob_store.upload(
             f"{common.SILVER_META}/processing.parquet",
@@ -200,7 +202,7 @@ def main(argv: list[str] | None = None) -> None:
         if stale.empty:
             return
         futures: dict[Future, int] = {}
-        landed, missing = [], []
+        landed, absent, missing = [], [], []
         for idx, r in stale.iterrows():
             key = silver.layer_file_key(r["content_hash"], r["layer"])
             blob_path = silver.silver_layer_path(
@@ -213,6 +215,7 @@ def main(argv: list[str] | None = None) -> None:
                 fut = upload_pool.submit(silver.upload_file, blob_store, blob_path, local)
                 futures[fut] = idx
             else:
+                absent.append(idx)
                 missing.append(f"{r['sha256'][:8]}/{r['layer']}")
         for fut, idx in futures.items():
             try:
@@ -220,8 +223,15 @@ def main(argv: list[str] | None = None) -> None:
                 landed.append(idx)
             except (AzureError, OSError) as e:
                 proc_df.loc[idx, "error"] = _upload_error(e)
+                absent.append(idx)
         if landed:
             proc_df.loc[landed, "uploaded"] = True
+        if absent:
+            # Checked and not there: a definite False, not the null it arrived
+            # as. "Unknown" and "known missing" are different states, and only
+            # the second is actionable.
+            proc_df.loc[absent, "uploaded"] = False
+        if landed or absent:
             proc_df.to_parquet(args.work_dir / silver.PROCESSING_FILE)
         print(
             f"resume: {len(stale)} rows had no confirmed upload — "
