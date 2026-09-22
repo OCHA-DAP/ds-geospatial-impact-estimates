@@ -339,6 +339,60 @@ def transfer_record(
     } | extra
 
 
+def record_outcome(
+    ledger: pd.DataFrame,
+    work_dir: Path,
+    stage: str,
+    target_id: str,
+    updates: dict,
+    members: list[dict],
+    *,
+    via: str | None = None,
+) -> list[dict]:
+    """Apply one outcome to the ledger and journal it — the single path by
+    which any outcome is recorded, whether it came from a download attempt, a
+    URL sibling or the settle step. Returns ``members`` unchanged, so the
+    caller can accumulate them in one expression."""
+    apply_updates(ledger, target_id, updates)
+    journal(
+        work_dir,
+        transfer_record(
+            ledger.loc[target_id], stage, updates["status"], via=via,
+            size_bytes=updates.get("size_bytes"), sha256=updates.get("sha256"),
+            error=updates.get("error"),
+        ),
+    )
+    return members
+
+
+def propagate_to_siblings(
+    ledger: pd.DataFrame,
+    work_dir: Path,
+    stage: str,
+    updates: dict,
+    members: list[dict],
+    sibling_ids: list[str],
+) -> list[dict]:
+    """Record the representative's outcome against each of its siblings (see
+    ``sibling_updates``). Returns every sibling's member rows."""
+    out: list[dict] = []
+    for sibling_id in sibling_ids:
+        sib_updates, sib_members = sibling_updates(updates, members, sibling_id)
+        out.extend(
+            record_outcome(
+                ledger, work_dir, stage, sibling_id, sib_updates, sib_members, via="url_sibling"
+            )
+        )
+    return out
+
+
+def outcome_marker(updates: dict) -> str:
+    """Progress-line marker for one outcome: the bare status when the content
+    landed, ``** status: error`` when it did not."""
+    status = updates["status"]
+    return status if status in common.UPLOADED_STATUSES else f"** {status}: {updates.get('error')}"
+
+
 def checkpoint(
     work: Path, ledger: pd.DataFrame, members: list[dict], store: BlobStore
 ) -> list[dict]:

@@ -73,14 +73,8 @@ def main(argv: list[str] | None = None) -> None:
     settled = harvest.settle_url_siblings(ledger)
     if not args.dry_run:
         for target_id, updates in settled:
-            harvest.apply_updates(ledger, target_id, updates)
-            harvest.journal(
-                args.work_dir,
-                harvest.transfer_record(
-                    ledger.loc[target_id], args.stage, "uploaded_dedup", via="url_sibling",
-                    size_bytes=updates.get("size_bytes"), sha256=updates.get("sha256"),
-                    error=updates.get("error"),
-                ),
+            harvest.record_outcome(
+                ledger, args.work_dir, args.stage, target_id, updates, [], via="url_sibling"
             )
 
     wanted = ["pending"] + (sorted(common.RETRYABLE_STATUSES) if args.retry_failed else [])
@@ -131,47 +125,35 @@ def main(argv: list[str] | None = None) -> None:
         futures = [pool.submit(worker, row) for _, row in reps.iterrows()]
         for fut in as_completed(futures):
             target_id, updates, members = fut.result()  # bugs propagate here
-            harvest.apply_updates(ledger, target_id, updates)
-            members_buf.extend(members)
-            outcome = updates["status"]
-            harvest.journal(
-                args.work_dir,
-                harvest.transfer_record(
-                    ledger.loc[target_id], args.stage, outcome,
-                    size_bytes=updates.get("size_bytes"), sha256=updates.get("sha256"),
-                    error=updates.get("error"),
-                ),
+            members_buf.extend(
+                harvest.record_outcome(
+                    ledger, args.work_dir, args.stage, target_id, updates, members
+                )
             )
             done += 1
             since_checkpoint += 1
-            ok = outcome in common.UPLOADED_STATUSES
-            marker = outcome if ok else f"** {outcome}: {updates.get('error')}"
-            print(f"  [{done}/{len(todo)}] {target_id} {marker}", flush=True)
+            print(f"  [{done}/{len(todo)}] {target_id} {harvest.outcome_marker(updates)}",
+                  flush=True)
             checkpoint_if_due()
 
-            for sibling_id in siblings.get(target_id, []):
-                sib_updates, sib_members = harvest.sibling_updates(updates, members, sibling_id)
-                harvest.apply_updates(ledger, sibling_id, sib_updates)
-                members_buf.extend(sib_members)
-                harvest.journal(
-                    args.work_dir,
-                    harvest.transfer_record(
-                        ledger.loc[sibling_id], args.stage, sib_updates["status"],
-                        via="url_sibling", size_bytes=sib_updates.get("size_bytes"),
-                        sha256=sib_updates.get("sha256"), error=sib_updates.get("error"),
-                    ),
+            sibling_ids = siblings.get(target_id, [])
+            if sibling_ids:
+                members_buf.extend(
+                    harvest.propagate_to_siblings(
+                        ledger, args.work_dir, args.stage, updates, members, sibling_ids
+                    )
                 )
-                done += 1
-                since_checkpoint += 1
-                sib_ok = sib_updates["status"] in common.UPLOADED_STATUSES
-                sib_marker = (
-                    sib_updates["status"]
-                    if sib_ok
-                    else f"** {sib_updates['status']}: {sib_updates.get('error')}"
+                # Every sibling of a representative gets the same outcome, so
+                # one marker covers the whole group.
+                sib_marker = harvest.outcome_marker(
+                    harvest.sibling_updates(updates, [], sibling_ids[0])[0]
                 )
-                print(f"  [{done}/{len(todo)}] {sibling_id} {sib_marker} (via {target_id})",
-                      flush=True)
-                checkpoint_if_due()
+                for sibling_id in sibling_ids:
+                    done += 1
+                    since_checkpoint += 1
+                    print(f"  [{done}/{len(todo)}] {sibling_id} {sib_marker} (via {target_id})",
+                          flush=True)
+                    checkpoint_if_due()
     finally:
         pool.shutdown(wait=False, cancel_futures=True)
         harvest.checkpoint(args.work_dir, ledger, members_buf, store)

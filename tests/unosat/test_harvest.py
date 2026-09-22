@@ -439,6 +439,65 @@ def test_sibling_updates_for_terminal_outcome_is_identical_without_attempts():
     assert sib_members == []
 
 
+def _journal_lines(work_dir: Path) -> list[dict]:
+    return [json.loads(x) for x in (work_dir / "transfers.jsonl").read_text().splitlines()]
+
+
+def test_record_outcome_updates_the_ledger_and_writes_one_journal_line(tmp_path):
+    led = _ledger2()
+    updates = harvest._outcome(
+        status="uploaded", http_status=200, sha256="a" * 64, size_bytes=100, n_members=2,
+        uploaded_at="2024-01-01T00:00:01", attempts=1, attempted_at="2024-01-01T00:00:00",
+    )
+    members = [{"target_id": _TID_SHP, "sha256": "a" * 64, "event_code": "FL20220424SSD",
+                "member": "a.shp", "file_size": 1, "compress_size": 1}]
+
+    returned = harvest.record_outcome(
+        led, tmp_path, "dev", _TID_SHP, updates, members, via="url_sibling"
+    )
+
+    assert returned == members  # pass-through, so callers can accumulate in one expression
+    assert led.loc[_TID_SHP, "status"] == "uploaded"
+    assert led.loc[_TID_SHP, "sha256"] == "a" * 64
+    lines = _journal_lines(tmp_path)
+    assert len(lines) == 1
+    assert lines[0]["outcome"] == "uploaded"
+    assert lines[0]["target_id"] == _TID_SHP
+    assert lines[0]["via"] == "url_sibling"
+    assert lines[0]["blob_path"] == common.blob_path("a" * 64, "FL20220424SSD_SHP.zip")
+
+
+def test_propagate_to_siblings_records_every_sibling_once(tmp_path):
+    led = _ledger2()
+    updates = harvest._outcome(
+        status="uploaded", http_status=200, sha256="a" * 64, size_bytes=100, n_members=2,
+        uploaded_at="2024-01-01T00:00:01", attempts=1, attempted_at="2024-01-01T00:00:00",
+    )
+    members = [{"target_id": _TID_SHP, "sha256": "a" * 64, "event_code": "FL20220424SSD",
+                "member": "a.shp", "file_size": 1, "compress_size": 1}]
+    sibling_ids = [_TID_SHP2, _TID_OTHER]
+
+    out = harvest.propagate_to_siblings(led, tmp_path, "dev", updates, members, sibling_ids)
+
+    assert [m["target_id"] for m in out] == sibling_ids  # N siblings x N member rows
+    assert list(led.loc[sibling_ids, "status"]) == ["uploaded_dedup"] * 2
+    assert list(led.loc[sibling_ids, "sha256"]) == ["a" * 64] * 2
+    assert list(led.loc[sibling_ids, "attempts"]) == [0, 0]  # no attempt was made for a sibling
+    lines = _journal_lines(tmp_path)
+    assert [x["target_id"] for x in lines] == sibling_ids
+    assert {x["outcome"] for x in lines} == {"uploaded_dedup"}
+    assert {x["via"] for x in lines} == {"url_sibling"}
+
+
+def test_outcome_marker_flags_failures_only():
+    assert harvest.outcome_marker({"status": "uploaded"}) == "uploaded"
+    assert harvest.outcome_marker({"status": "uploaded_dedup"}) == "uploaded_dedup"
+    assert (
+        harvest.outcome_marker({"status": "failed_download", "error": "HTTP 500"})
+        == "** failed_download: HTTP 500"
+    )
+
+
 def test_cli_dry_run_is_side_effect_free_and_reports_settled_count(tmp_path, monkeypatch, capsys):
     """--dry-run must not journal or persist settle_url_siblings' results: the
     representative row is already 'uploaded', its DS2 sibling shares the URL
@@ -457,21 +516,59 @@ def test_cli_dry_run_is_side_effect_free_and_reports_settled_count(tmp_path, mon
 
     st = store.MemoryStore()
     st.upload(common.blob_path(sha, "FL20220424SSD_SHP.zip"), b"x" * 56726504)
-
-    class _NoMetaContainerClient:
-        """No blob _meta/ files exist yet; bootstrap must restore nothing."""
-
-        def download_blob(self, path):
-            from azure.core.exceptions import ResourceNotFoundError
-
-            raise ResourceNotFoundError(f"{path} not found")
-
-    monkeypatch.setattr(cli.stratus, "get_container_client", lambda **kw: _NoMetaContainerClient())
-    monkeypatch.setattr(cli.blobio, "uploader", lambda settings: object())
-    monkeypatch.setattr(cli, "DataLakeStore", lambda fs, cc: st)
+    _patch_cli_blob(cli, monkeypatch, st)
 
     cli.main(["--dry-run", "--work-dir", str(tmp_path)])
 
     out = capsys.readouterr().out
     assert "1 settled" in out
     assert not (tmp_path / "transfers.jsonl").exists()
+
+
+class _NoMetaContainerClient:
+    """No blob _meta/ files exist yet; bootstrap must restore nothing."""
+
+    def download_blob(self, path):
+        from azure.core.exceptions import ResourceNotFoundError
+
+        raise ResourceNotFoundError(f"{path} not found")
+
+
+def _patch_cli_blob(cli, monkeypatch, st):
+    monkeypatch.setattr(cli.stratus, "get_container_client", lambda **kw: _NoMetaContainerClient())
+    monkeypatch.setattr(cli.blobio, "uploader", lambda settings: object())
+    monkeypatch.setattr(cli, "DataLakeStore", lambda fs, cc: st)
+
+
+def test_cli_run_records_the_representative_then_each_sibling(
+    tmp_path, monkeypatch, capsys, good_zip
+):
+    """The two DS/DS2 rows share a URL and declared size: one is downloaded,
+    the other is settled from it. Both get a numbered progress line and a
+    journal entry, and the sibling's names the representative."""
+    cli = _load_cli_module()
+
+    led = discovery.resources_ledger([DS, DS2])
+    led = common.coerce_ledger_dtypes(led[led["target_id"].isin([_TID_SHP, _TID_SHP2])])
+    led.to_parquet(tmp_path / "resources.parquet")
+
+    st = store.MemoryStore()
+    _patch_cli_blob(cli, monkeypatch, st)
+    url = "https://unosat.org/static/x/FL20220424SSD_SHP.zip"
+    monkeypatch.setattr(
+        cli.common, "make_session", lambda: FakeSession({url: FakeResponse(200, good_zip)})
+    )
+
+    cli.main(["--work-dir", str(tmp_path), "--workers", "1", "--sleep", "0"])
+
+    out = capsys.readouterr().out
+    assert "[1/2]" in out and "[2/2]" in out
+    assert "(via " in out  # the sibling line names the representative it came from
+    lines = _journal_lines(tmp_path)
+    assert sorted(x["target_id"] for x in lines) == sorted([_TID_SHP, _TID_SHP2])
+    assert {x["outcome"] for x in lines} == {"uploaded", "uploaded_dedup"}
+    assert [x["via"] for x in lines] == [None, "url_sibling"]  # representative first
+    final = pd.read_parquet(tmp_path / "resources.parquet").set_index("target_id")
+    assert set(final["status"]) == {"uploaded", "uploaded_dedup"}
+    assert len(set(final["sha256"])) == 1  # both rows point at the one uploaded object
+    assert len(pd.read_parquet(tmp_path / "zip_contents.parquet")) == 4  # 2 members x 2 rows
