@@ -108,6 +108,10 @@ unosat/gold/label_index.parquet                        v2 schema (shared with CE
 unosat/gold/labels/code={EventCode}/data.parquet
 ```
 
+A missing local work dir is bootstrapped from this `_meta/` copy before any
+CLI reads a local file, so the blob copy is always the recoverable baseline
+for the ledger, journal and domains bookkeeping.
+
 ## 1. Discovery (`discovery.py`)
 
 Pull every dataset of HDX organisation `unosat` with `hdx-python-api`

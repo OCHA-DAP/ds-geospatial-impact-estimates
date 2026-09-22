@@ -416,7 +416,15 @@ def test_cli_dry_run_is_side_effect_free_and_reports_settled_count(tmp_path, mon
     st = store.MemoryStore()
     st.upload(common.blob_path(sha, "FL20220424SSD_SHP.zip"), b"x" * 56726504)
 
-    monkeypatch.setattr(cli.stratus, "get_container_client", lambda **kw: object())
+    class _NoMetaContainerClient:
+        """No blob _meta/ files exist yet; bootstrap must restore nothing."""
+
+        def download_blob(self, path):
+            from azure.core.exceptions import ResourceNotFoundError
+
+            raise ResourceNotFoundError(f"{path} not found")
+
+    monkeypatch.setattr(cli.stratus, "get_container_client", lambda **kw: _NoMetaContainerClient())
     monkeypatch.setattr(cli.blobio, "uploader", lambda settings: object())
     monkeypatch.setattr(cli, "DataLakeStore", lambda fs, cc: st)
 

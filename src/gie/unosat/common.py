@@ -10,12 +10,15 @@ re-ship the same zip many times (spec §Decisions).
 from __future__ import annotations
 
 import dataclasses
+import os
 import re
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
+from pathlib import Path
 from urllib.parse import urlsplit
 
+import platformdirs
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -89,6 +92,14 @@ def blob_path(sha256: str, basename: str) -> str:
 
 def host_of(url: str) -> str:
     return urlsplit(url).netloc
+
+
+def default_work_dir() -> Path:
+    """Where the ledger, journal and checkpoints live: ``$GIE_WORK_DIR`` if
+    set, else ``platformdirs.user_data_dir("gie")/unosat_archive``. Off
+    ``/tmp`` so the local work dir survives a reboot."""
+    env = os.getenv("GIE_WORK_DIR")
+    return Path(env) if env else Path(platformdirs.user_data_dir("gie")) / "unosat_archive"
 
 
 def global_settings(stage: str) -> Settings:

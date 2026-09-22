@@ -30,7 +30,9 @@ uv run --group etl --group api python pipelines/unosat/audit.py               # 
 ```
 
 Needs `.env` with `DSCI_AZ_BLOB_DEV_SAS_WRITE` (via `gie.config`) and GDAL's
-`ogrinfo` on PATH (`brew install gdal`). Default stage dev.
+`ogrinfo` on PATH (`brew install gdal`). Default stage dev. The work dir
+(ledger, journal, checkpoints) defaults to `$GIE_WORK_DIR` or
+`platformdirs.user_data_dir("gie")/unosat_archive`.
 
 `harvest.py` flags: `--scope`, `--limit`, `--workers` (default 6), `--per-host`
 (default 3), `--sleep`, `--no-cache`, `--dry-run`, `--retry-failed`; the full
@@ -72,3 +74,6 @@ ledger before `--scope`/`--limit` filtering, so a scoped run may settle rows
 outside its scope.
 Uploads pass the whole file through memory (`gie.blobio.upload` takes bytes);
 peak RSS ≈ workers × largest file (337 MB in this corpus).
+A missing work dir is restored from the blob `_meta/` copy before anything
+runs, so losing the local files (reboot, new machine) costs nothing; the blob
+copy lags the local one by at most one checkpoint (25 transfers).

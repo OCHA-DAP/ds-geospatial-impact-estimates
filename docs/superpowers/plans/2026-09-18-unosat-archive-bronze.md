@@ -19,7 +19,7 @@
 - Ledger status vocabulary (exact strings): `pending`, `excluded_format`, `uploaded`, `uploaded_dedup`, `uploaded_untested`, `failed_download`, `failed_upload`, `unavailable_404`, `corrupt_upstream`.
 - Politeness: 6 workers total, at most 3 concurrent requests per host, `User-Agent: OCHA-CHD-DS unosat-archive (ds-geospatial-impact-estimates)`, retry/backoff on 429/500/502/503/504.
 - Local cache root: `GIE_CACHE_DIR` env var, else `platformdirs.user_cache_dir("gie")`. Layout mirrors bronze: `{root}/unosat/bronze/blob={sha256}/{basename}`. `--no-cache` disables writes.
-- Work dir (ledger, journal, checkpoints): `--work-dir`, default `/tmp/gie_unosat_archive`.
+- Work dir (ledger, journal, checkpoints): `--work-dir`, default `$GIE_WORK_DIR` or `platformdirs.user_data_dir("gie")/unosat_archive`; a missing work dir bootstraps from the blob `_meta/` copy.
 - Never commit anything under `data/`, `*.parquet`, or the work dir (already gitignored).
 
 ## File Structure

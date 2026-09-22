@@ -18,7 +18,7 @@ import ocha_stratus as stratus
 import pandas as pd
 
 from gie import blobio
-from gie.unosat import cache, common, domains
+from gie.unosat import cache, common, domains, meta
 
 # Checkpoint frequency: persist every N GDBs so a kill mid-batch loses at most
 # this many GDBs' worth of re-work, never silently drops already-done work.
@@ -27,13 +27,19 @@ CHECKPOINT_EVERY = 25
 
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--work-dir", default="/tmp/gie_unosat_archive", type=Path)
+    ap.add_argument("--work-dir", default=common.default_work_dir(), type=Path)
     ap.add_argument("--stage", default="dev", choices=["dev", "prod"])
     ap.add_argument("--limit", type=int, default=None)
     args = ap.parse_args(argv)
+    args.work_dir.mkdir(parents=True, exist_ok=True)
 
     if shutil.which("ogrinfo") is None:
         raise RuntimeError("ogrinfo not found on PATH — install GDAL (brew install gdal)")
+
+    cc = stratus.get_container_client(container_name=common.CONTAINER, stage=args.stage)
+    restored = meta.bootstrap_work_dir(args.work_dir, meta.blob_fetcher(cc))
+    if restored:
+        print(f"bootstrapped from blob: {restored}")
 
     led = pd.read_parquet(args.work_dir / "resources.parquet")
     gdbs = led[(led["format"] == "Geodatabase") & led["status"].isin(common.UPLOADED_STATUSES)]
@@ -47,7 +53,6 @@ def main(argv: list[str] | None = None) -> None:
         todo = todo.head(args.limit)
     print(f"distinct GDBs: {len(gdbs)}, to process: {len(todo)}")
 
-    cc = stratus.get_container_client(container_name=common.CONTAINER, stage=args.stage)
     all_rows: list[dict] = []
     statuses: list[dict] = []
     try:
