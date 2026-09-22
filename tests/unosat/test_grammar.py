@@ -61,6 +61,22 @@ def test_malformed_date_recorded_not_parsed():
     assert ln.dates == () and ln.malformed_tokens == ("0150118",) and ln.kind == "flood"
 
 
+def test_short_numeric_suffix_stays_in_area():
+    ln = P("PL_20191115_AnalysisExtent_Libenge_COD_1")
+    assert ln.area == "Libenge_COD_1" and ln.malformed_tokens == ()
+
+
+def test_numeric_suffix_disambiguates_split_aoi_pair():
+    a = P("PHR_20200307_AnalysisExtent_ZMB_Lunga_AOI4_1")
+    b = P("PHR_20200307_AnalysisExtent_ZMB_Lunga_AOI4_2")
+    assert a.area != b.area
+    assert a.area == "ZMB_Lunga_AOI4_1" and b.area == "ZMB_Lunga_AOI4_2"
+
+
+def test_ge1_sensor_alias():
+    assert P("GE1_20230513_WaterExtent_OverDam").sensor == "GeoEye-1"
+
+
 def test_fixture_coverage_counts():
     fixtures = Path(__file__).parent / "fixtures"
     names = (fixtures / "layer_names_flood.txt").read_text().splitlines()

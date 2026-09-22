@@ -48,6 +48,7 @@ SENSOR_ALIASES: dict[str, str] = {
     "TX": "TerraSAR-X",
     "TDX": "TerraSAR-X",
     "GE01": "GeoEye-1",
+    "GE1": "GeoEye-1",
     "VIIRS": "VIIRS",
     "MODIS": "MODIS",
     "ICEYE": "ICEYE",
@@ -180,8 +181,14 @@ def parse(name: str) -> LayerName:
             if parsed is not None:
                 dates.append(parsed)
                 pieces.append(("date", token))
-            else:
+            elif 7 <= len(token) <= 9:
+                # Looks like a mistyped date (e.g. "0150118", "201400819"):
+                # recorded, not parsed. A short numeric suffix ("_1", "_2"
+                # disambiguating a split AOI) or a long unrelated numeric
+                # code is not date-shaped and stays ordinary area text.
                 malformed.append(token)
+            else:
+                pieces.append(("word", token))
             continue
         fused = _FUSED_SENSOR_DATE.fullmatch(token)
         if fused:
