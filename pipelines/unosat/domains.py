@@ -38,16 +38,23 @@ def main(argv: list[str] | None = None) -> None:
     gdbs = led[(led["format"] == "Geodatabase") & led["status"].isin(common.UPLOADED_STATUSES)]
     gdbs = gdbs.drop_duplicates("sha256")
     status_path = args.work_dir / "domains_status.parquet"
-    done = (
-        pd.read_parquet(status_path) if status_path.exists() else pd.DataFrame(columns=["sha256"])
-    )
-    todo = gdbs[~gdbs["sha256"].isin(done["sha256"])]
+    # Read once; every checkpoint folds its batch into these frames and writes
+    # them, instead of re-reading both parquet files each time.
+    rows_df, status_df = domains.load_frames(args.work_dir)
+    todo = gdbs[~gdbs["sha256"].isin(status_df["sha256"])]
     if args.limit:
         todo = todo.head(args.limit)
     print(f"distinct GDBs: {len(gdbs)}, to process: {len(todo)}")
 
     all_rows: list[dict] = []
     statuses: list[dict] = []
+
+    def checkpoint() -> None:
+        nonlocal rows_df, status_df, all_rows, statuses
+        rows_df, status_df = domains.merge_batch(rows_df, status_df, all_rows, statuses)
+        domains.persist_frames(args.work_dir, rows_df, status_df)
+        all_rows, statuses = [], []
+
     try:
         for i, r in enumerate(todo.itertuples(), 1):
             path = cache.read_through(
@@ -61,13 +68,12 @@ def main(argv: list[str] | None = None) -> None:
             if status == "gdb_unreadable":
                 print(f"    ** gdb_unreadable: {error}", flush=True)
             if i % CHECKPOINT_EVERY == 0:
-                domains.persist(args.work_dir, all_rows, statuses)
-                all_rows, statuses = [], []
+                checkpoint()
     finally:
         # Persists whatever completed before a Ctrl-C or an exception, so
         # interrupted runs never lose already-processed GDBs.
         if statuses or all_rows:
-            domains.persist(args.work_dir, all_rows, statuses)
+            checkpoint()
 
     if len(todo):
         fs = blobio.uploader(common.global_settings(args.stage))

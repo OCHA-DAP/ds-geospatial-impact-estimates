@@ -212,3 +212,49 @@ def test_persist_accepts_legacy_status_file_without_error_column(tmp_path):
     status = pd.read_parquet(tmp_path / "domains_status.parquet")
     assert len(status.columns) == 5
     assert len(status) == 2
+
+
+def test_load_frames_returns_typed_empty_frames_when_nothing_is_written_yet(tmp_path):
+    rows, status = domains.load_frames(tmp_path)
+    assert list(rows.columns) == domains.ROWS_COLUMNS and len(rows) == 0
+    assert list(status.columns) == domains.STATUS_COLUMNS and len(status) == 0
+
+
+def _batch(sha: str, layer: str, n: int):
+    rows = [
+        {"sha256": sha, "layer": layer, "field": "f", "domain_name": "d",
+         "code": str(i), "value": f"{layer}-{i}"}
+        for i in range(n)
+    ]
+    return rows, [domains.status_row(sha, "ok", n)]
+
+
+def test_in_memory_checkpoints_land_the_same_tables_as_re_reading_each_time(tmp_path):
+    """What the domains CLI now does per checkpoint — carry the frames forward
+    and merge into them — must leave exactly what the read-merge-write
+    ``persist`` left, including the replace-by-sha256 rule."""
+    batches = [_batch("a" * 64, "L1", 2), _batch("b" * 64, "L2", 1), _batch("a" * 64, "L3", 3)]
+
+    on_disk = tmp_path / "reread"
+    on_disk.mkdir()
+    for new_rows, new_status in batches:
+        domains.persist(on_disk, new_rows, new_status)
+
+    in_memory = tmp_path / "carried"
+    in_memory.mkdir()
+    rows_df, status_df = domains.load_frames(in_memory)
+    for new_rows, new_status in batches:
+        rows_df, status_df = domains.merge_batch(rows_df, status_df, new_rows, new_status)
+        domains.persist_frames(in_memory, rows_df, status_df)
+
+    pd.testing.assert_frame_equal(
+        pd.read_parquet(in_memory / "domains.parquet"),
+        pd.read_parquet(on_disk / "domains.parquet"),
+    )
+    # processed_at is a wall clock and the two runs are not the same instant
+    pd.testing.assert_frame_equal(
+        pd.read_parquet(in_memory / "domains_status.parquet").drop(columns="processed_at"),
+        pd.read_parquet(on_disk / "domains_status.parquet").drop(columns="processed_at"),
+    )
+    rows = pd.read_parquet(in_memory / "domains.parquet")
+    assert set(rows["layer"]) == {"L2", "L3"}  # the second "a" batch replaced the first
