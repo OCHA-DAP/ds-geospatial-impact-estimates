@@ -282,8 +282,11 @@ kept. Agreement (equal, or the attribute inside the filename window) gives
 false`. Disagreement (6 % in the sample: month/day swaps, a few days' drift)
 gives `acq_precision = window` spanning both values and `acq_conflict = true`,
 so a consumer filtering to day precision drops them rather than receiving a
-silently chosen date. Layers with no date anywhere are `acq_precision =
-none` and excluded from gold.
+silently chosen date. A layer whose name carries a date window (a
+composite) and whose polygons carry no sensor date is `acq_precision =
+window`, `acq_method = window`; `acq_method = filename` is reserved for a
+single filename date with no attribute date. Layers with no date anywhere
+are `acq_precision = none` and excluded from gold.
 
 `coverage`: `code`, `layer_name`, `role` (`footprint` | `not_analysed`),
 `sensor`, `acq_*` as above, `attrs_json`, `geometry`. `sources`: one row per
