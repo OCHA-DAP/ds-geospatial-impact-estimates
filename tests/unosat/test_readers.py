@@ -1,3 +1,4 @@
+import json
 import zipfile
 from pathlib import Path
 
@@ -121,6 +122,18 @@ def test_content_hash_ignores_objectid_only_difference():
     assert readers.content_hash(a) == readers.content_hash(b)
 
 
+def test_content_hash_ignores_mixed_case_hash_exclude_columns():
+    # real exports vary casing: GDB names the field `Shape_Length`, shapefiles
+    # truncate it to `Shape_Leng` — the exclusion must match case-insensitively.
+    a = _gdf(
+        [{"geometry": SQUARE_A, "Water_Class": 0, "Shape_Length": 4.0, "OBJECTID": 1}]
+    )
+    b = _gdf(
+        [{"geometry": SQUARE_A, "Water_Class": 0, "Shape_Length": 9.9, "OBJECTID": 999}]
+    )
+    assert readers.content_hash(a) == readers.content_hash(b)
+
+
 def test_content_hash_ignores_shape_area_and_length_artifacts():
     a = _gdf(
         [{"geometry": SQUARE_A, "Water_Class": 0, "SHAPE_Area": 1.0, "SHAPE_Length": 4.0}]
@@ -146,3 +159,13 @@ def test_attrs_json_keeps_hash_exclude_columns_verbatim_for_storage():
     row = pd.Series({"geometry": SQUARE_A, "OBJECTID": 42, "Water_Class": 0})
     text = readers.attrs_json(row)
     assert "42" in text and "OBJECTID" in text
+
+
+def test_attrs_json_serialises_nan_and_nat_as_json_null():
+    row = pd.Series(
+        {"geometry": SQUARE_A, "missing_value": float("nan"), "missing_date": pd.NaT}
+    )
+    text = readers.attrs_json(row)
+    parsed = json.loads(text)  # raises if the text is not valid JSON (e.g. bare NaN)
+    assert parsed["missing_value"] is None
+    assert parsed["missing_date"] is None

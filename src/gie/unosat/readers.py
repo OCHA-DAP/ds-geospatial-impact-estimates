@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from pathlib import Path
 
 import geopandas as gpd
@@ -38,7 +39,12 @@ __all__ = [
 # real attributes of the exported layer), but excluded from the content hash
 # so the same polygons re-exported with fresh OBJECTIDs/recomputed
 # SHAPE_Area|Length hash identically instead of looking like different content.
-HASH_EXCLUDE = {"SHAPE_Length", "SHAPE_Area", "Shape_Leng", "Shape_Area", "OBJECTID", "FID"}
+# Matched case-insensitively against column names: GDB exports name the field
+# `Shape_Length`, shapefiles truncate it to `Shape_Leng`, and casing otherwise
+# varies by exporter.
+HASH_EXCLUDE = frozenset(
+    s.lower() for s in ("shape_length", "shape_leng", "shape_area", "objectid", "fid")
+)
 
 
 def read_gdb_layer(gdb_path: Path, layer: str) -> gpd.GeoDataFrame:
@@ -68,17 +74,34 @@ def to_wgs84(gdf: gpd.GeoDataFrame, layer: str) -> tuple[gpd.GeoDataFrame, str]:
     return gdf.to_crs(epsg=4326), source_crs
 
 
+def _json_scalar(v: object) -> object:
+    """Normalise one attribute value for JSON: missing values (NaN, NaT, None)
+    all become `None` so they serialise as valid JSON `null` — plain
+    `json.dumps` defaults instead emit bare `NaN`/`NaT` tokens, which are not
+    valid JSON and strict parsers (including `json.loads` itself) reject.
+    """
+    if v is None or v is pd.NaT:
+        return None
+    if isinstance(v, float) and math.isnan(v):
+        return None
+    if pd.api.types.is_scalar(v) and pd.isna(v):
+        return None
+    return v
+
+
 def attrs_json(row: pd.Series) -> str:
     """JSON-serialise every non-geometry column of one feature row.
 
     Keys are sorted so the same attributes always produce the same string
-    regardless of column order, and `default=str` covers values `json`
-    cannot natively serialise on its own — timestamps (GDB fields come back
+    regardless of column order. Values are normalised through `_json_scalar`
+    first so NaN/NaT become `null`; `default=str` then covers whatever `json`
+    still cannot natively serialise — timestamps (GDB fields come back
     tz-aware UTC; SHP dates may be plain datetimes or strings already) and
-    numpy scalar types alike.
+    numpy scalar types alike. `allow_nan=False` makes any NaN that slips past
+    normalisation raise loudly instead of emitting invalid JSON.
     """
-    attrs = {k: v for k, v in row.items() if k != "geometry"}
-    return json.dumps(attrs, default=str, sort_keys=True)
+    attrs = {k: _json_scalar(v) for k, v in row.items() if k != "geometry"}
+    return json.dumps(attrs, default=str, sort_keys=True, allow_nan=False)
 
 
 def content_hash(gdf: gpd.GeoDataFrame) -> str:
@@ -90,8 +113,8 @@ def content_hash(gdf: gpd.GeoDataFrame) -> str:
     non-excluded columns. The per-feature strings are sorted before hashing
     so row order never affects the result.
     """
-    keep = [c for c in gdf.columns if c in HASH_EXCLUDE]
-    hashable = gdf.drop(columns=keep) if keep else gdf
+    drop = [c for c in gdf.columns if c.lower() in HASH_EXCLUDE]
+    hashable = gdf.drop(columns=drop) if drop else gdf
     parts = [
         f"{row.geometry.wkb_hex}|{attrs_json(row)}" for _, row in hashable.iterrows()
     ]
