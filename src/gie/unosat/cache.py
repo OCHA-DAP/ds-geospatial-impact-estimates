@@ -8,7 +8,6 @@ Blob is the source of truth; this directory is disposable.
 from __future__ import annotations
 
 import os
-import tempfile
 from collections.abc import Callable
 from pathlib import Path
 
@@ -26,19 +25,12 @@ def cache_path(sha256: str, basename: str) -> Path:
     return cache_root() / common.blob_path(sha256, basename)
 
 
-def read_through(
-    sha256: str, basename: str, fetch: Callable[[], bytes], *, enabled: bool = True
-) -> Path:
+def read_through(sha256: str, basename: str, fetch: Callable[[], bytes]) -> Path:
     """Return a local file holding the content for ``sha256``/``basename``,
-    calling ``fetch`` only when it is not already cached. Writes are atomic
-    (temp file + rename) so a killed run never leaves a truncated file at
-    the final path. With ``enabled=False`` the bytes go to a temp file
-    outside the cache (caller owns cleanup)."""
-    if not enabled:
-        fd, tmp = tempfile.mkstemp(suffix=basename)
-        with os.fdopen(fd, "wb") as f:
-            f.write(fetch())
-        return Path(tmp)
+    calling ``fetch`` only when it is not already cached. The write is atomic
+    (temp file + rename) so a killed run never leaves a truncated file at the
+    final path. Harvest's ``--no-cache`` does not come through here: it keeps
+    its own temp file and never consults the cache."""
     dest = cache_path(sha256, basename)
     if dest.exists():
         return dest

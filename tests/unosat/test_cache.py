@@ -38,13 +38,6 @@ def test_read_through_fetches_once_then_hits(monkeypatch, tmp_path):
     assert calls["n"] == 1
 
 
-def test_read_through_disabled_uses_temp_and_still_returns_bytes(monkeypatch, tmp_path):
-    monkeypatch.setenv("GIE_CACHE_DIR", str(tmp_path))
-    p = cache.read_through("d" * 64, "A.zip", lambda: b"x", enabled=False)
-    assert p.read_bytes() == b"x"
-    assert not (tmp_path / "unosat").exists()  # nothing persisted under the cache
-
-
 def test_read_through_writes_atomically(monkeypatch, tmp_path):
     monkeypatch.setenv("GIE_CACHE_DIR", str(tmp_path))
 
