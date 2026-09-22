@@ -32,20 +32,17 @@ _TIMEOUT = 300
 META_FILES = ("datasets.parquet", "resources.parquet", "zip_contents.parquet")
 CHECKPOINT_EVERY = 25
 
-# Every ledger column a transfer outcome may set. Each outcome carries all of
-# them, with None where that branch has nothing to say, so applying an outcome
-# never leaves a stale value from an earlier attempt on the same row.
-OUTCOME_KEYS = (
-    "status",
-    "http_status",
-    "error",
-    "sha256",
-    "size_bytes",
-    "n_members",
-    "uploaded_at",
-    "attempts",
-    "attempted_at",
-)
+# What this attempt did: always present in every outcome, None where the
+# branch has nothing to say. That is what lets ``apply_updates`` stay
+# special-case-free and still clear a stale http_status from an earlier
+# attempt on the same row.
+STATE_KEYS = ("status", "http_status", "error", "attempts", "attempted_at")
+# What this attempt learned about the bytes: present ONLY when this attempt
+# learned it. A branch that never got bytes omits these rather than writing
+# None, so a fingerprint learned by an earlier attempt survives a failed retry
+# and ``reconcile_with_blob`` can still heal the row from the blob census.
+CONTENT_KEYS = ("sha256", "size_bytes", "n_members", "uploaded_at")
+OUTCOME_KEYS = STATE_KEYS + CONTENT_KEYS
 
 
 def _now() -> str:
@@ -53,12 +50,15 @@ def _now() -> str:
 
 
 def _outcome(**fields) -> dict:
-    """Build a full outcome dict: the fields given, every other
-    ``OUTCOME_KEYS`` entry None. An unknown field is a bug, not a new column."""
+    """Build an outcome dict: every ``STATE_KEYS`` entry (None where not
+    given) plus whichever ``CONTENT_KEYS`` this attempt actually learned. An
+    unknown field is a bug, not a new column."""
     unknown = sorted(set(fields) - set(OUTCOME_KEYS))
     if unknown:
         raise ValueError(f"not outcome keys: {unknown}")
-    return {k: fields.get(k) for k in OUTCOME_KEYS}
+    return {k: fields.get(k) for k in STATE_KEYS} | {
+        k: v for k, v in fields.items() if k in CONTENT_KEYS
+    }
 
 
 def content_key(row) -> tuple[str, str]:
@@ -138,8 +138,19 @@ def process_target(
     limiter: common.HostLimiter,
     use_cache: bool = True,
 ) -> tuple[dict, list[dict]]:
-    """One ledger row -> (ledger updates, member inventory rows). The updates
-    always carry the full ``OUTCOME_KEYS`` set (see ``_outcome``)."""
+    """One ledger row -> (ledger updates, member inventory rows).
+
+    Every outcome carries all ``STATE_KEYS`` (status, http_status, error,
+    attempts, attempted_at), None where this branch has nothing to say — so
+    applying it clears a stale http_status without any special case. It
+    carries a ``CONTENT_KEYS`` entry (sha256, size_bytes, n_members,
+    uploaded_at) only when THIS attempt learned it: a branch that never got
+    the bytes (failed_download, unavailable_404) omits them entirely, leaving
+    whatever an earlier attempt learned in place, so a failed retry does not
+    erase a fingerprint that ``reconcile_with_blob`` could still heal the row
+    from. corrupt_upstream records size_bytes; failed_upload records sha256,
+    size_bytes and n_members — both did get the bytes.
+    """
     prev = row["attempts"]
     attempts = (int(prev) if pd.notna(prev) else 0) + 1
     attempted_at = _now()
@@ -300,7 +311,8 @@ def sibling_updates(updates: dict, members: list[dict], sibling_id: str) -> tupl
     http_status, error, uploaded_at=now; member rows re-keyed to
     ``sibling_id``. Any failure or terminal status -> identical updates (same
     URL fails the same way). Either way ``attempts``/``attempted_at`` are
-    dropped: no attempt was made for the sibling."""
+    dropped: no attempt was made for the sibling, and whichever content keys
+    the representative's outcome carries are the ones the sibling gets."""
     sib_updates = {k: v for k, v in updates.items() if k not in ("attempts", "attempted_at")}
     if updates["status"] in common.UPLOADED_STATUSES:
         sib_updates |= {"status": "uploaded_dedup", "uploaded_at": _now()}
@@ -415,8 +427,9 @@ def checkpoint(
 
 def apply_updates(ledger: pd.DataFrame, target_id, updates: dict) -> None:
     """Write an outcome onto ``ledger`` in place. Every key present is
-    applied, None included: a ``process_target`` outcome carries the whole
-    ``OUTCOME_KEYS`` set, so a branch that has no http_status writes None and
-    thereby clears a stale value from an earlier attempt on the same row."""
+    applied, None included: an outcome always carries ``STATE_KEYS``, so a
+    branch with no http_status writes None and thereby clears a stale value
+    from an earlier attempt. Keys the outcome omits — the ``CONTENT_KEYS`` an
+    attempt that never got bytes cannot speak to — are left as they were."""
     for col, val in updates.items():
         ledger.loc[target_id, col] = val

@@ -91,20 +91,25 @@ def test_network_error_is_retryable_failed_download(ledger_row):
     assert updates["http_status"] is None  # no response, so nothing to record
 
 
-def test_every_outcome_carries_every_outcome_key(ledger_row, good_zip):
-    """Whatever the branch, the updates dict has the full key set — that is
-    what lets ``apply_updates`` clear stale values without special cases."""
-    st = store.MemoryStore(fail_upload=True)
-    for resp_or_exc, store_ in (
-        (FakeResponse(200, good_zip), None),  # uploaded
-        (FakeResponse(404), None),  # unavailable_404
-        (FakeResponse(500), None),  # failed_download (HTTP)
-        (requests.ConnectionError("boom"), None),  # failed_download (network)
-        (FakeResponse(200, b"not a zip"), None),  # corrupt_upstream
-        (FakeResponse(200, good_zip), st),  # failed_upload
-    ):
-        updates, _, _ = _run(ledger_row, resp_or_exc, store_)
-        assert set(updates) == set(harvest.OUTCOME_KEYS), updates["status"]
+def test_every_outcome_carries_state_keys_and_only_the_content_it_learned(ledger_row, good_zip):
+    """State keys are always present — that is what lets ``apply_updates``
+    clear stale values without special cases. A content key appears only when
+    that branch actually got the bytes and learned it."""
+    cases = [
+        (FakeResponse(200, good_zip), None, "uploaded",
+         {"sha256", "size_bytes", "n_members", "uploaded_at"}),
+        (FakeResponse(404), None, "unavailable_404", set()),
+        (FakeResponse(500), None, "failed_download", set()),
+        (requests.ConnectionError("boom"), None, "failed_download", set()),
+        (FakeResponse(200, b"not a zip"), None, "corrupt_upstream", {"size_bytes"}),
+        (FakeResponse(200, good_zip), store.MemoryStore(fail_upload=True), "failed_upload",
+         {"sha256", "size_bytes", "n_members"}),
+    ]
+    for resp_or_exc, st, expected_status, expected_content in cases:
+        updates, _, _ = _run(ledger_row, resp_or_exc, st)
+        assert updates["status"] == expected_status
+        assert set(harvest.STATE_KEYS) <= set(updates), expected_status
+        assert set(updates) & set(harvest.CONTENT_KEYS) == expected_content, expected_status
 
 
 def test_upload_error_is_retryable_failed_upload(ledger_row, good_zip):
@@ -302,6 +307,26 @@ def test_apply_updates_clears_stale_http_status_on_retryable_status(ledger_row):
     assert led.loc[tid, "status"] == "failed_download"
     assert led.loc[tid, "attempts"] == 2
     assert pd.isna(led.loc[tid, "http_status"])
+
+
+def test_failed_retry_keeps_previously_learned_content_facts(ledger_row):
+    """A retry that never reaches the bytes must not erase what an earlier
+    attempt learned: the sha256/size/members stay, so reconcile_with_blob can
+    still find the object in the census and heal the row."""
+    led = pd.DataFrame([ledger_row]).set_index("target_id", drop=False)
+    tid = ledger_row["target_id"]
+    led.loc[tid, ["status", "sha256", "size_bytes", "n_members", "http_status"]] = [
+        "failed_upload", "f" * 64, 10, 2, 500,
+    ]
+
+    updates, _, _ = _run(led.loc[tid], requests.ConnectionError("boom"))
+    harvest.apply_updates(led, tid, updates)
+
+    assert led.loc[tid, "status"] == "failed_download"
+    assert pd.isna(led.loc[tid, "http_status"])  # the stale 500 is cleared
+    assert led.loc[tid, "sha256"] == "f" * 64
+    assert led.loc[tid, "size_bytes"] == 10
+    assert led.loc[tid, "n_members"] == 2
 
 
 def _ledger2():
