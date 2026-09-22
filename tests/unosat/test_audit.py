@@ -139,17 +139,57 @@ def test_s3_ignores_undated_rows():
     assert ok and detail == "no dated rows"
 
 
+def test_s3_passes_for_a_window_precision_row_spanning_several_months():
+    """A window mid-point is what is checked against the event code's date and
+    the plausible-year range, not either endpoint — pinned so a change to that
+    midpoint logic is noticed."""
+    rows = _acq_rows(
+        {
+            "acq_precision": "window",
+            "acq_datetime": pd.NaT,
+            "acq_window_start": pd.Timestamp("2022-03-01"),
+            "acq_window_end": pd.Timestamp("2022-06-01"),
+        }
+    )
+    ok, _ = audit.check_s3_acquisition_dates(rows, now=pd.Timestamp("2026-09-22"))
+    assert ok
+
+
 # --- S4: vocabularies --------------------------------------------------------
 
 
 def test_s4_passes_within_vocabulary():
-    ok, _ = audit.check_s4_vocabularies({"layer_kind": pd.Series(["water", "flood", None])})
+    frame = pd.DataFrame({"layer_kind": ["water", "flood", None]})
+    ok, _ = audit.check_s4_vocabularies({"layer_kind": (frame, "layer_kind")})
     assert ok
 
 
-def test_s4_fails_outside_vocabulary():
-    ok, detail = audit.check_s4_vocabularies({"layer_kind": pd.Series(["water", "bogus_kind"])})
-    assert not ok and "bogus_kind" in detail
+def test_s4_fails_outside_vocabulary_and_names_the_codes():
+    frame = pd.DataFrame({"layer_kind": ["water", "bogus_kind"], "code": ["FL1", "FL2"]})
+    ok, detail = audit.check_s4_vocabularies({"layer_kind": (frame, "layer_kind")})
+    assert not ok and "bogus_kind" in detail and "FL2" in detail
+
+
+def test_s4_violation_reaches_stale_codes():
+    """A code-bearing S4 violation lands its code in `stale_codes`'s
+    reprocessing list — the bug this rule exists to prevent."""
+    ledger, layers_df, proc_df, acq_rows, index = _empty_stale_inputs()
+    frame = pd.DataFrame({"layer_kind": ["water", "bogus_kind"], "code": ["FL1", "FL2"]})
+    stale = audit.stale_codes(
+        ledger, layers_df, proc_df, store.MemoryStore(), acq_rows,
+        {"layer_kind": (frame, "layer_kind")}, index, {},
+    )
+    assert {"FL2", "FL20190314MOZ"} <= stale
+
+
+def test_s4_reports_a_violation_it_cannot_attribute():
+    """A frame with no `code` column still fails the check (and says so
+    plainly), it just cannot name which code to reprocess."""
+    frame = pd.DataFrame({"layer_kind": ["bogus_kind"]})
+    ok, detail = audit.check_s4_vocabularies({"layer_kind": (frame, "layer_kind")})
+    assert not ok
+    assert "bogus_kind" in detail
+    assert "unattributable" in detail
 
 
 # --- S5: unclassified share per code -----------------------------------------
@@ -299,7 +339,11 @@ def test_label_coverage_summary_reports_distributions():
     assert out["by_valid_match"]["product"] == 1
 
 
-def test_stale_codes_collects_codes_from_any_failing_rule():
+def _empty_stale_inputs():
+    """The `stale_codes` fixture shared by the tests below: one GDB unit with
+    no processing row at all, so S1 always contributes `FL20190314MOZ` —
+    used to check that another rule's contribution lands alongside it, not in
+    place of it."""
     ledger = ledger_rows(
         {"dataset_id": "d1", "sha256": "g1", "resource_name": "a_GDB.zip",
          "format": "Geodatabase", "target_id": "t1"},
@@ -314,5 +358,12 @@ def test_stale_codes_collects_codes_from_any_failing_rule():
         columns=["code", "acq_datetime", "acq_window_start", "acq_window_end", "acq_precision"]
     )
     index = pd.DataFrame(columns=["code", "valid_basis", "valid_area_km2", "excluded_aggregate_n"])
-    stale = audit.stale_codes(ledger, layers_df, proc_df, store.MemoryStore(), acq_rows, index, {})
+    return ledger, layers_df, proc_df, acq_rows, index
+
+
+def test_stale_codes_collects_codes_from_any_failing_rule():
+    ledger, layers_df, proc_df, acq_rows, index = _empty_stale_inputs()
+    stale = audit.stale_codes(
+        ledger, layers_df, proc_df, store.MemoryStore(), acq_rows, {}, index, {}
+    )
     assert stale == {"FL20190314MOZ"}

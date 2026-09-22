@@ -223,21 +223,59 @@ def check_s3_acquisition_dates(
     return ok, detail
 
 
-def check_s4_vocabularies(series_by_column: dict[str, pd.Series]) -> tuple[bool, str]:
+def _s4_bad(
+    frames: dict[str, tuple[pd.DataFrame, str]],
+) -> dict[str, tuple[list[str], set[str] | None]]:
+    """``{vocab column: (bad values, codes those values appear under)}`` for
+    every vocabulary violation. ``codes`` is ``None`` — not an empty set —
+    when the frame carries no ``code`` column to attribute the violation to;
+    the two must never look the same, or an unattributable violation would
+    silently vanish from `stale_codes`' reprocessing list instead of being
+    named as unattributable."""
+    violations: dict[str, tuple[list[str], set[str] | None]] = {}
+    for vocab_col, (frame, column) in frames.items():
+        vocab = VOCABULARIES.get(vocab_col)
+        if vocab is None:
+            raise ValueError(f"no documented vocabulary for column {vocab_col!r}")
+        if not len(frame):
+            continue
+        values = frame[column]
+        bad_mask = values.notna() & ~values.astype(str).isin(vocab)
+        if not bad_mask.any():
+            continue
+        bad_values = sorted(str(v) for v in values[bad_mask].unique())
+        codes = set(frame.loc[bad_mask, "code"].dropna()) if "code" in frame.columns else None
+        violations[vocab_col] = (bad_values, codes)
+    return violations
+
+
+def check_s4_vocabularies(frames: dict[str, tuple[pd.DataFrame, str]]) -> tuple[bool, str]:
     """Every value in each given column lies within its documented
     vocabulary. Membership only, not coverage: a vocabulary member that never
-    appears (`class_method = "unresolved_code"`) is not a failure here."""
-    violations: dict[str, list[str]] = {}
-    for col, series in series_by_column.items():
-        vocab = VOCABULARIES.get(col)
-        if vocab is None:
-            raise ValueError(f"no documented vocabulary for column {col!r}")
-        bad = sorted(str(v) for v in set(series.dropna().unique()) - vocab)
-        if bad:
-            violations[col] = bad
+    appears (`class_method = "unresolved_code"`) is not a failure here.
+
+    ``frames`` maps a vocabulary column name to ``(frame, column)``: the
+    frame the values come from, and the column name inside it (the two differ
+    when a caller reuses a frame under a different vocabulary key). A
+    violation is attributed to whatever the frame's own ``code`` column says
+    — the frame must carry one, one row per value, for that to work. A frame
+    with no ``code`` column reports its bad values but says explicitly that
+    they could not be attributed to a code, rather than the column silently
+    dropping out of the reprocessing list `stale_codes` builds from this.
+    """
+    violations = _s4_bad(frames)
     ok = not violations
-    detail = "; ".join(f"{col}: {bad}" for col, bad in violations.items())
-    return ok, (detail or f"{len(series_by_column)} columns within vocabulary")
+    if ok:
+        return ok, f"{len(frames)} columns within vocabulary"
+    parts = []
+    for col, (bad_values, codes) in violations.items():
+        if codes is None:
+            parts.append(
+                f"{col}: {bad_values} (codes unattributable — no `code` column on this frame)"
+            )
+        else:
+            parts.append(f"{col}: {bad_values} in codes {sorted(codes)[:5]}")
+    return ok, "; ".join(parts)
 
 
 def _s5_share(proc_df: pd.DataFrame) -> pd.Series:
@@ -313,7 +351,7 @@ def run_silver_checks(
     proc_df: pd.DataFrame,
     store: BlobStore,
     acq_rows: pd.DataFrame,
-    vocab_series: dict[str, pd.Series],
+    vocab_frames: dict[str, tuple[pd.DataFrame, str]],
 ) -> bool:
     ok = True
     for name, (passed, detail) in {
@@ -322,7 +360,7 @@ def run_silver_checks(
         ),
         "S2 every ok-layer code has its partition": check_s2_partitions_written(proc_df, store),
         "S3 acquisition dates plausible": check_s3_acquisition_dates(acq_rows),
-        "S4 vocabularies within documented sets": check_s4_vocabularies(vocab_series),
+        "S4 vocabularies within documented sets": check_s4_vocabularies(vocab_frames),
         "S5 unclassified share per code <= 4%": check_s5_unclassified_share(proc_df),
         "S6 shp/gdb sibling check recorded consistently": check_s6_sibling_consistency(proc_df),
         "S7 every built layer confirmed uploaded": check_s7_all_uploaded(proc_df),
@@ -430,6 +468,7 @@ def stale_codes(
     proc_df: pd.DataFrame,
     store: BlobStore,
     acq_rows: pd.DataFrame,
+    vocab_frames: dict[str, tuple[pd.DataFrame, str]],
     index: pd.DataFrame,
     observed_by_code: dict[str, pd.DataFrame],
     *,
@@ -438,7 +477,13 @@ def stale_codes(
     min_year: int = 2005,
 ) -> set[str]:
     """Every code touched by an S/G failure — the defect-fix loop's
-    reprocessing list, written to `audit_stale_codes.txt`."""
+    reprocessing list, written to `audit_stale_codes.txt`.
+
+    An S4 violation on a frame with no `code` column (`_s4_bad` returns
+    `None` for it) contributes no codes here — there is nothing to
+    attribute — but it still fails `check_s4_vocabularies` and so still
+    fails the overall audit; it is just not, and cannot be, on this list.
+    """
     now = now if now is not None else pd.Timestamp.now()
     if now.tzinfo is not None:
         now = now.tz_localize(None)
@@ -453,6 +498,10 @@ def stale_codes(
     if not acq_rows.empty:
         _, out_of_range, off_by_year = _s3_bad(acq_rows, now=now, min_year=min_year)
         codes.update(pd.concat([out_of_range, off_by_year])["code"])
+
+    for _, s4_codes in _s4_bad(vocab_frames).values():
+        if s4_codes:
+            codes.update(s4_codes)
 
     if not proc_df.empty:
         per_code = _s5_share(proc_df)

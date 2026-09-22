@@ -74,23 +74,37 @@ def _load_sources(work_dir: Path, store: DataLakeStore) -> pd.DataFrame:
     return pd.concat(frames, ignore_index=True)
 
 
-def _vocab_series(proc_df: pd.DataFrame, sources_df: pd.DataFrame) -> dict[str, pd.Series]:
+def _kind_frame(proc_df: pd.DataFrame, table: str, column: str) -> pd.DataFrame:
+    """`(code, {column})` rows exploded from one table's `kind_counts_json` —
+    S4's `layer_kind` (observed_event) / `role` (coverage) vocab, with `code`
+    carried along row for row so a violation can be attributed to it."""
+    sub = proc_df.loc[proc_df["table"] == table, ["code", "kind_counts_json"]].dropna(
+        subset=["kind_counts_json"]
+    )
+    rows = [
+        {"code": r.code, column: k}
+        for r in sub.itertuples()
+        for k in json.loads(r.kind_counts_json)
+    ]
+    return pd.DataFrame(rows, columns=["code", column])
+
+
+def _vocab_frames(
+    proc_df: pd.DataFrame, sources_df: pd.DataFrame
+) -> dict[str, tuple[pd.DataFrame, str]]:
     """The S4 vocab columns checkable from data already loaded for other
-    checks — see `VOCAB_NOTE` for what is left out and why."""
-    series: dict[str, pd.Series] = {
-        "status": proc_df["status"],
-        "geometry_source": proc_df["geometry_source"],
+    checks, each paired with its own `code` column so a violation can be
+    attributed to the code(s) that produced it — see `VOCAB_NOTE` for what is
+    left out and why."""
+    frames: dict[str, tuple[pd.DataFrame, str]] = {
+        "status": (proc_df, "status"),
+        "geometry_source": (proc_df, "geometry_source"),
+        "layer_kind": (_kind_frame(proc_df, "observed_event", "layer_kind"), "layer_kind"),
+        "role": (_kind_frame(proc_df, "coverage", "role"), "role"),
     }
-    for table, column in (("observed_event", "layer_kind"), ("coverage", "role")):
-        kinds = [
-            k
-            for blob in proc_df.loc[proc_df["table"] == table, "kind_counts_json"].dropna()
-            for k in json.loads(blob)
-        ]
-        series[column] = pd.Series(kinds, dtype="object")
     if len(sources_df):
-        series["acq_precision"] = sources_df["acq_precision"]
-    return series
+        frames["acq_precision"] = (sources_df, "acq_precision")
+    return frames
 
 
 def _load_gold_index(work_dir: Path, store: DataLakeStore) -> tuple[pd.DataFrame, str | None]:
@@ -192,6 +206,8 @@ def main(argv: list[str] | None = None) -> None:
     layers_df, _ = layers.load_frames(args.work_dir)
     proc_df = silver.load_processing(args.work_dir)
     sources_df = pd.DataFrame(columns=silver.SOURCES_COLUMNS)
+    vocab_frames: dict[str, tuple[pd.DataFrame, str]] = {}
+    partial_notes: list[str] = []
 
     if run_silver:
         print("\nsilver:")
@@ -208,9 +224,9 @@ def main(argv: list[str] | None = None) -> None:
             ok = False
         else:
             sources_df = _load_sources(args.work_dir, store)
-            vocab_series = _vocab_series(proc_df, sources_df)
+            vocab_frames = _vocab_frames(proc_df, sources_df)
             ok &= audit.run_silver_checks(
-                ledger, layers_df, proc_df, store, sources_df, vocab_series
+                ledger, layers_df, proc_df, store, sources_df, vocab_frames
             )
             print(f"  (note) {VOCAB_NOTE}")
 
@@ -244,6 +260,10 @@ def main(argv: list[str] | None = None) -> None:
                         f"  (note) G2 checked {len(observed_by_code)}/{len(codes)} gold codes; "
                         f"{len(uncached)} skipped, no local silver cache: {uncached[:5]}"
                     )
+                    partial_notes.append(
+                        f"G2 verified {len(observed_by_code)} of {len(codes)} gold codes; "
+                        "the rest were not cached locally"
+                    )
                 ok_g2, detail_g2 = audit.check_g2_excluded_accounting(observed_by_code, index)
                 _print("G2 excluded-kind polygons fully accounted for", ok_g2, detail_g2)
                 ok &= ok_g2
@@ -251,7 +271,7 @@ def main(argv: list[str] | None = None) -> None:
             print(f"  label_coverage: {audit.label_coverage_summary(index)}")
 
     stale = audit.stale_codes(
-        ledger, layers_df, proc_df, store, sources_df, index, observed_by_code
+        ledger, layers_df, proc_df, store, sources_df, vocab_frames, index, observed_by_code
     )
     stale_path = args.work_dir / "audit_stale_codes.txt"
     stale_path.write_text("".join(f"{c}\n" for c in sorted(stale)))
@@ -259,7 +279,10 @@ def main(argv: list[str] | None = None) -> None:
 
     if not ok:
         sys.exit(1)
-    print("\nALL AUDITED SECTIONS PASSED" if only else "\nALL CHECKS PASSED")
+    summary = "ALL AUDITED SECTIONS PASSED" if only else "ALL CHECKS PASSED"
+    if partial_notes:
+        summary += f" ({'; '.join(partial_notes)})"
+    print(f"\n{summary}")
 
 
 if __name__ == "__main__":
