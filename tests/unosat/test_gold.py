@@ -83,6 +83,76 @@ def build(obs, cov=None):
 # --- the geometry rules ----------------------------------------------------
 
 
+# --- geometry methods (ADR-0036) -------------------------------------------
+
+
+def _staircase(x0: float, y0: float, n: int = 40, step: float = 0.01):
+    """A polygonised-raster-like square: n steps a side, a vertex at each
+    pixel corner, plus 1e-9 sliver noise on one edge as reprojection leaves."""
+    from shapely.geometry import Polygon
+
+    pts = [(x0 + i * step, y0) for i in range(n + 1)]
+    pts += [(x0 + n * step, y0 + i * step) for i in range(1, n + 1)]
+    pts += [(x0 + (n - i) * step + (1e-9 if i % 2 else 0), y0 + n * step) for i in range(1, n + 1)]
+    pts += [(x0, y0 + (n - i) * step) for i in range(1, n)]
+    return Polygon(pts)
+
+
+def test_snap_and_validate_dissolve_to_the_same_water_area():
+    """The fast path must be a speed-up, not a different answer: on
+    raster-derived staircase polygons both methods agree on the dissolved
+    area to far better than a pixel."""
+    obs = observed(
+        {"layer_kind": "flood", "geometry": _staircase(0, 0)},
+        {"layer_kind": "water", "geometry": _staircase(0.4, 0)},
+        {"layer_kind": "water_pre", "geometry": _staircase(0, 0.4)},
+    )
+    labels_v, index_v = gold.build_code(CODE, obs, coverage(), META, geometry_method="validate")
+    labels_s, index_s = gold.build_code(CODE, obs, coverage(), META, geometry_method="snap")
+    assert len(labels_v) == len(labels_s) == 1
+    area_v = index_v["water_area_km2"].iloc[0]
+    area_s = index_s["water_area_km2"].iloc[0]
+    assert area_s == pytest.approx(area_v, rel=1e-6)
+    sym = labels_v.geom_water.iloc[0].symmetric_difference(labels_s.geom_water.iloc[0])
+    assert sym.area < 1e-6 * labels_v.geom_water.iloc[0].area
+
+
+def test_snap_repairs_ring_self_intersection_like_validate_does():
+    """The 9.5% of silver rows that are invalid are all ring self-intersections
+    (pixel corners touching). Both methods must yield valid, equal-area output."""
+    from shapely.geometry import Polygon
+
+    bowtie = Polygon([(0, 0), (1, 1), (1, 0), (0, 1)])  # self-intersecting ring
+    assert not bowtie.is_valid
+    for method in gold.GEOMETRY_METHODS:
+        labels, index = gold.build_code(
+            CODE, observed({"layer_kind": "flood", "geometry": bowtie}), coverage(), META,
+            geometry_method=method,
+        )
+        assert labels.geom_water.iloc[0].is_valid, method
+        assert index["water_area_km2"].iloc[0] > 0, method
+
+
+def test_snap_keeps_one_row_per_input_row_after_regrouping():
+    """`_clean(snap)` explodes to parts and reconstructs per input row; the
+    frame handed to the dissolve must have exactly the input row count, or
+    every downstream count (`n_polygons`, contributing ids) silently drifts."""
+    obs = observed(
+        {"layer_kind": "flood", "geometry": A.union(C)},  # one multipolygon row
+        {"layer_kind": "water", "geometry": B},
+    )
+    cleaned = gold._clean(obs.geometry.values, "snap")
+    assert len(cleaned) == len(obs) == 2
+    assert cleaned[0].geom_type == "MultiPolygon" and len(cleaned[0].geoms) == 2
+    labels, index = gold.build_code(CODE, obs, coverage(), META, geometry_method="snap")
+    assert index["n_polygons"].iloc[0] == 2
+
+
+def test_unknown_geometry_method_fails_loudly():
+    with pytest.raises(ValueError, match="geometry_method"):
+        gold.build_code(CODE, observed(), coverage(), META, geometry_method="fast")
+
+
 def test_water_is_flood_and_pre_flood_dissolved_together():
     """The fusion target: everything wet at acquisition, whatever produced it."""
     labels, index = build(

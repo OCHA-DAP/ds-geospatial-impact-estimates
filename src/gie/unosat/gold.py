@@ -43,6 +43,7 @@ from pathlib import Path
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import shapely
 from shapely.geometry import MultiPolygon
 
 from gie.unosat import classes, common, grammar, silver
@@ -180,7 +181,84 @@ def _check_vocabulary(
         )
 
 
-def _prepare(frame: gpd.GeoDataFrame, *, code: str, table: str) -> gpd.GeoDataFrame:
+# --- geometry methods -------------------------------------------------------
+# UNOSAT flood polygons are polygonised rasters: staircase outlines with a
+# vertex at every pixel corner, tens of thousands of parts per feature, and
+# 1e-9-degree sliver noise from reprojection. GEOS noding (make_valid, unary
+# union) is superlinear in the vertices of ONE geometry, so a single 30M-vertex
+# feature takes hours where its parts would take minutes. See ADR-0036.
+GEOMETRY_METHODS = ("validate", "snap")
+# ~1 cm at the equator: far finer than any UNOSAT pixel, so snapping only
+# collapses sliver noise and never moves a real boundary.
+SNAP_GRID = 1e-7
+
+
+def _clean(geom: np.ndarray, method: str) -> np.ndarray:
+    """Return a row-shaped array of valid geometry.
+
+    `validate`: `make_valid` on each row as stored (the original behaviour).
+    `snap`: explode to parts, snap to `SNAP_GRID`, repair only parts that are
+    still invalid, then CONSTRUCT each row's multipolygon back. Construction
+    is O(n) with no noding; unioning the parts here would reintroduce the
+    exact superlinear step being avoided.
+    """
+    if method == "validate":
+        return shapely.make_valid(geom)
+    if method != "snap":
+        raise ValueError(f"geometry method {method!r} not in {GEOMETRY_METHODS}")
+    parts, idx = shapely.get_parts(geom, return_index=True)
+    # Repair BEFORE snapping: the precision reducer is only defined on valid
+    # input and raises on a self-intersecting ring. Repair again after, since
+    # snapping can itself create a self-touch. Both passes are cheap because
+    # they run on small parts and only on the ~10% of them that are invalid.
+    for _ in range(2):
+        bad = ~shapely.is_valid(parts)
+        if bad.any():
+            parts[bad] = shapely.make_valid(parts[bad])
+        parts = shapely.set_precision(parts, SNAP_GRID)
+    bad = ~shapely.is_valid(parts)
+    if bad.any():
+        parts[bad] = shapely.make_valid(parts[bad])
+    parts, sub = shapely.get_parts(parts, return_index=True)  # flatten Multi*/collections
+    idx = idx[sub]
+    keep = ~shapely.is_empty(parts) & (shapely.get_type_id(parts) == 3)
+    parts, idx = parts[keep], idx[keep]
+    order = np.argsort(idx, kind="stable")
+    parts, idx = parts[order], idx[order]
+    edge = np.searchsorted(idx, np.arange(len(geom) + 1))
+    out = np.empty(len(geom), dtype=object)
+    for i in range(len(geom)):
+        chunk = parts[edge[i] : edge[i + 1]]
+        out[i] = shapely.multipolygons(chunk) if len(chunk) else shapely.Polygon()
+    return out
+
+
+def _dissolve(series: gpd.GeoSeries, method: str):
+    """Union of a geometry series under `method`.
+
+    `validate`: `union_all` (the original behaviour). `snap`: the parts form a
+    polygonal coverage (a classified raster is non-overlapping by
+    construction), so GEOS's coverage union applies; it falls back to
+    `union_all` if GEOS rejects the input or the result is invalid.
+    """
+    if method == "validate":
+        return series.union_all()
+    parts = shapely.get_parts(series.values)
+    parts = parts[~shapely.is_empty(parts)]
+    if not len(parts):
+        return series.union_all()
+    try:
+        u = shapely.coverage_union_all(parts)
+        if shapely.is_valid(u):
+            return u
+    except shapely.errors.GEOSException:
+        pass
+    return shapely.union_all(parts)
+
+
+def _prepare(
+    frame: gpd.GeoDataFrame, *, code: str, table: str, method: str = "validate"
+) -> gpd.GeoDataFrame:
     """Silver rows to gold's grain: valid geometry, an acquisition interval,
     an area label, and no undated rows.
 
@@ -213,18 +291,17 @@ def _prepare(frame: gpd.GeoDataFrame, *, code: str, table: str) -> gpd.GeoDataFr
             f"{sorted(out.loc[undated, 'acq_precision'].unique())} but have no acquisition date; "
             f"layers: {sorted(out.loc[undated, 'layer_name'].unique())[:5]}"
         )
-    # UNOSAT shapefiles carry self-intersecting rings that crash GEOS unions;
-    # make_valid is a no-op on already-valid geometry.
-    out["geometry"] = out.geometry.make_valid()
+    # UNOSAT shapefiles carry self-intersecting rings that crash GEOS unions.
+    out["geometry"] = _clean(out.geometry.values, method)
     return out
 
 
 # --- one label set ---------------------------------------------------------
 
 
-def _union(frame: gpd.GeoDataFrame, kinds: tuple[str, ...]):
+def _union(frame: gpd.GeoDataFrame, kinds: tuple[str, ...], method: str = "validate"):
     sub = frame[frame["layer_kind"].isin(kinds)]
-    return sub.geometry.union_all() if len(sub) else None
+    return _dissolve(sub.geometry, method) if len(sub) else None
 
 
 def _separates_flood(group: pd.DataFrame) -> bool:
@@ -236,7 +313,9 @@ def _separates_flood(group: pd.DataFrame) -> bool:
     return any(grammar.parse(str(name)).kind == "flood" for name in group["layer_name"].unique())
 
 
-def _valid_mask(cov: gpd.GeoDataFrame, aoi, start, end, target_ids: set[str]):
+def _valid_mask(
+    cov: gpd.GeoDataFrame, aoi, start, end, target_ids: set[str], method: str = "validate"
+):
     """The analysis footprint for this label set minus what was not analysed.
 
     Coverage belongs to a label set when it came out of the **same source
@@ -270,11 +349,11 @@ def _valid_mask(cov: gpd.GeoDataFrame, aoi, start, end, target_ids: set[str]):
         # evidence at all about what was.
         return None, "none", None
     match = "interval" if refined else "product"
-    valid = footprint.geometry.union_all()
+    valid = _dissolve(footprint.geometry, method)
     masked = pool[pool["role"] == "not_analysed"]
     if not len(masked):
         return valid, "footprint", match
-    return valid.difference(masked.geometry.union_all()), "footprint_minus_cloud", match
+    return valid.difference(_dissolve(masked.geometry, method)), "footprint_minus_cloud", match
 
 
 def _values(series: pd.Series) -> list[str]:
@@ -313,15 +392,17 @@ def _shares_target(frame: pd.DataFrame, wanted: set[str]) -> pd.Series:
     return frame["target_ids"].map(lambda ids: not wanted.isdisjoint(_id_set(ids)))
 
 
-def _label_set(code: str, aoi, start, end, group: gpd.GeoDataFrame, cov, meta: dict) -> dict:
+def _label_set(
+    code: str, aoi, start, end, group: gpd.GeoDataFrame, cov, meta: dict, method: str = "validate"
+) -> dict:
     contributing = group[~group["layer_kind"].isin(EXCLUDED_KINDS)]
-    flood = _union(contributing, FLOOD_KINDS)
+    flood = _union(contributing, FLOOD_KINDS, method)
     if flood is None and _separates_flood(group):
         flood = MultiPolygon()
     ids: set[str] = set()
     for value in group["target_ids"]:
         ids |= _id_set(value)
-    valid, basis, match = _valid_mask(cov, aoi, start, end, ids)
+    valid, basis, match = _valid_mask(cov, aoi, start, end, ids, method)
     same_day = start.date() == end.date()
     # Both the sensor and its class describe the rows that produced the
     # geometries, not every row filed under this acquisition: an excluded
@@ -363,9 +444,9 @@ def _label_set(code: str, aoi, start, end, group: gpd.GeoDataFrame, cov, meta: d
         "valid_match": match,
         "target_ids": "; ".join(sorted(ids)) if ids else None,
         "excluded_aggregate_n": int(len(group) - len(contributing)),
-        "geom_water": _union(contributing, WATER_KINDS),
+        "geom_water": _union(contributing, WATER_KINDS, method),
         "geom_flood": flood,
-        "geom_possible": _union(contributing, POSSIBLE_KINDS),
+        "geom_possible": _union(contributing, POSSIBLE_KINDS, method),
         "geom_valid": valid,
     }
 
@@ -414,6 +495,7 @@ def build_code(
     observed: gpd.GeoDataFrame,
     coverage: gpd.GeoDataFrame,
     meta: dict,
+    geometry_method: str = "validate",
 ) -> tuple[gpd.GeoDataFrame, pd.DataFrame]:
     """One code's silver rows dissolved into label sets.
 
@@ -424,10 +506,12 @@ def build_code(
     A code with no datable water polygons yields two empty frames with the
     full schema, which is a real state (zero rows), not a failure.
     """
-    obs = _prepare(observed, code=code, table="observed_event")
-    cov = _prepare(coverage, code=code, table="coverage")
+    if geometry_method not in GEOMETRY_METHODS:
+        raise ValueError(f"geometry_method {geometry_method!r} not in {GEOMETRY_METHODS}")
+    obs = _prepare(observed, code=code, table="observed_event", method=geometry_method)
+    cov = _prepare(coverage, code=code, table="coverage", method=geometry_method)
     rows = [
-        _label_set(code, aoi, start, end, group, cov, meta)
+        _label_set(code, aoi, start, end, group, cov, meta, geometry_method)
         for (aoi, start, end), group in obs.groupby(
             ["area_label", "acq_start", "acq_end"], dropna=False, sort=True
         )

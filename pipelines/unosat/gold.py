@@ -55,6 +55,14 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument(
         "--force", action="store_true", help="rebuild codes whose gold files already exist"
     )
+    ap.add_argument(
+        "--geometry-method",
+        default="validate",
+        choices=gold.GEOMETRY_METHODS,
+        help="validate: make_valid + union_all (original). snap: explode, snap to a 1e-7 deg "
+        "grid, coverage union -- orders of magnitude faster on polygonised-raster geometry, "
+        "same area to ~1e-8 (ADR-0036). Recorded per code in the run log.",
+    )
     args = ap.parse_args(argv)
 
     cc = meta.bootstrap(args.work_dir, args.stage)
@@ -115,13 +123,18 @@ def main(argv: list[str] | None = None) -> None:
                 )
             coverage = gold.read_partition(args.work_dir, blob_store, "coverage", code)
             labels, index = gold.build_code(
-                code, observed, coverage, meta_by_code.get(code, {})
+                code,
+                observed,
+                coverage,
+                meta_by_code.get(code, {}),
+                geometry_method=args.geometry_method,
             )
             publish(gold.labels_path(code), labels)
             publish(gold.index_part_path(code), index)
             print(
                 f"  [{i}/{len(todo)}] {code}: {len(index)} label sets "
-                f"from {len(observed)} polygons, {len(coverage)} coverage rows",
+                f"from {len(observed)} polygons, {len(coverage)} coverage rows "
+                f"[geometry={args.geometry_method}]",
                 flush=True,
             )
     finally:
