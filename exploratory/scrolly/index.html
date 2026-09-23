@@ -204,6 +204,12 @@
   @media (prefers-reduced-motion: reduce) { #qbar .qbig { transition:none; transform:none; } }
   /* narrow screens: the chart panel sits under the tracker, so the large line would collide with it */
   @media (max-width: 860px) { #qbar .qbig { display:none; } }
+  /* wide screens: beside the question box, clear of the chart panel and the legends on the right */
+  @media (min-width: 1200px) {
+    #qbar { display:flex; align-items:center; gap:22px; width:auto; }
+    #qbar .qbox { width:min(440px, 40vw); flex:none; }
+    #qbar .qbig { margin:0; flex:0 1 340px; }
+  }
 </style>
 </head>
 <body>
@@ -215,7 +221,7 @@
   <div class="q" data-n="1">How good are the assessments at flagging damaged buildings?
     <div class="ans">Not on their own: no single assessment supports acting on an individual flag.</div></div>
   <div class="q" data-n="2">Do they rank neighbourhoods well enough to guide triage?
-    <div class="ans">Yes, inside a known disaster zone; they order it, they do not find it.</div></div>
+    <div class="ans">Yes, inside a known disaster zone.</div></div>
   <div class="q" data-n="3">How should they be used together?
     <div class="ans">Do not choose one: count agreement between them.</div></div>
   </div>
@@ -704,6 +710,7 @@ function coreOnly(op){ if(map.getLayer("ext-core")) map.setPaintProperty("ext-co
 function hexes(mode){ if(!map.getLayer("hex-e")) return;
   map.setPaintProperty("hex-e","fill-opacity", mode==="e"?0.8:0);
   map.setPaintProperty("hex-a","fill-opacity", mode==="a"?0.8:0); }
+let qbigTimer = null;
 function qbar(active, done, reveal){
   const bar = document.getElementById("qbar");
   bar.classList.toggle("on", active !== null);
@@ -718,8 +725,13 @@ function qbar(active, done, reveal){
     if (shown) big = q.querySelector(".ans").textContent;
   });
   const el = document.getElementById("qbig");
-  if (big) el.textContent = big;                    // keep the old text while it fades out
-  el.classList.toggle("on", big !== "");
+  clearTimeout(qbigTimer);
+  if (big) {
+    el.textContent = big;
+    qbigTimer = setTimeout(() => el.classList.add("on"), 1500);   // after the chart has arrived
+  } else {
+    el.classList.remove("on");
+  }
 }
 function legends(which){ for (const id of ["legend-verdict","legend-test","legend-extents","legend-hex"])
   document.getElementById(id).classList.toggle("on", id==="legend-"+which); }
