@@ -116,6 +116,39 @@ def test_content_hash_changes_when_geometry_changes():
     assert readers.content_hash(base) != readers.content_hash(changed)
 
 
+def test_content_hash_handles_a_feature_with_no_geometry():
+    """UNOSAT geodatabases contain attribute rows carrying no shape. That is a
+    real state of the data, not a read failure, so hashing must not raise."""
+    with_null = _gdf(
+        [
+            {"geometry": SQUARE_A, "Water_Class": 0, "OBJECTID": 1},
+            {"geometry": None, "Water_Class": 1, "OBJECTID": 2},
+        ]
+    )
+    assert len(readers.content_hash(with_null)) == 64
+
+
+def test_content_hash_does_not_drop_a_geometryless_feature():
+    """Hashing a null geometry as a sentinel rather than skipping the row is
+    what keeps two layers that differ only in such rows distinguishable."""
+    with_null = _gdf(
+        [
+            {"geometry": SQUARE_A, "Water_Class": 0, "OBJECTID": 1},
+            {"geometry": None, "Water_Class": 1, "OBJECTID": 2},
+        ]
+    )
+    without = _gdf([{"geometry": SQUARE_A, "Water_Class": 0, "OBJECTID": 1}])
+    assert readers.content_hash(with_null) != readers.content_hash(without)
+
+
+def test_content_hash_distinguishes_null_geometry_rows_by_attributes():
+    """Two geometryless rows are the same content only when their attributes
+    match, so the sentinel must not flatten them together."""
+    a = _gdf([{"geometry": None, "Water_Class": 0, "OBJECTID": 1}])
+    b = _gdf([{"geometry": None, "Water_Class": 1, "OBJECTID": 1}])
+    assert readers.content_hash(a) != readers.content_hash(b)
+
+
 def test_content_hash_ignores_objectid_only_difference():
     a = _gdf([{"geometry": SQUARE_A, "Water_Class": 0, "OBJECTID": 1}])
     b = _gdf([{"geometry": SQUARE_A, "Water_Class": 0, "OBJECTID": 999}])

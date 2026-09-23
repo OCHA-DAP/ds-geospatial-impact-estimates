@@ -47,6 +47,11 @@ HASH_EXCLUDE = frozenset(
     s.lower() for s in ("shape_length", "shape_leng", "shape_area", "objectid", "fid")
 )
 
+# Stands in for a feature that carries no geometry at all, so such a row still
+# contributes to `content_hash`. Not hex, so it can never collide with a real
+# `wkb_hex` value.
+NULL_GEOMETRY = "NULL_GEOMETRY"
+
 
 def read_gdb_layer(gdb_path: Path, layer: str) -> gpd.GeoDataFrame:
     """Read one feature class from an extracted `.gdb` via GDAL's OpenFileGDB driver."""
@@ -113,11 +118,19 @@ def content_hash(gdf: gpd.GeoDataFrame) -> str:
     For each feature: `f"{wkb_hex}|{attrs_json}"`, attrs restricted to the
     non-excluded columns. The per-feature strings are sorted before hashing
     so row order never affects the result.
+
+    A feature with **no geometry** is a real state in UNOSAT's geodatabases
+    (an attribute row carrying no shape), not a read failure, so it is hashed
+    as the sentinel `NULL_GEOMETRY` rather than dropped: dropping it would make
+    two layers that differ only in their geometry-less rows hash identically.
+    The sentinel cannot collide with a real value because `wkb_hex` is only
+    ever hex digits.
     """
     drop = [c for c in gdf.columns if c.lower() in HASH_EXCLUDE]
     hashable = gdf.drop(columns=drop) if drop else gdf
     parts = [
-        f"{row.geometry.wkb_hex}|{attrs_json(row)}" for _, row in hashable.iterrows()
+        f"{NULL_GEOMETRY if row.geometry is None else row.geometry.wkb_hex}|{attrs_json(row)}"
+        for _, row in hashable.iterrows()
     ]
     digest_input = "".join(sorted(parts))
     return hashlib.sha256(digest_input.encode("utf-8")).hexdigest()
