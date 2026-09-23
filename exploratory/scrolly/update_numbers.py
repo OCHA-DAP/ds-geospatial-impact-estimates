@@ -35,6 +35,10 @@ singles = {"Microsoft": "Microsoft", "IMPACT v2": "IMPACT", "OSU": "OSU", "UH": 
 rows = [f'["{best} agreement",{h8.loc[best, "rho"]:.3f},true]']
 rows += [f'["{short}",{h8.loc[lab, "rho"]:.3f},false]' for lab, short in sorted(singles.items(), key=lambda kv: -h8.loc[kv[0], "rho"])]
 sub1(r"const RANKDATA = \[.*?\];", "const RANKDATA = [" + ",".join(rows) + "];")
+if N["top20_vote_rule_8"] != "5-of-6":
+    raise SystemExit(f"the shortlist sentence says 'five of the six'; the best rule is now {N['top20_vote_rule_8']}")
+sub1(r"agree gets \d+ right", f"agree gets {N['top20_vote_8']} right")
+sub1(r"against \d+ for the best single assessment", f"against {N['top20_single_8']} for the best single assessment")
 n07 = int((h8.loc[list(singles), "rho"] >= 0.7).sum())
 sub1(r"\(\w+ of the six assessments agree closely with", f"({words(n07)} of the six assessments agree closely with")
 # --- precision bounds (rq2r): floor and upper bound, per cent, sorted by floor
