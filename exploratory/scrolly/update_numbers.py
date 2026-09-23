@@ -65,6 +65,13 @@ for name, key in [("Microsoft AI4G", "MS"), ("IMPACT", "IMPACT"), ("OSU / NASA",
     if len(re.findall(pat, t)) != 1: raise SystemExit(f"timeline row for {name!r} not found exactly once")
     t = re.sub(pat, lambda m: m.group(1) + str(int(tot[key])), t, count=1)
 sub1(r"the six assessments count anywhere from [\d,]+ to [\d,]+ damaged", f"the six assessments count anywhere from {int(prod.flagged.min()):,} to {int(prod.flagged.max()):,} damaged")
+# --- the shared comparison area and the hex cell size (were hand-typed, unchecked)
+sub1(r"where all overlap \(~\d+ km²\)", f"where all overlap (~{N['core_area_km2']} km²)")
+sub1(r"overlap: \d+ km² and [\d,]+ shared", f"overlap: {N['core_area_km2']} km² and {N['core_n_buildings']} shared")
+sub1(r"shared comparison area is only\s+\d+ km²", f"shared comparison area is only\n    {N['core_area_km2']} km²")
+sub1(r"damage per cell \(~[\d.]+ km²\)", f"damage per cell (~{N['h3_res8_km2_1']} km²)")
+sub1(r"cells of about [\d.]+ km² each", f"cells of about {N['h3_res8_km2_1']} km² each")
+
 # --- core labels and 4-of-6 count
 meta = re.search(r'"expert": (\d+)', (pathlib.Path(__file__).parent / "data.js").read_text()).group(1)
 sub1(r"The teal dots are the [\d,]+ buildings", f"The teal dots are the {int(meta):,} buildings")
