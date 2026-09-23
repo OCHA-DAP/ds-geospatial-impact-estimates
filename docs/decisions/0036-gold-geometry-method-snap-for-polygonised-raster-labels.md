@@ -66,6 +66,7 @@ Measured on real silver layers (not fixtures):
 | `coverage_union_all` vs `union_all`, same layer | 0.03 s vs 0.90 s (30x) |
 | Prototype end to end on the largest Somalia layer | 20.1 s vs 295.2 s (14.7x) |
 | **Shipped `snap` vs `validate`, same layer** | **36.9 s vs 329.0 s (8.9x)** |
+| Shipped `build_code`, whole code FL20170424HTI (4,926 polygons, 6 label sets) | 1.16 s vs 1.14 s; water area equal to 4 dp per label set; valid mask differs 1e-4 km² on 1,010 km² |
 | Dissolved area, same layer | 5,681.131574 vs 5,681.131517 km² (1e-8 relative) |
 | Symmetric difference, same layer | 0.0025% of area |
 
@@ -76,6 +77,10 @@ The shipped code is slower than the prototype because it repairs invalid parts
 both before and after snapping: the precision reducer raises on a
 self-intersecting ring, and snapping can itself create a self-touch. That
 is roughly 20% of the speed-up spent on never crashing on real input.
+
+On an ordinary code (Haiti 2017 above) the two methods run in the same time and
+produce the same label-set count and areas: `snap` costs nothing where nothing
+is pathological, and the gain appears only on the raster-derived giants.
 
 **Which codes used which method is the record that matters.** Codes built
 before this decision used `validate`. Codes built after it use the method
