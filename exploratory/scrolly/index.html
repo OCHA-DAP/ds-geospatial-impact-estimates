@@ -178,8 +178,9 @@
   footer .foot-logo { height:26px; display:block; margin-bottom:12px; }
   footer .org { font:13px Roboto, sans-serif; color:var(--ink); margin-bottom:14px; }
   #qbar { position:fixed; top:18px; left:7vw; z-index:3; width:min(440px, 86vw);
-          background:var(--card); border:1px solid rgba(250,251,251,.09); border-radius:10px;
-          padding:10px 14px 8px; opacity:0; transition:opacity .5s; pointer-events:none; }
+          opacity:0; transition:opacity .5s; pointer-events:none; }
+  #qbar .qbox { background:var(--card); border:1px solid rgba(250,251,251,.09); border-radius:10px;
+          padding:10px 14px 8px; }
   #qbar.on { opacity:1; }
   #qbar .qh { font:700 11px/1 Roboto, sans-serif; letter-spacing:.14em; text-transform:uppercase;
               color:var(--mut); margin-bottom:8px; }
@@ -195,12 +196,21 @@
   #qbar .q.done::before { content:"✓"; border-color:#51ac92; color:#51ac92; background:rgba(81,172,146,.15); }
   #qbar .q .ans { display:none; margin-top:3px; font:12px/1.35 Roboto, sans-serif; color:#51ac92; }
   #qbar .q.done .ans { display:block; }
+  #qbar .q.reveal .ans { display:none; }            /* while it is showing large below, don't say it twice */
+  #qbar .qbig { margin:14px 2px 0; font:700 clamp(17px, 1.35vw, 19px)/1.35 Merriweather, Georgia, serif;
+          color:#51ac92; text-shadow:0 1px 14px rgba(5,20,43,.95), 0 0 4px rgba(5,20,43,.9);
+          opacity:0; transform:translateY(-6px); transition:opacity .55s, transform .55s; }
+  #qbar .qbig.on { opacity:1; transform:none; }
+  @media (prefers-reduced-motion: reduce) { #qbar .qbig { transition:none; transform:none; } }
+  /* narrow screens: the chart panel sits under the tracker, so the large line would collide with it */
+  @media (max-width: 860px) { #qbar .qbig { display:none; } }
 </style>
 </head>
 <body>
 <div id="map"></div>
 
 <div id="qbar">
+  <div class="qbox">
   <div class="qh">Three questions</div>
   <div class="q" data-n="1">How good are the assessments at flagging damaged buildings?
     <div class="ans">Not on their own: no single assessment supports acting on an individual flag.</div></div>
@@ -208,6 +218,8 @@
     <div class="ans">Yes, inside a known disaster zone; they order it, they do not find it.</div></div>
   <div class="q" data-n="3">How should they be used together?
     <div class="ans">Do not choose one: count agreement between them.</div></div>
+  </div>
+  <div class="qbig" id="qbig"></div>
 </div>
 
 <div class="legend" id="legend-verdict">
@@ -692,15 +704,22 @@ function coreOnly(op){ if(map.getLayer("ext-core")) map.setPaintProperty("ext-co
 function hexes(mode){ if(!map.getLayer("hex-e")) return;
   map.setPaintProperty("hex-e","fill-opacity", mode==="e"?0.8:0);
   map.setPaintProperty("hex-a","fill-opacity", mode==="a"?0.8:0); }
-function qbar(active, done){
+function qbar(active, done, reveal){
   const bar = document.getElementById("qbar");
   bar.classList.toggle("on", active !== null);
   bar.classList.toggle("neutral", active === 0);
+  let big = "";
   bar.querySelectorAll(".q").forEach(q => {
     const n = +q.dataset.n;
+    const shown = reveal === true && active === n;
     q.classList.toggle("active", active === n);
     q.classList.toggle("done", (done||[]).includes(n));
+    q.classList.toggle("reveal", shown);
+    if (shown) big = q.querySelector(".ans").textContent;
   });
+  const el = document.getElementById("qbig");
+  if (big) el.textContent = big;                    // keep the old text while it fades out
+  el.classList.toggle("on", big !== "");
 }
 function legends(which){ for (const id of ["legend-verdict","legend-test","legend-extents","legend-hex"])
   document.getElementById(id).classList.toggle("on", id==="legend-"+which); }
@@ -769,12 +788,12 @@ const STEPS = {
   11:()=>{ qbar(null); pts(.92, C_EXPERT, null, R_EXPERT); glow(0); sat(0); extents(false); coreOnly(.3); hexes(null); panels(null);
           legends(null); prods(0); timeline(-1);
           map.flyTo({center:COAST, zoom:10.9, pitch:0, bearing:0, duration:2200}); },
-  12:()=>{ qbar(1, []); pts(.25, C_MSTEST, ["any",["==",["get","ms"],1],["==",["get","y"],1]], R_MSTEST);
+  12:()=>{ qbar(1, [], true); pts(.25, C_MSTEST, ["any",["==",["get","ms"],1],["==",["get","y"],1]], R_MSTEST);
           glow(0); sat(0); extents(false); hexes(null); legends(null); prods(0); timeline(-1);
           panels("panel-bounds"); resetBounds(); setTimeout(animBounds, 250); },
   13:()=>{ qbar(2, [1]); pts(0); glow(0); sat(0); extents(false); hexes("e"); panels(null); legends("hex"); prods(0); timeline(-1);
           map.flyTo({center:COAST, zoom:11.0, pitch:0, bearing:0, duration:2400}); },
-  14:()=>{ qbar(2, [1]); pts(0); glow(0); sat(0); extents(false); hexes("e"); legends("hex"); prods(0); timeline(-1);
+  14:()=>{ qbar(2, [1], true); pts(0); glow(0); sat(0); extents(false); hexes("e"); legends("hex"); prods(0); timeline(-1);
           panels("panel-rank"); rankState(false); resetRank(); setTimeout(animRank, 400);
           map.flyTo({center:COAST, zoom:11.0, pitch:0, bearing:0, duration:1200}); },
   15:()=>{ qbar(3, [1,2]); pts(.92, C_VERDICT); glow(0); sat(0); extents(false); hexes(null); panels(null);
@@ -789,7 +808,7 @@ const STEPS = {
   18:()=>{ qbar(3, [1,2]); pts(0); glow(0); sat(0); extents(false); hexes("e"); legends("hex"); prods(0); timeline(-1);
           panels("panel-rank"); rankState(false); animRank(); setTimeout(()=>rankState(true), 700);
           map.flyTo({center:COAST, zoom:11.0, pitch:0, bearing:0, duration:2000}); },
-  19:()=>{ qbar(3, [1,2,3]); pts(0); glow(0); sat(0); extents(true); hexes(null); panels(null); legends("extents"); prods(0); timeline(-1);
+  19:()=>{ qbar(3, [1,2,3], true); pts(0); glow(0); sat(0); extents(true); hexes(null); panels(null); legends("extents"); prods(0); timeline(-1);
            map.flyTo({center:[-67.2,10.1], zoom:7.4, pitch:0, bearing:0, duration:3000}); },
   20:()=>{ qbar(null); legends(null); panels(null); timeline(-1); },
 };
