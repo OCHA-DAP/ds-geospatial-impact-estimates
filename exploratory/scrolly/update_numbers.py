@@ -36,7 +36,7 @@ rows = [f'["{best} agreement",{h8.loc[best, "rho"]:.3f},true]']
 rows += [f'["{short}",{h8.loc[lab, "rho"]:.3f},false]' for lab, short in sorted(singles.items(), key=lambda kv: -h8.loc[kv[0], "rho"])]
 sub1(r"const RANKDATA = \[.*?\];", "const RANKDATA = [" + ",".join(rows) + "];")
 n07 = int((h8.loc[list(singles), "rho"] >= 0.7).sum())
-sub1(r"\(\w+ of the six agree closely with", f"({words(n07)} of the six agree closely with")
+sub1(r"\(\w+ of the six assessments agree closely with", f"({words(n07)} of the six assessments agree closely with")
 # --- precision bounds (rq2r): floor and upper bound, per cent, sorted by floor
 b = rq2r.loc[PRODUCTS].sort_values("P_floor", ascending=False)
 bounds = ",".join(f'["{LONG[p]}",{100 * r.P_floor:.1f},{100 * r.P_upper:.1f}]' for p, r in b.iterrows())
@@ -60,7 +60,7 @@ for name, key in [("Microsoft AI4G", "MS"), ("IMPACT", "IMPACT"), ("OSU / NASA",
     pat = rf'(name:"{re.escape(name)}",[^\n]*?n:)\d+'
     if len(re.findall(pat, t)) != 1: raise SystemExit(f"timeline row for {name!r} not found exactly once")
     t = re.sub(pat, lambda m: m.group(1) + str(int(tot[key])), t, count=1)
-sub1(r"the six count anywhere from [\d,]+ to [\d,]+ damaged", f"the six count anywhere from {int(prod.flagged.min()):,} to {int(prod.flagged.max()):,} damaged")
+sub1(r"the six assessments count anywhere from [\d,]+ to [\d,]+ damaged", f"the six assessments count anywhere from {int(prod.flagged.min()):,} to {int(prod.flagged.max()):,} damaged")
 # --- core labels and 4-of-6 count
 meta = re.search(r'"expert": (\d+)', (pathlib.Path(__file__).parent / "data.js").read_text()).group(1)
 sub1(r"The teal dots are the [\d,]+ buildings", f"The teal dots are the {int(meta):,} buildings")
