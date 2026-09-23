@@ -202,6 +202,14 @@
   #qbar .q.done .ans, #qbar .q.reveal .ans { display:block; animation:ansIn .45s ease both; }
   @keyframes ansIn { from { opacity:0 } to { opacity:1 } }
   @media (prefers-reduced-motion: reduce) { #qbar .q.done .ans, #qbar .q.reveal .ans { animation:none; } }
+  /* phones: keep the tracker compact, it shares the top of the screen with the legend and the chart */
+  @media (max-width: 860px) {
+    #qbar .qbox { padding:10px 13px 8px; }
+    #qbar .q { font-size:12.5px; padding:5px 0 5px 22px; }
+    #qbar .q::before { top:7px; width:15px; height:15px; font-size:9.5px; line-height:15px; }
+    #qbar .q .ans { font-size:12px; margin:4px 0 1px; padding-left:9px; }
+    #qbar .q.pop .ans { font-size:13.5px; }
+  }
 
 </style>
 </head>
