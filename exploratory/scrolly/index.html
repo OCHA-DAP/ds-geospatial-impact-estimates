@@ -201,6 +201,7 @@
   #qbar .q.pop .ans { font-size:clamp(19px, 1.6vw, 22px); color:#6fd3ad;
              border-left-color:rgba(111,211,173,.9); }
   #qbar .q.done .ans, #qbar .q.reveal .ans { display:block; animation:ansIn .45s ease both; }
+  #qbar .q.pending .ans { display:none; }           /* waiting to land: never show it small first */
   @keyframes ansIn { from { opacity:0 } to { opacity:1 } }
   @media (prefers-reduced-motion: reduce) { #qbar .q.done .ans, #qbar .q.reveal .ans { animation:none; } }
   /* phones: keep the tracker compact, it shares the top of the screen with the legend and the chart */
@@ -714,10 +715,12 @@ function qbar(active, done, reveal){
     const n = +q.dataset.n;
     q.classList.toggle("active", active === n);
     q.classList.toggle("done", (done||[]).includes(n));
-    q.classList.remove("reveal", "pop");
-    // the live question's answer lands once its chart has drawn: large for a beat, then settling
-    if (reveal === true && active === n)
-      qbigTimer = setTimeout(() => q.classList.add("reveal", "pop"), 1500);
+    q.classList.remove("reveal", "pop", "pending");
+    // the live question's answer lands once its chart has drawn, large, and stays until the reader moves on
+    if (reveal === true && active === n) {
+      q.classList.add("pending");
+      qbigTimer = setTimeout(() => { q.classList.remove("pending"); q.classList.add("reveal", "pop"); }, 1500);
+    }
   });
 }
 function legends(which){ for (const id of ["legend-verdict","legend-test","legend-extents","legend-hex"])
