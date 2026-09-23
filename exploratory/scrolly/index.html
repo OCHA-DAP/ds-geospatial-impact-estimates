@@ -28,7 +28,7 @@
   .card .statsub { font:12.5px Roboto, sans-serif; color:var(--mut); }
   strong.amber { color:var(--amber); } strong.red { color:var(--red); } strong.teal { color:#51ac92; }
   .spacer { height:1px; }
-  .qstep { align-items:flex-start; padding-top:min(240px, 30vh); box-sizing:border-box; }
+  .qstep { align-items:flex-start; padding-top:min(340px, 40vh); box-sizing:border-box; }  /* clears the tracker, which is tallest once all three answers show */
   .card a { color:var(--ink); text-decoration:underline; text-underline-offset:3px; }
   .card p { margin:0 0 10px; } .card p:last-child { margin-bottom:0; }
   .card ol.qs { margin:12px 0 0; padding-left:1.4em; }
@@ -198,7 +198,8 @@
              font:700 14px/1.4 Merriweather, Georgia, serif; color:#51ac92;
              transition:font-size .6s ease, color .6s ease, border-color .6s ease; }
   /* it lands large for a beat, then settles into the list */
-  #qbar .q.pop .ans { font-size:19.5px; color:#6fd3ad; border-left-color:rgba(111,211,173,.9); }
+  #qbar .q.pop .ans { font-size:clamp(19px, 1.6vw, 22px); color:#6fd3ad;
+             border-left-color:rgba(111,211,173,.9); }
   #qbar .q.done .ans, #qbar .q.reveal .ans { display:block; animation:ansIn .45s ease both; }
   @keyframes ansIn { from { opacity:0 } to { opacity:1 } }
   @media (prefers-reduced-motion: reduce) { #qbar .q.done .ans, #qbar .q.reveal .ans { animation:none; } }
@@ -208,7 +209,7 @@
     #qbar .q { font-size:12.5px; padding:5px 0 5px 22px; }
     #qbar .q::before { top:7px; width:15px; height:15px; font-size:9.5px; line-height:15px; }
     #qbar .q .ans { font-size:12px; margin:4px 0 1px; padding-left:9px; }
-    #qbar .q.pop .ans { font-size:13.5px; }
+    #qbar .q.pop .ans { font-size:15px; }
   }
 
 </style>
@@ -703,22 +704,20 @@ function coreOnly(op){ if(map.getLayer("ext-core")) map.setPaintProperty("ext-co
 function hexes(mode){ if(!map.getLayer("hex-e")) return;
   map.setPaintProperty("hex-e","fill-opacity", mode==="e"?0.8:0);
   map.setPaintProperty("hex-a","fill-opacity", mode==="a"?0.8:0); }
-let qbigTimer = null, qPopTimer = null;
+let qbigTimer = null;
 function qbar(active, done, reveal){
   const bar = document.getElementById("qbar");
   bar.classList.toggle("on", active !== null);
   bar.classList.toggle("neutral", active === 0);
-  clearTimeout(qbigTimer); clearTimeout(qPopTimer);
+  clearTimeout(qbigTimer);
   bar.querySelectorAll(".q").forEach(q => {
     const n = +q.dataset.n;
     q.classList.toggle("active", active === n);
     q.classList.toggle("done", (done||[]).includes(n));
     q.classList.remove("reveal", "pop");
     // the live question's answer lands once its chart has drawn: large for a beat, then settling
-    if (reveal === true && active === n) qbigTimer = setTimeout(() => {
-      q.classList.add("reveal", "pop");
-      qPopTimer = setTimeout(() => q.classList.remove("pop"), 1400);
-    }, 1500);
+    if (reveal === true && active === n)
+      qbigTimer = setTimeout(() => q.classList.add("reveal", "pop"), 1500);
   });
 }
 function legends(which){ for (const id of ["legend-verdict","legend-test","legend-extents","legend-hex"])
