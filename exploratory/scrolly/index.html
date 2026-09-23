@@ -632,7 +632,6 @@ map.on("load", () => {
     "circle-radius":["interpolate",["linear"],["zoom"],5,1.6,7,2.4,10,3.2], "circle-blur":0.3,
     "circle-opacity":0, "circle-opacity-transition":{duration:800} }});
   ["ext-cems","ext-core"].forEach(id => map.moveLayer(id));   // reference + core strip stay visible above the dots
-  buildTimeline();
 });
 
 // arrival order by our ingest dates (timeline_events.csv; LIST/UH tentative)
@@ -665,8 +664,11 @@ function buildTimeline(){
          ${a.name}<span class="n">${a.n}</span></div>
        <div class="tl-date" data-i="${i}" style="left:${a.pct}%; ${up?"":"top:auto; bottom:64px;"}">${a.date}</div>`);
   });
+  timeline(lastTimeline);   // if a step already asked for a state, apply it to the dots that now exist
 }
+let lastTimeline = -1;
 function timeline(n){
+  lastTimeline = n;
   document.getElementById("timeline").classList.toggle("on", n >= 0);
   document.querySelectorAll("#timeline [data-i]").forEach(el =>
     el.classList.toggle("on", +el.dataset.i < n));
@@ -815,6 +817,7 @@ const STEPS = {
   20:()=>{ qbar(null); legends(null); panels(null); timeline(-1); },
 };
 
+buildTimeline();   // before the scroll observer can call timeline(n)
 let current=-1;
 const io = new IntersectionObserver(entries => {
   const mid = window.innerHeight / 2;
