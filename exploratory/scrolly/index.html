@@ -165,6 +165,7 @@
   .plot .qchip { margin-bottom:10px; }
   .answer { display:block; margin-top:12px; padding-top:10px; border-top:1px solid rgba(250,251,251,.12); }
   .card .fn { display:block; margin-top:10px; font-size:12px; line-height:1.45; color:var(--mut); }
+  .card .fnref { font-size:.62em; line-height:0; vertical-align:super; color:var(--mut); margin-left:1px; }
   .article strong.aud { color:#a3c0ef; }
   .plot .answerbox { margin:18px -32px -28px; padding:14px 32px 16px; background:rgba(163,192,239,.10);
                      border-top:1px solid rgba(163,192,239,.35); border-radius:0 0 10px 10px;
@@ -405,17 +406,20 @@ earthquake and asks what responders can, and cannot, do with them.</p>
   <section class="step" data-step="11"><div class="card">
     <div class="kicker">The baseline</div>
     <p>Inside that shared strip, we measured every assessment against a reference dataset
-    built from three sources, each catching what the others miss: manually mapped damaged buildings
-    (<strong class="teal">Copernicus EMS</strong>), crowd-sourced volunteer
-    review (<strong>MapSwipe</strong>, 400+ volunteers), and reports from field teams on
+    built from three sources that became more fully available in the weeks after the earthquake:
+    1. manually mapped damaged buildings
+    (<strong class="teal">Copernicus EMS</strong>), 2. crowd-sourced volunteer
+    review (<strong>MapSwipe</strong>, 400+ volunteers), and 3. reports from field teams on
     the ground (<strong>ChatMap</strong>).</p>
-    <p>Copernicus EMS is the main part of that reference. Its analysts mapped each building by
-    hand, and responders already use it. But it is not ground truth: it covers only the dashed
-    areas and was finished days later, so the other two sources fill in what it missed.</p>
+    <p>Copernicus EMS comprises the main part of the reference.</p>
     <p>The teal dots are the 2,064 buildings where
-    Copernicus EMS recorded damage. For every assessment we then asked: of the buildings it
-    flags, how many are really damaged? And of the damaged buildings, how many does it
-    find?</p>
+    Copernicus EMS recorded potential damage.<sup class="fnref">1</sup> For every assessment we then
+    asked: of the buildings it flags, how many are really damaged? And of the damaged buildings,
+    how many does it find?</p>
+    <span class="fn"><sup class="fnref">1</sup> Only Copernicus EMS is drawn here. ChatMap accounts
+    for a small share of the recorded damage, and MapSwipe's crowd review is not building-level.
+    Both are still used in the analysis: to check how complete Copernicus EMS is as a reference, and
+    to widen it into a range of plausible estimates.</span>
   </div></section>
 
   <section class="step qstep" data-step="12"><div class="spacer"></div></section>
