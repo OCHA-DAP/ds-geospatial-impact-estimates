@@ -67,6 +67,8 @@ Measured on real silver layers (not fixtures):
 | Prototype end to end on the largest Somalia layer | 20.1 s vs 295.2 s (14.7x) |
 | **Shipped `snap` vs `validate`, same layer** | **36.9 s vs 329.0 s (8.9x)** |
 | `validate` in production, FL20220525BGD (35 polygons, 62.8M vertices, 9 label sets) | 6 h 19 min for one code |
+| **Head-to-head in production, FL20220418ZAF (20 polygons, 30.05M vertices, 3 label sets)** | **`validate`: killed unfinished at 13 h 58 min. `snap`: built in 4 h 35 min** |
+| `snap` in production, FL20220728NER (6 rows, 672k parts, 11.6M vertices, 2 label sets) | 2 h 05 min |
 | Shipped `build_code`, whole code FL20170424HTI (4,926 polygons, 6 label sets) | 1.16 s vs 1.14 s; water area equal to 4 dp per label set; valid mask differs 1e-4 km² on 1,010 km² |
 | Dissolved area, same layer | 5,681.131574 vs 5,681.131517 km² (1e-8 relative) |
 | Symmetric difference, same layer | 0.0025% of area |
@@ -78,6 +80,11 @@ The shipped code is slower than the prototype because it repairs invalid parts
 both before and after snapping: the precision reducer raises on a
 self-intersecting ring, and snapping can itself create a self-touch. That
 is roughly 20% of the speed-up spent on never crashing on real input.
+
+The South Africa row is the only same-event comparison: `snap` finished in under a
+third of the time `validate` had already spent without finishing. Both giants
+spent most of their `snap` time in GEOS's coverage union rather than in repair,
+which is why ADR-0037 proposes removing the union altogether for the fusion path.
 
 On an ordinary code (Haiti 2017 above) the two methods run in the same time and
 produce the same label-set count and areas: `snap` costs nothing where nothing
