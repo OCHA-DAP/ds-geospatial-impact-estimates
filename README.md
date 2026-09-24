@@ -10,6 +10,16 @@ Initiatives Sentinel-1 SAR damage proxy — normalizes them onto a common Overtu
 building base and an H3 grid, aggregates to OCHA COD admin 0/1/2/3 units, and
 lets users **compare what different sources say** for the same unit.
 
+## Published sites
+
+Everything this repo publishes, the viewers, the Venezuela damage-assessment evaluation
+(scroll story, technical brief, write-up, slides) and the trackers, is indexed on one landing page:
+
+**https://ocha-dap.github.io/ds-geospatial-impact-estimates/**
+
+Some pages are passphrase-gated for review. The site is the `pages/` tree, deployed as-is on
+push to `v1`; see [`pages/README.md`](pages/README.md).
+
 ## Architecture at a glance
 
 - **Lake:** Azure Blob, medallion layout (`bronze`/`silver`/`gold`),
