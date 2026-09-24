@@ -95,6 +95,17 @@ def rasterise_label_set(
     return out
 
 
+def _vertex_count(geoms) -> int:
+    """Exterior-ring vertices across polygons and multipolygon parts."""
+    n = 0
+    for g in geoms:
+        if g is None or g.is_empty:
+            continue
+        parts = g.geoms if g.geom_type == "MultiPolygon" else (g,)
+        n += sum(len(part.exterior.coords) for part in parts)
+    return n
+
+
 def build_code_raster(code: str, observed, coverage, out_dir: Path) -> list[dict]:
     """The gold grouping, then a burn per label set. Returns per-set timings."""
     obs = gold._prepare(observed, code=code, table="observed_event", method="none")
@@ -142,15 +153,7 @@ def build_code_raster(code: str, observed, coverage, out_dir: Path) -> list[dict
                 "start": start,
                 "end": end,
                 "polygons": len(group),
-                "vertices": int(
-                    sum(
-                        len(g.exterior.coords)
-                        if g.geom_type == "Polygon"
-                        else sum(len(p.exterior.coords) for p in g.geoms)
-                        for g in group.geometry
-                        if g is not None
-                    )
-                ),
+                "vertices": _vertex_count(group.geometry),
                 "cells": h * w,
                 "water_cells": int(bands["water"].sum()),
                 "valid_cells": int(bands["valid"].sum()),
