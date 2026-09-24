@@ -14,6 +14,8 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -70,6 +72,31 @@ def domain_rows(sha256: str, info: dict) -> list[dict]:
     return rows
 
 
+@contextmanager
+def extract_gdbs(zip_path: Path) -> Iterator[list[tuple[str, Path]]]:
+    """Extract every ``.gdb`` directory found in ``zip_path`` to a fresh temp
+    dir and yield ``(zip_relative_name, extracted_path)`` pairs — the name is
+    kept zip-relative (subfolder prefix included, e.g. ``"sub/good.gdb"``) so
+    callers can report exactly which archived entry an error came from. The
+    temp dir (and everything extracted into it) is removed on exit, success or
+    error. Yields ``[]`` without extracting anything when the zip has no
+    ``.gdb`` inside it. Opening/reading the zip itself (``zipfile.BadZipFile``,
+    or ``NotImplementedError`` for a compression method Python's zipfile
+    cannot decompress) is not caught here — the caller decides what that
+    means."""
+    with zipfile.ZipFile(zip_path) as z:
+        gdb_dirs = sorted({n.split(".gdb/")[0] + ".gdb" for n in z.namelist() if ".gdb/" in n})
+        if not gdb_dirs:
+            yield []
+            return
+        tmp = Path(tempfile.mkdtemp(prefix="unosat_gdb_"))
+        try:
+            z.extractall(tmp)
+            yield [(g, tmp / g) for g in gdb_dirs]
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
 def domains_for_gdb_zip(sha256: str, zip_path: Path) -> tuple[list[dict], str, str | None]:
     """Extract the zip to a temp dir, run ogrinfo on each .gdb inside, collect rows.
 
@@ -82,24 +109,16 @@ def domains_for_gdb_zip(sha256: str, zip_path: Path) -> tuple[list[dict], str, s
     recorded as ``zip_unreadable``, not raised.
     """
     try:
-        with zipfile.ZipFile(zip_path) as z:
-            gdb_dirs = sorted(
-                {n.split(".gdb/")[0] + ".gdb" for n in z.namelist() if ".gdb/" in n}
-            )
-            if not gdb_dirs:
+        with extract_gdbs(zip_path) as gdbs:
+            if not gdbs:
                 return [], "no_gdb_in_zip", None
-            tmp = Path(tempfile.mkdtemp(prefix="unosat_gdb_"))
-            try:
-                z.extractall(tmp)
-                rows: list[dict] = []
-                errors: list[tuple[str, str]] = []
-                for g in gdb_dirs:
-                    try:
-                        rows.extend(domain_rows(sha256, ogrinfo_json(tmp / g)))
-                    except OgrinfoError as e:
-                        errors.append((g, str(e)[:500]))
-            finally:
-                shutil.rmtree(tmp, ignore_errors=True)
+            rows: list[dict] = []
+            errors: list[tuple[str, str]] = []
+            for name, path in gdbs:
+                try:
+                    rows.extend(domain_rows(sha256, ogrinfo_json(path)))
+                except OgrinfoError as e:
+                    errors.append((name, str(e)[:500]))
     except (zipfile.BadZipFile, NotImplementedError) as e:
         return [], "zip_unreadable", f"{type(e).__name__}: {e}"[:500]
     if errors:

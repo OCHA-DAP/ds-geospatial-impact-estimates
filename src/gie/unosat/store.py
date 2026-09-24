@@ -32,23 +32,32 @@ class BlobStore(Protocol):
     def exists_size(self, path: str) -> int | None: ...
     def upload(self, path: str, data: bytes) -> None: ...
     def list_sizes(self, prefix: str) -> dict[str, int]: ...
+    def download(self, path: str) -> bytes: ...
 
 
 class MemoryStore:
     def __init__(self, *, fail_upload: bool = False) -> None:
         self.uploads: dict[str, bytes] = {}
         self._fail = fail_upload
+        # Test hook, called with (path, data) before each upload: lets a test
+        # block, count or fail one upload without a blob account.
+        self.on_upload = None
 
     def exists_size(self, path: str) -> int | None:
         return len(self.uploads[path]) if path in self.uploads else None
 
     def upload(self, path: str, data: bytes) -> None:
+        if self.on_upload is not None:
+            self.on_upload(path, data)
         if self._fail:
             raise OSError("simulated upload failure")
         self.uploads[path] = data
 
     def list_sizes(self, prefix: str) -> dict[str, int]:
         return {p: len(d) for p, d in self.uploads.items() if p.startswith(prefix)}
+
+    def download(self, path: str) -> bytes:
+        return self.uploads[path]
 
 
 class DataLakeStore:
@@ -74,3 +83,6 @@ class DataLakeStore:
     def list_sizes(self, prefix: str) -> dict[str, int]:
         sizes = {b.name: b.size for b in self._cc.list_blobs(name_starts_with=prefix)}
         return drop_directory_entries(sizes)
+
+    def download(self, path: str) -> bytes:
+        return self._cc.download_blob(path).readall()

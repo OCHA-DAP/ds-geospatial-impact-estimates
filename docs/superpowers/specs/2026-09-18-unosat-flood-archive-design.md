@@ -102,8 +102,10 @@ unosat/bronze/_meta/resources.parquet                  THE LEDGER: one row per r
 unosat/bronze/_meta/zip_contents.parquet               member inventory per sha256
 unosat/bronze/_meta/transfers.jsonl                    append-only journal
 unosat/bronze/_meta/domains.parquet                    (sha256, layer, field, domain, code, value) from every GDB
-unosat/silver/{observed_event,coverage,sources}/code={EventCode}/data.parquet
-unosat/silver/_meta/processing.parquet                 one row per distinct layer content
+unosat/silver/{observed_event,coverage}/code={EventCode}/layer={content_hash}-{name8}.parquet
+unosat/silver/sources/code={EventCode}/data.parquet
+unosat/silver/_meta/{layers,layers_status}.parquet     layer inventory per (sha256, layer)
+unosat/silver/_meta/processing.parquet                 one row per (sha256, layer)
 unosat/gold/label_index.parquet                        v2 schema (shared with CEMS)
 unosat/gold/labels/code={EventCode}/data.parquet
 ```
@@ -203,11 +205,64 @@ disagreements are recorded per layer (`shp_gdb_mismatch`). `geometry_source`
 ∈ {`gdb`, `shp`} on every row. Geometry is reprojected to EPSG:4326 when the
 source is not (seen: EPSG:32636); the source CRS is recorded.
 
+**The layer inventory decides what a zip is, not the HDX `format` label**, and
+the GDB-first preference is applied to that. The same content is sometimes
+listed as `Geodatabase` in one dataset and `SHP` in others
+(`FL20140910PAK_gdb.zip`); trusting the label made silver look for `.shp`
+members inside a geodatabase. The label rides along as `format_label` with a
+`format_mismatch` flag, so the HDX metadata defect stays visible rather than
+being quietly corrected. A geodatabase entry `ogrinfo` reports with no
+geometry field is one of the coded-value lookup tables (`Water_Class`,
+`Water_StatusID`, …), not a feature class: `skipped_non_water`, never read.
+The same null geometry type on a shapefile member means only that the
+inventory records none, so that layer is read and its geometry decides.
+
 **Unit of work** is one distinct **layer content**: `(event_code, layer_name,
 content hash)` where the content hash is the sha256 of the `.shp`+`.dbf`
 members or of the GDB feature class exported to GeoParquet. A layer re-shipped
 in 35 datasets is processed once; the processing ledger lists every
 `target_id` that carried it.
+
+**Storage: one file per layer content and name**,
+`{observed_event,coverage}/code={EventCode}/layer={content_hash}-{name8}.parquet`
+(`name8` = first 8 hex of `sha256(layer_name)`), not one `data.parquet` per
+code. The key is the file name, so a re-shipped layer lands on a path that
+already exists and the write is skipped — the pass is idempotent and
+deduplicates by construction rather than by rewriting a whole code partition
+from an accumulated in-memory list, which a partial or resumed run would
+silently truncate. The layer name is part of the key because identical
+geometry under two names is real and meaningful (the same analysis footprint
+shipped for two acquisition dates); hashing content alone collapsed such
+layers onto one path and dropped the second. `sources` stays one
+`data.parquet` per code (it is a small per-code summary, not layer content).
+
+**Local mirror first, blob in the background.** Every file is written to
+`{work_dir}/silver/…` — the same relative layout — and uploaded from there by
+a small thread pool with a short socket timeout (60 s, against bronze's 300 s:
+the median upload is 0.5 s and observed stalls ran to 470 s and made up half a
+real run's wall time). The processing ledger's `uploaded` flag says whether
+that push is confirmed; a checkpoint drains the in-flight uploads first, so a
+persisted row never claims an upload that is still in the air, and a killed
+run leaves `uploaded=False` rows whose files are already built and need only
+pushing. `uploaded` null (a ledger written before the flag existed) is
+reconciled against the blob listing, not assumed either way. The mirror is
+disposable: blob is the truth, and gold reads through
+`silver.iter_layer_files`, which fetches whatever the mirror lacks. Zips are
+processed in parallel worker processes (`--workers`, default 3) by the pure
+`silver.process_unit`; the ledger, the uploads and the printing stay on the
+main thread.
+
+Note for readers of these files: they live under a `code={EventCode}/`
+directory *and* carry a `code` column, so pyarrow's hive-partition inference
+collides with the data. Read them with `silver.read_layer_file`, which turns
+that inference off.
+
+**One partition per content.** A content listed under two event codes (an
+ISO3 typo in one of UNOSAT's resource names — seen once, Cabo Verde listed as
+both `FL20250812CPV` and `FL20250812COD`) is assigned one code: a checked
+entry in `silver.CODE_OVERRIDES`, else the code of the most recently listed
+resource version. Every listed code is carried on the processing rows as
+`codes_listed`, so the choice is inspectable rather than implicit.
 
 **Event code.** The resource-name code is the partition key (`code`). The
 per-polygon `EventCode` attribute is recorded as `event_code_attr`; it is
@@ -230,11 +285,15 @@ or more, as in multi-sensor names like `ST3_..._ST2_..._ICEYE_..._FloodExtent`
 in the vocabulary below (order matters: `PreFlood` before `Flood`,
 `MaximumFlood` before `Flood`). Everything else is area text. Unmatched
 layers land in the processing ledger as `unclassified` with their names.
+`aoi`/`areaofinterest` match a whole `_`-delimited token only: the coverage
+rules sit ahead of the water rules, so substring matching filed every real
+water layer carrying a numbered zone suffix
+(`ST1_20191105_WaterExtent_BasseKotto_CAF_AOI1`) as a coverage footprint.
 
 | name contains (casefolded) | table | role / `layer_kind` |
 |---|---|---|
 | `cloudobstruction` | coverage | `not_analysed` |
-| `analysisextent`, `analysis_extent`, `areaofinterest`, `aoi`, trailing `extent` alone | coverage | `footprint` |
+| `analysisextent`, `analysis_extent`, trailing `extent` alone (substring); `areaofinterest`, `aoi` (**whole token only**) | coverage | `footprint` |
 | `permanentwater`, `prefloodwater`, `preflood`, `archivewater` | observed_event | `water_pre` |
 | `maximumflood`, `maxflood`, `cumulative` | observed_event | `aggregate_max` |
 | `minimumflood` | observed_event | `aggregate_min` |
@@ -276,24 +335,39 @@ only the layer name carries a date; `window` for composites), `acq_conflict`,
 `geometry_source`, `source_crs`, `attrs_json` (everything raw, verbatim),
 `geometry` (EPSG:4326).
 
+Silver adds `sensor_method` ∈ {`filename`, `attribute`, `none`} next to
+`sensor` on both `observed_event` and `coverage`. The layer name is
+authoritative when it names a sensor; otherwise the per-polygon `Sensor_ID`
+text is used, which carries sensors the filename grammar never sees
+(COSMO-SkyMed, SkySat, SPOT, Kompsat). Without the column a consumer could
+not tell the two apart, and `sensor_class` in gold would silently mix them.
+The same resolution builds `sources.sensor`, so the tables agree.
+
 **Acquisition.** Filename date(s) and the per-polygon sensor date are both
 kept. Agreement (equal, or the attribute inside the filename window) gives
 `acq_precision = date` (or `window` for composites) with `acq_conflict =
 false`. Disagreement (6 % in the sample: month/day swaps, a few days' drift)
 gives `acq_precision = window` spanning both values and `acq_conflict = true`,
 so a consumer filtering to day precision drops them rather than receiving a
-silently chosen date. Layers with no date anywhere are `acq_precision =
-none` and excluded from gold.
+silently chosen date. A layer whose name carries a date window (a
+composite) and whose polygons carry no sensor date is `acq_precision =
+window`, `acq_method = window`; `acq_method = filename` is reserved for a
+single filename date with no attribute date. Layers with no date anywhere
+are `acq_precision = none` and excluded from gold.
 
 `coverage`: `code`, `layer_name`, `role` (`footprint` | `not_analysed`),
 `sensor`, `acq_*` as above, `attrs_json`, `geometry`. `sources`: one row per
 distinct `(code, sensor, acq_datetime)` seen across layers.
 
-Processing ledger `silver/_meta/processing.parquet`: one row per layer
-content, `status` ∈ {`ok`, `unclassified`, `skipped_non_water`, `no_date`,
-`error`}, `geometry_source`, carrying `target_ids`, polygon counts by
+Processing ledger `silver/_meta/processing.parquet`: one row per `(sha256,
+layer)` — the resumable unit, one per encounter of a layer content rather
+than one per content, so every zip that shipped it is accounted for —
+`status` ∈ {`ok`, `unclassified`, `skipped_non_water`, `no_date`,
+`unreadable`}, `geometry_source`, carrying `target_ids`, polygon counts by
 `layer_kind`, `shp_gdb_mismatch`. Absence of water polygons in a layer is
-`ok` with zero rows, never an error.
+`ok` with zero rows, never an error. A layer whose content was already
+written under this code is `ok` with `reused = true` and no polygon counts:
+the counts sit on the row that wrote the file.
 
 ## 4. Gold (`gold.py`) — schema v2, shared with CEMS
 
@@ -305,7 +379,7 @@ Per row up to three dissolved geometries and one valid mask:
 | `geom_water` | dissolve of `water`, `water_pre`, `flood` (all water present at acquisition); null if none |
 | `geom_flood` | dissolve of `flood`; null if not separable |
 | `geom_possible` | dissolve of `flood_possible`; null if none |
-| `geom_valid` | `footprint` for that acquisition minus `not_analysed`; `valid_basis` ∈ {`footprint_minus_cloud`, `footprint`, `none`} |
+| `geom_valid` | the matched `footprint` minus `not_analysed`; `valid_basis` ∈ {`footprint_minus_cloud`, `footprint`, `none`}, `valid_match` ∈ {`interval`, `product`} |
 
 `aggregate_max`, `aggregate_min` and `other_water` never enter gold
 geometries; their counts ride along. Rows with `acq_conflict = true` are kept
@@ -319,7 +393,7 @@ geometries; their counts ride along. Rows with `acq_conflict = true` are kept
 (null for UNOSAT), `det_methods` (null for UNOSAT), `product_classes`
 (layer kinds present), `confidence`, `water_status`, `n_polygons`,
 `water_area_km2`, `flood_area_km2`, `possible_area_km2`, `valid_basis`,
-`valid_area_km2`, `minx`, `miny`, `maxx`, `maxy`, `target_ids`,
+`valid_match`, `valid_area_km2`, `minx`, `miny`, `maxx`, `maxy`, `target_ids`,
 `excluded_aggregate_n`. Areas in EPSG:6933 as CEMS gold does. `sensor_class`
 exists because 1,829 of the label layers are VIIRS (375 m, automated), and a
 consumer must be able to tier them differently from a Pléiades digitisation.
@@ -328,6 +402,51 @@ CEMS gold is rebuilt to v2 in a follow-up (`geom_flood` = today's `geometry`,
 `geom_valid` = today's `valid_geometry`, `geom_water` null until the
 hydrography extension lands, `label_source = cems`). Until then the fusion
 reader accepts v1 by column presence and says which it got.
+
+Rules settled while building it (Tasks 7-8), recorded here because they are
+the difference between a missing label and a negative one:
+
+- **`geom_flood` null vs empty.** Null where no layer in the set set out to
+  map flood extent (a `WaterExtent` layer says "water here", not "flood
+  here"); an **empty** geometry, area 0, where a flood-kind layer looked and
+  its polygons all resolved to something else. Unknown and none are not the
+  same claim.
+- **Coverage is matched to a label set by source product and area**, following
+  CEMS gold's `target_id` rule: a coverage row belongs to the set when it
+  shares at least one `target_id` with it *and* carries the same area label.
+  Measured against the real silver output (285 label sets, 185 footprint
+  rows), exact `(area, interval)` matching gives a mask for 46 % of sets and
+  interval overlap 51 %, against 73 % for product-and-area: a footprint layer
+  usually carries only its filename's date while the observed layer's
+  per-polygon sensor dates widen its interval, so two layers out of one
+  product rarely share an interval exactly. `target_id` alone reaches 84 %,
+  and the extra 11 points are one AOI's footprint masking another's — never
+  matched across areas. The interval survives as a refinement, not a gate:
+  `valid_match = "interval"` when the matched coverage also carried the
+  identical `(acq_start, acq_end)`, `"product"` when the link was product and
+  area alone, so a consumer can tier the two. `coverage` carries no
+  `area_label` (§3's column list), so gold re-derives it from the layer name
+  with the same grammar that produced the observed one.
+- **A set built from more than one sensor is `sensor_class = "multiple"`.**
+  `sensor` keeps the modal value for provenance, but classing a set built
+  from a SAR pass and a VHR digitisation as `sar` would tell a consumer one
+  thing about a label that is two. Both are taken over the rows that
+  contributed geometry, never the excluded ones: a cumulative layer's
+  instrument produced none of the label, and a set whose every row was an
+  excluded kind has no sensor at all.
+- **A label set whose every polygon was an excluded kind keeps its row**,
+  with null geometries and `excluded_aggregate_n` set. Dropping it would
+  erase the only record that those polygons existed.
+
+Gold is written per code — `gold/labels/code={EventCode}/data.parquet` and
+`gold/_index_parts/code={EventCode}.parquet` — and the whole
+`label_index.parquet` is concatenated from *every* part in blob at the end of
+each run, not from what that run rebuilt. That is what makes the stage
+resumable per code without ever publishing an index that covers only part of
+the corpus. An index part is mutable (rebuilding a code rewrites it in place),
+so the mirror is trusted only when its size matches the blob listing's, and a
+part that lacks any `label_index` column was written by an older schema and
+raises rather than being reindexed into shape with nulls.
 
 ## 5. Audit (`audit.py`) and report
 
@@ -365,18 +484,35 @@ in place**: event-code parsing, status vocabulary, per-host limiter, cache
 atomicity and concurrency, ledger build and merge, harvest worker outcomes
 (404, not-a-zip, untestable zip, network error, upload failure, lost race,
 dedup), URL settlement and representatives, reconcile, journal, checkpoint,
-domains parsing and crash-safe persistence, audit rules. **The remainder of
-this section is phase 2–3 (silver/gold) scope**: layer grammar over the 2,600
-distinct real names (a fixture list, committed) asserting the documented
-classification counts; fused sensor-date tokens; multi-date names; malformed
-dates; `Water_Class` resolution for text, GDB code with domain, code without
-domain entry (must resolve to null with method `unresolved_code`), unfilled
-records (must fall back to layer name); content deduplication (two ledger
-rows, one blob); acquisition cross-check (agree, in-window, disagree,
-filename-only, none); reprojection from EPSG:32636; gold dissolve with and
-without cloud obstruction; v1/v2 gold reader compatibility. Fixtures are
-small synthetic shapefiles and trimmed `ogrinfo -json` dumps, not the
-sampled zips.
+domains parsing and crash-safe persistence, audit rules.
+
+**Phase 2–3 (silver/gold) coverage is in place as well.** Done:
+
+- layer grammar over the 2,600 distinct real names (the committed fixture
+  `tests/unosat/fixtures/layer_names_flood.txt`) asserting the documented
+  classification counts, with every unmatched name listed in the sibling
+  fixture — `test_grammar.py::test_fixture_coverage_counts`;
+- fused sensor-date tokens, multi-date names, malformed dates
+  (`test_grammar.py`);
+- `Water_Class` resolution for text, for a GDB code with a domain, for a code
+  with no domain entry (resolves to null with method `unresolved_code`) and
+  for unfilled records (falls back to the layer name) — `test_classes.py`;
+- content deduplication, two ledger rows and one blob object
+  (`test_silver.py::test_cli_skips_a_layer_whose_content_is_already_in_silver`);
+- the acquisition cross-check in all five states — agree, in-window,
+  disagree, filename-only, none (`test_acquisition.py`);
+- reprojection from a non-4326 source CRS, and the raise when a populated
+  layer carries none (`test_readers.py`);
+- the gold dissolve with and without cloud obstruction, both `valid_basis`
+  and both `valid_match` values, and the multi-geometry GeoParquet round-trip
+  (`test_gold.py`).
+
+Genuinely outstanding: **v1/v2 gold reader compatibility**, which belongs to
+the fusion reader in `ds-flood-gfm` rather than to this repo and lands with
+the CEMS rebuild to gold v2.
+
+Fixtures are small synthetic shapefiles and trimmed `ogrinfo -json` dumps,
+not the sampled zips.
 
 ## Phasing
 

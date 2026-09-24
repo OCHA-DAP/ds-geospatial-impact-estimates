@@ -131,6 +131,34 @@ def test_multi_gdb_zip_keeps_rows_from_readable_gdb(tmp_path, monkeypatch):
     assert "bad.gdb" in error
 
 
+def test_extract_gdbs_keeps_zip_relative_name_for_nested_gdb(tmp_path):
+    p = tmp_path / "nested.zip"
+    with zipfile.ZipFile(p, "w") as z:
+        z.writestr("sub/good.gdb/a.gdbtable", b"x")
+
+    with domains.extract_gdbs(p) as gdbs:
+        assert [name for name, _ in gdbs] == ["sub/good.gdb"]
+        path = gdbs[0][1]
+        assert path.name == "good.gdb" and path.parent.name == "sub"
+        assert path.exists()
+
+
+def test_domains_for_gdb_zip_reports_nested_gdb_error_with_full_relative_name(
+    tmp_path, monkeypatch
+):
+    p = tmp_path / "nested.zip"
+    with zipfile.ZipFile(p, "w") as z:
+        z.writestr("sub/bad.gdb/a.gdbtable", b"x")
+
+    def fake_ogrinfo_json(path):
+        raise domains.OgrinfoError(f"ogrinfo failed on {path}: boom")
+
+    monkeypatch.setattr(domains, "ogrinfo_json", fake_ogrinfo_json)
+    rows, status, error = domains.domains_for_gdb_zip("s" * 64, p)
+    assert status == "gdb_unreadable"
+    assert "sub/bad.gdb" in error
+
+
 def test_persist_writes_typed_empty_rows_and_one_status_row(tmp_path):
     domains.persist(tmp_path, [], [domains.status_row("s" * 64, "no_domains", 0)])
     rows = pd.read_parquet(tmp_path / "domains.parquet")

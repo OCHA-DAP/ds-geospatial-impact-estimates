@@ -28,12 +28,21 @@ _MAX_CONCURRENCY = 4
 _READ_TIMEOUT = 300
 
 
-def uploader(settings) -> "any":
-    """A tuned DataLake filesystem client. Build once; reuse across many uploads."""
+def uploader(settings, *, read_timeout: int = _READ_TIMEOUT) -> "any":
+    """A tuned DataLake filesystem client. Build once; reuse across many uploads.
+
+    ``read_timeout`` is the per-socket-operation timeout in seconds. The
+    default suits one large sequential upload: waiting out a stalled socket is
+    fine when there is nothing else to do. A caller pushing many small files
+    concurrently should pass a much shorter one — there a stall blocks the
+    whole pipeline, and failing onto a fresh connection is cheaper than
+    waiting. UNOSAT silver passes 60: its median upload is 0.5 s, yet observed
+    stalls ran to 470 s and accounted for half the wall time of a real run.
+    """
     return DataLakeServiceClient(
         f"https://{settings.account_name}.dfs.core.windows.net",
         credential=settings.sas_token(write=True),
-        read_timeout=_READ_TIMEOUT,
+        read_timeout=read_timeout,
     ).get_file_system_client(settings.container)
 
 
