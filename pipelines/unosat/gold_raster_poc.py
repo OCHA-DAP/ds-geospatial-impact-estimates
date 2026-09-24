@@ -14,7 +14,8 @@ Writes one 4-band uint8 GeoTIFF per label set under
     band 4 valid  (footprint minus not_analysed; 0 = unobserved, not dry)
 and prints per-label-set timings. Reads the local silver mirror only.
 
-Run:  uv run --group etl --group api python pipelines/unosat/gold_raster_poc.py --codes FL20250812CPV
+Run:  uv run --group etl --group api python pipelines/unosat/gold_raster_poc.py --codes
+FL20250812CPV
 """
 
 from __future__ import annotations
@@ -103,9 +104,11 @@ def build_code_raster(code: str, observed, coverage, out_dir: Path) -> list[dict
         ["area_label", "acq_start", "acq_end"], dropna=False, sort=True
     ):
         t0 = time.perf_counter()
-        # coverage matching as gold does it: same source zip(s) and same area, exact interval preferred
+        # coverage matching as gold does it: same source zip(s) and same area, exact interval
+        preferred
         ids = set().union(*(set(t) for t in group["target_ids"]))
-        same = cov[cov["target_ids"].map(lambda t: bool(set(t) & ids)) & (cov["area_label"] == aoi)]
+        shares_source = [bool(set(t) & ids) for t in cov["target_ids"]]
+        same = cov[pd.Series(shares_source, index=cov.index) & (cov["area_label"] == aoi)]
         exact = same[(same["acq_start"] == start) & (same["acq_end"] == end)]
         pool = exact if len(exact[exact["role"] == "footprint"]) else same
         footprint = pool[pool["role"] == "footprint"]
@@ -173,7 +176,7 @@ def main(argv=None):
     for code in [c.strip() for c in args.codes.split(",") if c.strip()]:
         t0 = time.perf_counter()
 
-        def part(table: str) -> pd.DataFrame:
+        def part(table: str, code: str = code) -> pd.DataFrame:
             files = sorted(glob.glob(str(mirror / table / f"code={code}" / "layer=*.parquet")))
             return pd.concat([silver.read_layer_file(Path(f)) for f in files], ignore_index=True)
 
