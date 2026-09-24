@@ -37,7 +37,7 @@ from brief_numbers import N
 After the M7.5 earthquake that struck coastal Venezuela on 24 June 2026, a large number of
 satellite-derived building-damage products were released in the first days of the response.
 We evaluated six damage classification products that were published and available within
-the first ten days, against three references with complementary blind spots: expert damage
+the first ten days, against a reference dataset built from three sources: expert damage
 points (Copernicus EMS), a crowd review of AI-flagged locations (MapSwipe), and
 `{python} N["field_n"]` field reports (ChatMap).
 
@@ -71,16 +71,16 @@ several of them in the same week has no established way to decide which to trust
 what purpose, and at what spatial scale.
 
 We evaluate six damage classification products that were published and available within
-the first ten days of the response (@tbl-products). Each published an analysed extent, the
-area it actually examined; without one, "no flag" cannot be distinguished from "never
-looked", so neither misses nor false alarms can be counted fairly. Throughout, a *flag* is
-a building a product marked as damaged to any extent.
+the first ten days of the response (@tbl-products). A few products were excluded because
+they had no accompanying area of analysis, or because the area they covered was too small
+to support the comparison ([The two reporting regions](#app-regions) gives the specifics).
+Throughout, a *flag* is a building a product marked as damaged to any extent.
 
 ```{python}
 #| label: tbl-products
-#| tbl-cap: "Products evaluated, as delivered. Analysis scope: Overture base buildings and area inside the provider's published extent. Damaged buildings flagged: the provider's own count (its own footprints for Microsoft, UH and UNEP; base-building ids for IMPACT, OSU and LIST). OSU figures refer to its v0 delivery, the version available during the response. UNEP publishes no extent and is scored under a stated coverage assumption. Sensor and resolution are as stated by the provider or visible in the delivery; \"not stated\" marks the products for which neither applies."
+#| tbl-cap: "Damage products evaluated."
 import pandas as pd
-from great_tables import GT, style, loc
+from great_tables import GT, style, loc, md
 
 from brief_numbers import N
 
@@ -92,22 +92,34 @@ P = [("Microsoft AI4G", "Microsoft", "VHR optical + AI classifier", "Vantor Worl
      ("UH QuakeDamage", "Univ. of Houston", "VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint", "Vantor, sub-metre", "UH"),
      ("LIST", "WFP / LIST / CERN", "AI change detection on before/after radar imagery (provider-stated)", "radar (sensor not stated); 10 m delivery grid", "LIST"),
      ("UNEP debris", "UNEP/OCHA JEU", "Sentinel-1 radar amplitude change detection on building footprints (debris tonnage modelled from the detected damage)", "Sentinel-1; product resolution not stated", "UNEP")]
-rows = [dict(product=n, provider=pr, basis=b, sensor=s,
+rows = [dict(product=f"**{n}**<br><span style='font-size:11.5px;color:#666'>{pr}</span>", basis=b, sensor=s,
              scope=f'{N["scope_bld_" + k]} buildings · {N["scope_km2_" + k]} km²' if k != "UNEP" else "no published extent",
              flags=N["native_" + k]) for n, pr, b, s, k in P]
-(GT(pd.DataFrame(rows), rowname_col="product")
- .cols_label(provider="Provider", basis="Sensing basis", sensor="Sensor and native resolution", scope="Analysis scope", flags="Damaged buildings flagged")
+(GT(pd.DataFrame(rows))
+ .fmt_markdown(columns=["product"])
+ .cols_label(product="Product", basis="Sensing basis", sensor="Sensor and native resolution", scope="Analysis scope", flags="Damaged buildings flagged")
  .cols_align("right", columns=["flags"])
+ .tab_source_note(md("Analysis scope counts Overture base buildings and area inside the provider's published extent. "
+                     "Damaged buildings flagged is the provider's own count: its own footprints for Microsoft, UH and UNEP, base-building ids for IMPACT, OSU and LIST. "
+                     "OSU figures refer to its v0 delivery, the version available during the response. UNEP publishes no extent and is scored under a stated coverage assumption. "
+                     "Sensor and resolution are as stated by the provider or visible in the delivery; \"not stated\" marks the products for which neither applies."))
  .tab_style(style.text(color="#555", size="12px"), loc.body(columns=["provider", "basis", "sensor"]))
  .tab_options(table_font_size="13px", column_labels_font_weight="bold", data_row_padding="4px"))
 ```
 
-![Who analysed where. Each product's analysed extent, the five expert-mapped CEMS AOIs
-(dashed black), and, in red with the zoom frame below, the ~`{python} N["core_area_km2"]` km² core region where the
-head-to-head and combination analyses live. UH publishes no extent (its polygon is
-derived from its own classified footprints); UNEP publishes none at all and is scored
-under a stated coverage
-assumption.](figures/fig_extents_map.png){#fig-extents}
+![Product and analysis extents. Top: each provider's analysed extent and the expert-mapped
+Copernicus EMS areas (dashed black). Bottom: the ~`{python} N["core_area_km2"]` km² area where all products
+overlap (red), where every product can be evaluated against the same reference and
+compared with the others. The paper calls this the core
+region.](figures/fig_extents_map.png){#fig-extents}
+
+We use two reporting regions throughout (@tbl-scope). *As delivered* evaluates each product
+across the whole area it delivered, wherever that overlaps the expert-mapped areas. This is
+the view that matches what responders actually received. The *core region* is the
+~`{python} N["core_area_km2"]` km² where all six products and the reference overlap: one shared area where each
+product can be compared against all the others. It holds `{python} N["cara_share_pct"]` of the
+expert-recorded damage. The core region is the main scope for the rest of the paper; where a
+section or caption uses the as-delivered frame instead, it says so.
 
 ```{python}
 #| label: tbl-scope
@@ -128,12 +140,6 @@ rows = [dict(product=n, asd_b=N["asd_bld_" + k], asd_f=N["asd_flags_" + k], core
  .tab_style(style.fill("#f7e3e1"), loc.body(columns=["core_b", "core_f"]))
  .tab_options(table_font_size="13px", column_labels_font_weight="bold", data_row_padding="4px"))
 ```
-
-We use two reporting regions throughout (@tbl-scope). *As delivered* scores each product across
-everything it shipped, wherever the expert reference mapped. This is the view that
-matches what responders actually received. The *core region* is the ~`{python} N["core_area_km2"]` km² where all six products
-and the reference overlap: one shared area on which every predictor is scored alike, and each product's favourable case (it holds `{python} N["cara_share_pct"]` of the expert-recorded
-damage). Sections and captions state which region they use.
 
 Each of the three references sees something different. Copernicus EMS provides trained-analyst
 damage points and is the primary reference: every headline precision and recall is
@@ -465,12 +471,15 @@ footprint there. {#tbl-regions}
 Why the core region is so small, and what its numbers mean: the five extent-publishing
 products mutually overlap over only ~`{python} N["products_overlap_km2"]` km², with Microsoft's `{python} N["ms_aoi_km2"]` km² strip the
 binding constraint (UNEP publishes no extent and is treated as covering the region, the
-same stated assumption as everywhere else). Intersecting with the expert reference then
+same stated assumption as everywhere else; UH publishes none either, so its extent is the
+polygon around its own classified footprints). Intersecting with the expert reference then
 trims the shared, scoreable area to ~`{python} N["core_area_km2"]` km². The trim scores every predictor on the same area, at the cost of representativeness: the core region covers the most heavily damaged area, where the reference is densest and every product scores best, so
 core-region numbers are each product's favourable case, while the as-delivered numbers
 describe what a responder actually had (@sec-flags).
 
-The same arithmetic is why DISHA is not a member. Its delivery included an analysed
+Two products that arrived in the same window are not evaluated at all. HOT's fAIr
+published no analysed extent, so its misses and false alarms cannot be counted. The same
+arithmetic is why DISHA is not a member. Its delivery included an analysed
 extent (`{python} N["disha_extent_km2"]` km², north-west Caracas and the La Guaira–Catia strip), but that extent
 covers only `{python} N["disha_share_pct"]` of the core region (`{python} N["disha_covers_km2"]` of `{python} N["core_area_km2_1"]` km²) and holds `{python} N["disha_cems"]` of the `{python} N["core_cems"]`
 expert damage points there. Admitting it would have halved the area on which all
