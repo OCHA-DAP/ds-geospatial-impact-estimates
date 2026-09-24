@@ -66,6 +66,7 @@ Measured on real silver layers (not fixtures):
 | `coverage_union_all` vs `union_all`, same layer | 0.03 s vs 0.90 s (30x) |
 | Prototype end to end on the largest Somalia layer | 20.1 s vs 295.2 s (14.7x) |
 | **Shipped `snap` vs `validate`, same layer** | **36.9 s vs 329.0 s (8.9x)** |
+| `validate` in production, FL20220525BGD (35 polygons, 62.8M vertices, 9 label sets) | 6 h 19 min for one code |
 | Shipped `build_code`, whole code FL20170424HTI (4,926 polygons, 6 label sets) | 1.16 s vs 1.14 s; water area equal to 4 dp per label set; valid mask differs 1e-4 km² on 1,010 km² |
 | Dissolved area, same layer | 5,681.131574 vs 5,681.131517 km² (1e-8 relative) |
 | Symmetric difference, same layer | 0.0025% of area |
