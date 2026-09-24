@@ -187,7 +187,10 @@ def _check_vocabulary(
 # 1e-9-degree sliver noise from reprojection. GEOS noding (make_valid, unary
 # union) is superlinear in the vertices of ONE geometry, so a single 30M-vertex
 # feature takes hours where its parts would take minutes. See ADR-0036.
+# Methods that can feed a dissolve. `none` is a cleaning mode only: a rasteriser
+# needs no validity, but a union does, so build_code refuses it.
 GEOMETRY_METHODS = ("validate", "snap")
+CLEAN_METHODS = GEOMETRY_METHODS + ("none",)
 # ~1 cm at the equator: far finer than any UNOSAT pixel, so snapping only
 # collapses sliver noise and never moves a real boundary.
 SNAP_GRID = 1e-7
@@ -197,6 +200,8 @@ def _clean(geom: np.ndarray, method: str) -> np.ndarray:
     """Return a row-shaped array of valid geometry.
 
     `validate`: `make_valid` on each row as stored (the original behaviour).
+    `none`: geometry untouched; only for the rasterising path (ADR-0037), which
+    never unions and so never needs validity.
     `snap`: explode to parts, snap to `SNAP_GRID`, repair only parts that are
     still invalid, then CONSTRUCT each row's multipolygon back. Construction
     is O(n) with no noding; unioning the parts here would reintroduce the
@@ -204,8 +209,11 @@ def _clean(geom: np.ndarray, method: str) -> np.ndarray:
     """
     if method == "validate":
         return shapely.make_valid(geom)
+    if method == "none":
+        # For consumers that rasterise (scanline fill needs no validity) and never union.
+        return geom
     if method != "snap":
-        raise ValueError(f"geometry method {method!r} not in {GEOMETRY_METHODS}")
+        raise ValueError(f"geometry method {method!r} not in {CLEAN_METHODS}")
     parts, idx = shapely.get_parts(geom, return_index=True)
     # Repair BEFORE snapping: the precision reducer is only defined on valid
     # input and raises on a self-intersecting ring. Repair again after, since

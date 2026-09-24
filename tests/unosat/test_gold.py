@@ -153,6 +153,14 @@ def test_unknown_geometry_method_fails_loudly():
         gold.build_code(CODE, observed(), coverage(), META, geometry_method="fast")
 
 
+def test_none_cleaning_mode_cannot_feed_a_dissolve():
+    """`none` skips repair, which a rasteriser tolerates and a union does not."""
+    with pytest.raises(ValueError, match="geometry_method"):
+        gold.build_code(CODE, observed(), coverage(), META, geometry_method="none")
+    bowtie = __import__("shapely").geometry.Polygon([(0, 0), (1, 1), (1, 0), (0, 1)])
+    assert gold._clean(__import__("numpy").array([bowtie], dtype=object), "none")[0] is bowtie
+
+
 def test_water_is_flood_and_pre_flood_dissolved_together():
     """The fusion target: everything wet at acquisition, whatever produced it."""
     labels, index = build(
