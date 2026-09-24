@@ -192,7 +192,8 @@ def main(argv=None):
         for r in rows:
             print(
                 f"   {r['area']:<22} {r['polygons']:>7} polys {r['vertices']:>10,} verts  "
-                f"{r['cells']:>8,} cells  water={r['water_cells']:>7,}  valid={r['valid_cells']:>8,}  {r['seconds']:6.2f}s"
+                f"{r['cells']:>8,} cells  water={r['water_cells']:>7,}  "
+                f"valid={r['valid_cells']:>8,}  {r['seconds']:6.2f}s"
             )
 
 
