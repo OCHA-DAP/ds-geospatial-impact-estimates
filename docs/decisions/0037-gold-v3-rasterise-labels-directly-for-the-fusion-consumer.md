@@ -74,6 +74,27 @@ gold's actual knowledge — stays identical.
 * Bad: 10 m over a country is gigapixels per event; far more work than needed
   for a 30 arcsec target.
 
+## Evidence from the night of 24 Sep 2026 (proof of concept, local mirror)
+
+| Event | v2 `validate` | v2 `snap` | v3 rasterise |
+|---|---|---|---|
+| FL20220728NER (672k parts, 11.6M vertices, 2 label sets) | not attempted | 2 h 05 min | 85 s (80 s burning one 508k-part footprint) |
+| FL20220418ZAF (30.05M vertices, 3 label sets) | unfinished at 13 h 58 min | 4 h 35 min | 5 s |
+| FL20250812CPV (7 polygons, 7 label sets) | seconds | seconds | 0.9 s |
+
+Niger is the like-for-like number: v3 burned the same footprint v2 unioned.
+South Africa is not: its 30M vertices are one WorldView-3 cloud mask whose area
+label (eThekwini_Umgungundlovu) matches no observed area, so no label set used
+it under either version; v2 spent its hours cleaning it anyway because
+`_prepare` cleans the whole coverage table before matching. v3 never touches
+unmatched rows. Both are real advantages; only the first measures burn vs
+union. v3's valid-cell counts agree with v2's km² to rounding on both events.
+
+Two follow-ups this exposed: v2 should match footprints before cleaning, which
+would have saved most of those hours even under the dissolve; and eThekwini is
+the Durban metropolitan municipality, so the area grammar may be discarding a
+genuine cloud mask for the Durban label set.
+
 ## More Information
 
 Revisit if a second consumer needs vector labels or a different grid. Related:
