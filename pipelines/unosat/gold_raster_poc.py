@@ -104,8 +104,7 @@ def build_code_raster(code: str, observed, coverage, out_dir: Path) -> list[dict
         ["area_label", "acq_start", "acq_end"], dropna=False, sort=True
     ):
         t0 = time.perf_counter()
-        # coverage matching as gold does it: same source zip(s) and same area, exact interval
-        preferred
+        # coverage matching as gold does it: same source zip(s) and same area, exact interval preferred
         ids = set().union(*(set(t) for t in group["target_ids"]))
         shares_source = [bool(set(t) & ids) for t in cov["target_ids"]]
         same = cov[pd.Series(shares_source, index=cov.index) & (cov["area_label"] == aoi)]
