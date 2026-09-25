@@ -405,7 +405,10 @@ def main(argv: list[str] | None = None) -> None:
             if not parquet.exists():
                 raise FileNotFoundError(f"{parquet} missing; run without --tiles-only first")
             _pmtiles(parquet, layer=parquet.stem, max_zoom=MAX_ZOOM[coll], log=cat / "portolan.log")
-            _portolan(["add", "--pmtiles", f"{sub}/{COLLECTION_FILES[coll]}"], cwd=cat)
+            # --force: a parquet portolan already tracks is otherwise "unchanged"
+            # and its PMTiles, built after that, never gets registered (and so
+            # never pushed). Regeneration is governed by --force-pmtiles, not this.
+            _portolan(["add", "--pmtiles", "--force", f"{sub}/{COLLECTION_FILES[coll]}"], cwd=cat)
         _portolan(["add", "label-index/label_index.parquet"], cwd=cat)
         _portolan(["check"], cwd=cat)
 
