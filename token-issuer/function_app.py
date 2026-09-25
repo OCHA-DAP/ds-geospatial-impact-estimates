@@ -57,6 +57,15 @@ ALLOWLIST = {
         "project_prefix": "copernicus_ems/flood",
         "dirs": {"platinum": "platinum"},
     },
+    # Combined flood-label corpus viewer (GitHub Pages, pages/flood-labels/):
+    # CEMS + UNOSAT in one Portolan catalog (pipelines/flood_labels/platinum.py).
+    # Same scoping rule as cems-flood-labels: the platinum directory only.
+    "flood-labels": {
+        "account": "imb0chd0dev",
+        "container": "global",
+        "project_prefix": "flood_labels",
+        "dirs": {"platinum": "platinum"},
+    },
 }
 
 _SAS_HOURS = 24
