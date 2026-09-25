@@ -164,7 +164,7 @@ def main():
     aois = ["ALL (as delivered)"] + aois
     prods = list(MEMBERS)
     fig, axes = plt.subplots(1, 2, figsize=(13.5, 6.5))
-    for ax, colname, title in ((axes[0], "P_cems", "precision (CEMS floor, r = 10 m)"),
+    for ax, colname, title in ((axes[0], "P_cems", "precision (baseline, r = 10 m)"),
                                (axes[1], "R_cems", "recall (CEMS, r = 10 m)")):
         M = np.full((len(prods), len(aois)), np.nan)
         for i, p in enumerate(prods):
@@ -181,7 +181,7 @@ def main():
                             color="#777")
                 elif np.isnan(M[i, j]):
                     # distinguish "zero reference points here" from "reference too thin"
-                    txt = ("no ref\n(n=0)" if int(r.n_cems.iloc[0]) == 0 else "ref too\nthin")
+                    txt = ("no CEMS points\nin overlap" if int(r.n_cems.iloc[0]) == 0 else "ref too\nthin")
                     ax.text(j, i, txt, ha="center", va="center", fontsize=8,
                             color="#777")
                 else:
@@ -193,9 +193,8 @@ def main():
                       fontsize=10)
         ax.set_yticks(range(len(prods)), prods, fontsize=11)
         ax.set_title(title, fontsize=12)
-    fig.suptitle("The scorecard is not one number per product: per-CEMS-AOI performance\n"
-                 "(96% of reference damage points sit in Caraballeda; n = CEMS {2,3} "
-                 "points per AOI)", fontsize=12.5)
+    fig.suptitle("Baseline precision and recall per CEMS reference AOI\n"
+                 "(n = CEMS damaged-or-destroyed points per AOI)", fontsize=12.5)
     fig.tight_layout()
     fig.savefig(os.path.join(FIGS, "rq2i_per_aoi_scorecard.png"), dpi=150)
     print("wrote figs/rq2i_per_aoi_scorecard.png")
