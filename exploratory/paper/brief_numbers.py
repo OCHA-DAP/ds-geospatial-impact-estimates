@@ -173,6 +173,8 @@ for p in PRODUCTS:
     N[f"core_P20_{p}"] = f3(rq5b[20].loc[p, "P_cems"])
     N[f"core_P30_{p}"] = f3(rq5b[30].loc[p, "P_cems"])
 N["core_P_range"] = rng(prod.P_cems.min(), prod.P_cems.max())            # was 0.045–0.093
+N["core_P30_max"] = f3(rq5b[30].loc[PRODUCTS, "P_cems"].max())   # best single product at the widest matching radius
+
 N["core_P_range2"] = rng(prod.P_cems.min(), prod.P_cems.max(), f2)       # abstract: 0.05–0.09
 N["core_R_range"] = rng(prod.R_cems.min(), prod.R_cems.max(), f2)        # was 0.31–0.69
 N["core_F1_range"] = rng(prod.F1_cems.min(), prod.F1_cems.max(), f2)     # was 0.09–0.15
@@ -370,7 +372,8 @@ def _rq3():
     f_all, f_core = _f("asd"), _f("core")
     c8 = f_core[f_core.res == 8].set_index("product"); a7 = f_all[f_all.res == 7].set_index("product"); a8 = f_all[f_all.res == 8].set_index("product")
     N["rank_core8_range"] = rng(c8.rho_product.min(), c8.rho_product.max(), f2)        # was 0.48–0.74
-    N["rank_asd7_range"] = f"{signed(a7.rho_product.min())} to {f2(a7.rho_product.max())}"  # was −0.09 to 0.59
+    N["rank_asd7_range"] = f"{signed(a7.rho_product.min())} to {f2(a7.rho_product.max())}"
+    N["rank_asd7_best"] = a7.rho_product.idxmax()   # the best single product at the coarse as-delivered scale  # was −0.09 to 0.59
     N["rank_asd8_range"] = f"{signed(a8.rho_product.min())} to {f2(a8.rho_product.max())}"
     for lab, key in (("Microsoft", "MS"), ("IMPACT v2", "IMPACT"), ("OSU", "OSU"), ("UH", "UH"), ("LIST", "LIST"), ("UNEP", "UNEP")):
         for tag, d in (("asd7", a7), ("asd8", a8), ("core8", c8)):
@@ -409,6 +412,7 @@ def _rq3():
         sg = [p for p in hr.index if p in SINGLE]
         vt = [p for p in hr.index if "-of-" in p]
         N[f"top20_single_{res}"] = str(int(round(20 * hr.loc[sg, "top20"].max())))
+        N[f"top20_single_product_{res}"] = hr.loc[sg, "top20"].idxmax()
         N[f"top20_vote_{res}"] = str(int(round(20 * hr.loc[vt, "top20"].max())))
         N[f"top20_vote_rule_{res}"] = hr.loc[vt, "top20"].idxmax()
     g = L("asd", "cells-fraction").rename(columns={"radius": "res", "predictor": "product"}); g["res"] = g["res"].astype(int)

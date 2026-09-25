@@ -57,3 +57,4 @@ docs/decisions/0024-uniteapps-registration-compliance.md
 # Local publish paths (per-machine worktree layout)
 scripts/publish_pages.env
 !exploratory/paper/appendix-fold.html
+!exploratory/paper/hdx-brief-style.html
