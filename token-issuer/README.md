@@ -96,17 +96,14 @@ cd token-issuer
 ```
 
 `deploy.sh` needs `listKeys` on the runtime storage account `chd0tokenissuer`, which the
-standing team role (Website Contributor on the RG) does not have. `deploy-zip.sh` ships the
-identical vendored package through the publishing channel instead
-(`az functionapp deployment source config-zip`), which that role allows; on Linux Consumption
-this stores the zip in the app's `function-releases` container and sets
-`WEBSITE_RUN_FROM_PACKAGE` itself. Verified route (team KB `infrastructure/token-issuer.md`,
-2026-07-30, `regional-forecasts`).
+standing team role (Website Contributor on the RG) does not have. `deploy-zip.sh` is the
+same mechanism with the key taken from the app's own `AzureWebJobsStorage` setting, which
+that role can read. Use it for routine redeploys.
 
-Then verify:
-```bash
-curl -s https://chd-ds-token-issuer.azurewebsites.net/api/token | jq .platinum_dir
-```
+> **Do not use `az functionapp deployment source config-zip` here.** It was the team KB's
+> documented keyless route (verified 2026-07-30), but az CLI 2.77.0 (2026-09-25) uploaded
+> the zip's *path string* as the package blob and pointed the app at it — every registered
+> app answered 503 until `deploy-zip.sh` re-deployed the real package.
 
 ## Security model (why the SAS being public is fine)
 
