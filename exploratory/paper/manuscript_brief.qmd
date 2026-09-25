@@ -215,17 +215,19 @@ roughly the share of a product's flags placed in areas with little recorded dama
 
 Those numbers come from the strictest configuration this study evaluates, and a defensible
 one: a flag counts as correct only where a CEMS point graded *damaged* or *destroyed* lies
-within 10 m of it. Neither of the two ways of relaxing that changes the conclusion. Allowing a flag to sit further from the
-expert point helps a little, and no more: at a 30 m radius the best single product reaches
-`{python} N["core_P30_max"]` ([performance versus matching radius](#app-radius) scores every
-product and rule at all three distances).
+within 10 m of it. The study loosens that criterion in two ways: by raising the distance
+threshold, and by relaxing the reference damage definition itself. Raising the threshold to
+30 m lifts the best single product's precision to `{python} N["core_P30_max"]`
+([performance versus matching radius](#app-radius) scores every product and rule at all
+three distances).
 
 Relaxing the reference itself is the more generous test, and @fig-bounds runs it using the
 other reference data this study collected: first adding the points CEMS graded *possibly
 damaged*, then instead crediting the flags the MapSwipe crowd reviewed and confirmed as
 damaged, and finally both together. The result is a range of possible precision values per
 product, with a realistic upper bound at the top. Even at that upper bound every product
-stays below `{python} N["P_upper_max"]`.
+stays below `{python} N["P_upper_max"]`. Neither loosening changes the conclusion: none of
+these products is reliable enough to send a team to a single building it has flagged.
 
 ![**Region: core (`{python} N["core_area_km2"]` km²).** Each product's precision under four reference
 definitions, flags fixed, read left to right. Filled brown dot: the baseline, CEMS points graded
