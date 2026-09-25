@@ -57,3 +57,6 @@ docs/decisions/0024-uniteapps-registration-compliance.md
 # Local publish paths (per-machine worktree layout)
 scripts/publish_pages.env
 !exploratory/paper/appendix-fold.html
+
+# Superpowers SDD scratch (ledgers, briefs, review packages)
+.superpowers/
