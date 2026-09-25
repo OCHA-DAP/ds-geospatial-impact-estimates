@@ -92,7 +92,16 @@ Linux-Consumption-Python quirks (vendored deps + external run-from-package):
 ```bash
 cd token-issuer
 ./deploy.sh            # builds vendored package, uploads to blob, points the app at it, restarts
+./deploy-zip.sh        # same package via `config-zip` — no storage keys needed (see below)
 ```
+
+`deploy.sh` needs `listKeys` on the runtime storage account `chd0tokenissuer`, which the
+standing team role (Website Contributor on the RG) does not have. `deploy-zip.sh` ships the
+identical vendored package through the publishing channel instead
+(`az functionapp deployment source config-zip`), which that role allows; on Linux Consumption
+this stores the zip in the app's `function-releases` container and sets
+`WEBSITE_RUN_FROM_PACKAGE` itself. Verified route (team KB `infrastructure/token-issuer.md`,
+2026-07-30, `regional-forecasts`).
 
 Then verify:
 ```bash
