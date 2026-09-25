@@ -95,7 +95,8 @@
 
   <div id="filters">
     <div class="label">Source</div>
-    <select id="source"><option value="">Both</option><option value="cems">CEMS</option><option value="unosat">UNOSAT</option></select>
+    <label class="chk"><input type="checkbox" id="src-cems" checked> <span class="tag cems">cems</span> Copernicus EMS rapid mapping (2012–)</label>
+    <label class="chk"><input type="checkbox" id="src-unosat" checked> <span class="tag unosat">unosat</span> UNOSAT flood &amp; cyclone products (2014–)</label>
     <div class="label">Region</div><select id="region"><option value="">Global</option></select>
     <div class="label">Country</div><select id="country"><option value="">All</option></select>
     <div class="label">Layers</div>
@@ -192,7 +193,8 @@ mapReady.then(() => { $("map").style.opacity = 1; });
 
 let IDX = [], EVENTS = new Map(), current = null, stepIdx = 0;
 let scopeCodes = null;                 // null = global; else Set of codes
-let source = "";                       // "" = both
+const SOURCES = ["cems", "unosat"];
+let sources = new Set(SOURCES);        // checked sources
 let t0 = Y_MIN, t1 = Y_MAX;
 const LAYERS = { water: ["water-fill", "water-line"], flood: ["flood-fill", "flood-line"] };
 
@@ -201,7 +203,7 @@ const yearToStr = (y) => {
   return `${yr}-${String(m).padStart(2, "0")}`;
 };
 const hasBox = (r) => [r.minx, r.miny, r.maxx, r.maxy].every(Number.isFinite);
-const inScope = (r) => (!scopeCodes || scopeCodes.has(r.code)) && (!source || r.label_source === source);
+const inScope = (r) => (!scopeCodes || scopeCodes.has(r.code)) && sources.has(r.label_source);
 const inTime = (r) => r.acq_start >= yearToStr(t0) && r.acq_start <= yearToStr(t1) + "-99";
 const frac = (s) => +s.slice(0, 4) + (Math.max(1, +s.slice(5, 7)) - 1) / 12;
 
@@ -209,7 +211,7 @@ function mapFilter() {
   const f = ["all",
     [">=", ["get", "acq_start"], yearToStr(t0)],
     ["<=", ["get", "acq_start"], yearToStr(t1) + "-99"]];
-  if (source) f.push(["==", ["get", "label_source"], source]);
+  f.push(["in", ["get", "label_source"], ["literal", [...sources]]]);
   if (scopeCodes) f.push(["in", ["get", "code"], ["literal", [...scopeCodes]]]);
   return f;
 }
@@ -229,7 +231,7 @@ function applyScope(fit) {
   const bySrc = {};
   for (const r of rows) bySrc[r.label_source] = (bySrc[r.label_source] || 0) + 1;
   $("count").textContent = `${rows.length.toLocaleString()} label sets · ${codes.size} events` +
-    (source ? "" : ` (cems ${(bySrc.cems || 0).toLocaleString()} · unosat ${(bySrc.unosat || 0).toLocaleString()})`);
+    (sources.size > 1 ? ` (cems ${(bySrc.cems || 0).toLocaleString()} · unosat ${(bySrc.unosat || 0).toLocaleString()})` : "");
   const boxed = rows.filter(hasBox);   // label sets with no geometry have no bbox
   if (fit && boxed.length) {
     const minx = Math.min(...boxed.map(r => r.minx)), miny = Math.min(...boxed.map(r => r.miny));
@@ -438,13 +440,13 @@ try {
       for (const c of REGION[reg] || [])
         for (const code of countryCodes.get(c) || []) scopeCodes.add(code);
     } else scopeCodes = null;
-    source = $("source").value;
+    sources = new Set(SOURCES.filter(s => $("src-" + s).checked));
     applyScope(true);
   }
   fillCountries();
   $("region").onchange = () => { fillCountries(); $("country").value = ""; if (!current) updateScope(); };
   $("country").onchange = () => { if (!current) updateScope(); };
-  $("source").onchange = () => { if (!current) updateScope(); };
+  $("src-cems").onchange = $("src-unosat").onchange = () => { if (!current) updateScope(); };
   $("lyr-water").onchange = $("lyr-flood").onchange = setLayerVisibility;
 
   applyScope(false);
