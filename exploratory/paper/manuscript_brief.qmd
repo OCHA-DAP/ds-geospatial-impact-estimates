@@ -488,11 +488,6 @@ footprint there. {#tbl-regions}
 
 ### Reference data sources {#app-reference .unnumbered}
 
-![The three reference datasets at a glance. Two are HOT-run and easily confused:
-MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
-ChatMap is field teams reporting building-level points from the ground, used to reveal
-misses.](figures/reference_architecture.png){#fig-refarch}
-
 - The expert map's own completeness was measured rather than assumed, using the one reference
   collected on the ground independently of satellite imagery.
 - It captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings, but only
