@@ -763,15 +763,11 @@ Markdown(N["_tbl_nullrank"])
 - That comparison mostly rewards telling one damaged AOI from four quiet ones, a task density and
   terrain solve almost by definition.
 
-```{python}
-#| label: tbl-nullrank-core
-#| tbl-cap: "The same test in the core region, resolution 8 cells, sorted by the product's margin over the geography null. The larger of the two correlations in each row is in bold."
-from IPython.display import Markdown
-Markdown(N["_tbl_nullrank_core"])
-```
-
-- Within the damage zone the result changes: `{python} N["core8_n_above"]` of six beat the benchmark at
-  ~`{python} N["h3_res8_km2"]` km² cells, and `{python} N["core9_n_above"]` of six at the finest scale.
+- Within the damage zone the result changes. The benchmark scores `{python} N["rhonull_core8_LIST"]`
+  on the shared cell set at ~`{python} N["h3_res8_km2"]` km², and `{python} N["core8_n_above"]` of six
+  products beat it (`{python} N["core8_above_null"]`), the best reaching `{python} N["rho_core8_LIST"]`
+  and the weakest `{python} N["rho_core8_UH"]`. At the finest scale `{python} N["core9_n_above"]` of six
+  are ahead.
 - So the products do know where within a damaged area to go first. What they do not add is which
   area that is, which is the part geography already encodes.
 - The benchmark is hindsight-fitted, so this says the pattern was recoverable from geography after
