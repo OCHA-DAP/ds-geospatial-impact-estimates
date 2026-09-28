@@ -510,42 +510,7 @@ lower bound.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 - Consequence carried through the whole brief: measured precision is a lower bound and measured
   recall an upper bound.
 
-### Matching products to references, in full {#app-matching .unnumbered}
-
-- The product and the reference have different geometries, so there is no shared instance list
-  and no single confusion matrix. Scoring is by proximity.
-- Precision anchors on the product, recall on the reference, each with its own denominator.
-  Neither uses the undamaged background, so its size affects no score.
-- Inside an analysed extent the reference is treated as complete. That assumption is tested
-  rather than asserted: the field reports measure the expert map's own recall, and
-  expert-unmatched flags are re-judged against the crowd.
-- Products that delivered their own footprints are mapped onto the shared building base by one
-  rule: highest overlap, else nearest within 20 m, else orphan. One rule for all, so no product is
-  credited or penalised for the shape of its own building layer.
-
-```{python}
-#| label: tbl-mapping
-#| tbl-cap: "Own-footprint products mapped onto the shared base by one rule: each delivered footprint goes to the overlapping base building with the highest intersection-over-union, else to the nearest base building within 20 m, else it is an orphan; one assignment per footprint. Collapsed: footprints that share a base building with another footprint. Native: delivered footprints whose location falls in the frame; base: base buildings flagged in the frame (the counts every score uses)."
-import pandas as pd
-from great_tables import GT, md, style, loc
-
-from brief_numbers import N
-
-K = [("Microsoft", "MS"), ("UH", "UH"), ("UNEP", "UNEP")]
-rows = [dict(product=n, delivered=N["delivered_" + k], iou=N["iou_" + k], snap=N["snapped_" + k], orphans=N["orphans_" + k],
-             base=N["onbase_" + k], collapsed=N["collapsed_" + k], miou=N["median_iou_" + k],
-             asd_n=N["native_asd_" + k], asd_b=N["asd_flags_" + k], core_n=N["native_core_" + k], core_b=N["core_flags_" + k]) for n, k in K]
-(GT(pd.DataFrame(rows), rowname_col="product")
- .tab_spanner(label=md("**Whole delivery**"), columns=["delivered", "iou", "snap", "orphans", "base", "collapsed", "miou"])
- .tab_spanner(label=md("**As delivered**"), columns=["asd_n", "asd_b"])
- .tab_spanner(label=md("**Core region**"), columns=["core_n", "core_b"])
- .cols_label(delivered="delivered footprints", iou="by IoU", snap="nearest ≤ 20 m", orphans="orphans", base="base buildings",
-             collapsed="collapsed", miou="median IoU", asd_n="native", asd_b="base", core_n="native", core_b="base")
- .cols_align("right", columns=["delivered", "iou", "snap", "orphans", "base", "collapsed", "miou", "asd_n", "asd_b", "core_n", "core_b"])
- .tab_style(style.fill("#e8f0f4"), loc.body(columns=["asd_n", "asd_b"]))
- .tab_style(style.fill("#f7e3e1"), loc.body(columns=["core_n", "core_b"]))
- .tab_options(table_font_size="12.5px", column_labels_font_weight="bold", data_row_padding="4px"))
-```
+### Performance classification details {#app-matching .unnumbered}
 
 ```{python}
 #| label: fig-matching
@@ -594,6 +559,52 @@ h = [plt.Line2D([], [], marker="*", ls="", ms=13, c="k", label="CEMS damage poin
 fig.legend(handles=h, loc="lower center", ncol=3, frameon=False, fontsize=9)
 fig.tight_layout(rect=(0, 0.07, 1, 0.97))
 plt.show()
+```
+
+![How the MapSwipe crowd enters the precision calculation, and what an independent re-vote
+changed. Both panels show the same Catia La Mar neighbourhood; hexagons are the ~50 m crowd
+task cells, tinted by majority verdict. **A**, round 1: a flag matched by an expert point
+within 10 m is a true positive (green); an unmatched flag in a cell the crowd judged
+damaged is counted as confirmed and improves the adjusted precision (blue); in a cell
+judged undamaged or uncertain it remains a false alarm (orange). **B**, round 2, re-voted
+the identical cells at ~`{python} N["r2_votes_per_cell"]` votes each, with no "no damage" answer available (its "not
+sure" absorbs it): purple outlines mark cells whose verdict changed between rounds. Individual
+cells flip; the total the adjustment depends on barely moves (`{python} N["r2_MS_conf_r1"]` → `{python} N["r2_MS_conf_r2"]` of the
+strip's unmatched Microsoft flags confirmed).](figures/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
+
+- The product and the reference have different geometries, so there is no shared instance list
+  and no single confusion matrix. Scoring is by proximity.
+- Precision anchors on the product, recall on the reference, each with its own denominator.
+  Neither uses the undamaged background, so its size affects no score.
+- Inside an analysed extent the reference is treated as complete. That assumption is tested
+  rather than asserted: the field reports measure the expert map's own recall, and
+  expert-unmatched flags are re-judged against the crowd.
+- Products that delivered their own footprints are mapped onto the shared building base by one
+  rule: highest overlap, else nearest within 20 m, else orphan. One rule for all, so no product is
+  credited or penalised for the shape of its own building layer.
+
+```{python}
+#| label: tbl-mapping
+#| tbl-cap: "Own-footprint products mapped onto the shared base by one rule: each delivered footprint goes to the overlapping base building with the highest intersection-over-union, else to the nearest base building within 20 m, else it is an orphan; one assignment per footprint. Collapsed: footprints that share a base building with another footprint. Native: delivered footprints whose location falls in the frame; base: base buildings flagged in the frame (the counts every score uses)."
+import pandas as pd
+from great_tables import GT, md, style, loc
+
+from brief_numbers import N
+
+K = [("Microsoft", "MS"), ("UH", "UH"), ("UNEP", "UNEP")]
+rows = [dict(product=n, delivered=N["delivered_" + k], iou=N["iou_" + k], snap=N["snapped_" + k], orphans=N["orphans_" + k],
+             base=N["onbase_" + k], collapsed=N["collapsed_" + k], miou=N["median_iou_" + k],
+             asd_n=N["native_asd_" + k], asd_b=N["asd_flags_" + k], core_n=N["native_core_" + k], core_b=N["core_flags_" + k]) for n, k in K]
+(GT(pd.DataFrame(rows), rowname_col="product")
+ .tab_spanner(label=md("**Whole delivery**"), columns=["delivered", "iou", "snap", "orphans", "base", "collapsed", "miou"])
+ .tab_spanner(label=md("**As delivered**"), columns=["asd_n", "asd_b"])
+ .tab_spanner(label=md("**Core region**"), columns=["core_n", "core_b"])
+ .cols_label(delivered="delivered footprints", iou="by IoU", snap="nearest ≤ 20 m", orphans="orphans", base="base buildings",
+             collapsed="collapsed", miou="median IoU", asd_n="native", asd_b="base", core_n="native", core_b="base")
+ .cols_align("right", columns=["delivered", "iou", "snap", "orphans", "base", "collapsed", "miou", "asd_n", "asd_b", "core_n", "core_b"])
+ .tab_style(style.fill("#e8f0f4"), loc.body(columns=["asd_n", "asd_b"]))
+ .tab_style(style.fill("#f7e3e1"), loc.body(columns=["core_n", "core_b"]))
+ .tab_options(table_font_size="12.5px", column_labels_font_weight="bold", data_row_padding="4px"))
 ```
 
 - A product is accountable only where it and the reference both looked, so scoring is restricted
@@ -1009,17 +1020,6 @@ for k in ("flat k-of-6 voting", "weighted fusion"):
   Microsoft's unmatched flags were reviewed against `{python} N["crowdcov_UH"]` of UH's.
 - The upper bound unions crowd credit with the *possibly damaged* points. They mostly touch different
   flags, so the crowd was largely confirming damage the expert map never recorded.
-
-![How the MapSwipe crowd enters the precision calculation, and what an independent re-vote
-changed. Both panels show the same Catia La Mar neighbourhood; hexagons are the ~50 m crowd
-task cells, tinted by majority verdict. **A**, round 1: a flag matched by an expert point
-within 10 m is a true positive (green); an unmatched flag in a cell the crowd judged
-damaged is counted as confirmed and improves the adjusted precision (blue); in a cell
-judged undamaged or uncertain it remains a false alarm (orange). **B**, round 2, re-voted
-the identical cells at ~`{python} N["r2_votes_per_cell"]` votes each, with no "no damage" answer available (its "not
-sure" absorbs it): purple outlines mark cells whose verdict changed between rounds. Individual
-cells flip; the total the adjustment depends on barely moves (`{python} N["r2_MS_conf_r1"]` → `{python} N["r2_MS_conf_r2"]` of the
-strip's unmatched Microsoft flags confirmed).](figures/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
 
 - In August 2026, after these numbers were frozen, the campaign was run again: `{python} N["r2_cells"]` of the
   same cells, about sixteen votes each instead of six, different volunteers.
