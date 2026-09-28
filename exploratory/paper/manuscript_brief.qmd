@@ -493,9 +493,9 @@ footprint there. {#tbl-regions}
 - It captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings, but only
   `{python} N["cems_field_significant_pct"]` of those significantly damaged.
 
-![An external check on the reference data, and the uncertainty it puts on every recall in this
-brief. Each line is one dataset's recall against independently collected field reports, at
-complete destruction versus significant damage. Every line slopes the same way: destruction is
+![ChatMap field reports are an independent dataset that helps evaluate both the products and
+the expert reference. Each line is one dataset's recall against those reports, at complete
+destruction versus significant damage. Every line slopes the same way: destruction is
 found far more often than damage, the products and the expert map
 alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
