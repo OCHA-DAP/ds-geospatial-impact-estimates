@@ -561,6 +561,8 @@ fig.tight_layout(rect=(0, 0.07, 1, 0.97))
 plt.show()
 ```
 
+[]{#app-crowd}
+
 ![How the MapSwipe crowd enters the precision calculation, and what an independent re-vote
 changed. Both panels show the same Catia La Mar neighbourhood; hexagons are the ~50 m crowd
 task cells, tinted by majority verdict. **A**, round 1: a flag matched by an expert point
@@ -571,6 +573,32 @@ the identical cells at ~`{python} N["r2_votes_per_cell"]` votes each, with no "n
 sure" absorbs it): purple outlines mark cells whose verdict changed between rounds. Individual
 cells flip; the total the adjustment depends on barely moves (`{python} N["r2_MS_conf_r1"]` → `{python} N["r2_MS_conf_r2"]` of the
 strip's unmatched Microsoft flags confirmed).](figures/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
+
+- The rule: a flagged building with an expert damage point within 10 m is a hit outright, and the
+  crowd plays no part. Every other flag sits in a ~50 m cell volunteers voted on, and the majority
+  verdict decides.
+- Flags in cells nobody saw earn nothing. The adjustment is a measurement, not an estimate, so it
+  understates products the crowd barely reviewed.
+- Coverage is uneven because the campaign was seeded on one product's flags: `{python} N["crowdcov_MS"]` of
+  Microsoft's unmatched flags were reviewed against `{python} N["crowdcov_UH"]` of UH's.
+- The upper bound unions crowd credit with the *possibly damaged* points. They mostly touch different
+  flags, so the crowd was largely confirming damage the expert map never recorded.
+
+- In August 2026, after these numbers were frozen, the campaign was run again: `{python} N["r2_cells"]` of the
+  same cells, about sixteen votes each instead of six, different volunteers.
+- Two caveats make it an imperfect replication. The answer buttons changed, so round one's headline
+  finding for this strip cannot be re-measured, and the two rounds showed different, though similarly
+  dated, imagery.
+- What replicates is how much damage the crowd confirmed: `{python} N["r2_MS_conf_r1"]` then
+  `{python} N["r2_MS_conf_r2"]`, so roughly one flag in `{python} N["r2_MS_one_in"]` has crowd-visible damage under it.
+- What does not replicate is which cells. Only about a quarter repeat, but six votes on a borderline
+  cell is close to a coin toss; corrected for that voting noise the two rounds agree well
+  (`{python} N["r2_latent_corr"]` against `{python} N["r2_raw_corr"]` before the correction).
+- The practical consequence is the rule this brief already follows: a single cell's verdict is too
+  noisy to rely on, while sums over thousands of cells are steady, so crowd verdicts appear only
+  inside aggregate numbers and never as building-level truth.
+- Swapping the second round's verdicts in moves each product's crowd-adjusted precision by at most
+  `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
 
 - The product and the reference have different geometries, so there is no shared instance list
   and no single confusion matrix. Scoring is by proximity.
@@ -1008,33 +1036,5 @@ for k in ("flat k-of-6 voting", "weighted fusion"):
 - The 6-of-6 rule's sub-1 visits per find holds; its interval's upper limit is `{python} N["k6_visits_hi"]`.
 - No product demonstrably adds information beyond geography at its shipped operating point, one
   demonstrably falls short of it, and both combination rules demonstrably exceed it.
-
-### How the crowd adjustment works, and what happened when the crowd voted again {#app-crowd .unnumbered}
-
-- The rule: a flagged building with an expert damage point within 10 m is a hit outright, and the
-  crowd plays no part. Every other flag sits in a ~50 m cell volunteers voted on, and the majority
-  verdict decides.
-- Flags in cells nobody saw earn nothing. The adjustment is a measurement, not an estimate, so it
-  understates products the crowd barely reviewed.
-- Coverage is uneven because the campaign was seeded on one product's flags: `{python} N["crowdcov_MS"]` of
-  Microsoft's unmatched flags were reviewed against `{python} N["crowdcov_UH"]` of UH's.
-- The upper bound unions crowd credit with the *possibly damaged* points. They mostly touch different
-  flags, so the crowd was largely confirming damage the expert map never recorded.
-
-- In August 2026, after these numbers were frozen, the campaign was run again: `{python} N["r2_cells"]` of the
-  same cells, about sixteen votes each instead of six, different volunteers.
-- Two caveats make it an imperfect replication. The answer buttons changed, so round one's headline
-  finding for this strip cannot be re-measured, and the two rounds showed different, though similarly
-  dated, imagery.
-- What replicates is how much damage the crowd confirmed: `{python} N["r2_MS_conf_r1"]` then
-  `{python} N["r2_MS_conf_r2"]`, so roughly one flag in `{python} N["r2_MS_one_in"]` has crowd-visible damage under it.
-- What does not replicate is which cells. Only about a quarter repeat, but six votes on a borderline
-  cell is close to a coin toss; corrected for that voting noise the two rounds agree well
-  (`{python} N["r2_latent_corr"]` against `{python} N["r2_raw_corr"]` before the correction).
-- The practical consequence is the rule this brief already follows: a single cell's verdict is too
-  noisy to rely on, while sums over thousands of cells are steady, so crowd verdicts appear only
-  inside aggregate numbers and never as building-level truth.
-- Swapping the second round's verdicts in moves each product's crowd-adjusted precision by at most
-  `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
 
 :::
