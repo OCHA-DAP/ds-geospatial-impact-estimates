@@ -512,7 +512,7 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
 ```{python}
 #| label: fig-matching
-#| fig-cap: "Counting hits, false alarms and misses. Left: a product is scored only where it and the reference both looked. Middle: each expert damage point is checked for a product flag within radius r, which gives recall. Right: each flagged building is checked for an expert point within r, which gives precision. The two counts have different denominators, so they do not form a single confusion matrix."
+#| fig-cap: "Counting hits, false alarms and misses. Left: a product is scored only where it and the reference both looked. Middle: each expert damage point is checked for a product flag within radius r, which gives recall. Right: each flagged building is checked for an expert point within r, which gives precision."
 import matplotlib.pyplot as plt
 import matplotlib.patches as mp
 import numpy as np
