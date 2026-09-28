@@ -165,7 +165,7 @@ a crowd review of ~50 m cells at locations AI products had flagged, by more than
 volunteers: it can refute a false alarm but never reveal a miss, so it adjudicates disputed
 flags and is never ground truth. ChatMap is `{python} N["field_n"]` damage reports from field
 teams, positives-only with no survey frame: it can reveal misses but not false alarms
-(the appendix [How complete is the expert reference?](#app-reference) shows the three side by side). Because the reference is incomplete, every measured precision here is a
+(the appendix [reference data sources](#app-reference) shows the three side by side). Because the reference is incomplete, every measured precision here is a
 lower bound and every recall an upper bound.
 
 ## Results
@@ -453,7 +453,7 @@ and magnitudes are hypotheses elsewhere until replicated.
 
 The references have limits of their own, and the largest was measured rather than
 assumed: the expert map captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
-`{python} N["cems_field_significant_pct"]` of those significantly damaged ([How complete is the expert reference?](#app-reference)),
+`{python} N["cems_field_significant_pct"]` of those significantly damaged ([reference data sources](#app-reference)),
 which is why every precision here is a lower bound and every recall an upper bound. The
 crowd campaign was seeded from two AI products' flags, so it scrutinises products unevenly
 and can never see any product's misses; the field reports are undated, positives-only,
@@ -486,7 +486,7 @@ footprint there. {#tbl-regions}
   region and holds `{python} N["disha_cems"]` of its `{python} N["core_cems"]` expert damage points; admitting it
   would have halved the shared comparison area.
 
-### How complete is the expert reference? {#app-reference .unnumbered}
+### Reference data sources {#app-reference .unnumbered}
 
 - Three references, two of them run by the same organisation and easily confused.
 
