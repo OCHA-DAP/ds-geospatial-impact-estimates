@@ -561,16 +561,12 @@ plt.show()
 
 []{#app-crowd}
 
-![How the MapSwipe crowd enters the precision calculation, and what an independent re-vote
-changed. Both panels show the same Catia La Mar neighbourhood; hexagons are the ~50 m crowd
-task cells, tinted by majority verdict. **A**, round 1: a flag matched by an expert point
-within 10 m is a true positive (green); an unmatched flag in a cell the crowd judged
-damaged is counted as confirmed and improves the adjusted precision (blue); in a cell
-judged undamaged or uncertain it remains a false alarm (orange). **B**, round 2, re-voted
-the identical cells at ~`{python} N["r2_votes_per_cell"]` votes each, with no "no damage" answer available (its "not
-sure" absorbs it): purple outlines mark cells whose verdict changed between rounds. Individual
-cells flip; the total the adjustment depends on barely moves (`{python} N["r2_MS_conf_r1"]` → `{python} N["r2_MS_conf_r2"]` of the
-strip's unmatched Microsoft flags confirmed).](figures/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
+![How the MapSwipe crowd enters the precision calculation. Hexagons are the ~50 m crowd task
+cells in Catia La Mar, tinted by majority verdict. A flag matched by an expert point within 10 m
+is a true positive and the crowd plays no part (green). An unmatched flag in a cell the crowd
+judged damaged is counted as confirmed and improves the adjusted precision (blue). In a cell
+judged undamaged or uncertain it stays a false alarm (orange), and a flag in a cell nobody voted
+on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech}
 
 - The rule: a flagged building with an expert damage point within 10 m is a hit outright, and the
   crowd plays no part. Every other flag sits in a ~50 m cell volunteers voted on, and the majority
@@ -582,8 +578,10 @@ strip's unmatched Microsoft flags confirmed).](figures/rq7_crowd_adjustment_expl
 - The upper bound unions crowd credit with the *possibly damaged* points. They mostly touch different
   flags, so the crowd was largely confirming damage the expert map never recorded.
 
-- In August 2026, after these numbers were frozen, the campaign was run again: `{python} N["r2_cells"]` of the
-  same cells, about sixteen votes each instead of six, different volunteers.
+- Every crowd-adjusted number in this brief comes from this first round. A second campaign re-voted
+  the same cells in August 2026, after the numbers were frozen, and it is used to test them rather
+  than to build them: `{python} N["r2_cells"]` of the same cells, about sixteen votes each instead of
+  six, different volunteers.
 - Two caveats make it an imperfect replication. The answer buttons changed, so round one's headline
   finding for this strip cannot be re-measured, and the two rounds showed different, though similarly
   dated, imagery.
