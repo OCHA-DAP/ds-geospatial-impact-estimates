@@ -466,14 +466,7 @@ skewed toward destruction, and come with no defined collection area.
 *Outline draft. The full prose version as published on 2026-09-25 is frozen at
 `appendix-frozen-2026-09-28.qmd`.*
 
-### The two reporting regions {#app-regions .unnumbered}
-
-- Every number is reported in one of two regions, and numbers are comparable only within one.
-- **Core region**: the ~`{python} N["core_area_km2"]` km² where the expert extents and all five
-  extent-publishing products overlap. One shared cell set, so every predictor is scored on
-  identical ground.
-- **As delivered**: each product's full delivered footprint wherever the expert map looked.
-  A different region per product.
+### Analysis extents {#app-regions .unnumbered}
 
 | reporting region | what it is | used for |
 |---|---|---|
@@ -485,13 +478,9 @@ region gives every predictor an identical cell set (one geography score); as-del
 is per-product by design, so the geography model is re-scored on each product's own
 footprint there. {#tbl-regions}
 
-- Why the core region is small: the five extents mutually overlap over only
-  ~`{python} N["products_overlap_km2"]` km², with Microsoft's `{python} N["ms_aoi_km2"]` km² strip the binding
-  constraint; intersecting with the reference trims it to ~`{python} N["core_area_km2"]` km².
-- The trade: identical ground for every predictor, at the cost of representativeness. Core-region
-  numbers are each product's favourable case; as-delivered describes what a responder had.
 - UNEP and UH publish no extent. UNEP is treated as covering the region; UH's extent is the
   polygon around its own classified footprints.
+
 - Two products in the same window are not evaluated. HOT's fAIr published no extent, so its
   misses cannot be counted. DISHA published one, but it covers `{python} N["disha_share_pct"]` of the core
   region and holds `{python} N["disha_cems"]` of its `{python} N["core_cems"]` expert damage points; admitting it
