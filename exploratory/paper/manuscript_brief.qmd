@@ -358,8 +358,8 @@ configuration.](figures/rq3h_agreement_ranking_summary.png){#fig-agreerank}
 [Coordinators]{.rec-who}
 
 The coordination has to come before the analysis. Everything the procedure above asks for
-was assembled here months after the response: a common building base, each product's
-analysed extent, the agreement count across products. It should be standing
+was assembled during and after the response rather than being in place before it: a common
+building base, each product's analysed extent, the agreement count across products. It should be standing
 infrastructure that runs as deliveries arrive, with a shared picture of who has analysed
 where, a consolidation point that receives products against a stated template (analysed
 extent, metadata, a common basemap and footprint set), and the combination produced
