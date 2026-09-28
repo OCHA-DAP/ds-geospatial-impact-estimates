@@ -57,13 +57,9 @@ else:
                 va="center", fontsize=10.5, color=PROD, weight="bold")
         ax.text(r.rho_null + 0.012, i + h / 2, f"{r.rho_null:.2f}",
                 va="center", fontsize=10.5, color=NULL, weight="bold")
-        ax.text(0.99, i, "product" if r.rho_product > r.rho_null else "null",
-                transform=ax.get_yaxis_transform(), ha="right", va="center",
-                fontsize=9.5, style="italic",
-                color=PROD if r.rho_product > r.rho_null else NULL, zorder=5)
     n_null = int((sA.rho_null > sA.rho_product).sum())
     ax.set_yticks(yA, sA["product"], fontsize=11.5)
-    ax.set_title(("As delivered" if SLIDES else "Test 1 · as delivered") + ": each product's own footprint, ~5 km² sectors\n"
+    ax.set_title("As delivered: each product's own footprint, ~5 km² sectors\n"
                  "(geography re-scored on each product's cells; ahead for "
                  f"{n_null} of {len(sA)})", fontsize=11.5, loc="left", color="#1f2324")
 
@@ -75,8 +71,12 @@ null_v = float(nulls[0])
 ax = axB
 yB = np.arange(len(sB))
 ax.barh(yB, sB.rho_product, height=0.55, color=PROD, zorder=3)
+null_b = float(sB.rho_null.iloc[0])
 for i, r in sB.iterrows():
-    ax.text(max(r.rho_product, 0) + 0.012, i, f"{r.rho_product:.2f}",
+    x = max(r.rho_product, 0) + 0.012
+    if abs(x - null_b) < 0.05:          # clear of the benchmark rule
+        x = null_b + 0.055 if r.rho_product > null_b else r.rho_product - 0.075
+    ax.text(x, i, f"{r.rho_product:.2f}",
             va="center", fontsize=10.5, color=PROD, weight="bold")
 if SUMMARY:
     ax.set_yticks(yB, sB["product"], fontsize=11.5)
@@ -84,11 +84,11 @@ if SUMMARY:
                  fontsize=11.5, loc="left", color="#1f2324")
 else:
     ax.axvline(null_v, color=NULL, lw=2.5, zorder=4)
-    ax.text(null_v + 0.015, len(sB) - 0.55, f"geography null {null_v:.2f}", color=NULL,
+    ax.text(null_v + 0.015, len(sB) - 0.55, f"geography benchmark {null_v:.2f}", color=NULL,
             fontsize=11, weight="bold", ha="left", va="center")
     n_above = int((sB.rho_product > null_v).sum())
     ax.set_yticks(yB, sB["product"], fontsize=11.5)
-    ax.set_title(("Core region" if SLIDES else "Test 2 · core region") + ": one shared cell set, ~0.7 km² cells\n"
+    ax.set_title("Core region: one shared cell set, ~0.7 km² cells\n"
                  f"(geography has a single score; products above it: {n_above} of {len(sB)})",
                  fontsize=11.5, loc="left", color="#1f2324")
 
@@ -105,11 +105,11 @@ if not SUMMARY:
     h1 = plt.Rectangle((0, 0), 1, 1, color=PROD)
     h2 = plt.Rectangle((0, 0), 1, 1, color=NULL)
     fig.legend([h1, h2], ["satellite product",
-                          "geography null (coast distance + building density + shaking)"],
+                          "geography benchmark (building density + terrain slope and elevation + shaking)"],
                loc="lower center", ncol=2, fontsize=11, frameon=False,
                bbox_to_anchor=(0.5, -0.04))
 fig.suptitle("Ranking which areas were worst hit: as delivered vs the known damage zone"
-             if SUMMARY else "Ranking which areas were worst hit: the two tests",
+             if SUMMARY else "Ranking which areas were worst hit, against a geography benchmark",
              fontsize=14, weight="bold", color="#1f2324")
 fig.tight_layout(rect=(0, 0.03, 1, 0.97))
 out = os.path.join(FIGS, f"rq3f_null_ranking_both{'_slides' if SLIDES else '_summary' if SUMMARY else ''}.png")

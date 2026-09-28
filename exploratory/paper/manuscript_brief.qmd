@@ -748,14 +748,13 @@ are.](figures/rq8_dayzero_schematic.png){#fig-dayzero-build}
 ### Area-ranking detail: tables and error structure {#app-ranking-tables .unnumbered}
 
 - The same benchmark test applied to ranking: sum the model's predicted per-building risk over the
-  same cells, which needs no threshold, and correlate with the expert count.
+  same cells, which needs no threshold, and correlate with the expert count (@fig-nullrank).
 
-```{python}
-#| label: tbl-nullrank
-#| tbl-cap: "How well each ranking matches the expert damage count per cell (rank correlation, Spearman's ρ): each product against the geography model, on identical cells within that product's shared region. The two scales are H3 resolution 7 and resolution 8 hexagons (sizes in the text). The larger of the two correlations in each row is in bold."
-from IPython.display import Markdown
-Markdown(N["_tbl_nullrank"])
-```
+![**Region: as delivered (left) and core (right).** Each product's rank correlation with the
+expert damage ordering, beside the geography benchmark scored on the same cells. As delivered the
+benchmark is re-scored on each product's own footprint, so it takes a different value per row;
+in the core region every predictor shares one cell set, so it has a single score, drawn as the
+vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
 
 - Across the delivered footprints geography ranks these areas better than the products do, beating
   `{python} N["null_beats_n_asd7"]` of six at the coarser scale, with large margins, and a negative correlation
