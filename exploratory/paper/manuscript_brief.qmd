@@ -600,6 +600,11 @@ strip's unmatched Microsoft flags confirmed).](figures/rq7_crowd_adjustment_expl
 - Swapping the second round's verdicts in moves each product's crowd-adjusted precision by at most
   `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
 
+- ChatMap, the field reports, is the second independent check. Its points are building-level, so
+  they can be unioned with the expert points directly, but doing so raises measured precision by
+  only `{python} N["field_union_gain_range"]`. That is why it is left off the bounds ladder in the
+  main text: geometrically exact, but too sparse to move the numbers.
+
 - The product and the reference have different geometries, so there is no shared instance list
   and no single confusion matrix. Scoring is by proximity.
 - Precision anchors on the product, recall on the reference, each with its own denominator.
@@ -688,8 +693,6 @@ mechanical (same flags, more reference points to be near); the finding is what d
   sits between it and the measured lower bound.
 - A second crowd re-voted the same cells at three times the depth and confirmed slightly less
   (`{python} N["r2_MS_conf_r2"]` against `{python} N["r2_MS_conf_r1"]`), so the upper estimates here sit a little high.
-- The field reports give a smaller but geometrically exact check, raising measured precision by
-  `{python} N["field_union_gain_range"]`.
 - Recall has no such correction and its bias runs the other way: the reference over-represents
   destruction, the class every product detects best, so recall is overstated rather than understated.
 
