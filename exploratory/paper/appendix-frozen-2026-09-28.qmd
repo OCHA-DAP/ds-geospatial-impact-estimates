@@ -1,23 +1,44 @@
-<!-- FROZEN COPY of the technical brief's appendix, taken 2026-09-28 from
-manuscript_brief.qmd at commit 331a10f, immediately before the trimming round.
+---
+title: "The technical brief's appendix, as published"
+subtitle: "Frozen 2026-09-28, before the trimming round"
+author: "Z. Arno, L. Milano · OCHA Centre for Humanitarian Data"
+date: 2026-09-28
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+    include-in-header: hdx-brief-style.html
+execute:
+  echo: false
+  warning: false
+jupyter: python3
+---
 
-This is the verbatim source, executable chunks and `{python} N[...]` keys included. It
-does not render on its own (it needs brief_numbers.py and the figures); it exists so any
-section cut from the brief can be restored word for word. The rendered companion, with
-every number resolved, is review/appendix-rendered-2026-09-28.md. -->
+```{python}
+#| include: false
+import sys; sys.path.insert(0, ".")
+from brief_numbers import N
+```
 
-## Appendix {.unnumbered}
+::: {.callout-note appearance="simple"}
+This is a standing copy of the technical brief's appendix as it stood on 2026-09-28,
+taken from `manuscript_brief.qmd` at commit `a2076c7` immediately before the appendix was
+cut down. Every number, figure and table is reproduced; nothing is collapsed. Five
+cross-references that pointed at figures in the brief's main text are spelled out in
+words, since those figures are not reproduced here. Restore anything from this file.
+:::
 
-::: {.callout-note collapse="true" appearance="simple" icon="false" title="Show the full appendix"}
 
-### The two reporting regions {#app-regions .unnumbered}
+
+## The two reporting regions {#app-regions .unnumbered}
 
 Results are reported in one of two *regions*, and numbers are comparable only within
 one:
 
 | reporting region | what it is | used for |
 |---|---|---|
-| **Core region** | the ~`{python} N["core_area_km2"]` km² intersection of the CEMS extents with all five extent-publishing products (@fig-extents): one shared cell set | voting, the pairwise rules, fusion, and the best-F1 geography comparison |
+| **Core region** | the ~`{python} N["core_area_km2"]` km² intersection of the CEMS extents with all five extent-publishing products (the analysed-extent map of the brief): one shared cell set | voting, the pairwise rules, fusion, and the best-F1 geography comparison |
 | **As delivered** | each product's full delivered footprint, wherever CEMS mapped: a different region per product | as-delivered precision and recall, and the geography benchmark; ranking test 1 |
 
 : The two reporting regions. Sections and captions state which they use. The core
@@ -32,7 +53,7 @@ same stated assumption as everywhere else; UH publishes none either, so its exte
 polygon around its own classified footprints). Intersecting with the expert reference then
 trims the shared, scoreable area to ~`{python} N["core_area_km2"]` km². The trim scores every predictor on the same area, at the cost of representativeness: the core region covers the most heavily damaged area, where the reference is densest and every product scores best, so
 core-region numbers are each product's favourable case, while the as-delivered numbers
-describe what a responder actually had (@sec-flags).
+describe what a responder actually had (the brief's section on flagging individual buildings).
 
 Two products that arrived in the same window are not evaluated at all. HOT's fAIr
 published no analysed extent, so its misses and false alarms cannot be counted. The same
@@ -43,7 +64,7 @@ expert damage points there. Admitting it would have halved the area on which all
 products are compared and dropped `{python} N["disha_drop_pct"]` of the reference from every shared analysis, weakening the evaluation of the six other products; it therefore appears in the availability
 inventory only.
 
-### How complete is the expert reference? {#app-reference .unnumbered}
+## How complete is the expert reference? {#app-reference .unnumbered}
 
 ![The three reference datasets at a glance. Two are HOT-run and easily confused:
 MapSwipe is remote volunteers voting on ~50 m cells, used to adjudicate false alarms;
@@ -63,7 +84,7 @@ line slopes down: the products and the expert reference alike find lighter damag
 less often, which is why measured recall is an upper bound and measured precision a
 lower bound.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
-### Matching products to references, in full {#app-matching .unnumbered}
+## Matching products to references, in full {#app-matching .unnumbered}
 
 The product and reference use different geometries (CEMS drops points on damaged
 buildings, while each product flags its own footprints on its own building base), so there
@@ -84,7 +105,7 @@ number). The rule is applied uniformly, so no product is advantaged by it. What 
 paper adds is that the completeness assumption is tested rather than assumed:
 the field reports measure the expert reference's own recall, every measured precision is
 reported as a lower bound, and the expert-unmatched flags are re-judged against the
-crowd (@sec-flags).
+crowd (the brief's section on flagging individual buildings).
 
 **From delivered footprints to base buildings.** IMPACT, OSU and LIST reference the shared
 Overture base directly, so their flags are base buildings as delivered (OSU's v0 delivery lists
@@ -170,7 +191,7 @@ plt.show()
 ```
 
 A product is only accountable where both it and the reference actually looked, so all
-scoring is restricted to the intersection of analysed extents; @fig-extents maps every
+scoring is restricted to the intersection of analysed extents; the analysed-extent map of the brief maps every
 extent this paper scores against, and the core region they share. UNEP debris publishes no
 extent. Based on its density across the study region, we make the explicit assumption
 that it fully covers the ~`{python} N["core_area_km2"]` km² core comparison region, the same logic used for its
@@ -199,9 +220,9 @@ completely destroyed, or highly damaged; `{python} N["core_destroyed"]` points i
 in the reference. A flag near one still counts as a false alarm, and a product that
 misses one loses no recall.
 
-Two analyses relax that choice. In the main text, @fig-bounds counts the *possibly
+Two analyses relax that choice. In the main text, the precision-bounds figure of the brief counts the *possibly
 damaged* points as damage, among other loosenings, to bound each product's precision
-from above. Here, @fig-basis re-scores every predictor of @fig-bestf1 under three
+from above. Here, @fig-basis re-scores every predictor of the best-F1 figure of the brief under three
 definitions of the reference: *Destroyed* only, the paper's *Damaged or Destroyed*, and
 also counting *possibly damaged*. Every flag list and operating point is frozen, so
 only the reference changes.
@@ -214,7 +235,7 @@ destruction-biased products lose. `{python} N["basis_reversals"]` The fused scor
 inside the product band, under every definition. Excluding *possibly damaged* is the
 more demanding choice, and we keep it.
 
-![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of every @fig-bestf1 predictor under three
+![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of every the best-F1 figure of the brief predictor under three
 definitions of the CEMS reference, with flags and operating points frozen, so only the
 target changes. Grey lines and band: the six products; coloured lines: the composites
 and the geography nulls. The dashed line marks the paper's reference. The rise is
@@ -269,7 +290,7 @@ and `{python} N["core_P20_MS"]` at 20 m, with the same flags scored against the 
 definitions of what counts as a hit.
 
 
-### Area ranking and error structure: method {#app-ranking-method .unnumbered}
+## Area ranking and error structure: method {#app-ranking-method .unnumbered}
 
 For questions about where damage is concentrated, we aggregate per-building flags to
 hexagonal grid cells (H3) at two levels, resolution 8 (~`{python} N["h3_res8_km2"]` km²) and resolution 7 (~`{python} N["h3_res7_km2"]` km², roughly the size of an operational triage area). We compare each product's ranking of cells against the ranking implied
@@ -293,7 +314,7 @@ second classifies each product's territory cell by cell, using local versions of
 same clustering score, into places where its errors scatter at random and places where they concentrate.
 
 
-### Combining products, and adjudicating disagreements: method {#app-adjudication .unnumbered}
+## Combining products, and adjudicating disagreements: method {#app-adjudication .unnumbered}
 
 For per-building questions, each product's flags are projected onto the shared Overture
 footprint base and combined by voting. A building passes the "k-of-6" rule when at least
@@ -327,11 +348,11 @@ frame, so the full denominator is unknowable. Because the reference over-represe
 destruction, which is the damage class every product detects best, recall measured
 against it is overstated rather than understated. The rule of thumb for this whole paper:
 against an incomplete reference, measured precision is a lower bound and measured
-recall an upper bound. The grade-stratified field-frame measurements in @sec-flags
+recall an upper bound. The grade-stratified field-frame measurements in the brief's section on flagging individual buildings
 quantify how much the recall upper bound overstates.
 
 
-### The geography benchmark: framing for this brief {#app-null-brief .unnumbered}
+## The geography benchmark: framing for this brief {#app-null-brief .unnumbered}
 
 Every product was compared against a deliberately simple benchmark that uses no satellite
 imagery, the *shaking-and-vulnerability null*: modelled shaking intensity from the USGS
@@ -360,7 +381,7 @@ so the brief uses the shaking-and-vulnerability null throughout and the conclusi
 
 
 
-### The geography null model and weighted fusion, in full {#app-null .unnumbered}
+## The geography null model and weighted fusion, in full {#app-null .unnumbered}
 
 *How to read this section next to the previous one.* This section is adapted from the
 frozen v3 manuscript, where the benchmark was reported as a headline result and scored
@@ -443,7 +464,7 @@ about information content (the products add little beyond what three context var
 earthquake (building density, terrain slope and elevation, and ShakeMap intensity) feed one
 spatially-blocked model whose target is CEMS damage; both learners are fitted and the
 stronger one is reported (the logistic here, the forest across the larger delivered
-footprints of @sec-flags). Its output is a *continuous* per-building risk, so every
+footprints of the brief's section on flagging individual buildings). Its output is a *continuous* per-building risk, so every
 threshold on it is a different flag list and the score traces an entire precision–recall
 curve, against which a single product is one already-thresholded point. No satellite
 product enters this model. Note what the diagram cannot show: fitting it requires the
@@ -452,7 +473,7 @@ available on the day its inputs
 are.](figures/rq8_dayzero_schematic.png){#fig-dayzero-build}
 
 
-### Area-ranking detail: tables and error structure {#app-ranking-tables .unnumbered}
+## Area-ranking detail: tables and error structure {#app-ranking-tables .unnumbered}
 
 Because area ranking is the products' strongest result, we run the same null test on it as on the building-level numbers (the first of this paper's three product-versus-geography
 comparisons; the v3 record's null-comparison table lists all three). We summed the geography model's predicted per-building risk (each
@@ -561,7 +582,7 @@ above assumes CEMS is complete within its extents. The next section tests that
 assumption.
 
 
-### Precision and recall in both frames, in full {#app-frames .unnumbered}
+## Precision and recall in both frames, in full {#app-frames .unnumbered}
 
 The pooled numbers are one place's numbers. That fact bounds every headline number in this paper. CEMS activated five separate AOIs,
 but `{python} N["cara_share_pct"]` of its damage points sit in one of them: Caraballeda (`{python} N["cara_points"]` points, against `{python} N["moron_points"]`
@@ -641,13 +662,13 @@ as-delivered frame.
 
 
 
-### The single-product ceiling: three experiments {#app-ceiling .unnumbered}
+## The single-product ceiling: three experiments {#app-ceiling .unnumbered}
 
 Three independent experiments in this event indicate that a better single product would not fix
 per-building precision. The limit looks like a property of the sensing method rather
 than of any particular product. We refer to it as the modality ceiling: a precision level
 that single-method tuning does not rise above. (Note that this is the opposite kind of
-bound from the reference-driven lower bounds of @sec-flags: those mean the truth is
+bound from the reference-driven lower bounds of the brief's section on flagging individual buildings: those mean the truth is
 higher than measured; the ceiling means single-product performance stops improving.)
 
 1. Same-satellite agreement barely helps. Requiring the two Sentinel-1 products
@@ -669,7 +690,7 @@ higher than measured; the ceiling means single-product performance stops improvi
    model inherits that model's calibration failures.
 
 
-### The west-strip case study, in full {#app-weststrip .unnumbered}
+## The west-strip case study, in full {#app-weststrip .unnumbered}
 
 The Microsoft west-strip anomaly was left unexplained above. It can now be resolved
 completely, and the resolution is the paper's best argument for metadata transparency.
@@ -737,7 +758,7 @@ published, but there was no mechanism for returning that finding to the provider
 products that publish no per-building provenance, we can see where they err, but never
 why.
 
-### A version postscript: what a product revision changes {#app-osu-v1 .unnumbered}
+## A version postscript: what a product revision changes {#app-osu-v1 .unnumbered}
 
 One provider revised its product after the study window: OSU delivered a v1 on 22 July
 (confidence tiers, expanded coverage, `{python} N["osu_v1_delivered"]` flags versus v0's `{python} N["osu_v0_delivered"]`). We score v0 throughout, because v0 is what responders had during the response; the operational dashboard now uses v1. Since both versions are built on the same building base, they can be scored identically on the common extent against the same `{python} N["osu_common_cems"]` CEMS
@@ -752,7 +773,7 @@ this kind of churn.
 
 The revision's other addition, the certainty tiers, lets us ask a question v0 could not:
 does a product's *most confident* class rise above the per-building ceiling? (v0's continuous score was too saturated for this question: `{python} N["osu_v0_saturated_pct"]` of its flags sat at probability
-exactly 1.0.) Scored in the core region, the frame of @tbl-dial, the tiers are correctly ordered and the high-confidence cut is v1's best operating point: precision `{python} N["osu_tier_high_P"]`,
+exactly 1.0.) Scored in the core region, the frame of the agreement dial of the brief, the tiers are correctly ordered and the high-confidence cut is v1's best operating point: precision `{python} N["osu_tier_high_P"]`,
 against `{python} N["osu_tier_prob_P"]` for the probable tier and `{python} N["osu_tier_head_P"]` for the published headline, with F1
 `{python} N["osu_tier_high_F1"]` versus the headline's `{python} N["osu_tier_head_F1"]` (recall `{python} N["osu_tier_high_R"]` against `{python} N["osu_tier_head_R"]`). So the
 tiering is a real quality signal, and it still does not change the conclusion: OSU's best
@@ -761,7 +782,7 @@ agreement rules, so the [ceiling appendix's](#app-ceiling) confidence finding, r
 
 
 
-### Performance versus matching radius {#app-radius .unnumbered}
+## Performance versus matching radius {#app-radius .unnumbered}
 
 ```{python}
 #| label: tbl-dial-full
@@ -860,7 +881,7 @@ the buildings Microsoft analysed are mostly obscured, precision is unchanged und
 exactly one missed reference point falls on an obscured building. The model abstains
 under cloud rather than flagging into it.
 
-### Confidence intervals for the headline numbers {#app-ci .unnumbered}
+## Confidence intervals for the headline numbers {#app-ci .unnumbered}
 
 Every interval below is a 95% spatial block bootstrap: H3 cells (res-8 in the core
 region, 133 blocks; res-7 as-delivered) are resampled with replacement 2,000 times and
@@ -930,7 +951,7 @@ product demonstrably adds information beyond geography at its shipped operating
 point, one (OSU) demonstrably falls short of it, and both combination rules
 demonstrably exceed it.
 
-### How the crowd adjustment works, and what happened when the crowd voted again {#app-crowd .unnumbered}
+## How the crowd adjustment works, and what happened when the crowd voted again {#app-crowd .unnumbered}
 
 Every crowd-adjusted precision in this paper starts from one simple rule, and
 @fig-crowdmech shows it applied to a real street in Catia La Mar. A flagged building with
@@ -948,7 +969,7 @@ the reviewed ones; that assumption is not defensible where the reviewed flags ar
 that happened to fall in another product's zone, and it is dropped throughout
 (decision record ADR-0031).
 
-The upper bound in @fig-bounds combines the crowd credit with the *possibly damaged*
+The upper bound in the precision-bounds figure of the brief combines the crowd credit with the *possibly damaged*
 points as a union: a flag that qualifies under both is counted once. The two additions mostly affect different flags anyway; only `{python} N["crowd_fp_near_class1_range"]` of the crowd-confirmed flags sit
 within 10 m of a *possibly-damaged* point, so the crowd was mainly confirming damage
 the expert map never recorded rather than re-grading its low-confidence points.
@@ -993,5 +1014,3 @@ the identical cells at ~`{python} N["r2_votes_per_cell"]` votes each, with no "n
 sure" absorbs it): purple outlines mark cells whose verdict changed between rounds. Individual
 cells flip; the total the adjustment depends on barely moves (`{python} N["r2_MS_conf_r1"]` → `{python} N["r2_MS_conf_r2"]` of the
 strip's unmatched Microsoft flags confirmed).](figures/rq7_crowd_adjustment_explainer.png){#fig-crowdmech}
-:::
-
