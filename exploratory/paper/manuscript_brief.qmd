@@ -493,13 +493,16 @@ footprint there. {#tbl-regions}
 - It captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings, but only
   `{python} N["cems_field_significant_pct"]` of those significantly damaged.
 
-![**Region: each product inside its own analysed extent, UNEP and the six-product union inside the core region, the expert map inside its own extent; reference: field reports (20 m GPS tolerance).** Recall by damage grade. Each line is one dataset's recall against
-field-reported damage, at "complete" destruction versus "significant" damage; the union line counts a field report as covered if any of the six products flagged a building within 20 m. Every
-line slopes down: the products and the expert reference alike find lighter damage far
-less often, which is why measured recall is an upper bound and measured precision a
-lower bound.](figures/rq2e_grade_slope.png){#fig-gradeslope}
+![An external check on the reference data, and the uncertainty it puts on every recall in this
+brief. Each line is one dataset's recall against independently collected field reports, at
+complete destruction versus significant damage. Every line slopes the same way: destruction is
+found far more often than damage, the products and the expert map
+alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
-- Every line slopes the same way: destruction is seen, lighter damage is not.
+- Recall here is matched at 20 m rather than the 10 m used elsewhere. Field reports are phone
+  points taken from the street, so the scatter is the reference's own positional error rather
+  than the product's.
+
 - Some damage was missed by everything: `{python} N["field_missed_by_all_pct"]` of field reports inside the
   area all four main products analysed had no flag from any of them.
 - Consequence carried through the whole brief: measured precision is a lower bound and measured
