@@ -38,6 +38,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "lib"))
 import gie_paper as gp  # noqa: E402
 import ocha_stratus as stratus  # noqa: E402
 
+# --round1: the technical brief's variant. Only round 1 feeds any published number, so the
+# brief shows that panel alone, full width; the two-panel version stays the default.
+ROUND1 = "--round1" in sys.argv
 FIGS = os.path.join(os.path.dirname(__file__), "..", "..", "figures")
 os.makedirs(FIGS, exist_ok=True)
 M = gp.METRIC_CRS  # UTM 19N
@@ -156,13 +159,18 @@ def main():
     inw_fm = fm.loc[inw_f.index]
     inw_c = cm[(cx_ > x0) & (cx_ < x1) & (cy_ > y0) & (cy_ < y1)]
 
-    fig, axes = plt.subplots(1, 2, figsize=(15.5, 8.6))
+    fig, axes = plt.subplots(1, 1 if ROUND1 else 2,
+                             figsize=(10.5, 9.6) if ROUND1 else (15.5, 8.6))
+    axes = np.atleast_1d(axes)
     tint = {0: T_NO, 1: T_YES, 2: T_UNSURE}
-    for ax, mcol, ttl in (
-            (axes[0], "m1",
-             "A · round 1 (≈6 votes/cell): how each unmatched flag is adjudicated"),
-            (axes[1], "m2",
-             "B · round 2 (≈16 votes/cell, no “No damage” option): same cells re-voted")):
+    panels = [(axes[0], "m1",
+               "Round 1 (≈6 votes per cell): how each unmatched flag is adjudicated")]
+    if not ROUND1:
+        panels = [(axes[0], "m1",
+                   "A · round 1 (≈6 votes/cell): how each unmatched flag is adjudicated"),
+                  (axes[1], "m2",
+                   "B · round 2 (≈16 votes/cell, no “No damage” option): same cells re-voted")]
+    for ax, mcol, ttl in panels:
         for _, r in polys.iterrows():
             v = r[mcol]
             ax.add_patch(plt.Polygon(np.asarray(r.geometry.exterior.coords),
@@ -247,21 +255,27 @@ def main():
         Patch(fc=T_YES, ec="#cccccc", label="cell majority “Yes”"),
         Patch(fc=T_NO, ec="#cccccc", label="cell majority “No damage”"),
         Patch(fc=T_UNSURE, ec="#cccccc", label="cell majority “Not sure”"),
-        Line2D([], [], color=C_FLIP, lw=2.2, ls="--",
-               label="confirmation status flipped between rounds"),
     ]
-    fig.legend(handles=handles, loc="lower center", ncol=3, fontsize=8.6, frameon=False,
-               bbox_to_anchor=(0.5, 0.035))
+    if not ROUND1:
+        handles.append(Line2D([], [], color=C_FLIP, lw=2.2, ls="--",
+                              label="confirmation status flipped between rounds"))
+    fig.legend(handles=handles, loc="lower center", ncol=2 if ROUND1 else 3,
+               fontsize=8.6, frameon=False,
+               bbox_to_anchor=(0.5, 0.03 if ROUND1 else 0.035))
     fig.suptitle("How the MapSwipe crowd enters the precision calculation — "
                  "Microsoft flags, Catia La Mar strip", fontsize=13.5, x=0.5, y=0.985)
-    fig.text(0.5, 0.005,
-             f"Whole strip: {stats['strip_flags']:,} Microsoft flags in crowd-voted cells, "
-             f"{stats['strip_hits']} expert-matched; of the {stats['unmatched']:,} unmatched, "
-             f"the crowd confirms {stats['conf_r1']:.1%} (round 1) → {stats['conf_r2']:.1%} "
-             f"(round 2). Flags in cells the crowd never voted earn no credit.",
-             ha="center", fontsize=9.5, style="italic")
-    fig.tight_layout(rect=(0, 0.12, 1, 0.965))
-    out = os.path.join(FIGS, "rq7_crowd_adjustment_explainer.png")
+    foot_txt = (f"Whole strip: {stats['strip_flags']:,} Microsoft flags in crowd-voted cells, "
+                f"{stats['strip_hits']} expert-matched; of the {stats['unmatched']:,} unmatched, "
+                f"the crowd confirms {stats['conf_r1']:.1%}.\n"
+                "Flags in cells the crowd never voted earn no credit.") if ROUND1 else (
+                f"Whole strip: {stats['strip_flags']:,} Microsoft flags in crowd-voted cells, "
+                f"{stats['strip_hits']} expert-matched; of the {stats['unmatched']:,} unmatched, "
+                f"the crowd confirms {stats['conf_r1']:.1%} (round 1) → {stats['conf_r2']:.1%} "
+                "(round 2). Flags in cells the crowd never voted earn no credit.")
+    fig.text(0.5, 0.005, foot_txt, ha="center", fontsize=9.5, style="italic")
+    fig.tight_layout(rect=(0, 0.19 if ROUND1 else 0.12, 1, 0.965))
+    out = os.path.join(FIGS, "rq7_crowd_adjustment_explainer"
+                       + ("_r1" if ROUND1 else "") + ".png")
     fig.savefig(out, dpi=150)
     print("wrote", out)
 
