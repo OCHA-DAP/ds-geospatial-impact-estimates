@@ -672,11 +672,9 @@ mechanical (same flags, more reference points to be near); the finding is what d
   of cells is compared with the expert ordering by rank correlation and top-k overlap.
 - Whether a ranking survives noisy per-building labels depends on how the noise sits in space. A
   count regression predicts each cell's flag count from its expert damage count, with the cell's
-  building stock built in, so "more flags because more buildings" cannot register as bias.
-- What remains is tested for spatial clustering, with significance judged by reshuffling values
-  across the same cells, and for correlation with building density, terrain and modelled shaking.
-- Two further tests on the same lattice: whether a product's reliability can be predicted from its
-  flag pattern alone, and where each product's errors scatter at random versus concentrate.
+  building stock built in, so "more flags because more buildings" cannot register as bias. What
+  remains is tested for spatial clustering and for correlation with building density, terrain and
+  modelled shaking.
 
 ### Combining products, and adjudicating disagreements: method {#app-adjudication .unnumbered}
 
@@ -790,26 +788,12 @@ either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
   geographically structured in this event, so dividing out building stock removes nothing the
   benchmark relies on.
 
-![Where each product over-flags once its building stock is accounted for (red = more
-flags than the recorded damage explains), for the three products the error-structure test
-covers. Each panel autoscales
-to its own analysed region, which is why they look so different: Microsoft analysed a
-single ~30 km coastal strip, so its few hundred grid cells appear as individual dots,
-while IMPACT and OSU are Sentinel-1 swaths spanning roughly 200 km, whose thousands of
-cells merge visually. IMPACT and OSU residuals follow the coastal severity gradient.
-Microsoft's error is a single hard cluster at the west end of its
-region.](figures/rq3_residual_maps_res8.png){#fig-residuals}
-
-- Residual over-flagging is strongly clustered in space, so the errors are not random noise. But
-  once building stock is controlled the clustering follows the earthquake: residuals rise toward the
-  coast and with modelled shaking, and show no association with building density.
-- Products over-call most where damage is worst, which is why area rankings survive per-building
-  noise. The dangerous alternative, errors tracking urban form, is what the test rules out.
-- Cell by cell, `{python} N["lisa_ns_range"]` of each product's territory shows errors scattered at random,
-  with failures concentrated in a few identifiable pockets.
-- One product does not fit. Microsoft's residual is a single dense cluster in the western strip that
-  no covariate explains, and at this point real over-detection and a local reference gap look
-  identical. The west-strip section resolves it.
+- Residual over-flagging is clustered in space rather than random, but once building stock is
+  controlled the clustering follows the earthquake: residuals rise toward the coast and with
+  modelled shaking, and show no association with building density. Products over-call most where
+  damage is worst, which is why area rankings survive per-building noise. Cell by cell,
+  `{python} N["lisa_ns_range"]` of each product's territory shows errors scattered at random, with
+  the failures concentrated in a few pockets.
 
 ### Precision and recall in both frames, in full {#app-frames .unnumbered}
 
@@ -852,36 +836,6 @@ incompleteness.](figures/rq2i_per_aoi_scorecard.png){#fig-peraoi}
   flags were rejected by `{python} N["frozen_scene_both_rejected"]` of crowd reviews.
 - Read together, the limit looks like a property of the sensing method rather than of any particular
   product: single-method tuning does not rise above it.
-
-### The west-strip case study, in full {#app-weststrip .unnumbered}
-
-- The Microsoft cluster can be resolved, and only the crowd can do it: this is exactly where the
-  expert map records far less than the products flag, so a thin reference cannot separate
-  over-flagging from its own incompleteness.
-- Volunteers judged `{python} N["r1_no_share_pct"]` of Microsoft-flagged locations undamaged in the west,
-  against a roughly even split in the damage-dense east.
-
-![**Region: the western half of Microsoft's delivered strip (Catia La Mar).** Top left:
-where Microsoft flags far more than the expert map
-records. Bottom left: where crowd volunteers said nothing is there. Right: cell by cell
-the two do not track; the agreement is at the scale of the strip, which sat under a
-single satellite
-scene.](figures/rq7_west_cluster_adjudication.png){#fig-weststrip}
-
-- The cluster is real over-detection, not a gap in the reference.
-- The product's own metadata explains it: every building in the strip was covered by exactly one
-  satellite scene, processed alone. The platform uses agreement between overlapping scenes as its
-  only internal check, and the west never got that check.
-- Cloud is ruled out; the west is the most cloud-free zone in the product.
-- Split at the scene boundary, the same product holds its worst zone and its best: the single-scene
-  west at precision `{python} N["strip_P2_MS_west"]`, the multi-scene east at `{python} N["strip_P2_MS_east"]`.
-- Head to head on the buildings both scenes covered, the better scene's advantage is restraint rather
-  than accuracy. The merge rule was directionally right but discarded roughly
-  `{python} N["frozen_scene_overruled_damaged"]` flags on buildings the crowd judged damaged.
-- A cross-product control confirms the attribution: UH, using the same imagery vendor over the same
-  strip, shows the opposite pattern. The failure is per-scene calibration, not the pixels.
-- The split was only visible because per-building provenance was published. For the five products
-  that publish none, we can see where they err but never why.
 
 ### Product updates {#app-updates .unnumbered}
 
