@@ -544,17 +544,15 @@ plt.show()
 ```
 
 - Products that delivered their own footprints are mapped onto the shared building base by one
-  rule: highest overlap, else nearest within 20 m, else orphan. One rule for all, so no product is
-  credited or penalised for the shape of its own building layer.
-- The matching radius comes from building spacing, not convenience: the median distance between
+  rule: highest overlap, else nearest within 20 m, else orphan. 
+- The matching radius chosen comes from the building spacing: the median distance between
   neighbouring buildings in the core region is `{python} N["spacing_median_m"]` m, and
-  `{python} N["spacing_within20_pct"]` have a neighbour within 20 m. A wider radius would routinely match a
-  flag to the building next door.
-- The radius defines the target, not the leniency: at 20 m the same expert points label
-  `{python} N["core_pos_r20"]` core-region buildings damaged, at 10 m `{python} N["core_pos_r10"]`.
-- Two labelled exceptions to the 10 m rule, each for a different question: 30 m for coverage and
-  visits per find, the distance at which a responder could plausibly find the building; 20 m for
-  field reports, whose phone GPS scatter is the reference's error, not the product's.
+  `{python} N["spacing_within20_pct"]` have a neighbour within 20 m.
+- Radii other than 10 m are used for two different purposes. Against ChatMap a more generous 20 m
+  is applied, to account for the GPS uncertainty in field-reported points. And 30 m is a *finding
+  distance*, close enough that a responder sent to a flag could plausibly find the damaged
+  building: it is what the coverage and visits-per-find columns of @tbl-dial report. Both radii are
+  also swept as sensitivity tests in [sensitivity to the scoring choices](#app-radius).
 - Each metric is anchored on its own side, so the match is not one-to-one: one expert point can
   validate several adjacent flags. In the core region `{python} N["core_cems"]` expert damage points sit
   within 10 m of `{python} N["core_pos_r10"]` distinct buildings, so a product that flags the whole cluster
