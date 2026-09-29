@@ -49,7 +49,6 @@ reading of the reference every product stays below `{python} N["P_upper_max"]`. 
 that is already identified. The practical way to use them is to count agreement between
 independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, ranking neighbourhoods by three- or four-product agreement beats every single product's ranking (at both cell sizes tested), and the method needs no weights, training data or reference, so it can be run as soon as several products are in hand.
 
-
 ## The event, the products, and the references
 
 An M7.5 earthquake struck the Venezuelan coast 20 km west of Catia La Mar at 22:05 UTC
@@ -213,7 +212,6 @@ product's favourable case; as delivered, the same product can be several times w
 roughly the share of a product's flags placed in areas with little recorded damage
 (@tbl-frames; the split by expert-mapped area is in [Precision and recall in both frames](#app-frames)).
 
-
 Those numbers come from the strictest configuration this study evaluates, and a defensible
 one: a flag counts as correct only where a CEMS point graded *damaged* or *destroyed* lies
 within 10 m of it. The study loosens that criterion in two ways: by raising the distance
@@ -313,7 +311,7 @@ crowd-adjusted precision. Pairs of two radar products sit lowest; pairs that inc
 high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fig-frontier}
 
 Counting agreement is also close to the ceiling of what any combination can achieve. A
-statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data; see the fairness note in the [appendix](#app-null)), but
+statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data; see the [geography benchmark](#app-null-brief) appendix), but
 fitting it requires the damage map a responder is still waiting for, so it explains the
 event afterwards and cannot run during one; flat counting can be done as soon as
 several products are in hand (@fig-bestf1).
@@ -353,7 +351,6 @@ configuration.](figures/rq3h_agreement_ranking_summary.png){#fig-agreerank}
 }
 </style>
 ```
-
 
 ::: {.rec}
 [Coordinators]{.rec-who}
@@ -679,10 +676,7 @@ bound, and the sections that follow report results inside those limits.
   by terrain slope and elevation.
 - It is fitted with hindsight to this event's own damage labels and validated on spatial blocks it
   never trained on. Its inputs are available on day zero anywhere; its coefficients are not. It is a
-  benchmark, not an operational alternative, and it is refit per event.
-
-[]{#app-null}
-
+  benchmark, not an operational alternative.
 - Validation is by spatial blocking: the map is cut into ~`{python} N["h3_res7_km2"]` km² zones and the model
   is always scored on zones it never trained on, because neighbouring buildings resemble each other
   in both features and damage.
@@ -690,20 +684,8 @@ bound, and the sections that follow report results inside those limits.
   paired comparison in this brief uses the logistic, so the whole brief rests on one model, even
   though the forest is marginally stronger at building level in the core region
   (`{python} N["null_rf_F1"]` against `{python} N["null_F1"]`).
-- Hindsight enters twice: in the fit, and in the cut. Re-choosing the operating cut on training folds
-  only and applying it blind moves the fusion from `{python} N["fusion_F1_hind"]` to `{python} N["fusion_F1_nested"]` and
-  the benchmark from `{python} N["null_F1_hind"]` to `{python} N["null_F1_nested"]`; flat voting does not move at all.
 
-![How the geography null model is built. Four context variables known within hours of the
-earthquake (building density, terrain slope and elevation, and ShakeMap intensity) feed one
-spatially-blocked model whose target is CEMS damage; both learners are fitted and both reported,
-and the logistic is the one every paired comparison uses. Its output is a *continuous* per-building risk, so every
-threshold on it is a different flag list and the score traces an entire precision–recall
-curve, against which a single product is one already-thresholded point. No satellite
-product enters this model. Note what the diagram cannot show: fitting it requires the
-damage labels themselves, which is why it is a retrospective null rather than something
-available on the day its inputs
-are.](figures/rq8_dayzero_schematic.png){#fig-dayzero-build}
+![Schematic of geography null model](figures/rq8_dayzero_schematic.png){#fig-dayzero-build}
 
 ### Area-ranking detail: tables and error structure {#app-ranking-tables .unnumbered}
 
@@ -719,8 +701,6 @@ vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
 - Across the delivered footprints geography ranks these areas better than the products do, beating
   `{python} N["null_beats_n_asd7"]` of six at the coarser scale, with large margins, and a negative correlation
   for `{python} N["asd_neg_7"]` means an ordering slightly worse than no information.
-- That comparison mostly rewards telling one damaged AOI from four quiet ones, a task density and
-  terrain solve almost by definition.
 
 - Within the damage zone the result changes. The benchmark scores `{python} N["rhonull_core8_LIST"]`
   on the shared cell set at ~`{python} N["h3_res8_km2"]` km², and `{python} N["core8_n_above"]` of six
@@ -827,7 +807,6 @@ mechanical (same flags, more reference points to be near); the finding is what d
   nothing. The fused score keeps its margin and the geography benchmark stays inside the product
   band under every definition.
 - Excluding *possibly damaged* is the more demanding choice, and it is the one kept.
-
 
 - Everything is scored at 10 m, and because the radius defines the target rather than the tolerance,
   the whole analysis is re-run at 20 m and at 30 m.
