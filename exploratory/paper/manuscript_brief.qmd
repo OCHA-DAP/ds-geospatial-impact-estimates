@@ -672,7 +672,7 @@ bound, and the sections that follow report results inside those limits.
 - Recall has no such correction and its bias runs the other way: the reference over-represents
   destruction, the class every product detects best, so recall is overstated rather than understated.
 
-### The geography benchmark: framing for this brief {#app-null-brief .unnumbered}
+### The geography benchmark {#app-null-brief .unnumbered}
 
 - Every product is compared against a deliberately simple benchmark that uses no satellite imagery:
   modelled shaking intensity, plus the vulnerability of the setting proxied by building density and
@@ -690,10 +690,8 @@ bound, and the sections that follow report results inside those limits.
   the damaged strip is a coastal fan, and it would not travel to another earthquake; terrain does the
   job at least as well (ADR-0033).
 
-### The geography null model and weighted fusion, in full {#app-null .unnumbered}
+[]{#app-null}
 
-*This section overlaps the one above and is a candidate for merging into it; only the points the
-framing section does not already make are kept here.*
 
 - The model's output is not a flag list but a continuous risk score per building. Every cutoff is a
   different flag list, so it traces a whole precision-recall curve, while a shipped product, whose
