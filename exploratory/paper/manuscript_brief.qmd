@@ -574,6 +574,8 @@ so they can re-judge flags the expert map has no record of. ChatMap was collecte
 independently of any satellite imagery, so it can measure what the expert map missed. Neither
 replaces the expert map, and neither can do the other's job.
 
+[]{#app-crowd}
+
 **Re-judging the flags the expert map does not cover.** A flag with no expert point near it is
 counted as a false alarm, but a gap in the reference and a genuine false alarm look identical.
 The crowd separates them where volunteers looked.
