@@ -153,7 +153,7 @@ convention pushes the other way (ADR-0034). Against these each
 product's baseline precision and recall are set under one matching radius, applied from
 both sides. For precision, a flagged building counts as a hit if a CEMS
 damage point lies within 10 m of it; for recall, a CEMS damage point counts as found if a
-flagged building lies within 10 m of it, so a miss is an CEMS point with no flag nearby.
+flagged building lies within 10 m of it, so a miss is a CEMS point with no flag nearby.
 
 From that baseline the performance calculations are extended in two ways, to give a range
 of possible values rather than a single figure: by widening the reference to include the
@@ -165,7 +165,7 @@ a crowd review of ~50 m cells at locations AI products had flagged, by more than
 volunteers: it can refute a false alarm but never reveal a miss, so it adjudicates disputed
 flags and is never ground truth. ChatMap is `{python} N["field_n"]` damage reports from field
 teams, positives-only with no survey frame: it can reveal misses but not false alarms
-(the appendix [testing and adjusting the reference](#app-reference) sets out how each is used). Because the reference is incomplete, every measured precision here is a
+(the appendix [how MapSwipe and ChatMap were used](#app-reference) sets out how each is used). Because the reference is incomplete, every measured precision here is a
 lower bound and every recall an upper bound.
 
 ## Results
@@ -451,7 +451,7 @@ and magnitudes are hypotheses elsewhere until replicated.
 
 The references have limits of their own, and the largest was measured rather than
 assumed: the CEMS reference captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
-`{python} N["cems_field_significant_pct"]` of those significantly damaged ([testing and adjusting the reference](#app-reference)),
+`{python} N["cems_field_significant_pct"]` of those significantly damaged ([how MapSwipe and ChatMap were used](#app-reference)),
 which is why every precision here is a lower bound and every recall an upper bound. The
 crowd campaign was seeded almost entirely on Microsoft's flags, so it scrutinises products very
 unevenly and can never see any product's misses; the field reports are undated, positives-only,
@@ -496,7 +496,7 @@ footprint there. {#tbl-regions}
 
 ```{python}
 #| label: fig-matching
-#| fig-cap: "Counting hits, false alarms and misses. Left: a product is scored only where it and the reference both looked. Middle: each CEMS damage point is checked for a product flag within radius r, which gives recall. Right: each flagged building is checked for an CEMS point within r, which gives precision."
+#| fig-cap: "Counting hits, false alarms and misses. Left: a product is scored only where it and the reference both looked. Middle: each CEMS damage point is checked for a product flag within radius r, which gives recall. Right: each flagged building is checked for a CEMS point within r, which gives precision."
 import matplotlib.pyplot as plt
 import matplotlib.patches as mp
 import numpy as np
@@ -558,64 +558,52 @@ plt.show()
 
 []{#app-reference}
 
-**Testing the assumption.** Everything above rests on one: that inside an analysed extent the
-CEMS reference recorded the damage that was there. Two independent datasets
-test it, and they do opposite jobs. MapSwipe volunteers reviewed places the products flagged,
-so they can re-judge flags the CEMS reference has no record of. ChatMap was collected on the ground
-independently of any satellite imagery, so it can measure what the CEMS reference missed. Neither
-replaces the CEMS reference, and neither can do the other's job.
-
 []{#app-crowd}
 
-**Re-judging the flags the CEMS reference does not cover.** A flag with no CEMS point near it is
-counted as a false alarm, but a gap in the reference and a genuine false alarm look identical.
-The crowd separates them where volunteers looked.
+**How MapSwipe was used.** MapSwipe turns the single precision figure measured against CEMS into
+a range. A flag with no CEMS point near it counts as a false alarm, but a gap in the reference and
+a genuine false alarm look the same. MapSwipe is a HOT volunteer platform, and in this event its
+volunteers reviewed ~50 m cells for visible damage, which separates the two wherever they looked.
 
-- The rule: a flagged building with an CEMS damage point within 10 m is a hit outright, and the
-  crowd plays no part. Every other flag sits in a ~50 m cell volunteers voted on, and the majority
-  verdict decides.
-- Flags in cells nobody saw earn nothing. The adjustment is a measurement, not an estimate, so it
-  understates products the crowd barely reviewed.
-- The crowd reviewed cells, not products, so a flag from any product inside a reviewed cell is
-  adjudicated. But the cells were drawn around Microsoft's flags, with a couple of dozen from HOT's
-  fAIr, which this brief does not evaluate. Every other product's coverage is therefore incidental:
-  its flags happen to fall inside cells drawn for Microsoft. Coverage of the unmatched flags runs
+- The first campaign was built to review Microsoft's flags, with a few dozen cells from HOT's fAIr,
+  so it is not spread evenly across the products. The others are covered only where their flags
+  happen to fall inside cells drawn for Microsoft. Coverage of each product's unmatched flags runs
   from `{python} N["crowdcov_MS"]` for Microsoft and `{python} N["crowdcov_UNEP"]` for UNEP down to
-  `{python} N["crowdcov_OSU"]` for OSU and `{python} N["crowdcov_UH"]` for UH.
+  `{python} N["crowdcov_OSU"]` for OSU and `{python} N["crowdcov_UH"]` for UH, so the adjustment says the most about
+  Microsoft and the least about UH.
+- The rule: a flagged building with a CEMS damage point within 10 m is a hit outright, and the crowd
+  plays no part. Every other flag sits in a crowd task cell and takes that cell's majority verdict: a
+  majority "yes, damaged" confirms it, a majority "no" or "not sure" leaves it a false alarm, and a
+  flag in a cell nobody voted on earns nothing.
+- Crowd-adjusted precision adds the confirmed flags back to the numerator. The CEMS-only precision
+  is the bottom of the range and the crowd-adjusted value sits above it. The upper bound in the main
+  text also counts the CEMS points graded *possibly damaged*, and a flag that qualifies both ways is
+  counted once.
+- The top of the range is generous. A verdict covers a whole cell, not a building, so a confirmed
+  flag means damage somewhere in that cell. For the same reason crowd verdicts are only used in
+  aggregate, never as building-level truth.
 
 ![How the MapSwipe crowd enters the precision calculation. Hexagons are the ~50 m crowd task
-cells in Catia La Mar, tinted by majority verdict. A flag matched by an CEMS point within 10 m
+cells in Catia La Mar, tinted by majority verdict. A flag matched by a CEMS point within 10 m
 is a true positive and the crowd plays no part (green). An unmatched flag in a cell the crowd
 judged damaged is counted as confirmed and improves the adjusted precision (blue). In a cell
 judged undamaged or uncertain it stays a false alarm (orange), and a flag in a cell nobody voted
 on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech}
 
 - Every crowd-adjusted number in this brief comes from this first round. A second campaign re-voted
-  the same cells in August 2026, after the numbers were frozen, and it is used to test them rather
-  than to build them: `{python} N["r2_cells"]` of the same cells, about sixteen votes each instead of six,
-  different volunteers.
-- Two caveats make it an imperfect replication. The answer buttons changed, so round one's headline
-  finding for this strip cannot be re-measured, and the two rounds showed different, though
-  similarly dated, imagery.
-- What replicates is how much damage the crowd confirmed: `{python} N["r2_MS_conf_r1"]` then
-  `{python} N["r2_MS_conf_r2"]`, so roughly one flag in `{python} N["r2_MS_one_in"]` has crowd-visible damage under it.
-- What does not replicate is which cells. Only about a quarter repeat, but six votes on a borderline
-  cell is close to a coin toss; corrected for that voting noise the two rounds agree well
-  (`{python} N["r2_latent_corr"]` against `{python} N["r2_raw_corr"]` before the correction).
-- The practical consequence is the rule this brief already follows: a single cell's verdict is too
-  noisy to rely on, while sums over thousands of cells are steady, so crowd verdicts appear only
-  inside aggregate numbers and never as building-level truth.
-- Swapping the second round's verdicts in moves each product's crowd-adjusted precision by at most
+  the same cells in August 2026, after the numbers were frozen, with about sixteen votes per cell
+  instead of six. Swapping its verdicts in moves each product's crowd-adjusted precision by at most
   `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
-- The upper bound in the main text unions crowd credit with the *possibly damaged* points. They
-  mostly touch different flags, so the crowd was largely confirming damage the CEMS reference never
-  recorded.
 
-**Testing what the CEMS reference missed.**
+**How ChatMap was used.** ChatMap field teams reported damaged buildings from the ground,
+independently of any satellite imagery, which makes it the one dataset that can check the CEMS
+reference itself.
 
-- ChatMap audits the CEMS reference because its field teams reported damage the imagery analysts never
-  saw. The CEMS reference captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings,
-  but only `{python} N["cems_field_significant_pct"]` of those significantly damaged.
+- Recall against ChatMap is matched at 20 m rather than 10 m, because field reports are phone points
+  taken from the street and that scatter is the reference's positional error, not the product's.
+- CEMS captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
+  `{python} N["cems_field_significant_pct"]` of those significantly damaged, and every product shows the
+  same slope.
 
 ![ChatMap field reports are an independent dataset that helps evaluate both the products and
 the CEMS reference. Each line is one dataset's recall against those reports, at complete
@@ -623,19 +611,13 @@ destruction versus significant damage. Every line slopes the same way: destructi
 found far more often than damage, the products and the CEMS reference
 alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
-- Recall here is matched at 20 m rather than the 10 m used elsewhere. Field reports are phone
-  points taken from the street, so the scatter is the reference's own positional error rather
-  than the product's.
-- Some damage was missed by everything: `{python} N["field_missed_by_all_pct"]` of field reports inside the
-  area all four main products analysed had no flag from any of them.
+- Because CEMS under-records lighter damage, the class every product detects worst, recall measured
+  against it is an upper bound. Some damage was missed by everything:
+  `{python} N["field_missed_by_all_pct"]` of field reports inside the area all four main products analysed had
+  no flag from any of them.
 - ChatMap can also be added to the reference directly, since its points are building-level. Doing
-  so raises measured precision by only `{python} N["field_union_gain_range"]`, which is why it is left off
-  the bounds ladder in the main text: geometrically exact, but too sparse to move the numbers.
-
-**What both tests leave.** A reference gap can turn a correct flag into an apparent false alarm but
-never the reverse, and the reference over-represents destruction, the class every product detects
-best. So every measured precision in this brief is a lower bound and every measured recall an upper
-bound, and the sections that follow report results inside those limits.
+  so raises measured precision by only `{python} N["field_union_gain_range"]`, which is why it is left off the
+  bounds ladder in the main text: too sparse to move the numbers.
 
 - Whether a ranking survives noisy per-building labels depends on how the noise sits in space. A
   count regression predicts each cell's flag count from its CEMS damage count, with the cell's
