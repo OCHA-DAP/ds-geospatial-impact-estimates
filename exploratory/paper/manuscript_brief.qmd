@@ -707,25 +707,9 @@ incompleteness.](figures/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 - Re-running the benchmark in this frame, list against list at each product's own delivered size,
   it beats `{python} N["dz_beats_n"]` of the six on precision.
 
-### Product updates {#app-updates .unnumbered}
+### Additional tests {#app-tests .unnumbered}
 
-- Three providers released later versions of their products after the response: Microsoft, OSU and
-  UH. None of them is a focus of this evaluation. The brief scores what was available in the first
-  weeks, which is what responders actually had.
-- Microsoft's later version: **TBD.**
-- UH's later version: **TBD.**
-- OSU's second version was evaluated, and the result is the same shape. It turned over more than
-  half the flag list and moved precision and recall barely at all (`{python} N["osu_v0_P"]` to
-  `{python} N["osu_v1_P"]` precision). We score the first version throughout, because that is what
-  responders had; the operational dashboard now uses the second.
-- A revision that relabels half the buildings without moving either metric is itself evidence that
-  at the individual-building level these products are noise-dominated. Version-to-version stability
-  belongs beside accuracy when judging them. The area-level signal is robust to that churn.
-- That version's certainty tiers are correctly ordered, and the high-confidence cut is its best
-  operating point, but it remains below Microsoft's core-region precision and far below the
-  agreement rules.
-
-### Sensitivity to the matching radius {#app-radius .unnumbered}
+#### Sensitivity to the matching radius {#app-radius .unnumbered}
 
 - Everything is scored at 10 m, and because the radius defines the target rather than the tolerance,
   the whole analysis is re-run at 20 m and at 30 m.
@@ -806,7 +790,7 @@ gt
 - The cloud check: only Microsoft publishes per-building visibility, and scored against it the effect
   is negligible. The model abstains under cloud rather than flagging into it.
 
-### Confidence intervals for the headline numbers {#app-ci .unnumbered}
+#### Bootstrapped confidence intervals {#app-ci .unnumbered}
 
 - Every interval is a 95% spatial block bootstrap: hexagonal cells resampled with replacement 2,000
   times, each statistic recomputed from the frozen match indicators.
@@ -868,5 +852,23 @@ for k in ("flat k-of-6 voting", "weighted fusion"):
 - The 6-of-6 rule's sub-1 visits per find holds; its interval's upper limit is `{python} N["k6_visits_hi"]`.
 - No product demonstrably adds information beyond geography at its shipped operating point, one
   demonstrably falls short of it, and both combination rules demonstrably exceed it.
+
+### Product updates {#app-updates .unnumbered}
+
+- Three providers released later versions of their products after the response: Microsoft, OSU and
+  UH. None of them is a focus of this evaluation. The brief scores what was available in the first
+  weeks, which is what responders actually had.
+- Microsoft's later version: **TBD.**
+- UH's later version: **TBD.**
+- OSU's second version was evaluated, and the result is the same shape. It turned over more than
+  half the flag list and moved precision and recall barely at all (`{python} N["osu_v0_P"]` to
+  `{python} N["osu_v1_P"]` precision). We score the first version throughout, because that is what
+  responders had; the operational dashboard now uses the second.
+- A revision that relabels half the buildings without moving either metric is itself evidence that
+  at the individual-building level these products are noise-dominated. Version-to-version stability
+  belongs beside accuracy when judging them. The area-level signal is robust to that churn.
+- That version's certainty tiers are correctly ordered, and the high-confidence cut is its best
+  operating point, but it remains below Microsoft's core-region precision and far below the
+  agreement rules.
 
 :::
