@@ -99,7 +99,7 @@ for ax in axes:
     ax.grid(axis="x", alpha=0.25, zorder=0)
     ax.spines[["top", "right", "left"]].set_visible(False)
 
-fig.supxlabel("Spearman rank correlation with the expert damage count per cell  "
+fig.supxlabel("Spearman rank correlation with the CEMS damage count per cell  "
               "(higher = ranks the worst-hit areas better)", fontsize=11.5)
 if not SUMMARY:
     h1 = plt.Rectangle((0, 0), 1, 1, color=PROD)

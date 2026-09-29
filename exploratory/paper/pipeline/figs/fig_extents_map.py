@@ -150,7 +150,7 @@ def main() -> None:
     handles += [Line2D([], [], color="none",
                        label="UNEP: no analysed extent published — not drawn"),
                 Line2D([], [], color="#1b1f24", ls="--", lw=1.4,
-                       label="CEMS expert-mapped AOIs (the reference)"),
+                       label="CEMS-mapped AOIs (the reference)"),
                 Patch(facecolor=CORE, alpha=0.85,
                       label=f"core region = CEMS ∩ the five published extents "
                             f"({core.area / 1e6:,.0f} km²)")]

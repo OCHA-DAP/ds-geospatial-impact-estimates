@@ -215,11 +215,11 @@ def main():
                     bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=C_FLIP, alpha=.95),
                     zorder=9)
         else:
-            notes = [("conf", "no expert point, but cell majority\n“Yes” → added to numerator",
+            notes = [("conf", "no CEMS point, but cell majority\n“Yes” → added to numerator",
                       (0.02, 0.975), "left", "top"),
                      ("fp", "cell majority “No” →\nstays a false positive",
                       (0.02, 0.10), "left", "bottom"),
-                     ("hit", "expert point ≤10 m → true positive\n(crowd plays no role)",
+                     ("hit", "CEMS point ≤10 m → true positive\n(crowd plays no role)",
                       (0.98, 0.975), "right", "top"),
                      ("nocrowd", "no crowd votes → no credit\n(stays a false positive)",
                       (0.98, 0.10), "right", "bottom")]
@@ -242,7 +242,7 @@ def main():
 
     handles = [
         Line2D([], [], marker="s", ls="", ms=9, mfc=C_HIT, mec="black",
-               label="flag matched by expert point ≤10 m → true positive"),
+               label="flag matched by CEMS point ≤10 m → true positive"),
         Line2D([], [], marker="s", ls="", ms=9, mfc=C_CONF, mec="white",
                label="unmatched flag, cell majority “Yes” → crowd-confirmed (added to numerator)"),
         Line2D([], [], marker="s", ls="", ms=9, mfc=C_FP, mec="white",
@@ -251,7 +251,7 @@ def main():
                label="unmatched flag, no crowd votes → no credit, stays a false positive\n"
                      "(none in this window — the crowd saw 98% of Microsoft's flags)"),
         Line2D([], [], marker="*", ls="", ms=13, mfc="black", mec="black",
-               label="CEMS expert damage point (dashed = 10 m match radius)"),
+               label="CEMS damage point (dashed = 10 m match radius)"),
         Patch(fc=T_YES, ec="#cccccc", label="cell majority “Yes”"),
         Patch(fc=T_NO, ec="#cccccc", label="cell majority “No damage”"),
         Patch(fc=T_UNSURE, ec="#cccccc", label="cell majority “Not sure”"),
@@ -265,11 +265,11 @@ def main():
     fig.suptitle("How the MapSwipe crowd enters the precision calculation — "
                  "Microsoft flags, Catia La Mar strip", fontsize=13.5, x=0.5, y=0.985)
     foot_txt = (f"Whole strip: {stats['strip_flags']:,} Microsoft flags in crowd-voted cells, "
-                f"{stats['strip_hits']} expert-matched; of the {stats['unmatched']:,} unmatched, "
+                f"{stats['strip_hits']} CEMS-matched; of the {stats['unmatched']:,} unmatched, "
                 f"the crowd confirms {stats['conf_r1']:.1%}.\n"
                 "Flags in cells the crowd never voted earn no credit.") if ROUND1 else (
                 f"Whole strip: {stats['strip_flags']:,} Microsoft flags in crowd-voted cells, "
-                f"{stats['strip_hits']} expert-matched; of the {stats['unmatched']:,} unmatched, "
+                f"{stats['strip_hits']} CEMS-matched; of the {stats['unmatched']:,} unmatched, "
                 f"the crowd confirms {stats['conf_r1']:.1%} (round 1) → {stats['conf_r2']:.1%} "
                 "(round 2). Flags in cells the crowd never voted earn no credit.")
     fig.text(0.5, 0.005, foot_txt, ha="center", fontsize=9.5, style="italic")

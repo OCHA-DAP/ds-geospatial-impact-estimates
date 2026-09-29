@@ -107,18 +107,18 @@ rows = [dict(product=f"**{n}**<br><span style='font-size:11.5px;color:#666'>{pr}
  .tab_options(table_font_size="13px", column_labels_font_weight="bold", data_row_padding="4px"))
 ```
 
-![Product and analysis extents. Top: each provider's analysed extent and the expert-mapped
+![Product and analysis extents. Top: each provider's analysed extent and the CEMS-mapped
 Copernicus EMS areas (dashed black). Bottom: the ~`{python} N["core_area_km2"]` km² area where all products
 overlap (red), where every product can be evaluated against the same reference and
 compared with the others. The paper calls this the core
 region.](figures/fig_extents_map.png){#fig-extents}
 
 We use two reporting regions throughout (@tbl-scope). *As delivered* evaluates each product
-across the whole area it delivered, wherever that overlaps the expert-mapped areas. This is
+across the whole area it delivered, wherever that overlaps the CEMS-mapped areas. This is
 the view that matches what responders actually received. The *core region* is the
 ~`{python} N["core_area_km2"]` km² where all six products and the reference overlap: one shared area where each
 product can be compared against all the others. It holds `{python} N["cara_share_pct"]` of the
-expert-recorded damage. The core region is the main scope for the rest of the paper; where a
+CEMS-recorded damage. The core region is the main scope for the rest of the paper; where a
 section or caption uses the as-delivered frame instead, it says so.
 
 ```{python}
@@ -153,7 +153,7 @@ convention pushes the other way (ADR-0034). Against these each
 product's baseline precision and recall are set under one matching radius, applied from
 both sides. For precision, a flagged building counts as a hit if a CEMS
 damage point lies within 10 m of it; for recall, a CEMS damage point counts as found if a
-flagged building lies within 10 m of it, so a miss is an expert point with no flag nearby.
+flagged building lies within 10 m of it, so a miss is an CEMS point with no flag nearby.
 
 From that baseline the performance calculations are extended in two ways, to give a range
 of possible values rather than a single figure: by widening the reference to include the
@@ -173,7 +173,7 @@ lower bound and every recall an upper bound.
 ### No product supports acting on a single flagged building {#sec-flags}
 
 Building-level precision was low for every product. As delivered, precision across
-everything the expert reference mapped ran from `{python} N["asd_P_min"]` (`{python} N["asd_P_min_product"]`) to `{python} N["asd_P_max"]` (`{python} N["asd_P_max_product"]`). Even
+everything the CEMS reference mapped ran from `{python} N["asd_P_min"]` (`{python} N["asd_P_min_product"]`) to `{python} N["asd_P_max"]` (`{python} N["asd_P_max_product"]`). Even
 in the core region, where every product scores best, baseline precision reached only
 `{python} N["core_P_range"]` against recall of `{python} N["core_R_range"]`: `{python} N["core_fa_per_hit_range"]` false alarms for
 every hit, in the products' most favourable region and before any loosening of the reference. While the products do find damage, they also produce an enormous number of flags
@@ -210,7 +210,7 @@ performance varies widely from region to region. Core-region numbers are each
 product's favourable case; as delivered, the same product can be several times weaker
 (UH: `{python} N["core_P_UH"]` in the core against `{python} N["asd_P_UH"]` across its delivery), because precision falls by
 roughly the share of a product's flags placed in areas with little recorded damage
-(@tbl-frames; the split by expert-mapped area is in [Precision and recall in both frames](#app-frames)).
+(@tbl-frames; the split by CEMS-mapped area is in [Precision and recall in both frames](#app-frames)).
 
 Those numbers come from the strictest configuration this study evaluates, and a defensible
 one: a flag counts as correct only where a CEMS point graded *damaged* or *destroyed* lies
@@ -258,7 +258,7 @@ core region and `{python} N["asd_P_max_product"]` as delivered, while `{python} 
 ranks the core region best and `{python} N["rank_asd7_best"]` ranks best across full delivered
 extents. `{python} N["core_P_best_product"]` moves from the best precision in the core region to
 the weakest as delivered (`{python} N["core_P_UH"]` against `{python} N["asd_P_UH"]`). Every one of those
-orderings was established against the expert reference weeks after the response needed it.
+orderings was established against the CEMS reference weeks after the response needed it.
 
 ![Each product's Spearman rank correlation with the CEMS reference ordering, across both
 analysis levels, at the two H3 resolutions used to define neighbourhood
@@ -395,7 +395,7 @@ with very different extents.
    here holds inside a zone already known to be damaged and weakens outside it
    (@sec-ranking).
 3. **Do not spend the first days choosing a product.** Which one is strongest changes
-   with the task and the area, and was only established against the expert reference
+   with the task and the area, and was only established against the CEMS reference
    weeks later (@sec-ranking).
 4. **Count agreement instead.** Counting needs no weights, no training data and no
    reference, so it runs as soon as several products are in hand. Two are not enough on
@@ -409,7 +409,7 @@ with very different extents.
    against the field team's capacity.
 
 Steps 2 to 5 rest on core-region results: the agreement rules were never scored across
-full delivered extents. When reporting what you find, a single expert reference
+full delivered extents. When reporting what you find, a single CEMS reference
 understates precision where damage is lighter: publish measured precision as a lower
 bound, or adjudicate the disputed flags against a second reference and publish the
 interval.
@@ -446,11 +446,11 @@ assessments accordingly.
 
 This is one event, one geography, and mostly one damage zone: a single earthquake
 in a coastal, dense-urban setting, and the core comparison region is only ~`{python} N["core_area_km2"]` km², with
-`{python} N["cara_share_pct"]` of the expert reference in a single AOI (Caraballeda). The specific rule orderings
+`{python} N["cara_share_pct"]` of the CEMS reference in a single AOI (Caraballeda). The specific rule orderings
 and magnitudes are hypotheses elsewhere until replicated.
 
 The references have limits of their own, and the largest was measured rather than
-assumed: the expert map captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
+assumed: the CEMS reference captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
 `{python} N["cems_field_significant_pct"]` of those significantly damaged ([testing and adjusting the reference](#app-reference)),
 which is why every precision here is a lower bound and every recall an upper bound. The
 crowd campaign was seeded from two AI products' flags, so it scrutinises products unevenly
@@ -477,12 +477,12 @@ is per-product by design, so the geography model is re-scored on each product's 
 footprint there. {#tbl-regions}
 
 - UNEP and UH published no extents, and are handled differently. UNEP flagged buildings in every
-  expert-mapped area, so it is treated as covering them. UH's extent is the polygon around its
-  own classified footprints, which does not reach every expert-mapped area: it has no flags in
+  CEMS-mapped area, so it is treated as covering them. UH's extent is the polygon around its
+  own classified footprints, which does not reach every CEMS-mapped area: it has no flags in
   San Felipe.
 - Two products in the same window are not evaluated. HOT's fAIr published no extent, so its
   misses cannot be counted. DISHA published one, but it covers `{python} N["disha_share_pct"]` of the core
-  region and holds `{python} N["disha_cems"]` of its `{python} N["core_cems"]` expert damage points; admitting it
+  region and holds `{python} N["disha_cems"]` of its `{python} N["core_cems"]` CEMS damage points; admitting it
   would have halved the shared comparison area.
 
 ### How performance was measured {#app-matching .unnumbered}
@@ -496,7 +496,7 @@ footprint there. {#tbl-regions}
 
 ```{python}
 #| label: fig-matching
-#| fig-cap: "Counting hits, false alarms and misses. Left: a product is scored only where it and the reference both looked. Middle: each expert damage point is checked for a product flag within radius r, which gives recall. Right: each flagged building is checked for an expert point within r, which gives precision."
+#| fig-cap: "Counting hits, false alarms and misses. Left: a product is scored only where it and the reference both looked. Middle: each CEMS damage point is checked for a product flag within radius r, which gives recall. Right: each flagged building is checked for an CEMS point within r, which gives precision."
 import matplotlib.pyplot as plt
 import matplotlib.patches as mp
 import numpy as np
@@ -559,28 +559,30 @@ plt.show()
 []{#app-reference}
 
 **Testing the assumption.** Everything above rests on one: that inside an analysed extent the
-expert map recorded the damage that was there. Two independent datasets
+CEMS reference recorded the damage that was there. Two independent datasets
 test it, and they do opposite jobs. MapSwipe volunteers reviewed places the products flagged,
-so they can re-judge flags the expert map has no record of. ChatMap was collected on the ground
-independently of any satellite imagery, so it can measure what the expert map missed. Neither
-replaces the expert map, and neither can do the other's job.
+so they can re-judge flags the CEMS reference has no record of. ChatMap was collected on the ground
+independently of any satellite imagery, so it can measure what the CEMS reference missed. Neither
+replaces the CEMS reference, and neither can do the other's job.
 
 []{#app-crowd}
 
-**Re-judging the flags the expert map does not cover.** A flag with no expert point near it is
+**Re-judging the flags the CEMS reference does not cover.** A flag with no CEMS point near it is
 counted as a false alarm, but a gap in the reference and a genuine false alarm look identical.
 The crowd separates them where volunteers looked.
 
-- The rule: a flagged building with an expert damage point within 10 m is a hit outright, and the
+- The rule: a flagged building with an CEMS damage point within 10 m is a hit outright, and the
   crowd plays no part. Every other flag sits in a ~50 m cell volunteers voted on, and the majority
   verdict decides.
 - Flags in cells nobody saw earn nothing. The adjustment is a measurement, not an estimate, so it
   understates products the crowd barely reviewed.
-- Coverage is uneven because the campaign was seeded on one product's flags: `{python} N["crowdcov_MS"]` of
-  Microsoft's unmatched flags were reviewed against `{python} N["crowdcov_UH"]` of UH's.
+- The crowd reviewed cells, not products, so a flag from any product inside a reviewed cell is
+  adjudicated. But the task cells were drawn around two products' flags, so coverage of the
+  unmatched flags runs from `{python} N["crowdcov_MS"]` for Microsoft and `{python} N["crowdcov_UNEP"]`
+  for UNEP down to `{python} N["crowdcov_OSU"]` for OSU and `{python} N["crowdcov_UH"]` for UH.
 
 ![How the MapSwipe crowd enters the precision calculation. Hexagons are the ~50 m crowd task
-cells in Catia La Mar, tinted by majority verdict. A flag matched by an expert point within 10 m
+cells in Catia La Mar, tinted by majority verdict. A flag matched by an CEMS point within 10 m
 is a true positive and the crowd plays no part (green). An unmatched flag in a cell the crowd
 judged damaged is counted as confirmed and improves the adjusted precision (blue). In a cell
 judged undamaged or uncertain it stays a false alarm (orange), and a flag in a cell nobody voted
@@ -604,19 +606,19 @@ on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech
 - Swapping the second round's verdicts in moves each product's crowd-adjusted precision by at most
   `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
 - The upper bound in the main text unions crowd credit with the *possibly damaged* points. They
-  mostly touch different flags, so the crowd was largely confirming damage the expert map never
+  mostly touch different flags, so the crowd was largely confirming damage the CEMS reference never
   recorded.
 
-**Testing what the expert map missed.**
+**Testing what the CEMS reference missed.**
 
-- ChatMap audits the expert map because its field teams reported damage the imagery analysts never
-  saw. The expert map captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings,
+- ChatMap audits the CEMS reference because its field teams reported damage the imagery analysts never
+  saw. The CEMS reference captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings,
   but only `{python} N["cems_field_significant_pct"]` of those significantly damaged.
 
 ![ChatMap field reports are an independent dataset that helps evaluate both the products and
-the expert reference. Each line is one dataset's recall against those reports, at complete
+the CEMS reference. Each line is one dataset's recall against those reports, at complete
 destruction versus significant damage. Every line slopes the same way: destruction is
-found far more often than damage, the products and the expert map
+found far more often than damage, the products and the CEMS reference
 alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
 - Recall here is matched at 20 m rather than the 10 m used elsewhere. Field reports are phone
@@ -634,7 +636,7 @@ best. So every measured precision in this brief is a lower bound and every measu
 bound, and the sections that follow report results inside those limits.
 
 - Whether a ranking survives noisy per-building labels depends on how the noise sits in space. A
-  count regression predicts each cell's flag count from its expert damage count, with the cell's
+  count regression predicts each cell's flag count from its CEMS damage count, with the cell's
   building stock built in, so "more flags because more buildings" cannot register as bias. What
   remains is tested for spatial clustering and for correlation with building density, terrain and
   modelled shaking.
@@ -644,9 +646,9 @@ bound, and the sections that follow report results inside those limits.
 - Flags are projected onto the shared building base and combined by voting. A building passes the
   k-of-6 rule when at least k products flag it. k-of-6 is a rule, never a score, and voting rules
   are scored exactly as single products are.
-- Because the expert map has gaps, precision measured against it is a lower bound. A reference gap
+- Because the CEMS reference has gaps, precision measured against it is a lower bound. A reference gap
   can turn a correct flag into an apparent false positive but never the reverse.
-- Adjudication estimates how far above: for every flagged building with no expert point within
+- Adjudication estimates how far above: for every flagged building with no CEMS point within
   10 m, the crowd's majority verdict for its cell decides. Crowd-adjusted precision adds the
   confirmed ones back.
 - Caveat on the upper end: crowd verdicts are per ~50 m cell, not per building, so a confirmed flag
@@ -678,10 +680,10 @@ bound, and the sections that follow report results inside those limits.
 ### Area-ranking detail: tables and error structure {#app-ranking-tables .unnumbered}
 
 - The same benchmark test applied to ranking: sum the model's predicted per-building risk over the
-  same cells, which needs no threshold, and correlate with the expert count (@fig-nullrank).
+  same cells, which needs no threshold, and correlate with the CEMS count (@fig-nullrank).
 
 ![**Region: as delivered (left) and core (right).** Each product's rank correlation with the
-expert damage ordering, beside the geography benchmark scored on the same cells. As delivered the
+CEMS damage ordering, beside the geography benchmark scored on the same cells. As delivered the
 benchmark is re-scored on each product's own footprint, so it takes a different value per row;
 in the core region every predictor shares one cell set, so it has a single score, drawn as the
 vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
@@ -701,7 +703,7 @@ vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
   the fact, not that a responder had this ranking on day one.
 
 ![**Region: as delivered; both cell scales.** Each product's rank correlation with the
-expert ordering when cells are ranked by damaged-building count (filled circles, the
+CEMS ordering when cells are ranked by damaged-building count (filled circles, the
 paper's target) versus damage fraction (filled squares; cells with at least 20
 buildings). Open markers: the geography null under each target. The null is as strong
 under fractions as under counts, and only OSU beats it under
@@ -720,7 +722,7 @@ either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
 
 ### Precision and recall in both frames, in full {#app-frames .unnumbered}
 
-- The pooled numbers are one place's numbers. The expert map activated five areas, but
+- The pooled numbers are one place's numbers. The CEMS reference activated five areas, but
   `{python} N["cara_share_pct"]` of its damage points sit in one of them.
 
 ![**Region: each CEMS AOI separately, plus the pooled as-delivered total.** Precision and
@@ -740,7 +742,7 @@ incompleteness.](figures/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 - Precision falls by almost exactly the share of a product's flags landing outside the damage-dense
   area. Microsoft's is unchanged because it shipped only the strip it had analysed; UH's falls hardest
   because most of its flags sit in the low-damage areas.
-- Worse, most products flag far beyond any expert extent, where no reference can score them at all.
+- Worse, most products flag far beyond any CEMS extent, where no reference can score them at all.
   Every precision figure in this brief is therefore measured on each product's most favourable,
   reference-covered subset, and the true figure across a product's full output is very likely lower.
 - Re-running the benchmark in this frame, list against list at each product's own delivered size,
@@ -780,7 +782,7 @@ incompleteness.](figures/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 
 ### Sensitivity to the scoring choices {#app-radius .unnumbered}
 
-- Two choices define the target rather than the tolerance: how far a flag may sit from an expert
+- Two choices define the target rather than the tolerance: how far a flag may sit from a CEMS
   point, and which damage grades count. Both are swept here, with every flag list frozen so that
   only the target moves.
 
@@ -801,7 +803,7 @@ mechanical (same flags, more reference points to be near); the finding is what d
 
 ```{python}
 #| label: tbl-dial-full
-#| tbl-cap: "Building-level performance in full: the six products and the six agreement rules in the core region at matching radii of 10, 20 and 30 m. Parentheses at 10 m give each product's as-delivered value. Crowd-adjusted precision re-judges expert-unmatched flags against the crowd verdicts, credited only where volunteers reviewed the cell; crowd reviewed is the share of each row's unmatched flags they saw. Visits per find is field visits per damage point reached at 30 m. Shading ranks values within each column."
+#| tbl-cap: "Building-level performance in full: the six products and the six agreement rules in the core region at matching radii of 10, 20 and 30 m. Parentheses at 10 m give each product's as-delivered value. Crowd-adjusted precision re-judges CEMS-unmatched flags against the crowd verdicts, credited only where volunteers reviewed the cell; crowd reviewed is the share of each row's unmatched flags they saw. Visits per find is field visits per damage point reached at 30 m. Shading ranks values within each column."
 import pandas as pd
 from great_tables import GT, html, style, loc
 from matplotlib import colormaps
@@ -866,7 +868,7 @@ gt
 ```
 
 - Every number rises with the radius, because a flag one or two buildings away starts to count.
-- The benchmark gains fastest: a wider radius spreads each expert point over a cluster of neighbours,
+- The benchmark gains fastest: a wider radius spreads each CEMS point over a cluster of neighbours,
   making the target area-shaped, which is the shape a smooth spatial predictor captures well.
 - Combination stays ahead at every radius, so no conclusion depends on the choice.
 - The tighter 10 m label concentrates the positives onto individual buildings, which is where the
