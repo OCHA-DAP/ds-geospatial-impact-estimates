@@ -553,8 +553,7 @@ plt.show()
   distance*, close enough that a responder sent to a flag could plausibly find the damaged
   building: it is what the coverage and visits-per-find columns of @tbl-dial report. Both radii are
   also swept as sensitivity tests in [sensitivity to the matching radius](#app-radius).
-- Reference grades: *damaged* and *destroyed* count, *possibly damaged* does not. What happens
-  when that choice is relaxed is in [building-level performance against the benchmark](#app-null-building).
+- Reference grades: *damaged* and *destroyed* count, *possibly damaged* does not.
 
 []{#app-reference}
 
@@ -636,25 +635,6 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
   (`{python} N["null_rf_F1"]` against `{python} N["null_F1"]`).
 
 ![Schematic of geography null model](figures/rq8_dayzero_schematic.png){#fig-dayzero-build}
-
-#### Building-level performance against the benchmark {#app-null-building .unnumbered}
-
-- At building level the benchmark falls inside the six products' band: F1 `{python} N["null_F1"]` against
-  the products' `{python} N["prod_F1_range_r10"]`. Only the combinations clear it by a wide margin.
-- Changing which CEMS grades count as damage moves every level but not that ordering. The flag lists
-  are frozen, so only the reference changes.
-
-![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of every @fig-bestf1 predictor under three
-definitions of the CEMS reference, with flags and operating points frozen, so only the
-target changes. Grey lines and band: the six products; coloured lines: the composites
-and the geography nulls. The dashed line marks the paper's reference. The rise is
-mechanical (same flags, more reference points to be near); the finding is what does
-*not* change: `{python} N["basis_reversals_caption"]`.](figures/rq8c_basis_precision_r10.png){#fig-basis}
-
-- Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]` and reverses
-  nothing. The fused score keeps its margin and the geography benchmark stays inside the product
-  band under every definition.
-- Excluding *possibly damaged* is the more demanding choice, and it is the one kept.
 
 #### Area ranking against the benchmark {#app-ranking-tables .unnumbered}
 
