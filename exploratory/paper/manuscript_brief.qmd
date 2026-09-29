@@ -596,11 +596,9 @@ on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech
   `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
 
 **How ChatMap was used.** ChatMap field teams reported damaged buildings from the ground,
-independently of any satellite imagery, which makes it the one dataset that can check the CEMS
+independently of any satellite imagery, which makes it one dataset that can check the CEMS
 reference itself.
 
-- Recall against ChatMap is matched at 20 m rather than 10 m, because field reports are phone points
-  taken from the street and that scatter is the reference's positional error, not the product's.
 - CEMS captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
   `{python} N["cems_field_significant_pct"]` of those significantly damaged, and every product shows the
   same slope.
@@ -611,19 +609,11 @@ destruction versus significant damage. Every line slopes the same way: destructi
 found far more often than damage, the products and the CEMS reference
 alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
-- Because CEMS under-records lighter damage, the class every product detects worst, recall measured
-  against it is an upper bound. Some damage was missed by everything:
-  `{python} N["field_missed_by_all_pct"]` of field reports inside the area all four main products analysed had
-  no flag from any of them.
 - ChatMap can also be added to the reference directly, since its points are building-level. Doing
   so raises measured precision by only `{python} N["field_union_gain_range"]`, which is why it is left off the
   bounds ladder in the main text: too sparse to move the numbers.
-
-- Whether a ranking survives noisy per-building labels depends on how the noise sits in space. A
-  count regression predicts each cell's flag count from its CEMS damage count, with the cell's
-  building stock built in, so "more flags because more buildings" cannot register as bias. What
-  remains is tested for spatial clustering and for correlation with building density, terrain and
-  modelled shaking.
+- Recall against ChatMap is matched at 20 m rather than 10 m, because field reports are phone points
+  taken from the street and that scatter is the reference's positional error, not the product's.
 
 ### Combining products, and adjudicating disagreements: method {#app-adjudication .unnumbered}
 
