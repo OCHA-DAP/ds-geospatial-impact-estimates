@@ -570,31 +570,12 @@ plt.show()
 
 []{#app-reference}
 
-**Testing the expert reference.** Everything above rests on one assumption: that inside an
-analysed extent the expert map recorded the damage that was there. Two independent datasets
-test it, and they do opposite jobs. ChatMap was collected on the ground independently of any
-satellite imagery, so it can measure what the expert map missed. MapSwipe volunteers reviewed
-places the products flagged, so it can re-judge flags the expert map has no record of. Neither
+**Testing the assumption.** Everything above rests on one: that inside an analysed extent the
+expert map recorded the damage that was there. Two independent datasets
+test it, and they do opposite jobs. MapSwipe volunteers reviewed places the products flagged,
+so they can re-judge flags the expert map has no record of. ChatMap was collected on the ground
+independently of any satellite imagery, so it can measure what the expert map missed. Neither
 replaces the expert map, and neither can do the other's job.
-
-- ChatMap audits the expert map because its field teams reported damage the imagery analysts never
-  saw. The expert map captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings,
-  but only `{python} N["cems_field_significant_pct"]` of those significantly damaged.
-
-![ChatMap field reports are an independent dataset that helps evaluate both the products and
-the expert reference. Each line is one dataset's recall against those reports, at complete
-destruction versus significant damage. Every line slopes the same way: destruction is
-found far more often than damage, the products and the expert map
-alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
-
-- Recall here is matched at 20 m rather than the 10 m used elsewhere. Field reports are phone
-  points taken from the street, so the scatter is the reference's own positional error rather
-  than the product's.
-- Some damage was missed by everything: `{python} N["field_missed_by_all_pct"]` of field reports inside the
-  area all four main products analysed had no flag from any of them.
-- ChatMap can also be added to the reference directly, since its points are building-level. Doing
-  so raises measured precision by only `{python} N["field_union_gain_range"]`, which is why it is left off
-  the bounds ladder in the main text: geometrically exact, but too sparse to move the numbers.
 
 **Re-judging the flags the expert map does not cover.** A flag with no expert point near it is
 counted as a false alarm, but a gap in the reference and a genuine false alarm look identical.
@@ -635,6 +616,27 @@ on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech
 - The upper bound in the main text unions crowd credit with the *possibly damaged* points. They
   mostly touch different flags, so the crowd was largely confirming damage the expert map never
   recorded.
+
+**Testing what the expert map missed.**
+
+- ChatMap audits the expert map because its field teams reported damage the imagery analysts never
+  saw. The expert map captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings,
+  but only `{python} N["cems_field_significant_pct"]` of those significantly damaged.
+
+![ChatMap field reports are an independent dataset that helps evaluate both the products and
+the expert reference. Each line is one dataset's recall against those reports, at complete
+destruction versus significant damage. Every line slopes the same way: destruction is
+found far more often than damage, the products and the expert map
+alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
+
+- Recall here is matched at 20 m rather than the 10 m used elsewhere. Field reports are phone
+  points taken from the street, so the scatter is the reference's own positional error rather
+  than the product's.
+- Some damage was missed by everything: `{python} N["field_missed_by_all_pct"]` of field reports inside the
+  area all four main products analysed had no flag from any of them.
+- ChatMap can also be added to the reference directly, since its points are building-level. Doing
+  so raises measured precision by only `{python} N["field_union_gain_range"]`, which is why it is left off
+  the bounds ladder in the main text: geometrically exact, but too sparse to move the numbers.
 
 **What both tests leave.** A reference gap can turn a correct flag into an apparent false alarm but
 never the reverse, and the reference over-represents destruction, the class every product detects
