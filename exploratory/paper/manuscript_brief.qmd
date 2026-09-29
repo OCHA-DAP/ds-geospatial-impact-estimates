@@ -453,8 +453,8 @@ The references have limits of their own, and the largest was measured rather tha
 assumed: the CEMS reference captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
 `{python} N["cems_field_significant_pct"]` of those significantly damaged ([testing and adjusting the reference](#app-reference)),
 which is why every precision here is a lower bound and every recall an upper bound. The
-crowd campaign was seeded from two AI products' flags, so it scrutinises products unevenly
-and can never see any product's misses; the field reports are undated, positives-only,
+crowd campaign was seeded almost entirely on Microsoft's flags, so it scrutinises products very
+unevenly and can never see any product's misses; the field reports are undated, positives-only,
 skewed toward destruction, and come with no defined collection area.
 
 ## Appendix {.unnumbered}
@@ -577,9 +577,11 @@ The crowd separates them where volunteers looked.
 - Flags in cells nobody saw earn nothing. The adjustment is a measurement, not an estimate, so it
   understates products the crowd barely reviewed.
 - The crowd reviewed cells, not products, so a flag from any product inside a reviewed cell is
-  adjudicated. But the task cells were drawn around two products' flags, so coverage of the
-  unmatched flags runs from `{python} N["crowdcov_MS"]` for Microsoft and `{python} N["crowdcov_UNEP"]`
-  for UNEP down to `{python} N["crowdcov_OSU"]` for OSU and `{python} N["crowdcov_UH"]` for UH.
+  adjudicated. But the cells were drawn around Microsoft's flags, with a couple of dozen from HOT's
+  fAIr, which this brief does not evaluate. Every other product's coverage is therefore incidental:
+  its flags happen to fall inside cells drawn for Microsoft. Coverage of the unmatched flags runs
+  from `{python} N["crowdcov_MS"]` for Microsoft and `{python} N["crowdcov_UNEP"]` for UNEP down to
+  `{python} N["crowdcov_OSU"]` for OSU and `{python} N["crowdcov_UH"]` for UH.
 
 ![How the MapSwipe crowd enters the precision calculation. Hexagons are the ~50 m crowd task
 cells in Catia La Mar, tinted by majority verdict. A flag matched by an CEMS point within 10 m
