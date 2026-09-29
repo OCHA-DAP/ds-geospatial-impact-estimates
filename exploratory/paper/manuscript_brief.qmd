@@ -235,7 +235,7 @@ damaged*. Open blue square: the baseline plus the flags the MapSwipe crowd revie
 damaged, an area-level check that can only raise precision ([how it works](#app-crowd)). Filled
 blue diamond: both additions, the upper bound. ChatMap is left off the ladder because adding its
 field points to the reference raises precision by only `{python} N["field_union_gain_range"]`
-([method](#app-adjudication)).](figures/rq2r_bounds_ladder.png){#fig-bounds}
+([how ChatMap was used](#app-chatmap)).](figures/rq2r_bounds_ladder.png){#fig-bounds}
 
 ### The products rank neighbourhoods well enough to triage, within the damage zone {#sec-ranking}
 
@@ -595,6 +595,8 @@ on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech
   instead of six. Swapping its verdicts in moves each product's crowd-adjusted precision by at most
   `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
 
+[]{#app-chatmap}
+
 **How ChatMap was used.** ChatMap field teams reported damaged buildings from the ground,
 independently of any satellite imagery, which makes it one dataset that can check the CEMS
 reference itself.
@@ -614,24 +616,6 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
   bounds ladder in the main text: too sparse to move the numbers.
 - Recall against ChatMap is matched at 20 m rather than 10 m, because field reports are phone points
   taken from the street and that scatter is the reference's positional error, not the product's.
-
-### Combining products, and adjudicating disagreements: method {#app-adjudication .unnumbered}
-
-- Flags are projected onto the shared building base and combined by voting. A building passes the
-  k-of-6 rule when at least k products flag it. k-of-6 is a rule, never a score, and voting rules
-  are scored exactly as single products are.
-- Because the CEMS reference has gaps, precision measured against it is a lower bound. A reference gap
-  can turn a correct flag into an apparent false positive but never the reverse.
-- Adjudication estimates how far above: for every flagged building with no CEMS point within
-  10 m, the crowd's majority verdict for its cell decides. Crowd-adjusted precision adds the
-  confirmed ones back.
-- Caveat on the upper end: crowd verdicts are per ~50 m cell, not per building, so a confirmed flag
-  means damage somewhere in the cell. Crowd-adjusted precision is an upper estimate and the truth
-  sits between it and the measured lower bound.
-- A second crowd re-voted the same cells at three times the depth and confirmed slightly less
-  (`{python} N["r2_MS_conf_r2"]` against `{python} N["r2_MS_conf_r1"]`), so the upper estimates here sit a little high.
-- Recall has no such correction and its bias runs the other way: the reference over-represents
-  destruction, the class every product detects best, so recall is overstated rather than understated.
 
 ### The geography benchmark {#app-null-brief .unnumbered}
 
