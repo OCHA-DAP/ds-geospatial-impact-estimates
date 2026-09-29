@@ -149,7 +149,8 @@ sources. They are used both to supplement one another and to evaluate one anothe
 The Copernicus EMS manually mapped damaged buildings are the most comprehensive building-level
 source. The baseline reference is restricted to the buildings CEMS graded *damaged* or
 *destroyed*: the strictest definition used in this study, though not the strictest
-conceivable, since a destroyed-only reference would sit lower still. Against these each
+conceivable, since a destroyed-only reference would sit lower still, and the matching
+convention pushes the other way ([how performance was measured](#app-matching)). Against these each
 product's baseline precision and recall are set under one matching radius, applied from
 both sides. For precision, a flagged building counts as a hit if a CEMS
 damage point lies within 10 m of it; for recall, a CEMS damage point counts as found if a
@@ -548,29 +549,6 @@ plt.show()
   rule: highest overlap, else nearest within 20 m, else orphan. One rule for all, so no product is
   credited or penalised for the shape of its own building layer.
 
-```{python}
-#| label: tbl-mapping
-#| tbl-cap: "Own-footprint products mapped onto the shared base by one rule: each delivered footprint goes to the overlapping base building with the highest intersection-over-union, else to the nearest base building within 20 m, else it is an orphan; one assignment per footprint. Collapsed: footprints that share a base building with another footprint. Native: delivered footprints whose location falls in the frame; base: base buildings flagged in the frame (the counts every score uses)."
-import pandas as pd
-from great_tables import GT, md, style, loc
-
-from brief_numbers import N
-
-K = [("Microsoft", "MS"), ("UH", "UH"), ("UNEP", "UNEP")]
-rows = [dict(product=n, delivered=N["delivered_" + k], iou=N["iou_" + k], snap=N["snapped_" + k], orphans=N["orphans_" + k],
-             base=N["onbase_" + k], collapsed=N["collapsed_" + k], miou=N["median_iou_" + k],
-             asd_n=N["native_asd_" + k], asd_b=N["asd_flags_" + k], core_n=N["native_core_" + k], core_b=N["core_flags_" + k]) for n, k in K]
-(GT(pd.DataFrame(rows), rowname_col="product")
- .tab_spanner(label=md("**Whole delivery**"), columns=["delivered", "iou", "snap", "orphans", "base", "collapsed", "miou"])
- .tab_spanner(label=md("**As delivered**"), columns=["asd_n", "asd_b"])
- .tab_spanner(label=md("**Core region**"), columns=["core_n", "core_b"])
- .cols_label(delivered="delivered footprints", iou="by IoU", snap="nearest ≤ 20 m", orphans="orphans", base="base buildings",
-             collapsed="collapsed", miou="median IoU", asd_n="native", asd_b="base", core_n="native", core_b="base")
- .cols_align("right", columns=["delivered", "iou", "snap", "orphans", "base", "collapsed", "miou", "asd_n", "asd_b", "core_n", "core_b"])
- .tab_style(style.fill("#e8f0f4"), loc.body(columns=["asd_n", "asd_b"]))
- .tab_style(style.fill("#f7e3e1"), loc.body(columns=["core_n", "core_b"]))
- .tab_options(table_font_size="12.5px", column_labels_font_weight="bold", data_row_padding="4px"))
-```
 
 - The matching radius comes from building spacing, not convenience: the median distance between
   neighbouring buildings in the core region is `{python} N["spacing_median_m"]` m, and
@@ -581,6 +559,14 @@ rows = [dict(product=n, delivered=N["delivered_" + k], iou=N["iou_" + k], snap=N
 - Two labelled exceptions to the 10 m rule, each for a different question: 30 m for coverage and
   visits per find, the distance at which a responder could plausibly find the building; 20 m for
   field reports, whose phone GPS scatter is the reference's error, not the product's.
+- Each metric is anchored on its own side, so the match is not one-to-one: one expert point can
+  validate several adjacent flags. In the core region `{python} N["core_cems"]` expert damage
+  points sit within 10 m of `{python} N["core_pos_r10"]` distinct buildings, so a product that
+  flags the whole cluster around one collapsed building is credited for the cluster. Detection
+  benchmarks that force a one-to-one assignment would count the extra flags as false alarms.
+- That convention pushes measured precision up, the opposite direction from reference
+  incompleteness, which pushes it down. Only the second is quantified here, so the lower bound in
+  this brief is the lower bound under this convention rather than the lowest conceivable one.
 - Reference grades: *damaged* and *destroyed* count, *possibly damaged* does not.
 
 ![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of every @fig-bestf1 predictor under three
