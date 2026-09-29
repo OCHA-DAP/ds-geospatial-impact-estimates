@@ -723,7 +723,7 @@ incompleteness.](figures/rq2i_per_aoi_scorecard.png){#fig-peraoi}
   belongs beside accuracy when judging them. The area-level signal is robust to that churn.
 - That version's certainty tiers are correctly ordered, and the high-confidence cut is its best
   operating point, but it remains below Microsoft's core-region precision and far below the
-  agreement rules. The confidence finding now rests on two products rather than one.
+  agreement rules.
 
 ### Sensitivity to the matching radius {#app-radius .unnumbered}
 
