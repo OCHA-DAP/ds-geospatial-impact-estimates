@@ -680,40 +680,24 @@ bound, and the sections that follow report results inside those limits.
 - It is fitted with hindsight to this event's own damage labels and validated on spatial blocks it
   never trained on. Its inputs are available on day zero anywhere; its coefficients are not. It is a
   benchmark, not an operational alternative, and it is refit per event.
-- Where it lands: inside the six products' band at building level (F1 `{python} N["null_F1"]` against the
-  products' `{python} N["prod_F1_range_r10"]`), and comparable to the better products at area ranking. Only
-  the combinations clear it by a wide margin.
-- Two checks stand behind it. Building density alone already reaches the band, so the result does
-  not hinge on one covariate. And refitting with a 500 m buffer between training and test buildings
-  barely moves it (`{python} N["null_F1"]` to `{python} N["null_F1_buf500"]`), so spatial leakage is not the explanation.
-- The frozen v3 record used a coast-distance benchmark. Coast distance predicts damage here because
-  the damaged strip is a coastal fan, and it would not travel to another earthquake; terrain does the
-  job at least as well (ADR-0033).
 
 []{#app-null}
 
-
-- The model's output is not a flag list but a continuous risk score per building. Every cutoff is a
-  different flag list, so it traces a whole precision-recall curve, while a shipped product, whose
-  provider already fixed the threshold, is a single point in that plane.
 - Validation is by spatial blocking: the map is cut into ~`{python} N["h3_res7_km2"]` km² zones and the model
   is always scored on zones it never trained on, because neighbouring buildings resemble each other
   in both features and damage.
-- It is fitted two ways, a logistic regression and a random forest, and whichever scores higher is
-  reported, with both disclosed. A weak benchmark would overstate the products' skill by construction.
-- The weighted fusion is the same construction with the products' flags and confidence fields added.
-  The benchmark is that model with the product inputs removed.
+- It is fitted two ways, a logistic regression and a random forest, and both are reported. Every
+  paired comparison in this brief uses the logistic, so the whole brief rests on one model, even
+  though the forest is marginally stronger at building level in the core region
+  (`{python} N["null_rf_F1"]` against `{python} N["null_F1"]`).
 - Hindsight enters twice: in the fit, and in the cut. Re-choosing the operating cut on training folds
   only and applying it blind moves the fusion from `{python} N["fusion_F1_hind"]` to `{python} N["fusion_F1_nested"]` and
   the benchmark from `{python} N["null_F1_hind"]` to `{python} N["null_F1_nested"]`; flat voting does not move at all.
-- What the comparison supports is a claim about information content, never the operational claim that
-  anyone held such a model on day zero.
 
 ![How the geography null model is built. Four context variables known within hours of the
 earthquake (building density, terrain slope and elevation, and ShakeMap intensity) feed one
-spatially-blocked model whose target is CEMS damage; both learners are fitted and the
-stronger one is reported (the logistic here, the forest across the larger delivered
-footprints of @sec-flags). Its output is a *continuous* per-building risk, so every
+spatially-blocked model whose target is CEMS damage; both learners are fitted and both reported,
+and the logistic is the one every paired comparison uses. Its output is a *continuous* per-building risk, so every
 threshold on it is a different flag list and the score traces an entire precision–recall
 curve, against which a single product is one already-thresholded point. No satellite
 product enters this model. Note what the diagram cannot show: fitting it requires the
