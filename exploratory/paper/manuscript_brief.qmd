@@ -643,7 +643,7 @@ never the reverse, and the reference over-represents destruction, the class ever
 best. So every measured precision in this brief is a lower bound and every measured recall an upper
 bound, and the sections that follow report results inside those limits.
 
-### Area ranking, combination and adjudication: method {#app-ranking-method .unnumbered}
+### Area ranking and error structure: method {#app-ranking-method .unnumbered}
 
 - Flags are aggregated to hexagonal cells at two scales, ~`{python} N["h3_res8_km2"]` km² and
   ~`{python} N["h3_res7_km2"]` km², roughly the size of an operational triage area. Each product's ordering
@@ -654,8 +654,7 @@ bound, and the sections that follow report results inside those limits.
   remains is tested for spatial clustering and for correlation with building density, terrain and
   modelled shaking.
 
-[]{#app-adjudication}
-
+### Combining products, and adjudicating disagreements: method {#app-adjudication .unnumbered}
 
 - Flags are projected onto the shared building base and combined by voting. A building passes the
   k-of-6 rule when at least k products flag it. k-of-6 is a rule, never a score, and voting rules
