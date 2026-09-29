@@ -476,9 +476,10 @@ region gives every predictor an identical cell set (one geography score); as-del
 is per-product by design, so the geography model is re-scored on each product's own
 footprint there. {#tbl-regions}
 
-- UNEP and UH publish no extent. UNEP is treated as covering the region; UH's extent is the
-  polygon around its own classified footprints.
-
+- UNEP and UH published no extents, and are handled differently. UNEP flagged buildings in every
+  expert-mapped area, so it is treated as covering them. UH's extent is the polygon around its
+  own classified footprints, which does not reach every expert-mapped area: it has no flags in
+  San Felipe.
 - Two products in the same window are not evaluated. HOT's fAIr published no extent, so its
   misses cannot be counted. DISHA published one, but it covers `{python} N["disha_share_pct"]` of the core
   region and holds `{python} N["disha_cems"]` of its `{python} N["core_cems"]` expert damage points; admitting it
@@ -642,11 +643,6 @@ never the reverse, and the reference over-represents destruction, the class ever
 best. So every measured precision in this brief is a lower bound and every measured recall an upper
 bound, and the sections that follow report results inside those limits.
 
-### Area ranking and error structure: method {#app-ranking-method .unnumbered}
-
-- Flags are aggregated to hexagonal cells at two scales, ~`{python} N["h3_res8_km2"]` km² and
-  ~`{python} N["h3_res7_km2"]` km², roughly the size of an operational triage area. Each product's ordering
-  of cells is compared with the expert ordering by rank correlation and top-k overlap.
 - Whether a ranking survives noisy per-building labels depends on how the noise sits in space. A
   count regression predicts each cell's flag count from its expert damage count, with the cell's
   building stock built in, so "more flags because more buildings" cannot register as bias. What

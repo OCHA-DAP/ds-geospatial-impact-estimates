@@ -145,16 +145,21 @@ def main() -> None:
                       label=f"{nm} analysed extent ({aois[nm].area / 1e6:,.0f} km²)"
                             + (" — derived from its footprints" if nm == "UH" else ""))
                for nm in aois]
-    handles += [Line2D([], [], color="#1b1f24", ls="--", lw=1.4,
+    # the sixth product belongs in the legend, where the reader asks where it is, rather than
+    # only in a footnote two panels below
+    handles += [Line2D([], [], color="none",
+                       label="UNEP: no analysed extent published — not drawn"),
+                Line2D([], [], color="#1b1f24", ls="--", lw=1.4,
                        label="CEMS expert-mapped AOIs (the reference)"),
                 Patch(facecolor=CORE, alpha=0.85,
-                      label=f"core region = CEMS ∩ all five ({core.area / 1e6:,.0f} km²)")]
+                      label=f"core region = CEMS ∩ the five published extents "
+                            f"({core.area / 1e6:,.0f} km²)")]
     ax.legend(handles=handles, loc="upper left", fontsize=9.5, framealpha=0.95)
     ax.set_title("Who analysed where — six products, one shared yardstick area",
                  fontsize=14.5, weight="bold")
     fig.text(0.5, 0.045,
-             "UNEP debris publishes no analysed extent and is not drawn: the analysis assumes "
-             "it covers the core region (see Methods).\nScoring happens only where a product "
+             "UNEP debris publishes no analysed extent, so the analysis assumes it covers the "
+             "core region (see Methods).\nScoring happens only where a product "
              "and the reference both looked.",
              ha="center", fontsize=9.5, color="#5a6570", va="top")
 
