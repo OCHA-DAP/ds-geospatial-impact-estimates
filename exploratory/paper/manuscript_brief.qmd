@@ -149,7 +149,7 @@ The Copernicus EMS manually mapped damaged buildings are the most comprehensive 
 source. The baseline reference is restricted to the buildings CEMS graded *damaged* or
 *destroyed*: the strictest definition used in this study, though not the strictest
 conceivable, since a destroyed-only reference would sit lower still, and the matching
-convention pushes the other way ([how performance was measured](#app-matching)). Against these each
+convention pushes the other way (ADR-0034). Against these each
 product's baseline precision and recall are set under one matching radius, applied from
 both sides. For precision, a flagged building counts as a hit if a CEMS
 damage point lies within 10 m of it; for recall, a CEMS damage point counts as found if a
@@ -553,14 +553,6 @@ plt.show()
   distance*, close enough that a responder sent to a flag could plausibly find the damaged
   building: it is what the coverage and visits-per-find columns of @tbl-dial report. Both radii are
   also swept as sensitivity tests in [sensitivity to the scoring choices](#app-radius).
-- Each metric is anchored on its own side, so the match is not one-to-one: one expert point can
-  validate several adjacent flags. In the core region `{python} N["core_cems"]` expert damage points sit
-  within 10 m of `{python} N["core_pos_r10"]` distinct buildings, so a product that flags the whole cluster
-  around one collapsed building is credited for the cluster. Detection benchmarks that force a
-  one-to-one assignment would count the extra flags as false alarms.
-- That convention pushes measured precision up, the opposite direction from reference
-  incompleteness, which pushes it down. Only the second is quantified here, so the lower bound in
-  this brief is the lower bound under this convention rather than the lowest conceivable one.
 - Reference grades: *damaged* and *destroyed* count, *possibly damaged* does not. What happens
   when that choice is relaxed is in [sensitivity to the scoring choices](#app-radius).
 
