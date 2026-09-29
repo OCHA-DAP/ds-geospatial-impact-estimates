@@ -165,7 +165,7 @@ a crowd review of ~50 m cells at locations AI products had flagged, by more than
 volunteers: it can refute a false alarm but never reveal a miss, so it adjudicates disputed
 flags and is never ground truth. ChatMap is `{python} N["field_n"]` damage reports from field
 teams, positives-only with no survey frame: it can reveal misses but not false alarms
-(the appendix [reference data sources](#app-reference) shows the three side by side). Because the reference is incomplete, every measured precision here is a
+(the appendix [testing and adjusting the reference](#app-reference) sets out how each is used). Because the reference is incomplete, every measured precision here is a
 lower bound and every recall an upper bound.
 
 ## Results
@@ -453,7 +453,7 @@ and magnitudes are hypotheses elsewhere until replicated.
 
 The references have limits of their own, and the largest was measured rather than
 assumed: the expert map captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
-`{python} N["cems_field_significant_pct"]` of those significantly damaged ([reference data sources](#app-reference)),
+`{python} N["cems_field_significant_pct"]` of those significantly damaged ([testing and adjusting the reference](#app-reference)),
 which is why every precision here is a lower bound and every recall an upper bound. The
 crowd campaign was seeded from two AI products' flags, so it scrutinises products unevenly
 and can never see any product's misses; the field reports are undated, positives-only,
@@ -486,29 +486,14 @@ footprint there. {#tbl-regions}
   region and holds `{python} N["disha_cems"]` of its `{python} N["core_cems"]` expert damage points; admitting it
   would have halved the shared comparison area.
 
-### Reference data sources {#app-reference .unnumbered}
+### How performance was measured {#app-matching .unnumbered}
 
-- The expert map's own completeness was measured rather than assumed, using the one reference
-  collected on the ground independently of satellite imagery.
-- It captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings, but only
-  `{python} N["cems_field_significant_pct"]` of those significantly damaged.
-
-![ChatMap field reports are an independent dataset that helps evaluate both the products and
-the expert reference. Each line is one dataset's recall against those reports, at complete
-destruction versus significant damage. Every line slopes the same way: destruction is
-found far more often than damage, the products and the expert map
-alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
-
-- Recall here is matched at 20 m rather than the 10 m used elsewhere. Field reports are phone
-  points taken from the street, so the scatter is the reference's own positional error rather
-  than the product's.
-
-- Some damage was missed by everything: `{python} N["field_missed_by_all_pct"]` of field reports inside the
-  area all four main products analysed had no flag from any of them.
-- Consequence carried through the whole brief: measured precision is a lower bound and measured
-  recall an upper bound.
-
-### Performance classification details {#app-matching .unnumbered}
+- The product and the reference have different geometries, so there is no shared instance list
+  and no single confusion matrix. Scoring is by proximity.
+- Precision anchors on the product, recall on the reference, each with its own denominator.
+  Neither uses the undamaged background, so its size affects no score.
+- A product is accountable only where it and the reference both looked, so scoring is restricted
+  to the intersection of analysed extents.
 
 ```{python}
 #| label: fig-matching
@@ -559,55 +544,6 @@ fig.tight_layout(rect=(0, 0.07, 1, 0.97))
 plt.show()
 ```
 
-[]{#app-crowd}
-
-![How the MapSwipe crowd enters the precision calculation. Hexagons are the ~50 m crowd task
-cells in Catia La Mar, tinted by majority verdict. A flag matched by an expert point within 10 m
-is a true positive and the crowd plays no part (green). An unmatched flag in a cell the crowd
-judged damaged is counted as confirmed and improves the adjusted precision (blue). In a cell
-judged undamaged or uncertain it stays a false alarm (orange), and a flag in a cell nobody voted
-on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech}
-
-- The rule: a flagged building with an expert damage point within 10 m is a hit outright, and the
-  crowd plays no part. Every other flag sits in a ~50 m cell volunteers voted on, and the majority
-  verdict decides.
-- Flags in cells nobody saw earn nothing. The adjustment is a measurement, not an estimate, so it
-  understates products the crowd barely reviewed.
-- Coverage is uneven because the campaign was seeded on one product's flags: `{python} N["crowdcov_MS"]` of
-  Microsoft's unmatched flags were reviewed against `{python} N["crowdcov_UH"]` of UH's.
-- The upper bound unions crowd credit with the *possibly damaged* points. They mostly touch different
-  flags, so the crowd was largely confirming damage the expert map never recorded.
-
-- Every crowd-adjusted number in this brief comes from this first round. A second campaign re-voted
-  the same cells in August 2026, after the numbers were frozen, and it is used to test them rather
-  than to build them: `{python} N["r2_cells"]` of the same cells, about sixteen votes each instead of
-  six, different volunteers.
-- Two caveats make it an imperfect replication. The answer buttons changed, so round one's headline
-  finding for this strip cannot be re-measured, and the two rounds showed different, though similarly
-  dated, imagery.
-- What replicates is how much damage the crowd confirmed: `{python} N["r2_MS_conf_r1"]` then
-  `{python} N["r2_MS_conf_r2"]`, so roughly one flag in `{python} N["r2_MS_one_in"]` has crowd-visible damage under it.
-- What does not replicate is which cells. Only about a quarter repeat, but six votes on a borderline
-  cell is close to a coin toss; corrected for that voting noise the two rounds agree well
-  (`{python} N["r2_latent_corr"]` against `{python} N["r2_raw_corr"]` before the correction).
-- The practical consequence is the rule this brief already follows: a single cell's verdict is too
-  noisy to rely on, while sums over thousands of cells are steady, so crowd verdicts appear only
-  inside aggregate numbers and never as building-level truth.
-- Swapping the second round's verdicts in moves each product's crowd-adjusted precision by at most
-  `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
-
-- ChatMap, the field reports, is the second independent check. Its points are building-level, so
-  they can be unioned with the expert points directly, but doing so raises measured precision by
-  only `{python} N["field_union_gain_range"]`. That is why it is left off the bounds ladder in the
-  main text: geometrically exact, but too sparse to move the numbers.
-
-- The product and the reference have different geometries, so there is no shared instance list
-  and no single confusion matrix. Scoring is by proximity.
-- Precision anchors on the product, recall on the reference, each with its own denominator.
-  Neither uses the undamaged background, so its size affects no score.
-- Inside an analysed extent the reference is treated as complete. That assumption is tested
-  rather than asserted: the field reports measure the expert map's own recall, and
-  expert-unmatched flags are re-judged against the crowd.
 - Products that delivered their own footprints are mapped onto the shared building base by one
   rule: highest overlap, else nearest within 20 m, else orphan. One rule for all, so no product is
   credited or penalised for the shape of its own building layer.
@@ -636,8 +572,6 @@ rows = [dict(product=n, delivered=N["delivered_" + k], iou=N["iou_" + k], snap=N
  .tab_options(table_font_size="12.5px", column_labels_font_weight="bold", data_row_padding="4px"))
 ```
 
-- A product is accountable only where it and the reference both looked, so scoring is restricted
-  to the intersection of analysed extents.
 - The matching radius comes from building spacing, not convenience: the median distance between
   neighbouring buildings in the core region is `{python} N["spacing_median_m"]` m, and
   `{python} N["spacing_within20_pct"]` have a neighbour within 20 m. A wider radius would routinely match a
@@ -660,6 +594,82 @@ mechanical (same flags, more reference points to be near); the finding is what d
   nothing. The fused score keeps its margin and the geography benchmark stays inside the product
   band under every definition.
 - Excluding *possibly damaged* is the more demanding choice, and it is the one kept.
+- All of the above rests on one assumption: that inside an analysed extent the expert map recorded
+  the damage that was there. The rest of this appendix tests that assumption rather than making it.
+
+### Testing and adjusting the reference {#app-reference .unnumbered}
+
+- Two datasets interrogate the expert map, and they do opposite jobs. ChatMap was collected on the
+  ground independently of any satellite imagery, so it can measure what the expert map missed.
+  MapSwipe volunteers reviewed places the products flagged, so it can re-judge flags the expert map
+  has no record of. Neither replaces the expert map, and neither can do the other's job.
+
+**What the expert map missed.**
+
+- ChatMap audits the expert map because its field teams reported damage the imagery analysts never
+  saw. The expert map captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings,
+  but only `{python} N["cems_field_significant_pct"]` of those significantly damaged.
+
+![ChatMap field reports are an independent dataset that helps evaluate both the products and
+the expert reference. Each line is one dataset's recall against those reports, at complete
+destruction versus significant damage. Every line slopes the same way: destruction is
+found far more often than damage, the products and the expert map
+alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
+
+- Recall here is matched at 20 m rather than the 10 m used elsewhere. Field reports are phone
+  points taken from the street, so the scatter is the reference's own positional error rather
+  than the product's.
+- Some damage was missed by everything: `{python} N["field_missed_by_all_pct"]` of field reports inside the
+  area all four main products analysed had no flag from any of them.
+- ChatMap can also be added to the reference directly, since its points are building-level. Doing
+  so raises measured precision by only `{python} N["field_union_gain_range"]`, which is why it is left off
+  the bounds ladder in the main text: geometrically exact, but too sparse to move the numbers.
+
+**Re-judging the flags the expert map does not cover.**
+
+- A flag with no expert point near it is counted as a false alarm, but the gap in the reference and
+  a genuine false alarm look identical. The crowd separates them where volunteers looked.
+- The rule: a flagged building with an expert damage point within 10 m is a hit outright, and the
+  crowd plays no part. Every other flag sits in a ~50 m cell volunteers voted on, and the majority
+  verdict decides.
+- Flags in cells nobody saw earn nothing. The adjustment is a measurement, not an estimate, so it
+  understates products the crowd barely reviewed.
+- Coverage is uneven because the campaign was seeded on one product's flags: `{python} N["crowdcov_MS"]` of
+  Microsoft's unmatched flags were reviewed against `{python} N["crowdcov_UH"]` of UH's.
+
+![How the MapSwipe crowd enters the precision calculation. Hexagons are the ~50 m crowd task
+cells in Catia La Mar, tinted by majority verdict. A flag matched by an expert point within 10 m
+is a true positive and the crowd plays no part (green). An unmatched flag in a cell the crowd
+judged damaged is counted as confirmed and improves the adjusted precision (blue). In a cell
+judged undamaged or uncertain it stays a false alarm (orange), and a flag in a cell nobody voted
+on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech}
+
+- Every crowd-adjusted number in this brief comes from this first round. A second campaign re-voted
+  the same cells in August 2026, after the numbers were frozen, and it is used to test them rather
+  than to build them: `{python} N["r2_cells"]` of the same cells, about sixteen votes each instead of six,
+  different volunteers.
+- Two caveats make it an imperfect replication. The answer buttons changed, so round one's headline
+  finding for this strip cannot be re-measured, and the two rounds showed different, though
+  similarly dated, imagery.
+- What replicates is how much damage the crowd confirmed: `{python} N["r2_MS_conf_r1"]` then
+  `{python} N["r2_MS_conf_r2"]`, so roughly one flag in `{python} N["r2_MS_one_in"]` has crowd-visible damage under it.
+- What does not replicate is which cells. Only about a quarter repeat, but six votes on a borderline
+  cell is close to a coin toss; corrected for that voting noise the two rounds agree well
+  (`{python} N["r2_latent_corr"]` against `{python} N["r2_raw_corr"]` before the correction).
+- The practical consequence is the rule this brief already follows: a single cell's verdict is too
+  noisy to rely on, while sums over thousands of cells are steady, so crowd verdicts appear only
+  inside aggregate numbers and never as building-level truth.
+- Swapping the second round's verdicts in moves each product's crowd-adjusted precision by at most
+  `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
+- The upper bound in the main text unions crowd credit with the *possibly damaged* points. They
+  mostly touch different flags, so the crowd was largely confirming damage the expert map never
+  recorded.
+
+**What both tests leave.**
+
+- A reference gap can turn a correct flag into an apparent false alarm but never the reverse, and
+  the reference over-represents destruction, the class every product detects best. So every measured
+  precision in this brief is a lower bound and every measured recall an upper bound.
 
 ### Area ranking and error structure: method {#app-ranking-method .unnumbered}
 
