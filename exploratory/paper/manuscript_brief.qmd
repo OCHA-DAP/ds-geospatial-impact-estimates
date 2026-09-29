@@ -548,8 +548,6 @@ plt.show()
 - Products that delivered their own footprints are mapped onto the shared building base by one
   rule: highest overlap, else nearest within 20 m, else orphan. One rule for all, so no product is
   credited or penalised for the shape of its own building layer.
-
-
 - The matching radius comes from building spacing, not convenience: the median distance between
   neighbouring buildings in the core region is `{python} N["spacing_median_m"]` m, and
   `{python} N["spacing_within20_pct"]` have a neighbour within 20 m. A wider radius would routinely match a
@@ -560,37 +558,24 @@ plt.show()
   visits per find, the distance at which a responder could plausibly find the building; 20 m for
   field reports, whose phone GPS scatter is the reference's error, not the product's.
 - Each metric is anchored on its own side, so the match is not one-to-one: one expert point can
-  validate several adjacent flags. In the core region `{python} N["core_cems"]` expert damage
-  points sit within 10 m of `{python} N["core_pos_r10"]` distinct buildings, so a product that
-  flags the whole cluster around one collapsed building is credited for the cluster. Detection
-  benchmarks that force a one-to-one assignment would count the extra flags as false alarms.
+  validate several adjacent flags. In the core region `{python} N["core_cems"]` expert damage points sit
+  within 10 m of `{python} N["core_pos_r10"]` distinct buildings, so a product that flags the whole cluster
+  around one collapsed building is credited for the cluster. Detection benchmarks that force a
+  one-to-one assignment would count the extra flags as false alarms.
 - That convention pushes measured precision up, the opposite direction from reference
   incompleteness, which pushes it down. Only the second is quantified here, so the lower bound in
   this brief is the lower bound under this convention rather than the lowest conceivable one.
-- Reference grades: *damaged* and *destroyed* count, *possibly damaged* does not.
+- Reference grades: *damaged* and *destroyed* count, *possibly damaged* does not. What happens
+  when that choice is relaxed is in [sensitivity to the scoring choices](#app-radius).
 
-![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of every @fig-bestf1 predictor under three
-definitions of the CEMS reference, with flags and operating points frozen, so only the
-target changes. Grey lines and band: the six products; coloured lines: the composites
-and the geography nulls. The dashed line marks the paper's reference. The rise is
-mechanical (same flags, more reference points to be near); the finding is what does
-*not* change: `{python} N["basis_reversals_caption"]`.](figures/rq8c_basis_precision_r10.png){#fig-basis}
+[]{#app-reference}
 
-- Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]` and reverses
-  nothing. The fused score keeps its margin and the geography benchmark stays inside the product
-  band under every definition.
-- Excluding *possibly damaged* is the more demanding choice, and it is the one kept.
-- All of the above rests on one assumption: that inside an analysed extent the expert map recorded
-  the damage that was there. The rest of this appendix tests that assumption rather than making it.
-
-### Testing and adjusting the reference {#app-reference .unnumbered}
-
-- Two datasets interrogate the expert map, and they do opposite jobs. ChatMap was collected on the
-  ground independently of any satellite imagery, so it can measure what the expert map missed.
-  MapSwipe volunteers reviewed places the products flagged, so it can re-judge flags the expert map
-  has no record of. Neither replaces the expert map, and neither can do the other's job.
-
-**What the expert map missed.**
+**Testing the expert reference.** Everything above rests on one assumption: that inside an
+analysed extent the expert map recorded the damage that was there. Two independent datasets
+test it, and they do opposite jobs. ChatMap was collected on the ground independently of any
+satellite imagery, so it can measure what the expert map missed. MapSwipe volunteers reviewed
+places the products flagged, so it can re-judge flags the expert map has no record of. Neither
+replaces the expert map, and neither can do the other's job.
 
 - ChatMap audits the expert map because its field teams reported damage the imagery analysts never
   saw. The expert map captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings,
@@ -611,10 +596,10 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
   so raises measured precision by only `{python} N["field_union_gain_range"]`, which is why it is left off
   the bounds ladder in the main text: geometrically exact, but too sparse to move the numbers.
 
-**Re-judging the flags the expert map does not cover.**
+**Re-judging the flags the expert map does not cover.** A flag with no expert point near it is
+counted as a false alarm, but a gap in the reference and a genuine false alarm look identical.
+The crowd separates them where volunteers looked.
 
-- A flag with no expert point near it is counted as a false alarm, but the gap in the reference and
-  a genuine false alarm look identical. The crowd separates them where volunteers looked.
 - The rule: a flagged building with an expert damage point within 10 m is a hit outright, and the
   crowd plays no part. Every other flag sits in a ~50 m cell volunteers voted on, and the majority
   verdict decides.
@@ -651,11 +636,10 @@ on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech
   mostly touch different flags, so the crowd was largely confirming damage the expert map never
   recorded.
 
-**What both tests leave.**
-
-- A reference gap can turn a correct flag into an apparent false alarm but never the reverse, and
-  the reference over-represents destruction, the class every product detects best. So every measured
-  precision in this brief is a lower bound and every measured recall an upper bound.
+**What both tests leave.** A reference gap can turn a correct flag into an apparent false alarm but
+never the reverse, and the reference over-represents destruction, the class every product detects
+best. So every measured precision in this brief is a lower bound and every measured recall an upper
+bound, and the sections that follow report results inside those limits.
 
 ### Area ranking and error structure: method {#app-ranking-method .unnumbered}
 
@@ -842,7 +826,24 @@ incompleteness.](figures/rq2i_per_aoi_scorecard.png){#fig-peraoi}
   operating point, but it remains below Microsoft's core-region precision and far below the
   agreement rules. The confidence finding now rests on two products rather than one.
 
-### Performance versus matching radius {#app-radius .unnumbered}
+### Sensitivity to the scoring choices {#app-radius .unnumbered}
+
+- Two choices define the target rather than the tolerance: how far a flag may sit from an expert
+  point, and which damage grades count. Both are swept here, with every flag list frozen so that
+  only the target moves.
+
+![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of every @fig-bestf1 predictor under three
+definitions of the CEMS reference, with flags and operating points frozen, so only the
+target changes. Grey lines and band: the six products; coloured lines: the composites
+and the geography nulls. The dashed line marks the paper's reference. The rise is
+mechanical (same flags, more reference points to be near); the finding is what does
+*not* change: `{python} N["basis_reversals_caption"]`.](figures/rq8c_basis_precision_r10.png){#fig-basis}
+
+- Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]` and reverses
+  nothing. The fused score keeps its margin and the geography benchmark stays inside the product
+  band under every definition.
+- Excluding *possibly damaged* is the more demanding choice, and it is the one kept.
+
 
 - Everything is scored at 10 m, and because the radius defines the target rather than the tolerance,
   the whole analysis is re-run at 20 m and at 30 m.
