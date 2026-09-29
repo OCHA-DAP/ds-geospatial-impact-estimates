@@ -707,20 +707,6 @@ incompleteness.](figures/rq2i_per_aoi_scorecard.png){#fig-peraoi}
 - Re-running the benchmark in this frame, list against list at each product's own delivered size,
   it beats `{python} N["dz_beats_n"]` of the six on precision.
 
-### The single-product ceiling: three experiments {#app-ceiling .unnumbered}
-
-- **Same-satellite agreement barely helps.** Requiring the two radar products to agree raises
-  precision only to `{python} N["pair_P_IMPACT∧OSU"]`, the weakest of the fifteen pairs.
-- **Product confidence scores add nothing.** Sweeping Microsoft's continuous score trades recall for
-  precision along a curve on which the shipped binary flag already sits near the best F1. OSU's
-  post-freeze certainty tiers repeat the pattern.
-- **Agreement within one product plateaus too.** Microsoft flags corroborated by a second satellite
-  scene are `{python} N["frozen_scene_ratio"]` times more precise than single-scene flags, a real gain, but
-  still well below the strongest two-product rule, and in the low-damage zone even doubly confirmed
-  flags were rejected by `{python} N["frozen_scene_both_rejected"]` of crowd reviews.
-- Read together, the limit looks like a property of the sensing method rather than of any particular
-  product: single-method tuning does not rise above it.
-
 ### Product updates {#app-updates .unnumbered}
 
 - Three providers released later versions of their products after the response: Microsoft, OSU and
