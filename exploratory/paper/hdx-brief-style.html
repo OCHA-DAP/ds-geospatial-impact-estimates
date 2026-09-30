@@ -93,6 +93,10 @@ nav#TOC {
 nav#TOC > h2, nav#TOC .h2, nav#TOC .toc-actions { color: var(--hdx-brand-8); }
 #TOC .nav-link.active, #TOC .nav-link:hover { color: var(--hdx-brand-6); border-left-color: var(--hdx-brand-4); }
 
+/* no figure may run wider than its column: generated plots carry a fixed pixel width, and the
+   collapsible appendix clips anything wider rather than letting the page scroll */
+#quarto-document-content img { max-width: 100%; height: auto; }
+
 @media (max-width: 700px) {
   #title-block-header.quarto-title-block.default { padding-top: 2.1rem; padding-bottom: 1.5rem; }
 }

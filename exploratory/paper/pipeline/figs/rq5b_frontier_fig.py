@@ -88,14 +88,14 @@ for _, r in kof.iterrows():
     ax.annotate(str(int(r.k)), (r.R_cems, r.P_cems), ha="center", va="center",
                 fontsize=10, color="white", zorder=6)
 
-ax.set_xlabel("recall (CEMS {2,3}, core region, r = 10 m)", fontsize=12)
-ax.set_ylabel("precision (CEMS floor, same frame)", fontsize=12)
+ax.set_xlabel("recall", fontsize=12)
+ax.set_ylabel("precision", fontsize=12)
 ax.tick_params(labelsize=11)
 ax.set_xlim(0, max(1.0, float(df.R_cems.max()) + 0.05))   # data-driven: a fixed 0.85 once clipped 1-of-6 and 2-of-6 (recall .95, .90)
 ax.set_ylim(0, 1.0)
 ax.legend(fontsize=10, loc="upper right")
-ax.set_title("Six-member voting frontier — every rule's precision is an interval\n"
-             "(marker = measured against CEMS; whisker top = crowd-adjusted)", fontsize=13)
+# reference, radius and region live in the brief's caption, not on the chart
+ax.set_title("Precision and recall: single products and agreement rules", fontsize=13)
 fig.tight_layout()
 fig.savefig(os.path.join(FIGS, "rq5b_frontier_r10.png"), dpi=150)
 print("wrote figures/rq5b_frontier_r10.png")
