@@ -74,13 +74,6 @@ We evaluate six damage classification products that were published and available
 the first ten days of the response (@tbl-products). A few products were excluded because
 they had no accompanying area of analysis, or because the area they covered was too small
 to support the comparison ([analysis extents](#app-regions) gives the specifics).
-This is not the only evaluation of this event. The UN Global Service Centre (UNGSC) evaluated
-damage products for the same earthquake independently
-([story map](https://storymaps.arcgis.com/stories/0f31285dcc4241d0a33f6ef768e16d1e)), making
-different choices of study area, reference definition, matching radius and agreement rule, so the
-two sets of numbers are not directly comparable. The two pieces are complementary and are best
-read together.
-<!-- placeholder: add a link to the UNGSC analysis paper here, beside the story map, once published -->
 Throughout, a *flag* is a building a product marked as damaged to any extent.
 
 ```{python}
@@ -234,6 +227,13 @@ damaged, and finally both together. The result is a range of possible precision 
 product, with a realistic upper bound at the top. Even at that upper bound every product
 stays below `{python} N["P_upper_max"]`. Neither loosening changes the conclusion: none of
 these products is reliable enough to send a team to a single building it has flagged.
+
+An independent evaluation of the same earthquake by the UN Global Service Centre (UNGSC) reached
+the same conclusion ([story map](https://storymaps.arcgis.com/stories/0f31285dcc4241d0a33f6ef768e16d1e)). It too found the individual products unreliable for
+identifying damaged buildings, and it too found wide disagreement between products. The two
+evaluations made their own choices throughout, so their agreement is stronger evidence than either
+on its own.
+<!-- placeholder: add a link to the UNGSC analysis paper here, beside the story map, once published -->
 
 ![Each product's precision under four reference
 definitions, flags fixed, read left to right. Filled brown dot: the baseline, CEMS points graded
