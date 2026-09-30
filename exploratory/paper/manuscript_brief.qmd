@@ -500,6 +500,8 @@ footprint there. {#tbl-regions}
 
 ```{python}
 #| label: fig-matching
+#| out-width: "60%"
+#| fig-align: center
 #| fig-cap: "Counting hits, false alarms and misses. Top: a product is scored only where it and the reference both looked. Middle: each CEMS damage point is checked for a product flag within radius r, which gives recall. Bottom: each flagged building is checked for a CEMS point within r, which gives precision."
 import matplotlib.pyplot as plt
 import matplotlib.patches as mp
