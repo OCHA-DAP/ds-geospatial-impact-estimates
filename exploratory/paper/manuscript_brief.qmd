@@ -311,7 +311,7 @@ crowd-adjusted precision. Pairs of two radar products sit lowest; pairs that inc
 high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fig-frontier}
 
 Counting agreement is also close to the ceiling of what any combination can achieve. A
-statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 than counting, both scored on the building labels the model is fitted to (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data; see the [geography benchmark](#app-null-brief) appendix), but
+statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 than counting, both scored on the building labels the model is fitted to (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data), but
 fitting it requires the damage map a responder is still waiting for, so it explains the
 event afterwards and cannot run during one; flat counting can be done as soon as
 several products are in hand (@fig-bestf1).
