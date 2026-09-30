@@ -462,9 +462,6 @@ skewed toward destruction, and come with no defined collection area.
 
 ::: {.callout-note collapse="true" appearance="simple" icon="false" title="Show the full appendix"}
 
-*Outline draft. The full prose version as published on 2026-09-25 is frozen at
-`appendix-frozen-2026-09-28.qmd`.*
-
 ### Analysis extents {#app-regions .unnumbered}
 
 | reporting region | what it is | used for |
@@ -664,18 +661,14 @@ in the core region every predictor shares one cell set, so it has a single score
 vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
 
 - Across the delivered footprints geography ranks these areas better than the products do, beating
-  `{python} N["null_beats_n_asd7"]` of six at the coarser scale, with large margins, and a negative correlation
-  for `{python} N["asd_neg_7"]` means an ordering slightly worse than no information.
+  `{python} N["null_beats_n_asd7"]` of six at the coarser scale, with large margins.
 
-- Within the damage zone the result changes. The benchmark scores `{python} N["rhonull_core8_LIST"]`
-  on the shared cell set at ~`{python} N["h3_res8_km2"]` km², and `{python} N["core8_n_above"]` of six
-  products beat it (`{python} N["core8_above_null"]`), the best reaching `{python} N["rho_core8_LIST"]`
-  and the weakest `{python} N["rho_core8_UH"]`. At the finest scale `{python} N["core9_n_above"]` of six
-  are ahead.
+- Within the known damage zone, the core region, the individual products rank much better than
+  across their full delivered scope.
 - So the products do know where within a damaged area to go first. What they do not add is which
   area that is, which is the part geography already encodes.
-- The benchmark is hindsight-fitted, so this says the pattern was recoverable from geography after
-  the fact, not that a responder had this ranking on day one.
+- The geography benchmark is fitted with hindsight to the known damage labels, so it is not a viable
+  alternative in real time. Its purpose here is solely as an informative benchmark.
 
 ![Each product's rank correlation with the
 CEMS ordering across its delivered footprint, when cells are ranked by damaged-building count (filled circles, the
@@ -687,13 +680,6 @@ either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
 - Ranking by damage fraction rather than count changes no conclusion: damage rate is itself
   geographically structured in this event, so dividing out building stock removes nothing the
   benchmark relies on.
-
-- Residual over-flagging is clustered in space rather than random, but once building stock is
-  controlled the clustering follows the earthquake: residuals rise toward the coast and with
-  modelled shaking, and show no association with building density. Products over-call most where
-  damage is worst, which is why area rankings survive per-building noise. Cell by cell,
-  `{python} N["lisa_ns_range"]` of each product's territory shows errors scattered at random, with
-  the failures concentrated in a few pockets.
 
 ### Additional tests {#app-tests .unnumbered}
 
