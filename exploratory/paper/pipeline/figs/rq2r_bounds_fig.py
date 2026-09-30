@@ -19,7 +19,7 @@ HERE = os.path.dirname(__file__)
 FIGS = os.path.join(HERE, "..", "..", "figures")
 pb = pd.read_csv(os.path.join(HERE, "..", "legacy", "rq2r_precision_bounds.csv"))
 
-DEFS = [("P_floor", "expert points graded Damaged or Destroyed\n(the baseline: lower bound)", "#8a5a00", "o", True),
+DEFS = [("P_floor", "CEMS points graded Damaged or Destroyed\n(the baseline: lower bound)", "#8a5a00", "o", True),
         ("P_grade", "also counting points graded Possibly damaged", "#c98a1e", "o", False),
         ("P_crowd", "also counting crowd-confirmed flags (MapSwipe)", "#2a78d6", "s", False),
         ("P_upper", "counting both additions  (upper bound)", "#1b4f8a", "D", True)]
