@@ -228,13 +228,6 @@ product, with a realistic upper bound at the top. Even at that upper bound every
 stays below `{python} N["P_upper_max"]`. Neither loosening changes the conclusion: none of
 these products is reliable enough to send a team to a single building it has flagged.
 
-An independent evaluation of the same earthquake by the UN Global Service Centre (UNGSC) reached
-the same conclusion ([story map](https://storymaps.arcgis.com/stories/0f31285dcc4241d0a33f6ef768e16d1e)). It too found the individual products unreliable for
-identifying damaged buildings, and it too found wide disagreement between products. The two
-evaluations made their own choices throughout, so their agreement is stronger evidence than either
-on its own.
-<!-- placeholder: add a link to the UNGSC analysis paper here, beside the story map, once published -->
-
 ![Each product's precision under four reference
 definitions, flags fixed, read left to right. Filled brown dot: the baseline, CEMS points graded
 *damaged* or *destroyed*. Open circle: the reference widened to include points graded *possibly
@@ -243,6 +236,13 @@ damaged, an area-level check that can only raise precision ([how it works](#app-
 blue diamond: both additions, the upper bound. ChatMap is left off the ladder because adding its
 field points to the reference raises precision by only `{python} N["field_union_gain_range"]`
 ([how ChatMap was used](#app-chatmap)).](figures/rq2r_bounds_ladder.png){#fig-bounds}
+
+An independent evaluation of the same earthquake by the UN Global Service Centre (UNGSC) reached
+the same conclusion ([story map](https://storymaps.arcgis.com/stories/0f31285dcc4241d0a33f6ef768e16d1e)). It too found the individual products unreliable for
+identifying damaged buildings, and it too found wide disagreement between products. The two
+evaluations made their own choices throughout, so their agreement is stronger evidence than either
+on its own.
+<!-- placeholder: add a link to the UNGSC analysis paper here, beside the story map, once published -->
 
 ### The products rank neighbourhoods well enough to triage, within the damage zone {#sec-ranking}
 
