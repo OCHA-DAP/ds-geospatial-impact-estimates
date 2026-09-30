@@ -73,7 +73,15 @@ what purpose, and at what spatial scale.
 We evaluate six damage classification products that were published and available within
 the first ten days of the response (@tbl-products). A few products were excluded because
 they had no accompanying area of analysis, or because the area they covered was too small
-to support the comparison ([The two reporting regions](#app-regions) gives the specifics).
+to support the comparison ([analysis extents](#app-regions) gives the specifics).
+This is not the only evaluation of this event. The UN Global Service Centre (UNGSC) evaluated
+damage products for the same earthquake independently
+([story map](https://storymaps.arcgis.com/stories/0f31285dcc4241d0a33f6ef768e16d1e)), making
+different choices of study area, reference definition, matching radius and agreement rule, so the
+two sets of numbers are not directly comparable. The two pieces are complementary and are best
+read together.
+<!-- UNGSC placeholder: if their fuller analysis is published, cite it here beside the story map,
+e.g. "(story map; full analysis [paper](URL))". Keep this the one place the brief cites them. -->
 Throughout, a *flag* is a building a product marked as damaged to any extent.
 
 ```{python}
