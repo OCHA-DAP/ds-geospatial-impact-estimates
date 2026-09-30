@@ -639,13 +639,6 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
 #### Building-level performance against the benchmark {#app-null-building .unnumbered}
 
-- At building level the benchmark falls inside the six products' band: F1 `{python} N["null_F1"]` against
-  the products' `{python} N["prod_F1_range_r10"]`. Only the combinations clear it by a wide margin.
-  These F1 values are scored on building labels, as any comparison with a model must be, so they
-  run slightly below the main text's, where recall counts CEMS points found.
-- Changing which CEMS grades count as damage moves every level but not that ordering. The flag lists
-  are frozen, so only the reference changes.
-
 ![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of each product, the two fitted combinations and the geography benchmark under three
 definitions of the CEMS reference, with flags and operating points frozen, so only the
 target changes. Grey lines and band: the six products; coloured lines: the composites
