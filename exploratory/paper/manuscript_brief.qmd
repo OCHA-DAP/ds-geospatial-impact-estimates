@@ -228,7 +228,7 @@ product, with a realistic upper bound at the top. Even at that upper bound every
 stays below `{python} N["P_upper_max"]`. Neither loosening changes the conclusion: none of
 these products is reliable enough to send a team to a single building it has flagged.
 
-![**Region: core (`{python} N["core_area_km2"]` km²).** Each product's precision under four reference
+![Each product's precision under four reference
 definitions, flags fixed, read left to right. Filled brown dot: the baseline, CEMS points graded
 *damaged* or *destroyed*. Open circle: the reference widened to include points graded *possibly
 damaged*. Open blue square: the baseline plus the flags the MapSwipe crowd reviewed and judged
@@ -305,7 +305,7 @@ which share a sensor class but not a method (`{python} N["pair_second"]`, `{pyth
 alone does not predict which pair will work, and one event cannot settle it: treat this
 as a reason to mix sensing methods, not as a ranking of providers.
 
-![**Region: core (`{python} N["core_area_km2"]` km²).** All `{python} N["pair_n"]` two-product agreement rules (open circles, labelled) against the six
+![All `{python} N["pair_n"]` two-product agreement rules (open circles, labelled) against the six
 products (grey) and the k-of-6 voting rules (blue squares, k inside); whiskers run from measured to
 crowd-adjusted precision. Pairs of two radar products sit lowest; pairs that include a
 high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fig-frontier}
@@ -639,7 +639,7 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
 #### Building-level performance against the benchmark {#app-null-building .unnumbered}
 
-![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of each product, the two fitted combinations and the geography benchmark under three
+![Precision of each product, the two fitted combinations and the geography benchmark under three
 definitions of the CEMS reference, with flags and operating points frozen, so only the
 target changes. Grey lines and band: the six products; coloured lines: the composites
 and the geography nulls. The dashed line marks the paper's reference. The rise is
@@ -656,7 +656,7 @@ mechanical (same flags, more reference points to be near); the finding is what d
 - The same benchmark test applied to ranking: sum the model's predicted per-building risk over the
   same cells, which needs no threshold, and correlate with the CEMS count (@fig-nullrank).
 
-![**Region: as delivered (left) and core (right).** Each product's rank correlation with the
+![Each product's rank correlation with the
 CEMS damage ordering, beside the geography benchmark scored on the same cells. As delivered the
 benchmark is re-scored on each product's own footprint, so it takes a different value per row;
 in the core region every predictor shares one cell set, so it has a single score, drawn as the
@@ -676,8 +676,8 @@ vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
 - The benchmark is hindsight-fitted, so this says the pattern was recoverable from geography after
   the fact, not that a responder had this ranking on day one.
 
-![**Region: as delivered; both cell scales.** Each product's rank correlation with the
-CEMS ordering when cells are ranked by damaged-building count (filled circles, the
+![Each product's rank correlation with the
+CEMS ordering across its delivered footprint, when cells are ranked by damaged-building count (filled circles, the
 paper's target) versus damage fraction (filled squares; cells with at least 20
 buildings). Open markers: the geography null under each target. The null is as strong
 under fractions as under counts, and only OSU beats it under
