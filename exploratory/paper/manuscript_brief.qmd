@@ -63,8 +63,8 @@ University working with NASA, and the University of Houston; an NGO, IMPACT Init
 UN bodies, the United Nations Environment Programme / Office for the Coordination of
 Humanitarian Affairs (UNEP/OCHA) Joint Environment Unit, the World Food Programme working
 with the Luxembourg Institute of Science and Technology (LIST) and the European
-Organization for Nuclear Research (CERN), and DISHA (Data Insights for Social and
-Humanitarian Action), an initiative of UN Global Pulse; and a volunteer AI platform, the
+Organization for Nuclear Research (CERN), and Data Insights for Social and
+Humanitarian Action (DISHA), an initiative of UN Global Pulse; and a volunteer AI platform, the
 Humanitarian OpenStreetMap Team's fAIr. These products disagree with each other,
 sometimes by a wide margin. A coordinator of search-and-rescue (SAR) teams receiving
 several of them in the same week has no established way to decide which to trust, for
