@@ -500,7 +500,6 @@ footprint there. {#tbl-regions}
 
 ```{python}
 #| label: fig-matching
-#| out-width: "45%"
 #| fig-align: center
 #| fig-cap: "Counting hits, false alarms and misses. Top: a product is scored only where it and the reference both looked. Middle: each CEMS damage point is checked for a product flag within radius r, which gives recall. Bottom: each flagged building is checked for a CEMS point within r, which gives precision."
 import matplotlib.pyplot as plt
@@ -509,7 +508,7 @@ import numpy as np
 from shapely.geometry import Point
 
 R = 0.16
-fig, ax = plt.subplots(3, 1, figsize=(6.4, 15.5))   # stacked: side by side ran past the page margin
+fig, ax = plt.subplots(3, 1, figsize=(4.3, 9.9))   # stacked: side by side ran past the page margin
 a0 = ax[0]
 c1, c2 = Point(-0.28, 0).buffer(0.75), Point(0.28, 0).buffer(0.75)
 inter = c1.intersection(c2)
@@ -544,8 +543,8 @@ for a in ax:
 h = [plt.Line2D([], [], marker="*", ls="", ms=13, c="k", label="CEMS damage point"),
      plt.Line2D([], [], marker="s", ls="", ms=8, c="tab:orange", label="product-flagged building"),
      plt.Line2D([], [], ls="--", c="grey", label="match radius r")]
-fig.legend(handles=h, loc="lower center", ncol=3, frameon=False, fontsize=8.5)
-fig.tight_layout(rect=(0, 0.035, 1, 0.99))
+fig.legend(handles=h, loc="lower center", ncol=1, frameon=False, fontsize=8.5)
+fig.tight_layout(rect=(0, 0.075, 1, 0.99))
 plt.show()
 ```
 
