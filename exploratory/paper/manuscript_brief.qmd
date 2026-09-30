@@ -305,10 +305,11 @@ which share a sensor class but not a method (`{python} N["pair_second"]`, `{pyth
 alone does not predict which pair will work, and one event cannot settle it: treat this
 as a reason to mix sensing methods, not as a ranking of providers.
 
-![All `{python} N["pair_n"]` two-product agreement rules (open circles, labelled) against the six
-products (grey) and the k-of-6 voting rules (blue squares, k inside); whiskers run from measured to
-crowd-adjusted precision. Pairs of two radar products sit lowest; pairs that include a
-high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fig-frontier}
+![The six products as shipped (grey), all `{python} N["pair_n"]` two-product agreement rules (open
+circles, labelled) and the six k-of-6 rules (blue squares, k inside), in the core region. Precision
+and recall are measured against CEMS points graded *damaged* or *destroyed*, matched within 10 m;
+whiskers run from measured to crowd-adjusted precision. Pairs of two radar products sit lowest; pairs
+that include a high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fig-frontier}
 
 Counting agreement is also close to the ceiling of what any combination can achieve. A
 statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 than counting, both scored on the building labels the model is fitted to (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data), but
@@ -813,8 +814,6 @@ rows = [{"rule": labels.get(k, k),
  .tab_options(column_labels_font_weight="bold", table_font_size="12.5px",
               data_row_padding="3px"))
 ```
-
-- The 6-of-6 rule's sub-1 visits per find holds; its interval's upper limit is `{python} N["k6_visits_hi"]`.
 
 ### Product updates {#app-updates .unnumbered}
 
