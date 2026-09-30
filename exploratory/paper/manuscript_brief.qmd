@@ -80,8 +80,7 @@ damage products for the same earthquake independently
 different choices of study area, reference definition, matching radius and agreement rule, so the
 two sets of numbers are not directly comparable. The two pieces are complementary and are best
 read together.
-<!-- UNGSC placeholder: if their fuller analysis is published, cite it here beside the story map,
-e.g. "(story map; full analysis [paper](URL))". Keep this the one place the brief cites them. -->
+<!-- placeholder: add a link to the UNGSC analysis paper here, beside the story map, once published -->
 Throughout, a *flag* is a building a product marked as damaged to any extent.
 
 ```{python}
