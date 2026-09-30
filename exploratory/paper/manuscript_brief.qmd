@@ -646,7 +646,7 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 - Changing which CEMS grades count as damage moves every level but not that ordering. The flag lists
   are frozen, so only the reference changes.
 
-![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of every @fig-bestf1 predictor under three
+![**Region: core (`{python} N["core_area_km2"]` km²).** Precision of each product, the two fitted combinations and the geography benchmark under three
 definitions of the CEMS reference, with flags and operating points frozen, so only the
 target changes. Grey lines and band: the six products; coloured lines: the composites
 and the geography nulls. The dashed line marks the paper's reference. The rise is
