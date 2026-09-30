@@ -311,14 +311,14 @@ crowd-adjusted precision. Pairs of two radar products sit lowest; pairs that inc
 high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fig-frontier}
 
 Counting agreement is also close to the ceiling of what any combination can achieve. A
-statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data; see the [geography benchmark](#app-null-brief) appendix), but
+statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 than counting, both scored on the building labels the model is fitted to (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data; see the [geography benchmark](#app-null-brief) appendix), but
 fitting it requires the damage map a responder is still waiting for, so it explains the
 event afterwards and cannot run during one; flat counting can be done as soon as
 several products are in hand (@fig-bestf1).
 
-![F1 at each predictor's operating point, at both analysis levels: the six products
-(grey) and the two combinations (green), which exist only in the core region. Bar labels
-give F1, precision and recall.](figures/rq8_best_f1_r10_summary.png){#fig-bestf1}
+![F1 at each product's own threshold, at both analysis levels, beside the best of the six
+agreement rules (green), which exists only in the core region. Bar labels give F1, precision
+and recall, counted as in @tbl-frames.](figures/best_f1_points_r10.png){#fig-bestf1}
 
 Counting agreement helps the area ranking too, not just the building-level decision
 (@fig-agreerank). Ranking cells by their count of buildings with three or four products agreeing beats every
@@ -641,6 +641,8 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
 - At building level the benchmark falls inside the six products' band: F1 `{python} N["null_F1"]` against
   the products' `{python} N["prod_F1_range_r10"]`. Only the combinations clear it by a wide margin.
+  These F1 values are scored on building labels, as any comparison with a model must be, so they
+  run slightly below the main text's, where recall counts CEMS points found.
 - Changing which CEMS grades count as damage moves every level but not that ordering. The flag lists
   are frozen, so only the reference changes.
 
@@ -794,7 +796,7 @@ gt
 
 ```{python}
 #| label: tbl-ci-core
-#| tbl-cap: "Core region, 95% block-bootstrap intervals. P/R/F1 at 10 m, crowd-adjusted precision (10 m), F1 at 30 m, and visits per find (30 m). The 20 m radius and the as-delivered region are in the frozen artefact (RQ9)."
+#| tbl-cap: "Core region, 95% block-bootstrap intervals, counted as in the main text (recall is the share of CEMS points found). P/R/F1 at 10 m, crowd-adjusted precision (10 m), F1 at 30 m, and visits per find (30 m). The 20 m radius and the as-delivered region are in the frozen artefact (RQ9)."
 import pandas as pd
 from great_tables import GT
 
@@ -821,7 +823,7 @@ rows = [{"rule": labels.get(k, k),
 
 ```{python}
 #| label: tbl-ci-models
-#| tbl-cap: "Model frame (building labels, core region), 95% block-bootstrap intervals: F1 at each predictor's frozen operating point and its paired difference from the logistic geography null. A difference interval that excludes zero separates from the null; only the combination rules do so upward."
+#| tbl-cap: "Model frame (building labels, core region), 95% block-bootstrap intervals: F1 at each predictor's frozen operating point and its paired difference from the logistic geography null. Recall here is the share of labelled buildings flagged rather than of CEMS points found, so recall and F1 run below the table above while precision is identical. A difference interval that excludes zero separates from the null; only the combination rules do so upward."
 from brief_numbers import ci_models as mi   # from artefacts/results.csv
 def mcell(pred, metric):
     r = mi[(mi.predictor == pred) & (mi.metric == metric)].iloc[0]
