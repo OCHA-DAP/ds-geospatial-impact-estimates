@@ -821,31 +821,7 @@ rows = [{"rule": labels.get(k, k),
               data_row_padding="3px"))
 ```
 
-```{python}
-#| label: tbl-ci-models
-#| tbl-cap: "Model frame (building labels, core region), 95% block-bootstrap intervals: F1 at each predictor's frozen operating point and its paired difference from the logistic geography null. Recall here is the share of labelled buildings flagged rather than of CEMS points found, so recall and F1 run below the table above while precision is identical. A difference interval that excludes zero separates from the null; only the combination rules do so upward."
-from brief_numbers import ci_models as mi   # from artefacts/results.csv
-def mcell(pred, metric):
-    r = mi[(mi.predictor == pred) & (mi.metric == metric)].iloc[0]
-    return f"{r['point']:+.3f} ({r['lo']:+.3f}–{r['hi']:+.3f})" if metric == "F1_diff"         else f"{r['point']:.3f} ({r['lo']:.3f}–{r['hi']:.3f})"
-
-prods = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
-rows = [{"predictor": labels.get(k, k), "F1": mcell(f"{k} (as shipped)", "F1"),
-         "diff": mcell(f"{k} (as shipped) − null (logit)", "F1_diff")} for k in prods]
-rows.append({"predictor": "geography null (logistic)",
-             "F1": mcell("geography null (logistic)", "F1"), "diff": "—"})
-for k in ("flat k-of-6 voting", "weighted fusion"):
-    rows.append({"predictor": k, "F1": mcell(k, "F1"),
-                 "diff": mcell(f"{k} − null (logit)", "F1_diff")})
-(GT(pd.DataFrame(rows), rowname_col="predictor")
- .cols_label(F1="F1 at operating point", diff="F1 − null")
- .tab_options(column_labels_font_weight="bold", table_font_size="12.5px",
-              data_row_padding="3px"))
-```
-
 - The 6-of-6 rule's sub-1 visits per find holds; its interval's upper limit is `{python} N["k6_visits_hi"]`.
-- No product demonstrably adds information beyond geography at its shipped operating point, one
-  demonstrably falls short of it, and both combination rules demonstrably exceed it.
 
 ### Product updates {#app-updates .unnumbered}
 
