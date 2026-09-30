@@ -210,6 +210,11 @@ FIG = {
     "figures/rq8_dayzero_schematic.png": ("rq8_dayzero_schematic.py", [], ""),
     "figures/rq3_residual_maps_res8.png": ("rq3_error_structure.py", [LIB[1]], ""),
     "figures/rq3g_frac_vs_count_rho.png": ("rq3g_fig.py", ["frozen/rq3g_frac_vs_count.csv"], ""),
+    # brief variants added 2026-09-28/30: main-text best-F1 in the points frame, the appendix's paired
+    # product-vs-benchmark ranking chart, and the round-1-only crowd explainer
+    "figures/best_f1_points_r10.png": ("best_f1_points_fig.py", ["results.csv", "brief_numbers.py"], ""),
+    "figures/rq3f_null_ranking_both.png": ("rq3f_null_ranking_both_fig.py", [f"{P}/legacy/rq3f_null_ranking.csv", f"{P}/legacy/rq3f_null_ranking_core.csv"], ""),
+    "figures/rq7_crowd_adjustment_explainer_r1.png": ("rq7_round2_explainer_fig.py", ["frozen/rq7_round2_replication.csv", LIB[1]], "--round1"),
 }
 
 for _png, (_script, _inputs, _args) in FIG.items():

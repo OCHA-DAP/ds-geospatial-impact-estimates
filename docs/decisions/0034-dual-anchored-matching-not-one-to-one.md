@@ -72,6 +72,17 @@ The brief's main text carries one clause on this, in the sentence that introduce
 reference as the strictest definition used in the study. The appendix carried a fuller version
 until 2026-09-29, when it was cut for length; this record is where it lives now.
 
+**Where each frame is reported (2026-09-30).** Dual anchoring means recall, and so F1, differs
+between the points frame (recall = share of CEMS points found; 1,467 in the core) and the
+building-label frame (recall = share of labelled buildings flagged; 2,064 in the core). Precision is
+identical in both. The fitted models (the geography benchmark, the weighted fusion) can only be
+scored on building labels, so any comparison with them uses that frame. The brief's main text
+reports the points frame throughout, with one exception: the fusion-over-counting ratio, a ratio
+within the building-label frame, labelled as such in the sentence. Every other building-label number
+appears only in the appendix beside the models, each labelled. The main-text best-F1 chart was rebuilt in the points frame for this reason
+(`best_f1_points_fig.py`), after the building-label version put a second recall for each product
+beside Table 3 (Microsoft 0.47 against 0.61).
+
 Related: ADR-0025 (evaluation method), ADR-0030 (footprint frame and the Microsoft one-to-one
 footprint mapping, which is a different one-to-one question), ADR-0031 (crowd credit measured, not
 extrapolated).
