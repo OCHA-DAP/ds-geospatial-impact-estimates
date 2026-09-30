@@ -237,11 +237,10 @@ blue diamond: both additions, the upper bound. ChatMap is left off the ladder be
 field points to the reference raises precision by only `{python} N["field_union_gain_range"]`
 ([how ChatMap was used](#app-chatmap)).](figures/rq2r_bounds_ladder.png){#fig-bounds}
 
-An independent evaluation of the same earthquake by the UN Global Service Centre (UNGSC) reached
-the same conclusion ([story map](https://storymaps.arcgis.com/stories/0f31285dcc4241d0a33f6ef768e16d1e)). It too found the individual products unreliable for
-identifying damaged buildings, and it too found wide disagreement between products. The two
-evaluations made their own choices throughout, so their agreement is stronger evidence than either
-on its own.
+These findings are in line with an [independent analysis](https://storymaps.arcgis.com/stories/0f31285dcc4241d0a33f6ef768e16d1e) by the UN Global
+Service Centre (UNGSC), which examined the same damage products and several others. It also found
+individual products unreliable for identifying damaged buildings, and wide disagreement between
+them.
 <!-- placeholder: add a link to the UNGSC analysis paper here, beside the story map, once published -->
 
 ### The products rank neighbourhoods well enough to triage, within the damage zone {#sec-ranking}
