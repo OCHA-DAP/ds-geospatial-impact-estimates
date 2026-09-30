@@ -239,8 +239,8 @@ field points to the reference raises precision by only `{python} N["field_union_
 
 These findings are in line with an [independent analysis](https://storymaps.arcgis.com/stories/0f31285dcc4241d0a33f6ef768e16d1e) by the UN Global
 Service Centre (UNGSC), which examined the same damage products and several others. It also found
-individual products unreliable for identifying damaged buildings, and wide disagreement between
-them.
+individual products unreliable for identifying individual damaged buildings, and found wide
+disagreement among the products.
 <!-- placeholder: add a link to the UNGSC analysis paper here, beside the story map, once published -->
 
 ### The products rank neighbourhoods well enough to triage, within the damage zone {#sec-ranking}
