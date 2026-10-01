@@ -686,7 +686,8 @@ either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
 
 ```{python}
 #| label: tbl-dial-full
-#| tbl-cap: "Building-level performance across the six products and six agreement rules in the core region at matching radii of 10, 20 and 30 m. Parentheses at 10 m give each product's as-delivered value. Visits per find is field visits per damage point reached at 30 m. Shading ranks values within each column."
+#| tbl-cap: "Building-level performance across the six products and six agreement rules in the core region at matching radii of 10, 20 and 30 m. Parentheses at 10 m give each product's as-delivered value. Visits per find is the number of field visits per damage point reached, matched at 30 m on the assumption that a responder sent to a flag has a good chance of finding damage within that distance."
+
 import pandas as pd
 from great_tables import GT, html, style, loc
 from matplotlib import colormaps
@@ -743,9 +744,7 @@ cols = [
     "visits",
 ]
 df = pd.DataFrame(disp)[["group"] + cols]
-nm = pd.DataFrame(nums)[
-    [c for c in cols if c not in ("rule", "flags", "cov")]
-]  # cov is not shaded
+nm = pd.DataFrame(nums)[[c for c in cols if c not in ("rule", "flags", "cov")]]  # cov is not shaded
 
 cmap = colormaps["Blues"]
 gt = (
