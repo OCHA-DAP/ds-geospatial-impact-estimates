@@ -686,13 +686,13 @@ either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
 
 ```{python}
 #| label: tbl-dial-full
-#| tbl-cap: "Building-level performance in full: the six products and the six agreement rules in the core region at matching radii of 10, 20 and 30 m. Parentheses at 10 m give each product's as-delivered value. Crowd-adjusted precision re-judges CEMS-unmatched flags against the crowd verdicts, credited only where volunteers reviewed the cell; crowd reviewed is the share of each row's unmatched flags they saw. Visits per find is field visits per damage point reached at 30 m. Shading ranks values within each column."
+#| tbl-cap: "Building-level performance across the six products and six agreement rules in the core region at matching radii of 10, 20 and 30 m. Parentheses at 10 m give each product's as-delivered value. Visits per find is field visits per damage point reached at 30 m. Shading ranks values within each column."
 import pandas as pd
 from great_tables import GT, html, style, loc
 from matplotlib import colormaps
 from matplotlib.colors import to_hex
 
-from brief_numbers import rq5b as five, asd   # both slices of artefacts/results.csv
+from brief_numbers import rq5b as five, asd  # both slices of artefacts/results.csv
 
 products = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
 rules = [f"{k}-of-6" for k in range(1, 7)]
@@ -701,8 +701,10 @@ from brief_numbers import N_CEMS_CORE as N_CEMS
 
 disp, nums = [], []
 for key in products + rules:
-    d = {"rule": labels.get(key, key),
-         "group": "Products" if key in products else "Voting rules (k of 6 agree)"}
+    d = {
+        "rule": labels.get(key, key),
+        "group": "Products" if key in products else "Voting rules (k of 6 agree)",
+    }
     n = {}
     d["flags"] = f"{int(five[10].loc[key]['flagged']):,}"
     for r in (10, 20, 30):
@@ -717,48 +719,71 @@ for key in products + rules:
     n["Padj"] = float(five[10].loc[key]["P_crowd"])
     _cov = five[10].loc[key]["crowd_cov_of_fps"]
     d["Padj"] = f"{n['Padj']:.3f}"
-    d["cov"] = f"{100 * _cov:.0f}%"   # coverage in its own column, so parentheses in this table mean "as delivered" only
+    d["cov"] = (
+        f"{100 * _cov:.0f}%"  # coverage in its own column, so parentheses in this table mean "as delivered" only
+    )
     visits = five[10].loc[key]["flagged"] / (five[30].loc[key]["R_cems"] * N_CEMS)
     n["visits"] = -visits
     d["visits"] = f"{visits:.1f}"
-    disp.append(d); nums.append(n)
+    disp.append(d)
+    nums.append(n)
 
-cols = ["rule", "flags", "P10", "R10", "F110", "Padj", "cov",
-        "P20", "R20", "F120", "P30", "R30", "F130", "visits"]
+cols = [
+    "rule",
+    "flags",
+    "P10",
+    "R10",
+    "F110",
+    "P20",
+    "R20",
+    "F120",
+    "P30",
+    "R30",
+    "F130",
+    "visits",
+]
 df = pd.DataFrame(disp)[["group"] + cols]
-nm = pd.DataFrame(nums)[[c for c in cols if c not in ("rule", "flags", "cov")]]   # cov is not shaded
+nm = pd.DataFrame(nums)[
+    [c for c in cols if c not in ("rule", "flags", "cov")]
+]  # cov is not shaded
 
 cmap = colormaps["Blues"]
-gt = (GT(df, rowname_col="rule", groupname_col="group")
-      .tab_spanner("10 m", ["P10", "R10", "F110", "Padj", "cov"])
-      .tab_spanner("20 m", ["P20", "R20", "F120"])
-      .tab_spanner("30 m", ["P30", "R30", "F130", "visits"])
-      .cols_label(flags="flags", P10="P", R10="R", F110="F1", Padj=html("P<br>(crowd-adj)"), cov=html("crowd<br>reviewed"),
-                  P20="P", R20="R", F120="F1", P30="P", R30="R", F130="F1",
-                  visits=html("visits<br>per find"))
-      .tab_options(column_labels_font_weight="bold",
-                   row_group_font_weight="bold",
-                   table_font_size="13px",
-                   data_row_padding="4px"))
+gt = (
+    GT(df, rowname_col="rule", groupname_col="group")
+    .tab_spanner("10 m", ["P10", "R10", "F110"])
+    .tab_spanner("20 m", ["P20", "R20", "F120"])
+    .tab_spanner("30 m", ["P30", "R30", "F130", "visits"])
+    .cols_label(
+        flags="flags",
+        P10="P",
+        R10="R",
+        F110="F1",
+        P20="P",
+        R20="R",
+        F120="F1",
+        P30="P",
+        R30="R",
+        F130="F1",
+        visits=html("visits<br>per find"),
+    )
+    .tab_options(
+        column_labels_font_weight="bold",
+        row_group_font_weight="bold",
+        table_font_size="13px",
+        data_row_padding="4px",
+    )
+)
 for col in nm.columns:
     vals = nm[col]
     lo, hi = vals.min(), vals.max()
     for i, v in enumerate(vals):
         t = 0.0 if hi == lo else (v - lo) / (hi - lo)
-        gt = gt.tab_style(style.fill(color=to_hex(cmap(0.15 + 0.55 * t))),
-                          loc.body(columns=[col], rows=[i]))
+        gt = gt.tab_style(
+            style.fill(color=to_hex(cmap(0.15 + 0.55 * t))),
+            loc.body(columns=[col], rows=[i]),
+        )
 gt
 ```
-
-- Every number rises with the radius, because a flag one or two buildings away starts to count.
-- The benchmark gains fastest: a wider radius spreads each CEMS point over a cluster of neighbours,
-  making the target area-shaped, which is the shape a smooth spatial predictor captures well.
-- Combination stays ahead at every radius, so the findings hold whichever radius is used.
-- The tighter 10 m label concentrates the positives onto individual buildings, which is where the
-  case for combining products is strongest, and it is the reading in which a building-level claim
-  means a building.
-- The cloud check: only Microsoft publishes per-building visibility, and scored against it the effect
-  is negligible. The model abstains under cloud rather than flagging into it.
 
 #### Bootstrapped confidence intervals {#app-ci .unnumbered}
 
@@ -772,7 +797,7 @@ gt
 
 ```{python}
 #| label: tbl-ci-core
-#| tbl-cap: "Core region, 95% block-bootstrap intervals, counted as in the main text (recall is the share of CEMS points found). P/R/F1 at 10 m, crowd-adjusted precision (10 m), F1 at 30 m, and visits per find (30 m). The 20 m radius and the as-delivered region are in the frozen artefact (RQ9)."
+#| tbl-cap: "Core region, 95% block-bootstrap intervals, counted as in the main text (recall is the share of CEMS points found). P/R/F1 at 10 m, F1 at 30 m, and visits per find (30 m). The 20 m radius and the as-delivered region are in the frozen artefact (RQ9)."
 import pandas as pd
 from great_tables import GT
 
@@ -786,12 +811,12 @@ order = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"] + [f"{k}-of-6" for k in ra
 labels = {"MS": "Microsoft", "IMPACT": "IMPACT v2"}
 rows = [{"rule": labels.get(k, k),
          "P10": cell(k, 10, "P"), "R10": cell(k, 10, "R"), "F110": cell(k, 10, "F1"),
-         "Padj": cell(k, 10, "P_crowd"), "F130": cell(k, 30, "F1"),
+         "F130": cell(k, 30, "F1"),
          "visits": cell(k, 30, "visits_per_find", dp=1)} for k in order]
 (GT(pd.DataFrame(rows), rowname_col="rule")
- .tab_spanner("10 m", ["P10", "R10", "F110", "Padj"])
+ .tab_spanner("10 m", ["P10", "R10", "F110"])
  .tab_spanner("30 m", ["F130", "visits"])
- .cols_label(P10="P", R10="R", F110="F1", Padj="P (crowd-adj)", F130="F1",
+ .cols_label(P10="P", R10="R", F110="F1", F130="F1",
              visits="visits/find")
  .tab_options(column_labels_font_weight="bold", table_font_size="12.5px",
               data_row_padding="3px"))
