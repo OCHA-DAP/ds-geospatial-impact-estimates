@@ -615,12 +615,11 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 - ChatMap can also be added to the reference directly, since its points are building-level.
   However, doing so raises measured precision minimally, by roughly
   `{python} N["field_union_gain_range"]`, and it has not been included in the main text.
-- Recall against ChatMap is matched at 20 m rather than 10 m, because field reports are phone points
-  taken from the street and that scatter is the reference's positional error, not the product's.
+- Recall against ChatMap is matched at 20 m rather than 10 m due to uncertainty in the accuracy of spatial information provided by ChatMap.
 
 ### The geography benchmark {#app-null-brief .unnumbered}
 
-#### How the benchmark is built {#app-null-build .unnumbered}
+#### How the benchmark is built {#app-null-build .unnumbered} 
 
 - Every product is compared against a deliberately simple benchmark that uses no satellite imagery:
   modelled shaking intensity, plus the vulnerability of the setting proxied by building density and
@@ -636,22 +635,17 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
   though the forest is marginally stronger at building level in the core region
   (`{python} N["null_rf_F1"]` against `{python} N["null_F1"]`).
 
-![Schematic of geography null model](figures/rq8_dayzero_schematic.png){#fig-dayzero-build}
+![How the geography benchmark is built](figures/rq8_dayzero_schematic.png){#fig-dayzero-build}
 
 #### Building-level performance against the benchmark {#app-null-building .unnumbered}
 
-![Precision of each product, the two fitted combinations and the geography benchmark under three
-definitions of the CEMS reference, with flags and operating points frozen, so only the
-target changes. Grey lines and band: the six products; coloured lines: the composites
-and the geography nulls. The dashed line marks the paper's reference. The rise is
-mechanical (same flags, more reference points to be near); the finding is what does
-*not* change: `{python} N["basis_reversals_caption"]`.](figures/rq8c_basis_precision_r10.png){#fig-basis}
+![Precision of each product, the two composite combinations and the geography benchmark under three
+definitions of the CEMS reference. The vertical dashed line marks the paper's common reference definition.](figures/rq8c_basis_precision_r10.png){#fig-basis}
 
 - Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]`. But the
   key findings stay largely the same: the combinations
   stay well above every single product, and the geography benchmark stays inside the products' band
   under every definition.
-- Excluding *possibly damaged* is the more demanding choice, and it is the one kept.
 
 #### Area ranking against the benchmark {#app-ranking-tables .unnumbered}
 
@@ -660,7 +654,7 @@ mechanical (same flags, more reference points to be near); the finding is what d
 
 ![Each product's rank correlation with the
 CEMS damage ordering, beside the geography benchmark scored on the same cells. As delivered the
-benchmark is re-scored on each product's own footprint, so it takes a different value per row;
+benchmark is re-scored on each product's own footprint overlap with CEMS reference, so it takes a different value per row;
 in the core region every predictor shares one cell set, so it has a single score, drawn as the
 vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
 
@@ -677,20 +671,18 @@ vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
 ![Each product's rank correlation with the
 CEMS ordering across its delivered footprint, when cells are ranked by damaged-building count (filled circles, the
 paper's target) versus damage fraction (filled squares; cells with at least 20
-buildings). Open markers: the geography null under each target. The null is as strong
+buildings). Open markers: the geography benchmark under each target. The benchmark is as strong
 under fractions as under counts, and only OSU beats it under
 either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
 
 - Ranking by damage fraction instead of count moves some products up and others down, but the
-  benchmark is as strong either way: damage rate is itself geographically structured in this
-  event, so dividing by building stock leaves its advantage in place.
+  benchmark is as strong either way.
 
 ### Additional tests {#app-tests .unnumbered}
 
 #### Sensitivity to the matching radius {#app-radius .unnumbered}
 
-- Everything is scored at 10 m, and because the radius defines the target rather than the tolerance,
-  the whole analysis is re-run at 20 m and at 30 m.
+- Throughout the paper the common radius used is 10 m. Here we test at 20 m and at 30 m.
 
 ```{python}
 #| label: tbl-dial-full
