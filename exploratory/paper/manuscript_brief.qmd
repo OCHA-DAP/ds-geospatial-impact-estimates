@@ -832,11 +832,5 @@ rows = [{"rule": labels.get(k, k),
   half the flag list and moved precision and recall barely at all (`{python} N["osu_v0_P"]` to
   `{python} N["osu_v1_P"]` precision). We score the first version throughout, because that is what
   responders had; the operational dashboard now uses the second.
-- A revision that relabels half the buildings without moving either metric is itself evidence that
-  at the individual-building level these products are noise-dominated. Version-to-version stability
-  belongs beside accuracy when judging them. The area-level signal is robust to that churn.
-- That version's certainty tiers are correctly ordered, and the high-confidence cut is its best
-  operating point, but it remains below Microsoft's core-region precision and far below the
-  agreement rules.
 
 :::
