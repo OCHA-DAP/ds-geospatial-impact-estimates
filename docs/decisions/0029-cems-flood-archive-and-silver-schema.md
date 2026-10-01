@@ -4,6 +4,11 @@ date: 2026-09-01
 deciders: Zack Arno
 ---
 
+> **Superseded in part by [ADR-0034](0034-flood-label-gold-v2-water-and-flood-geometries.md):**
+> the gold label schema described here is replaced by gold v2 (per-kind
+> geometries, `label_source`, `sensor_class`). The silver decisions below
+> stand.
+
 # CEMS flood archive: corpus-level bronze plus era-normalized silver with per-polygon acquisition metadata
 
 ## Context and Problem Statement

@@ -4,6 +4,8 @@ import pytest
 
 from gie.unosat import common, meta
 
+ALL_META_FILES = meta.META_FILES + meta.SILVER_META_FILES
+
 
 def test_bootstrap_restores_only_missing_files(tmp_path: Path):
     (tmp_path / "datasets.parquet").write_bytes(b"local-bytes")
@@ -15,11 +17,33 @@ def test_bootstrap_restores_only_missing_files(tmp_path: Path):
     restored = meta.bootstrap_work_dir(tmp_path, fetch)
 
     assert (tmp_path / "datasets.parquet").read_bytes() == b"local-bytes"
-    for name in meta.META_FILES:
+    for name in ALL_META_FILES:
         if name == "datasets.parquet":
             continue
         assert (tmp_path / name).read_bytes() == f"remote-{name}".encode()
-    assert sorted(restored) == sorted(n for n in meta.META_FILES if n != "datasets.parquet")
+    assert sorted(restored) == sorted(n for n in ALL_META_FILES if n != "datasets.parquet")
+
+
+def test_bootstrap_restores_the_silver_meta_tables(tmp_path: Path):
+    """Without these a wiped work dir made silver look like it had no layers to
+    process, rather than no inventory at all."""
+    blobs = {
+        f"{common.SILVER_META}/{name}": f"silver-{name}".encode()
+        for name in meta.SILVER_META_FILES
+    }
+    restored = meta.bootstrap_work_dir(tmp_path, blobs.get)
+
+    assert sorted(restored) == sorted(meta.SILVER_META_FILES)
+    assert (tmp_path / "layers.parquet").read_bytes() == b"silver-layers.parquet"
+    assert (tmp_path / "processing.parquet").read_bytes() == b"silver-processing.parquet"
+
+
+def test_bootstrap_never_overwrites_a_local_silver_table(tmp_path: Path):
+    (tmp_path / "processing.parquet").write_bytes(b"local-ledger")
+    restored = meta.bootstrap_work_dir(tmp_path, lambda path: b"remote")
+
+    assert (tmp_path / "processing.parquet").read_bytes() == b"local-ledger"
+    assert "processing.parquet" not in restored
 
 
 def test_bootstrap_fetch_returning_none_restores_nothing(tmp_path: Path):
@@ -46,7 +70,9 @@ def test_bootstrap_fetches_from_the_meta_prefix(tmp_path: Path):
 
     meta.bootstrap_work_dir(tmp_path, fetch)
 
-    assert seen == [f"{common.META}/{name}" for name in meta.META_FILES]
+    assert seen == [f"{common.META}/{name}" for name in meta.META_FILES] + [
+        f"{common.SILVER_META}/{name}" for name in meta.SILVER_META_FILES
+    ]
 
 
 class _FakeContainerClient:
