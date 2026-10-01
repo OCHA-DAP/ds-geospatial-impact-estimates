@@ -639,7 +639,7 @@ alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
 #### Building-level performance against the benchmark {#app-null-building .unnumbered}
 
-![Precision of each product, the two composite combinations and the geography benchmark under three
+![Precision of each product, the two combinations and the geography benchmark under three
 definitions of the CEMS reference. The vertical dashed line marks the paper's common reference definition.](figures/rq8c_basis_precision_r10.png){#fig-basis}
 
 - Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]`. But the
@@ -654,7 +654,7 @@ definitions of the CEMS reference. The vertical dashed line marks the paper's co
 
 ![Each product's rank correlation with the
 CEMS damage ordering, beside the geography benchmark scored on the same cells. As delivered the
-benchmark is re-scored on each product's own footprint overlap with CEMS reference, so it takes a different value per row;
+benchmark is re-scored on the overlap of each product's footprint with the CEMS-mapped areas, so it takes a different value per row;
 in the core region every predictor shares one cell set, so it has a single score, drawn as the
 vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
 
