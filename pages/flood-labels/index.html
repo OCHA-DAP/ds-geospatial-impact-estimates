@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flood Labels</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css">
+<style>
+  html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  :root { --ink: #1c2430; --accent: #2563cd; --water: #0e8f8a; --sub: #5d6b7a; --line: #cfd6de; }
+  #space {
+    position: absolute; inset: 0; z-index: 0; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 115%, #1a2b47 0%, #0c1526 48%, #05080f 100%);
+  }
+  #map { position: absolute; inset: 0; z-index: 1; background: transparent;
+         opacity: 0; transition: opacity .7s ease; }
+  .star { position: absolute; border-radius: 50%; background: #fff; }
+  .star.tw { animation: twinkle 4s ease-in-out infinite; }
+  @keyframes twinkle { 0%,100% { opacity: .25; } 50% { opacity: .95; } }
+  @media (prefers-reduced-motion: reduce) { .star.tw { animation: none; } }
+  #panel {
+    position: absolute; top: 12px; left: 12px; z-index: 5; width: 300px;
+    background: rgba(255,255,255,.96); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(20,30,40,.12); padding: 12px 14px;
+    max-height: calc(100% - 170px); overflow-y: auto;
+  }
+  #panel h1 { font-size: 15px; margin: 0; }
+  #panel .sub { font-size: 11px; color: var(--sub); margin: 2px 0 10px; }
+  .label { font-size: 10.5px; color: #8b95a1; margin: 8px 0 3px; text-transform: uppercase; letter-spacing: .04em; }
+  select {
+    width: 100%; font: inherit; font-size: 12px; padding: 4px 6px;
+    border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink);
+  }
+  .count { font-size: 11px; color: var(--sub); margin-top: 10px; }
+  button {
+    font: inherit; font-size: 12px; padding: 5px 10px; border-radius: 6px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer;
+  }
+  #eventcard h2 { font-size: 13px; margin: 0 0 2px; }
+  #eventcard .sub { margin-bottom: 8px; }
+  #steps { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+  .step {
+    text-align: left; font-size: 11.5px; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--line); background: #fff; cursor: pointer; line-height: 1.35;
+  }
+  .step.active { border-color: var(--accent); background: #eef4fd; }
+  .step b { font-variant-numeric: tabular-nums; }
+  .nav { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+  label.chk { display: flex; gap: 6px; font-size: 11.5px; align-items: center; margin: 4px 0; cursor: pointer; }
+  .legend { font-size: 10.5px; color: var(--sub); margin-top: 10px; line-height: 1.5; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+  .tag { display: inline-block; font-size: 9.5px; padding: 1px 5px; border-radius: 4px; vertical-align: 1px;
+         background: #eef1f4; color: #4a5866; text-transform: uppercase; letter-spacing: .04em; }
+  .tag.unosat { background: #e3f3f2; color: #0b6b67; }
+  .tag.cems { background: #e6eefb; color: #1d4ea8; }
+  #err { color: #b8272d; font-size: 11.5px; margin-top: 8px; white-space: pre-wrap; }
+  a { color: var(--accent); }
+  #timeline {
+    position: absolute; left: 50%; transform: translateX(-50%); top: 12px; z-index: 5;
+    width: min(760px, calc(100% - 680px)); min-width: 420px; height: 118px;
+    background: rgba(255,255,255,.72); backdrop-filter: blur(7px);
+    border: 1px solid rgba(207,214,222,.7); border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(20,30,40,.14); padding: 6px 12px 2px; box-sizing: border-box;
+  }
+  #timeline .tl-head { font-size: 10.5px; color: var(--sub); display: flex; justify-content: space-between; }
+  #tlsvg { width: 100%; height: 88px; display: block; }
+  .shoot { position: absolute; z-index: 1; pointer-events: none; width: 130px; height: 1.5px;
+    background: linear-gradient(90deg, #fff, transparent); opacity: 0;
+    transform: rotate(-28deg); animation: shoot 7s linear infinite; }
+  .shoot.s2 { animation-delay: 3.4s; animation-duration: 9s; top: 12%; left: 68%; }
+  .shoot.s1 { top: 22%; left: 12%; }
+  .shoot.s3 { animation-delay: 5.6s; animation-duration: 11s; top: 70%; left: 40%; width: 90px; }
+  @keyframes shoot {
+    0%, 88% { opacity: 0; transform: translate(0,0) rotate(-28deg); }
+    90% { opacity: .9; }
+    100% { opacity: 0; transform: translate(-340px, 180px) rotate(-28deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .shoot { display: none; } }
+  #tltip {
+    position: absolute; pointer-events: none; background: var(--ink); color: #fff;
+    font-size: 11px; padding: 4px 8px; border-radius: 5px; opacity: 0; max-width: 260px; z-index: 9;
+  }
+</style>
+</head>
+<body>
+<div id="space"></div>
+<div id="map"></div>
+<div class="shoot s1"></div><div class="shoot s2"></div><div class="shoot s3"></div>
+<div id="panel">
+  <h1>Flood Labels</h1>
+  <p class="sub">Every Copernicus EMS Rapid Mapping flood activation (2012–) and every UNOSAT
+  flood and cyclone product on HDX (2014–), as dated label sets with acquisition
+  intervals. <a href="../">Home</a></p>
+
+  <div id="filters">
+    <div class="label">Source</div>
+    <label class="chk"><input type="checkbox" id="src-cems" checked> <span class="tag cems">cems</span> Copernicus EMS rapid mapping (2012–)</label>
+    <label class="chk"><input type="checkbox" id="src-unosat" checked> <span class="tag unosat">unosat</span> UNOSAT flood &amp; cyclone products (2014–)</label>
+    <div class="label">Region</div><select id="region"><option value="">Global</option></select>
+    <div class="label">Country</div><select id="country"><option value="">All</option></select>
+    <div class="label">Layers</div>
+    <label class="chk"><input type="checkbox" id="lyr-water" checked> <span class="swatch" style="background:#0e8f8a"></span>water at acquisition (UNOSAT)</label>
+    <label class="chk"><input type="checkbox" id="lyr-flood" checked> <span class="swatch" style="background:#2563cd"></span>flood extent (CEMS; UNOSAT where separated)</label>
+    <div class="count" id="count"></div>
+    <div class="legend">
+      Hover a shape for sensor, class, method and time precision; click to open the event.
+      Drag the timeline handles to set the period. Display-simplified geometry;
+      analysis uses the gold GeoParquet, not this catalog.
+    </div>
+  </div>
+
+  <div id="eventcard" style="display:none">
+    <button id="back">&#8592; back</button>
+    <h2 id="evtitle"></h2><div class="sub" id="evsub"></div>
+    <div class="nav"><button id="prev">&#9664;</button><span id="pos" style="font-size:11.5px"></span><button id="next">&#9654;</button></div>
+    <label class="chk"><input type="checkbox" id="ghost" checked> outline previous acquisition (same AOI)</label>
+    <label class="chk"><input type="checkbox" id="mask"> valid (analysed) mask</label>
+    <div id="steps"></div>
+  </div>
+  <div id="err"></div>
+</div>
+<div id="timeline">
+  <div class="tl-head"><span id="tlmode"></span><span id="tlrange"></span></div>
+  <svg id="tlsvg"></svg>
+</div>
+<div id="tltip"></div>
+
+<script type="module">
+import maplibregl from "https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.0/+esm";
+import { Protocol, PMTiles } from "https://cdn.jsdelivr.net/npm/pmtiles@3.2.1/+esm";
+import { asyncBufferFromUrl, parquetReadObjects } from "https://cdn.jsdelivr.net/npm/hyparquet@1.8.0/+esm";
+import { compressors } from "https://cdn.jsdelivr.net/npm/hyparquet-compressors@1.1.1/+esm";
+
+const TOKEN_URL = "https://chd-ds-token-issuer.azurewebsites.net/api/token?app=flood-labels&tier=platinum";
+// Country names as the sources write them (CEMS portal names, HDX names for
+// UNOSAT; three spellings unified by the builder). A country absent here is
+// still selectable under "All".
+const REGION = {
+  Africa: ["Botswana","Cabo Verde","Cameroon","Chad","Congo","Democratic Republic of the Congo","Djibouti","Ethiopia","Gambia","Ghana","Kenya","Libya","Madagascar","Malawi","Mozambique","Namibia","Niger","Nigeria","Rwanda","Senegal","Somalia","South Africa","South Sudan","Sudan","Togo","Tunisia","Uganda","Zambia","Zimbabwe"],
+  Americas: ["Anguilla","Antigua and Barbuda","Barbados","Belize","Bolivia","Brazil","British Virgin Islands","Colombia","Cuba","Dominica","Dominican Republic","Ecuador","El Salvador","Grenada","Guadeloupe","Guatemala","Guyana","Haiti","Honduras","Jamaica","Mexico","Montserrat","Nicaragua","Panama","Peru","Puerto Rico","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Suriname","Trinidad and Tobago","Turks and Caicos Islands","United States","United States Virgin Islands"],
+  Asia: ["Afghanistan","Bangladesh","Cambodia","Georgia","India","Indonesia","Iran","Iraq","Jordan","Lao People's Democratic Republic","Malaysia","Myanmar","Nepal","Pakistan","Philippines","Sri Lanka","Tajikistan","Thailand","Timor-Leste","Viet Nam","Yemen"],
+  Europe: ["Albania","Austria","Belgium","Bosnia and Herzegovina","Bulgaria","Croatia","Czechia","Finland","France","Germany","Greece","Hungary","Ireland","Italy","Kosovo","Latvia","Lithuania","Moldova","Montenegro","Netherlands","North Macedonia","Norway","Poland","Portugal","Romania","Serbia","Slovakia","Slovenia","Spain","Sweden","Ukraine","United Kingdom"],
+  Oceania: ["Australia","Fiji","Solomon Islands"],
+};
+const DOT_THRESHOLD = 110;
+const Y_MIN = 2012, Y_MAX = 2027;
+const NONE = ["==", ["get", "code"], "__none__"];
+
+const qs = new URLSearchParams(location.search);
+const $ = (id) => document.getElementById(id);
+const err = (m) => { $("err").textContent = m; };
+const tag = (s) => `<span class="tag ${s}">${s}</span>`;
+const km2 = (v) => (v == null || isNaN(+v)) ? null : (+v).toFixed(1) + " km²";
+const areas = (r) => [km2(r.water_area_km2) && `water ${km2(r.water_area_km2)}`,
+                      km2(r.flood_area_km2) && `flood ${km2(r.flood_area_km2)}`].filter(Boolean).join(" · ") || "no area";
+const sensorLine = (r) => `${r.sensor || "sensor ?"}${r.sensor_class ? " (" + r.sensor_class + ")" : ""} · ${r.acq_method || ""}/${r.acq_precision || ""}`;
+
+async function getAccess() {
+  if (qs.get("base") && qs.get("sas"))
+    return { base: qs.get("base"), sas: qs.get("sas") };
+  const t = await fetch(TOKEN_URL).then(r => r.json());
+  return { base: `${t.base_url}/${t.platinum_dir}`, sas: t.sas };
+}
+
+const protocol = new Protocol();
+maplibregl.addProtocol("pmtiles", protocol.tile);
+{
+  const space = document.getElementById("space");
+  let seed = 42;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 220; i++) {
+    const s = document.createElement("span");
+    const px = 0.6 + rnd() * 1.7;
+    s.className = "star" + (rnd() < 0.28 ? " tw" : "");
+    s.style.cssText = `left:${rnd() * 100}%; top:${rnd() * 100}%; width:${px}px; height:${px}px;` +
+      `opacity:${0.25 + rnd() * 0.65}; animation-delay:${(rnd() * 4).toFixed(2)}s;`;
+    space.appendChild(s);
+  }
+}
+
+const map = new maplibregl.Map({
+  container: "map",
+  style: "https://tiles.openfreemap.org/styles/liberty",
+  center: [16, 24], zoom: 2.7, attributionControl: { compact: true },
+  projection: { type: "globe" },
+});
+map.addControl(new maplibregl.NavigationControl(), "top-right");
+window.__map = map;   // for the headless smoke test (tests/pages/) only
+map.once("style.load", () => map.setProjection({ type: "globe" }));
+const mapReady = new Promise((res) => map.once("load", res));
+mapReady.then(() => { $("map").style.opacity = 1; });
+
+let IDX = [], EVENTS = new Map(), current = null, stepIdx = 0;
+let scopeCodes = null;                 // null = global; else Set of codes
+const SOURCES = ["cems", "unosat"];
+let sources = new Set(SOURCES);        // checked sources
+let t0 = Y_MIN, t1 = Y_MAX;
+const LAYERS = { water: ["water-fill", "water-line"], flood: ["flood-fill", "flood-line"] };
+
+const yearToStr = (y) => {
+  const yr = Math.floor(y), m = Math.min(12, Math.max(1, Math.round((y - yr) * 12) + 1));
+  return `${yr}-${String(m).padStart(2, "0")}`;
+};
+const hasBox = (r) => [r.minx, r.miny, r.maxx, r.maxy].every(Number.isFinite);
+const inScope = (r) => (!scopeCodes || scopeCodes.has(r.code)) && sources.has(r.label_source);
+const inTime = (r) => r.acq_start >= yearToStr(t0) && r.acq_start <= yearToStr(t1) + "-99";
+const frac = (s) => +s.slice(0, 4) + (Math.max(1, +s.slice(5, 7)) - 1) / 12;
+
+function mapFilter() {
+  const f = ["all",
+    [">=", ["get", "acq_start"], yearToStr(t0)],
+    ["<=", ["get", "acq_start"], yearToStr(t1) + "-99"]];
+  f.push(["in", ["get", "label_source"], ["literal", [...sources]]]);
+  if (scopeCodes) f.push(["in", ["get", "code"], ["literal", [...scopeCodes]]]);
+  return f;
+}
+function setLayerVisibility() {
+  for (const [k, ids] of Object.entries(LAYERS)) {
+    const on = $("lyr-" + k).checked;
+    for (const id of ids) if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  }
+}
+function applyScope(fit) {
+  if (map.getLayer("flood-fill")) {
+    const f = mapFilter();
+    for (const ids of Object.values(LAYERS)) for (const id of ids) map.setFilter(id, f);
+  }
+  const rows = IDX.filter(r => inScope(r) && inTime(r));
+  const codes = new Set(rows.map(r => r.code));
+  const bySrc = {};
+  for (const r of rows) bySrc[r.label_source] = (bySrc[r.label_source] || 0) + 1;
+  $("count").textContent = `${rows.length.toLocaleString()} label sets · ${codes.size} events` +
+    (sources.size > 1 ? ` (cems ${(bySrc.cems || 0).toLocaleString()} · unosat ${(bySrc.unosat || 0).toLocaleString()})` : "");
+  const boxed = rows.filter(hasBox);   // label sets with no geometry have no bbox
+  if (fit && boxed.length) {
+    const minx = Math.min(...boxed.map(r => r.minx)), miny = Math.min(...boxed.map(r => r.miny));
+    const maxx = Math.max(...boxed.map(r => r.maxx)), maxy = Math.max(...boxed.map(r => r.maxy));
+    map.fitBounds([[minx, miny], [maxx, maxy]], { padding: 70, maxZoom: 7 });
+  }
+  drawTimeline();
+}
+
+// ---------- timeline (SVG): brush + histogram/dots ----------
+const svg = $("tlsvg"), tip = $("tltip");
+const NS = "http://www.w3.org/2000/svg";
+function el(n, a, p) { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); (p || svg).appendChild(e); return e; }
+let dragging = null;
+const dotColor = (r, active) => !active ? "#c6cdd6" : (r.label_source === "unosat" ? "#0e8f8a" : "#2563cd");
+
+function drawTimeline() {
+  svg.innerHTML = "";
+  const W = svg.clientWidth || 800, H = svg.clientHeight || 88, mL = 14, mR = 14, axisY = H - 18;
+  const sx = (y) => mL + (y - Y_MIN) / (Y_MAX - Y_MIN) * (W - mL - mR);
+  const xy = (px) => Y_MIN + (px - mL) / (W - mL - mR) * (Y_MAX - Y_MIN);
+
+  for (let y = Y_MIN; y <= Y_MAX; y++) {
+    el("line", { x1: sx(y), x2: sx(y), y1: axisY, y2: axisY + 4, stroke: "#aeb6bf" });
+    if (y % 2 === 0 && y < Y_MAX)
+      el("text", { x: sx(y), y: H - 5, "font-size": 9, fill: "#8b95a1", "text-anchor": "middle" }).textContent = y;
+  }
+  el("line", { x1: mL, x2: W - mR, y1: axisY, y2: axisY, stroke: "#cfd6de" });
+  const px = (e) => e.clientX - svg.getBoundingClientRect().left;
+
+  el("rect", { x: mL, y: 6, width: Math.max(0, sx(t0) - mL), height: axisY - 6, fill: "rgba(140,150,160,.16)" });
+  el("rect", { x: sx(t1), y: 6, width: Math.max(0, W - mR - sx(t1)), height: axisY - 6, fill: "rgba(140,150,160,.16)" });
+  const win = el("rect", { x: sx(t0), y: 6, width: Math.max(0, sx(t1) - sx(t0)), height: axisY - 6,
+    fill: "rgba(37,99,205,.10)", stroke: "rgba(37,99,205,.35)", cursor: "grab" });
+  win.addEventListener("mousedown", (e) => {
+    dragging = { kind: "win", grab: xy(px(e)) - t0, width: t1 - t0 }; e.preventDefault();
+  });
+
+  const rows = IDX.filter(inScope);
+  const evs = new Map();
+  for (const r of rows) if (!evs.has(r.code)) evs.set(r.code, r);
+  $("tlmode").textContent = evs.size <= DOT_THRESHOLD
+    ? `${evs.size} events — hover a dot, click to open`
+    : `label sets per quarter (${evs.size} events — pick a country for dots)`;
+  $("tlrange").textContent = `${yearToStr(t0)} → ${yearToStr(t1)}`;
+
+  if (evs.size <= DOT_THRESHOLD) {
+    let i = 0;
+    for (const [code, r] of evs) {
+      const yr = frac(r.acq_start);
+      const x = sx(Math.max(Y_MIN, Math.min(Y_MAX, yr)));   // off-range dates pin to the edge
+      const y = 14 + ((i * 37) % 5) * 11;
+      const active = yr >= t0 && yr <= t1;
+      const c = el("circle", { cx: x, cy: y, r: 4.5, fill: dotColor(r, active), cursor: "pointer" });
+      c.addEventListener("mousemove", (e) => {
+        tip.style.opacity = 1;
+        tip.style.left = Math.min(e.clientX + 10, innerWidth - 270) + "px";
+        tip.style.top = (e.clientY - 40) + "px";
+        tip.innerHTML = `<b>${code}</b> ${r.label_source}<br>${r.name || ""}<br>${r.countries || ""} · ${r.acq_start.slice(0, 10)}`;
+      });
+      c.addEventListener("mouseleave", () => tip.style.opacity = 0);
+      c.addEventListener("click", () => openEvent(code));
+      i++;
+    }
+  } else {
+    // stacked per quarter: cems below, unosat above
+    const bins = new Map();
+    for (const r of rows) {
+      const q = Math.floor(Math.max(Y_MIN, Math.min(Y_MAX, frac(r.acq_start))) * 4) / 4;
+      const b = bins.get(q) || { cems: 0, unosat: 0 };
+      b[r.label_source] = (b[r.label_source] || 0) + 1;
+      bins.set(q, b);
+    }
+    const max = Math.max(...[...bins.values()].map(b => b.cems + b.unosat), 1);
+    for (const [q, b] of bins) {
+      const active = q >= t0 - 0.25 && q <= t1;
+      const w = Math.max(2, sx(q + 0.25) - sx(q) - 1);
+      const hc = b.cems / max * (axisY - 12), hu = b.unosat / max * (axisY - 12);
+      if (hc) el("rect", { x: sx(q), y: axisY - hc, width: w, height: Math.max(1, hc), fill: active ? "#2563cd" : "#c6cdd6", rx: 1 });
+      if (hu) el("rect", { x: sx(q), y: axisY - hc - hu, width: w, height: Math.max(1, hu), fill: active ? "#0e8f8a" : "#d5dbe1", rx: 1 });
+    }
+  }
+
+  for (const [which, y] of [["t0", t0], ["t1", t1]]) {
+    const hx = sx(y);
+    el("line", { x1: hx, x2: hx, y1: 4, y2: axisY, stroke: "#2563cd", "stroke-width": 2 });
+    const grip = el("rect", { x: hx - 5, y: axisY / 2 - 11, width: 10, height: 26, rx: 5,
+      fill: "#2563cd", cursor: "ew-resize" });
+    el("line", { x1: hx - 1.5, x2: hx - 1.5, y1: axisY / 2 - 5, y2: axisY / 2 + 9, stroke: "#fff", "stroke-width": 1 });
+    el("line", { x1: hx + 1.5, x2: hx + 1.5, y1: axisY / 2 - 5, y2: axisY / 2 + 9, stroke: "#fff", "stroke-width": 1 });
+    const hit = el("rect", { x: hx - 9, y: 4, width: 18, height: axisY - 4, fill: "transparent", cursor: "ew-resize" });
+    for (const h of [grip, hit])
+      h.addEventListener("mousedown", (e) => { dragging = { kind: which }; e.preventDefault(); });
+  }
+  svg.onmousemove = (e) => {
+    if (!dragging) return;
+    const y = Math.max(Y_MIN, Math.min(Y_MAX, xy(px(e))));
+    if (dragging.kind === "t0") t0 = Math.min(y, t1);
+    else if (dragging.kind === "t1") t1 = Math.max(y, t0);
+    else {
+      t0 = Math.max(Y_MIN, Math.min(y - dragging.grab, Y_MAX - dragging.width));
+      t1 = t0 + dragging.width;
+    }
+    applyScope(false);
+  };
+  svg.onmouseup = svg.onmouseleave = () => { dragging = null; };
+  svg.ondblclick = () => { t0 = Y_MIN; t1 = Y_MAX; applyScope(false); };
+}
+addEventListener("resize", drawTimeline);
+
+// ---------- event mode ----------
+function setFilterForStep() {
+  const s = current.steps[stepIdx];
+  if (map.getLayer("flood-fill")) {
+    const f = ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]];
+    for (const ids of Object.values(LAYERS)) for (const id of ids) map.setFilter(id, f);
+    const prev = [...current.steps].slice(0, stepIdx).reverse().find(p => p.aoi === s.aoi);
+    const ghost = ($("ghost").checked && prev)
+      ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], prev.acq_start]]
+      : NONE;
+    map.setFilter("ghost-water", ghost);
+    map.setFilter("ghost-flood", ghost);
+    map.setFilter("mask-line", $("mask").checked
+      ? ["all", ["==", ["get", "code"], current.code], ["==", ["get", "acq_start"], s.acq_start]]
+      : NONE);
+  }
+  $("pos").textContent = `${stepIdx + 1} / ${current.steps.length}`;
+  document.querySelectorAll(".step").forEach((n, i) => n.classList.toggle("active", i === stepIdx));
+  if (hasBox(s)) map.fitBounds([[s.minx, s.miny], [s.maxx, s.maxy]], { padding: 60, maxZoom: 12 });
+}
+function openEvent(code) {
+  current = { code, steps: EVENTS.get(code) };
+  stepIdx = 0;
+  $("filters").style.display = "none";
+  $("eventcard").style.display = "";
+  const first = current.steps[0];
+  $("evtitle").innerHTML = `${code} ${tag(first.label_source)}`;
+  $("evsub").textContent = `${first.name || ""} — ${current.steps.length} label sets`;
+  const list = $("steps");
+  list.innerHTML = "";
+  current.steps.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.className = "step";
+    b.innerHTML = `<b>${s.acq_start.slice(0, 16)}</b>${s.acq_end !== s.acq_start ? " → " + s.acq_end.slice(0, 10) : ""} · ${s.aoi || "(whole product)"}<br>` +
+      `${sensorLine(s)}<br>${areas(s)}` + (s.valid_basis === "none" ? " · no valid mask" : "") +
+      (hasBox(s) ? "" : " · <i>no geometry (all polygons excluded)</i>");
+    b.onclick = () => { stepIdx = i; setFilterForStep(); };
+    list.appendChild(b);
+  });
+  setFilterForStep();
+}
+function closeEvent() {
+  current = null;
+  $("filters").style.display = "";
+  $("eventcard").style.display = "none";
+  if (map.getLayer("ghost-flood")) {
+    map.setFilter("ghost-water", NONE);
+    map.setFilter("ghost-flood", NONE);
+    map.setFilter("mask-line", NONE);
+  }
+  applyScope(false);
+}
+
+// ---------- boot ----------
+try {
+  const { base, sas } = await getAccess();
+  const url = (p) => `${base}/${p}?${sas}`;
+
+  IDX = await parquetReadObjects({
+    file: await asyncBufferFromUrl({ url: url("label-index/label_index.parquet") }),
+    compressors,
+    columns: ["label_source", "code", "name", "countries", "aoi", "acq_start", "acq_end", "label_day",
+              "sensor", "sensor_class", "acq_method", "acq_precision", "water_area_km2",
+              "flood_area_km2", "valid_basis", "minx", "miny", "maxx", "maxy"],
+  });
+  const iso = (v) => {
+    const d = v instanceof Date ? v : new Date(v);
+    return isNaN(d) ? String(v) : d.toISOString().slice(0, 19).replace("T", " ");
+  };
+  IDX.forEach(r => { r.acq_start = iso(r.acq_start); r.acq_end = iso(r.acq_end); r.aoi = r.aoi || ""; });
+  IDX.sort((a, b) => a.acq_start.localeCompare(b.acq_start) || a.aoi.localeCompare(b.aoi));
+  for (const r of IDX) {
+    if (!EVENTS.has(r.code)) EVENTS.set(r.code, []);
+    EVENTS.get(r.code).push(r);
+  }
+
+  const regions = Object.keys(REGION);
+  regions.forEach(x => $("region").add(new Option(x, x)));
+  const countryCodes = new Map();
+  for (const r of IDX) for (const c of String(r.countries || "").split(";")) {
+    const k = c.trim(); if (!k) continue;
+    if (!countryCodes.has(k)) countryCodes.set(k, new Set());
+    countryCodes.get(k).add(r.code);
+  }
+  function fillCountries() {
+    const reg = $("region").value;
+    const opts = [...countryCodes.keys()].filter(c => !reg || (REGION[reg] || []).includes(c)).sort();
+    $("country").innerHTML = "<option value=''>All</option>";
+    opts.forEach(c => $("country").add(new Option(`${c} (${countryCodes.get(c).size})`, c)));
+  }
+  function updateScope() {
+    const reg = $("region").value, ctry = $("country").value;
+    if (ctry) scopeCodes = countryCodes.get(ctry);
+    else if (reg) {
+      scopeCodes = new Set();
+      for (const c of REGION[reg] || [])
+        for (const code of countryCodes.get(c) || []) scopeCodes.add(code);
+    } else scopeCodes = null;
+    sources = new Set(SOURCES.filter(s => $("src-" + s).checked));
+    applyScope(true);
+  }
+  fillCountries();
+  $("region").onchange = () => { fillCountries(); $("country").value = ""; if (!current) updateScope(); };
+  $("country").onchange = () => { if (!current) updateScope(); };
+  $("src-cems").onchange = $("src-unosat").onchange = () => { if (!current) updateScope(); };
+  $("lyr-water").onchange = $("lyr-flood").onchange = setLayerVisibility;
+
+  applyScope(false);
+
+  const pm = {};
+  for (const k of ["water/water.pmtiles", "flood/flood.pmtiles", "valid-masks/valid_masks.pmtiles"]) {
+    pm[k] = new PMTiles(url(k)); protocol.add(pm[k]);
+  }
+  const layerId = async (k) => (await pm[k].getMetadata()).vector_layers[0].id;
+  const [wLayer, fLayer, mLayer] = await Promise.all(Object.keys(pm).map(layerId));
+
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, maxWidth: "290px" });
+  await mapReady;
+  map.addSource("water", { type: "vector", url: `pmtiles://${url("water/water.pmtiles")}` });
+  map.addSource("flood", { type: "vector", url: `pmtiles://${url("flood/flood.pmtiles")}` });
+  map.addSource("masks", { type: "vector", url: `pmtiles://${url("valid-masks/valid_masks.pmtiles")}` });
+  map.addLayer({ id: "water-fill", type: "fill", source: "water", "source-layer": wLayer,
+    paint: { "fill-color": "#0e8f8a", "fill-opacity": 0.38 } });
+  map.addLayer({ id: "water-line", type: "line", source: "water", "source-layer": wLayer,
+    paint: { "line-color": "#0b6b67", "line-width": 0.6 } });
+  map.addLayer({ id: "flood-fill", type: "fill", source: "flood", "source-layer": fLayer,
+    paint: { "fill-color": "#2563cd", "fill-opacity": 0.42 } });
+  map.addLayer({ id: "flood-line", type: "line", source: "flood", "source-layer": fLayer,
+    paint: { "line-color": "#1d4ea8", "line-width": 0.7 } });
+  map.addLayer({ id: "ghost-water", type: "line", source: "water", "source-layer": wLayer, filter: NONE,
+    paint: { "line-color": "#d97706", "line-width": 1.6, "line-dasharray": [2, 2] } });
+  map.addLayer({ id: "ghost-flood", type: "line", source: "flood", "source-layer": fLayer, filter: NONE,
+    paint: { "line-color": "#d97706", "line-width": 1.6, "line-dasharray": [2, 2] } });
+  map.addLayer({ id: "mask-line", type: "line", source: "masks", "source-layer": mLayer, filter: NONE,
+    paint: { "line-color": "#5d6b7a", "line-width": 1, "line-dasharray": [4, 3] } });
+  setLayerVisibility();
+
+  for (const id of ["water-fill", "flood-fill"]) {
+    map.on("click", id, (e) => { if (!current) openEvent(e.features[0].properties.code); });
+    map.on("mousemove", id, (e) => {
+      map.getCanvas().style.cursor = "pointer";
+      const p = e.features[0].properties;
+      const what = id === "water-fill" ? "water" : "flood";
+      popup.setLngLat(e.lngLat)
+        .setHTML(`<b>${p.code}</b> ${tag(p.label_source)} ${p.aoi || ""}<br>${String(p.acq_start).slice(0, 16)}` +
+                 `${p.acq_end && p.acq_end !== p.acq_start ? " → " + String(p.acq_end).slice(0, 10) : ""}<br>` +
+                 `${sensorLine(p)}<br>${what} ${km2(p.area_km2) || "area ?"}`)
+        .addTo(map);
+    });
+    map.on("mouseleave", id, () => { map.getCanvas().style.cursor = ""; popup.remove(); });
+  }
+
+  $("back").onclick = closeEvent;
+  $("prev").onclick = () => { if (current && stepIdx > 0) { stepIdx--; setFilterForStep(); } };
+  $("next").onclick = () => { if (current && stepIdx < current.steps.length - 1) { stepIdx++; setFilterForStep(); } };
+  $("ghost").onchange = () => current && setFilterForStep();
+  $("mask").onchange = () => current && setFilterForStep();
+  document.addEventListener("keydown", (e) => {
+    if (!current) return;
+    if (e.key === "ArrowLeft" && stepIdx > 0) { stepIdx--; setFilterForStep(); }
+    if (e.key === "ArrowRight" && stepIdx < current.steps.length - 1) { stepIdx++; setFilterForStep(); }
+    if (e.key === "Escape") closeEvent();
+  });
+
+  if (current) setFilterForStep(); else applyScope(false);
+} catch (e) {
+  err("Could not load the label catalog.\n" + e.message +
+      "\n(Needs the issuer redeploy; for local testing pass ?base=&sas=)");
+}
+</script>
+</body>
+</html>

@@ -55,7 +55,7 @@ if SUMMARY:
         axL.text(row.f1 + 0.004, yy, f"{row.f1:.3f}  (P {row.precision:.3f} / R {row.recall:.3f})",
                  va="center", fontsize=9.5)
     axL.set_yticks(ypL, labL, fontsize=11)
-    axL.set_title("core region (61 km²)", fontsize=12, weight="bold")
+    axL.set_title("core region", fontsize=12, weight="bold")
     # right: as delivered, products only
     ypR = np.arange(len(asd), dtype=float)
     axR.barh(ypR, asd.f1, color="#9db1b3", zorder=2)
@@ -68,8 +68,7 @@ if SUMMARY:
     xmax = max(max(valL), float(asd.f1.max())) * 1.55
     for ax in (axL, axR):
         ax.set_xlim(0, xmax)
-        ax.set_xlabel(f"F1 at the operating point (CEMS damaged/destroyed within {R} m)",
-                      fontsize=11)
+        ax.set_xlabel("F1 score", fontsize=11)
         ax.spines[["top", "right"]].set_visible(False)
     axL.set_ylim(-0.8, max(ypL) + 0.8)
     axR.set_ylim(-0.8, max(ypL) + 0.8)  # same vertical scale so the panels read together

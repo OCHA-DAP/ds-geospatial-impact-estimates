@@ -26,6 +26,7 @@ from sklearn.model_selection import GroupKFold
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import paperlib as pl  # noqa: E402
+import context as ctx  # noqa: E402  (the null's features: one definition, ADR-0033)
 from paperlib import gp  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -43,31 +44,19 @@ def rows(region, lens, radius, predictor, **metrics):
 
 
 def context_features(d: gpd.GeoDataFrame, resos) -> gpd.GeoDataFrame:
-    """density9, dist_coast, mmi and the cell ids the null and the aggregation need."""
-    import ocha_stratus as stratus
-    d = d.copy()
+    """The null's context features (pipeline/context.py, one definition) plus the cell ids the
+    aggregation needs."""
+    d = ctx.context_features(d)
     ll = pl.location(d).to_crs(4326)
     d["cell7"] = [h3.latlng_to_cell(p.y, p.x, 7) for p in ll]
     for r in set(resos) - {7}:
         d[f"cell{r}"] = [h3.latlng_to_cell(p.y, p.x, r) for p in ll]
-    cell9 = pd.Series([h3.latlng_to_cell(p.y, p.x, 9) for p in ll])
-    d["density9"] = cell9.map(cell9.value_counts()).to_numpy()
-    coast = gp.to_metric(gp.codab(0)).geometry.make_valid().union_all().boundary
-    d["dist_coast"] = d.geometry.distance(coast) / 1000.0
-    mmi = np.full(len(d), np.nan)
-    for ev in USGS_EVENTS:
-        raw = json.loads(stratus.load_blob_data(gp.S.blob_path("bronze", "source=usgs", "adm0=VE", f"event={ev}", "cont_mi.json", event=None),
-                                                stage="dev", container_name=gp.S.container))
-        g = gpd.GeoDataFrame.from_features(raw["features"], crs=4326).to_crs(pl.METRIC_CRS)[["value", "geometry"]]
-        j = gpd.sjoin_nearest(d[["geometry"]], g, how="left"); j = j[~j.index.duplicated()]
-        mmi = np.fmax(mmi, j["value"].to_numpy())
-    d["mmi"] = np.nan_to_num(mmi, nan=np.nanmedian(mmi))
     return d
 
 
 def null_oof(sub: pd.DataFrame) -> np.ndarray:
     """Out-of-fold geography-null probability, 5-fold grouped by res-7 cell."""
-    X = sub[["density9", "dist_coast", "mmi"]].astype(float).to_numpy()
+    X = sub[ctx.NULL_FEATURES].astype(float).to_numpy()
     y, groups = sub.y.to_numpy(), sub.cell7.to_numpy()
     oof = np.zeros(len(sub))
     for tr, te in GroupKFold(n_splits=5).split(X, y, groups):

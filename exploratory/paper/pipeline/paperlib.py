@@ -33,7 +33,14 @@ import gie_paper as gp  # noqa: E402
 
 METRIC_CRS = gp.METRIC_CRS
 PRODUCTS = {"MS": "ms_dmg", "IMPACT": "sar_dmg", "OSU": "osu_dmg", "UH": "uh_dmg", "LIST": "list_dmg", "UNEP": "debris_dmg"}
-PAIRS = [("IMPACT", "OSU"), ("MS", "UH"), ("MS", "LIST"), ("LIST", "UH"), ("UNEP", "OSU"), ("MS", "UNEP")]
+# Every two-product agreement rule (15 = C(6,2)). The first six keep the names and orientation
+# they had when they were the only pairs computed (2026-07-15 benchmark set: the same-sensor
+# IMPACT∧OSU pair against five cross pairs), so results.csv rows, brief keys and the oracle
+# snapshot stay addressable; the other nine follow PRODUCTS order.
+_LEGACY_PAIRS = [("IMPACT", "OSU"), ("MS", "UH"), ("MS", "LIST"), ("LIST", "UH"), ("UNEP", "OSU"), ("MS", "UNEP")]
+PAIRS = _LEGACY_PAIRS + [(a, c) for i, a in enumerate(PRODUCTS) for c in list(PRODUCTS)[i + 1:]
+                         if {a, c} not in [set(p) for p in _LEGACY_PAIRS]]
+PAIR_NAMES = [f"{a}∧{c}" for a, c in PAIRS]
 GRADES = {"floor": (2, 3), "grade": (1, 2, 3), "destroyed": (3,)}   # CEMS damage_class sets
 RADII = (10, 20, 30)          # matching radii reported; 10 m is the paper's radius
 FIELD_R = 20                  # ChatMap GPS tolerance

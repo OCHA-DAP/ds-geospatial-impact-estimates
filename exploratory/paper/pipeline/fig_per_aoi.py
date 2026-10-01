@@ -47,7 +47,7 @@ def main():
         ax.set_xticks(range(len(aois)), [f"{a}\n(n={int(out[out.aoi == a].n_cems.max())})" for a in aois], fontsize=10)
         ax.set_yticks(range(len(PRODUCTS)), PRODUCTS, fontsize=11)
         ax.set_title(title, fontsize=12)
-    fig.suptitle("The scorecard is not one number per product: per-CEMS-AOI performance\n"
+    fig.suptitle("Performance is not one number per product: precision and recall per CEMS AOI\n"
                  f"({share_cara:.0%} of reference damage points sit in Caraballeda; n = CEMS {{2,3}} points per AOI)", fontsize=12.5)
     fig.tight_layout()
     os.makedirs(FIGS, exist_ok=True)

@@ -64,3 +64,34 @@ flowchart LR
   hardened to a directory-scoped, short-lived user-delegation SAS (ADR-0011).
 - **Deploys** are code-only (build → staging → approval → prod). **Data refreshes**
   update `gold` (app restart, no deploy) and re-run `build_platinum` for `platinum/`.
+
+## Flood-label corpora (ML training labels; a separate chain from the damage pipeline)
+
+Two medallion archives of flood-extent labels live in the `global` container of the **dev**
+account (`imb0chd0dev`), not under this repo's `projects/` tree: they are general corpora,
+not event-scoped project data (ADR-0029). Neither has been promoted to prod (ADR-0014).
+
+| corpus | layers on blob | gold schema | code |
+|---|---|---|---|
+| Copernicus EMS Rapid Mapping flood activations, 2012– | `global/copernicus_ems/flood/{bronze,silver,gold,platinum}/` | **v1**: one flood `geometry` + `valid_geometry` per label set; `area_km2`, `sensor`; no `label_source`, no water geometry, no `sensor_class` | `pipelines/cems_flood/` (on `v1`) |
+| UNOSAT flood & cyclone products catalogued on HDX, 2014– | `global/unosat/{bronze,silver,gold}/` | **v2**: `geom_water` / `geom_flood` / `geom_possible` / `geom_valid`, `label_source`, `sensor_class`; 181 of 186 events built | `pipelines/unosat/`, `src/gie/unosat/` — PR #128 (bronze) and #132 (silver + gold), unmerged |
+
+- **Combined display platinum.** `global/flood_labels/platinum/` is one Portolan catalog over
+  BOTH golds — collections `water` (UNOSAT water at acquisition), `flood` (every CEMS extent +
+  UNOSAT flood where the source separated it), `valid-masks`, `label-index`; PMTiles capped at
+  z10/z10/z9 — built by `pipelines/flood_labels/platinum.py` + `src/gie/flood_labels/` (PR #137,
+  unmerged). It is **display-only**: simplified geometry, a thin harmonised index, and nothing
+  invented to make the two schemas match (CEMS `sensor_class` and water area stay null).
+  Analysis and any ML label reader must read gold, never this catalog.
+- **Page.** `pages/flood-labels/` (live on `v1` since 2026-09-25, #138) reads that catalog in the
+  browser through the shared token issuer: app `flood-labels` → read-only, 24 h, directory-scoped
+  SAS on `global/flood_labels/platinum`. The earlier CEMS-only viewer `pages/cems-flood-labels/`
+  (app `cems-flood-labels`, catalog `global/copernicus_ems/flood/platinum/`) is kept until the
+  combined page is confirmed. To retire it: delete the page directory and its landing card, drop
+  the `cems-flood-labels` entry from `token-issuer/function_app.py`, redeploy with
+  `token-issuer/deploy-zip.sh`, and leave the blob catalog in place (its `versions.json` is a
+  citable record).
+- **Decision records.** CEMS bronze/silver: ADR-0029 (on `v1`). UNOSAT bronze, gold v2, audit
+  scope, geometry method, gold v3 (rasterise), and the combined platinum are ADRs 0033–0038 on
+  the unmerged branches above; `v1` has since taken 0033 and 0034 (#127), so they must be
+  renumbered when #128/#132/#137 merge.

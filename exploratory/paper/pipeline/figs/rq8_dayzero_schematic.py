@@ -40,10 +40,11 @@ fig, ax = plt.subplots(figsize=(13.5, 5.4))
 ax.set_xlim(0, 13.5); ax.set_ylim(0, 5.4); ax.axis("off")
 
 # --- three inputs (left) --------------------------------------------------------
-inputs = ["coast distance (m)", "building density", "ShakeMap intensity (MMI)"]
-iy = [3.75, 2.55, 1.35]
+# four day-zero inputs (ADR-0033: terrain replaced coast distance); all globally available
+inputs = ["building density", "terrain slope (30 m DEM)", "elevation (30 m DEM)", "ShakeMap intensity (MMI)"]
+iy = [3.95, 3.05, 2.15, 1.25]
 for t, y in zip(inputs, iy):
-    box(ax, 0.3, y, 3.0, 0.9, t, "#e8f1fa", BLUE, fs=12.5)
+    box(ax, 0.3, y, 3.0, 0.75, t, "#e8f1fa", BLUE, fs=12.0)
 ax.text(1.8, 4.95, "known within HOURS —\nno satellite input", ha="center", va="center",
         fontsize=11, style="italic", color=BLUE, weight="bold")
 
@@ -57,7 +58,7 @@ box(ax, mx, my, mw, mh, "logistic  ·  random forest\n(whichever scores higher)\
     "spatially-blocked 5 km² CV\ntarget: CEMS damage {2,3}",
     "#f1f0ea", INK, fs=10.5, weight="bold")
 for y in iy:
-    arrow(ax, 3.32, y + 0.45, mx - 0.14, my + mh / 2)
+    arrow(ax, 3.32, y + 0.375, mx - 0.14, my + mh / 2)
 
 # NOTE: the weighted fusion is deliberately NOT drawn here — this figure is only about how
 # the day-zero baseline is constructed, and adding the fusion box invited the question "why

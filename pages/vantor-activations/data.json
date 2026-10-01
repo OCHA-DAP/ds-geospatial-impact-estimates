@@ -1,13 +1,51 @@
 {
  "catalog_url": "https://vantor-opendata.s3.amazonaws.com/events/catalog.json",
- "checked_at": "2026-09-14T04:49:41Z",
+ "checked_at": "2026-09-23T04:48:12Z",
  "totals": {
   "activations": 10,
-  "images": 200,
+  "images": 202,
   "pre": 60,
-  "post": 140
+  "post": 142
  },
  "activations": [
+  {
+   "id": "Nepal-Flooding-Aug-2026",
+   "title": "Nepal-Flooding-Aug-2026",
+   "event_date": "2026-08-26",
+   "event_date_raw": "2026-08-26T03:30:00Z",
+   "event_date_quality": "ok",
+   "n_items": 33,
+   "n_pre": 4,
+   "n_post": 29,
+   "n_phase_unknown": 0,
+   "first_published": "2026-08-27",
+   "last_published": "2026-09-22",
+   "first_post_acquired": "2026-08-27",
+   "first_post_published": "2026-08-27",
+   "acq_lag_days": 1,
+   "pub_lag_days": 1,
+   "first_post_seen": "2026-08-27",
+   "first_post_seen_source": "metadata",
+   "seen_lag_days": 1,
+   "satellites": [
+    "GE01",
+    "LG01",
+    "LG02",
+    "LG03",
+    "LG04",
+    "LG06",
+    "WV02",
+    "WV03"
+   ],
+   "bbox": [
+    84.35541227950617,
+    26.924453383659284,
+    85.82023439067271,
+    29.03598409372348
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Nepal-Flooding-Aug-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Nepal-Flooding-Aug-2026/collection.json"
+  },
   {
    "id": "Colombia-Earthquake-Aug-2026",
    "title": "Colombia-Earthquake-Aug-2026",
@@ -44,44 +82,6 @@
    ],
    "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Colombia-Earthquake-Aug-2026/collection.json",
    "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Colombia-Earthquake-Aug-2026/collection.json"
-  },
-  {
-   "id": "Nepal-Flooding-Aug-2026",
-   "title": "Nepal-Flooding-Aug-2026",
-   "event_date": "2026-08-26",
-   "event_date_raw": "2026-08-26T03:30:00Z",
-   "event_date_quality": "ok",
-   "n_items": 31,
-   "n_pre": 4,
-   "n_post": 27,
-   "n_phase_unknown": 0,
-   "first_published": "2026-08-27",
-   "last_published": "2026-09-12",
-   "first_post_acquired": "2026-08-27",
-   "first_post_published": "2026-08-27",
-   "acq_lag_days": 1,
-   "pub_lag_days": 1,
-   "first_post_seen": "2026-08-27",
-   "first_post_seen_source": "metadata",
-   "seen_lag_days": 1,
-   "satellites": [
-    "GE01",
-    "LG01",
-    "LG02",
-    "LG03",
-    "LG04",
-    "LG06",
-    "WV02",
-    "WV03"
-   ],
-   "bbox": [
-    84.35541227950617,
-    26.924453383659284,
-    85.82023439067271,
-    29.03598409372348
-   ],
-   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Nepal-Flooding-Aug-2026/collection.json",
-   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Nepal-Flooding-Aug-2026/collection.json"
   },
   {
    "id": "Indonesia-Earthquakes-Aug-2026",

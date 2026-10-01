@@ -21,7 +21,7 @@ FIGS = os.path.join(HERE, "..", "..", "figures")
 os.makedirs(FIGS, exist_ok=True)
 
 df = pd.read_csv(os.path.join(HERE, "..", "legacy", "rq2_chatmap_recall.csv"))
-ROWS = {"CEMS {2,3}": ("CEMS (expert reference)", "#1b1f24", 2.6),
+ROWS = {"CEMS {2,3}": ("CEMS (the reference)", "#1b1f24", 2.6),
         "≥1-of-6 votes (core region)": ("union of six products", "#2a78d6", 2.6),
         "OSU": ("OSU", "#9aa5b1", 1.6), "LIST": ("LIST", "#9aa5b1", 1.6),
         "MS": ("Microsoft", "#9aa5b1", 1.6), "IMPACT v2": ("IMPACT v2", "#9aa5b1", 1.6),
@@ -58,7 +58,7 @@ ax.set_xticks([0, 1], ['field-assessed\n"complete" destruction',
                        'field-assessed\n"significant" damage'], fontsize=12)
 ax.set_ylabel("recall vs ChatMap field reports (field frame, r = 20 m)", fontsize=12)
 ax.tick_params(axis="y", labelsize=11)
-ax.set_title("Recall falls with damage grade — for the products AND the expert "
+ax.set_title("Recall falls with damage grade — for the products AND the CEMS "
              "reference.\nCEMS-frame recall inherits this skew: it is a ceiling, "
              "not a floor.", fontsize=12.5)
 fig.tight_layout()

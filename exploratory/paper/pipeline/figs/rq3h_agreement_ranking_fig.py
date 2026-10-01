@@ -14,6 +14,7 @@ Run: uv run --with pandas --with matplotlib python \
 from __future__ import annotations
 import os, sys
 import numpy as np
+from matplotlib.ticker import PercentFormatter
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
@@ -34,10 +35,11 @@ fig, axes = plt.subplots(2, 2, figsize=(13.5, 10.5), sharex=True)
 for col, res in enumerate((8, 9)):
     v = df[df.res == res].set_index("predictor")
     for row, (metric, mlab) in enumerate((
-            ("rho", "Spearman ρ — how well the FULL cell ordering matches CEMS"),
-            ("top20_exp", "top-20 overlap — share of the 20 worst-hit cells shortlisted\n"
-                          "(tie-aware expected value)"))):
+            ("rho", "Spearman ρ: how well each product ranks\nthe neighbourhood blocks/cells"),
+            ("top20_exp", "% share of cells correctly predicted\nas top 20 most damaged cells"))):
         ax = axes[row][col]
+        pct = metric == "top20_exp"          # bottom row reads as a percentage
+        fmt = (lambda x: f"{x:.0%}") if pct else (lambda x: f"{x:.2f}")
         # every reference line labelled at the right edge, one dodged stack
         refs = [(v.loc[s, metric], s, "#9db1b3", "#5a6570", 1.1, "-") for s in SINGLES]
         if not SUMMARY:
@@ -55,7 +57,7 @@ for col, res in enumerate((8, 9)):
             ys.append(yy)
         for (val, nm, lc, tc, lw, ls), yy in zip(refs, ys):
             ax.axhline(val, color=lc, lw=lw, ls=ls, zorder=2 if lw > 1.2 else 1)
-            ax.annotate(f"{nm}  {val:.2f}", (6.35, val), xytext=(6.6, yy),
+            ax.annotate(f"{nm}  {fmt(val)}", (6.35, val), xytext=(6.6, yy),
                         textcoords="data", fontsize=8.5, color=tc, va="center",
                         weight="bold" if lw > 1.2 else "normal",
                         arrowprops=dict(arrowstyle="-", color=lc, lw=0.5, alpha=0.6))
@@ -63,10 +65,12 @@ for col, res in enumerate((8, 9)):
         vals = [v.loc[f"{k}-of-6", metric] for k in KS]
         ax.plot(KS, vals, marker="o", ms=8, lw=2.6, color="#18614c", zorder=3)
         for k, val in zip(KS, vals):
-            ax.annotate(f"{val:.2f}", (k, val), xytext=(0, 9), textcoords="offset points",
+            ax.annotate(fmt(val), (k, val), xytext=(0, 9), textcoords="offset points",
                         ha="center", fontsize=8.5, color="#18614c", weight="bold")
         ax.set_xlim(0.35, 8.8)
         ax.set_ylim(-0.02, 0.92)
+        if pct:
+            ax.yaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=0))
         ax.set_xticks(KS)
         ax.grid(axis="y", alpha=0.2)
         ax.spines[["top", "right"]].set_visible(False)

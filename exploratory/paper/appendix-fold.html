@@ -1,3 +1,17 @@
+<!-- Hypothesis review group. Quarto's `comments.hypothesis` schema has no `group` key, and the
+     client has no such config option either; the supported way to open the sidebar in a given
+     group is the URL fragment `#annotations:group:<id>`. Without it, a reader who comments lands
+     in the PUBLIC layer (which is how the 4 September threads leaked). Members of the group get
+     it selected on load; a reader who is not a member falls back to Public, so membership still
+     matters. Must run before the client bootstraps, hence a plain inline script. -->
+<script>
+(function () {
+  var GROUP = "ppY7JE2k";   // "ven brief: CHD (internal)"
+  if (!/^#annotations:/.test(location.hash)) {
+    history.replaceState(null, "", location.pathname + location.search + "#annotations:group:" + GROUP);
+  }
+})();
+</script>
 <!-- Appendix fold behavior: sections render as collapsed callouts. Following any
      internal link (cross-ref, TOC) into a folded section expands it, scrolling to
      the exact target once open; a section that was auto-expanded this way quietly

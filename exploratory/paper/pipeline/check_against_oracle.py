@@ -25,6 +25,9 @@ EXCEPTIONS = [
      "(verified 2026-09-15 for 5-of-6: 469 vs 468 of 481 unmatched flags reviewed -> .98 vs .97)"),
     (lambda r: r.lens == "cells-agreement" and r.predictor == "weighted fusion",
      "fusion row is only produced with --with-fusion (frozen rq8 parquet)"),
+    (lambda r: (r.lens == "cells" and r.metric in ("rho_null", "top20_null", "delta"))
+               or (r.lens == "cells-agreement" and r.predictor == "geography null"),
+     "geography null features changed (ADR-0033: density + slope + elevation + MMI; the archived rq3f oracle used coast distance)"),
 ]
 
 
