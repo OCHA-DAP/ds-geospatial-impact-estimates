@@ -576,10 +576,11 @@ volunteers reviewed ~50 m cells for visible damage, which separates the two wher
   from `{python} N["crowdcov_MS"]` for Microsoft and `{python} N["crowdcov_UNEP"]` for UNEP down to
   `{python} N["crowdcov_OSU"]` for OSU and `{python} N["crowdcov_UH"]` for UH, so the adjustment says the most about
   Microsoft and the least about UH.
-- The rule: a flagged building with a CEMS damage point within 10 m is a hit outright, and the crowd
-  plays no part. Every other flag sits in a crowd task cell and takes that cell's majority verdict: a
-  majority "yes, damaged" confirms it, a majority "no" or "not sure" leaves it a false alarm, and a
-  flag in a cell nobody voted on earns nothing.
+- The crowd only re-judges product flags that have no CEMS point within 10 m, which would otherwise
+  count as false alarms. If most volunteers who saw that flag's cell said damaged, the flag counts as
+  a hit; if they said no or not sure, or never saw the cell, it stays a false alarm. Flags a CEMS
+  point already confirms are never re-judged, and neither are buildings a product did not flag, so
+  the crowd can raise precision but never lower it, and leaves recall alone.
 - Crowd-adjusted precision adds the confirmed flags back to the numerator. The CEMS-only precision
   is the bottom of the range and the crowd-adjusted value sits above it. The upper bound in the main
   text also counts the CEMS points graded *possibly damaged*, and a flag that qualifies both ways is
@@ -651,9 +652,10 @@ and the geography nulls. The dashed line marks the paper's reference. The rise i
 mechanical (same flags, more reference points to be near); the finding is what does
 *not* change: `{python} N["basis_reversals_caption"]`.](figures/rq8c_basis_precision_r10.png){#fig-basis}
 
-- Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]` and reverses
-  nothing. The fused score keeps its margin and the geography benchmark stays inside the product
-  band under every definition.
+- Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]`. But the
+  key findings stay largely the same: the combinations
+  stay well above every single product, and the geography benchmark stays inside the products' band
+  under every definition.
 - Excluding *possibly damaged* is the more demanding choice, and it is the one kept.
 
 #### Area ranking against the benchmark {#app-ranking-tables .unnumbered}
@@ -684,9 +686,9 @@ buildings). Open markers: the geography null under each target. The null is as s
 under fractions as under counts, and only OSU beats it under
 either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
 
-- Ranking by damage fraction rather than count changes no conclusion: damage rate is itself
-  geographically structured in this event, so dividing out building stock removes nothing the
-  benchmark relies on.
+- Ranking by damage fraction instead of count moves some products up and others down, but the
+  benchmark is as strong either way: damage rate is itself geographically structured in this
+  event, so dividing by building stock leaves its advantage in place.
 
 ### Additional tests {#app-tests .unnumbered}
 
@@ -764,7 +766,7 @@ gt
 - Every number rises with the radius, because a flag one or two buildings away starts to count.
 - The benchmark gains fastest: a wider radius spreads each CEMS point over a cluster of neighbours,
   making the target area-shaped, which is the shape a smooth spatial predictor captures well.
-- Combination stays ahead at every radius, so no conclusion depends on the choice.
+- Combination stays ahead at every radius, so the findings hold whichever radius is used.
 - The tighter 10 m label concentrates the positives onto individual buildings, which is where the
   case for combining products is strongest, and it is the reading in which a building-level claim
   means a building.
