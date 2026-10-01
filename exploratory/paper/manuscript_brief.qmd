@@ -612,9 +612,9 @@ destruction versus significant damage. Every line slopes the same way: destructi
 found far more often than damage, the products and the CEMS reference
 alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
 
-- ChatMap can also be added to the reference directly, since its points are building-level. Doing
-  so raises measured precision by only `{python} N["field_union_gain_range"]`, which is why it is left off the
-  bounds ladder in the main text: too sparse to move the numbers.
+- ChatMap can also be added to the reference directly, since its points are building-level.
+  However, doing so raises measured precision minimally, by roughly
+  `{python} N["field_union_gain_range"]`, and it has not been included in the main text.
 - Recall against ChatMap is matched at 20 m rather than 10 m, because field reports are phone points
   taken from the street and that scatter is the reference's positional error, not the product's.
 
