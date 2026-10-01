@@ -549,7 +549,7 @@ plt.show()
 ```
 
 - Products that delivered their own footprints are mapped onto the shared building base by one
-  rule: highest overlap, else nearest within 20 m, else orphan. 
+  rule: highest overlap, else nearest within 20 m, else no match. 
 - The matching radius chosen comes from the building spacing: the median distance between
   neighbouring buildings in the core region is `{python} N["spacing_median_m"]` m, and
   `{python} N["spacing_within20_pct"]` have a neighbour within 20 m.
@@ -581,10 +581,8 @@ volunteers reviewed ~50 m cells for visible damage, which separates the two wher
   a hit; if they said no or not sure, or never saw the cell, it stays a false alarm. Flags a CEMS
   point already confirms are never re-judged, and neither are buildings a product did not flag, so
   the crowd can raise precision but never lower it, and leaves recall alone.
-- Crowd-adjusted precision adds the confirmed flags back to the numerator. The CEMS-only precision
-  is the bottom of the range and the crowd-adjusted value sits above it. The upper bound in the main
-  text also counts the CEMS points graded *possibly damaged*, and a flag that qualifies both ways is
-  counted once.
+- When crowd-adjusted precision is used in the paper, the CEMS-only precision is the bottom of the
+  range and the crowd-adjusted value sits above it.
 - The top of the range is generous. A verdict covers a whole cell, not a building, so a confirmed
   flag means damage somewhere in that cell. For the same reason crowd verdicts are only used in
   aggregate, never as building-level truth.
