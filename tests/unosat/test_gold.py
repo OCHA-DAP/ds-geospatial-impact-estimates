@@ -83,7 +83,7 @@ def build(obs, cov=None):
 # --- the geometry rules ----------------------------------------------------
 
 
-# --- geometry methods (ADR-0036) -------------------------------------------
+# --- geometry methods (ADR-0038) -------------------------------------------
 
 
 def _staircase(x0: float, y0: float, n: int = 40, step: float = 0.01):

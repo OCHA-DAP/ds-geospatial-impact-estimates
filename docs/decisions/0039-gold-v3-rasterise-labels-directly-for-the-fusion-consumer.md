@@ -8,13 +8,13 @@ deciders: Zack Arno
 
 ## Context and Problem Statement
 
-Gold v2 (ADR-0034) dissolves each label set's polygons into one geometry per
+Gold v2 (ADR-0036) dissolves each label set's polygons into one geometry per
 class with `make_valid` and `union_all`. UNOSAT's polygons are polygonised
 rasters — staircase outlines, hundreds of thousands of parts per feature,
 millions of vertices in single geometries, pixel-corner self-intersections
-(ADR-0036). GEOS noding is superlinear in vertices per geometry: one event
+(ADR-0038). GEOS noding is superlinear in vertices per geometry: one event
 ran 13 h 58 min under v2's method and never finished; another took 6 h 19 min.
-The `snap` method (ADR-0036) helps but is still a vector dissolve.
+The `snap` method (ADR-0038) helps but is still a vector dissolve.
 
 The sole consumer of these labels is the fusion model, built by the deciding
 user, which reads labels as 30 arcsec cells (ds-flood-gfm spec: 1/120°,
@@ -32,7 +32,7 @@ EPSG:4326, integer row/col). Why dissolve in vector space at all?
 
 1. **Rasterise directly**: burn each label set's contributing silver layers
    onto the 30 arcsec grid; union = OR, difference = AND NOT, no repair.
-2. Keep dissolving, with `snap` (ADR-0036).
+2. Keep dissolving, with `snap` (ADR-0038).
 3. Dissolve in raster space at fine resolution (e.g. 10 m) then downsample.
 
 ## Decision Outcome
@@ -54,7 +54,7 @@ gold's actual knowledge — stays identical.
 * Bad, because the archive is resolution-bound. Any future consumer at another
   resolution rasterises from silver (cheap) or unions (expensive) themselves.
   v2 remains available for that.
-* Neutral, because v2 is not rebuilt or removed; ADR-0034 is superseded only
+* Neutral, because v2 is not rebuilt or removed; ADR-0036 is superseded only
   for the fusion path.
 
 ## Pros and Cons of the Options
@@ -98,4 +98,4 @@ genuine cloud mask for the Durban label set.
 ## More Information
 
 Revisit if a second consumer needs vector labels or a different grid. Related:
-ADR-0034 (v2 contract), ADR-0036 (why the dissolve is slow on this data).
+ADR-0036 (v2 contract), ADR-0038 (why the dissolve is slow on this data).

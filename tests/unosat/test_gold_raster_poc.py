@@ -1,4 +1,4 @@
-"""Gold v3 PoC: burning label sets instead of dissolving them (ADR-0037)."""
+"""Gold v3 PoC: burning label sets instead of dissolving them (ADR-0039)."""
 
 import importlib.util
 from pathlib import Path

@@ -529,9 +529,9 @@ name list — become the test fixtures.
 
 ## ADRs to write with this work
 
-- `0033-unosat-flood-archive-content-addressed-bronze.md` — HDX cumulative
+- `0035-unosat-flood-archive-content-addressed-bronze.md` — HDX cumulative
   snapshots → sha256-keyed bronze; SHP+GDB both archived, GDB read first.
-- `0034-flood-label-gold-v2-water-and-flood-geometries.md` — shared gold with
+- `0036-flood-label-gold-v2-water-and-flood-geometries.md` — shared gold with
   `label_source`, `sensor_class` and separate water / flood / possible
   geometries; supersedes the gold section of ADR-0029.
 

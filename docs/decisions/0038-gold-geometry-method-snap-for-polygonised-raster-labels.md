@@ -84,7 +84,7 @@ is roughly 20% of the speed-up spent on never crashing on real input.
 The South Africa row is the only same-event comparison: `snap` finished in under a
 third of the time `validate` had already spent without finishing. Both giants
 spent most of their `snap` time in GEOS's coverage union rather than in repair,
-which is why ADR-0037 proposes removing the union altogether for the fusion path.
+which is why ADR-0039 proposes removing the union altogether for the fusion path.
 
 On an ordinary code (Haiti 2017 above) the two methods run in the same time and
 produce the same label-set count and areas: `snap` costs nothing where nothing
@@ -146,4 +146,4 @@ polygonised-raster source. Revisit if the fusion pipeline rasterises labels
 directly onto its 30 arcsec grid: at that point a vector dissolve of
 pixel-derived polygons is work that a raster union would do in a fraction of
 the time, and gold's geometry could be simplified rather than sped up.
-Related: ADR-0034 (gold v2 geometries).
+Related: ADR-0036 (gold v2 geometries).

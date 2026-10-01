@@ -39,7 +39,7 @@ pipelines/unosat/gold.py        CLI
 pipelines/unosat/audit.py       gains --silver / --gold sections
 tests/unosat/fixtures/layer_names_flood.txt   2,600 real SHP layer names (committed fixture)
 tests/unosat/test_layers.py, test_grammar.py, test_classes.py, test_readers.py, test_acquisition.py, test_silver.py, test_gold.py, test_audit.py (extend)
-docs/decisions/0034-flood-label-gold-v2-water-and-flood-geometries.md
+docs/decisions/0036-flood-label-gold-v2-water-and-flood-geometries.md
 ```
 
 ---
@@ -246,14 +246,14 @@ def test_fixture_coverage_counts():
 
 ### Task 7: Gold v2 builder and CLI
 
-**Files:** Create `src/gie/unosat/gold.py`, `pipelines/unosat/gold.py`, `tests/unosat/test_gold.py`, `docs/decisions/0034-flood-label-gold-v2-water-and-flood-geometries.md`.
+**Files:** Create `src/gie/unosat/gold.py`, `pipelines/unosat/gold.py`, `tests/unosat/test_gold.py`, `docs/decisions/0036-flood-label-gold-v2-water-and-flood-geometries.md`.
 
 **Interfaces:** `INDEX_COLUMNS` per spec §4; `build_code(code, observed: gpd.GeoDataFrame, coverage: gpd.GeoDataFrame, meta: dict) -> tuple[gpd.GeoDataFrame labels, pd.DataFrame index]`: `make_valid` both inputs; group observed by `(area_label, acq_start, acq_end)` where `acq_start = acq_window_start.fillna(acq_datetime)`, `acq_end = acq_window_end.fillna(acq_datetime)`; exclude `acq_precision == "none"`; per group `geom_water` = union of kinds {water, water_pre, flood}, `geom_flood` = union of {flood} (null if the group has no `flood` rows AND no `flood`-kind layer), `geom_possible` = union of {flood_possible}; `geom_valid` = union of coverage `footprint` rows for the same `(area_label, acq interval)` minus union of `not_analysed` (basis `footprint_minus_cloud` / `footprint` / `none`); areas in EPSG:6933; `sensor` = most common sensor in the group, `sensor_class` via `classes.sensor_class`; `excluded_aggregate_n` = count of aggregate/other_water rows dropped; `label_day` when start/end on the same day. Labels GeoDataFrame has geometry columns `geom_water, geom_flood, geom_possible, geom_valid` (primary `geom_water`) plus `label_source="unosat", code, aoi, acq_start, acq_end, label_day, valid_basis`.
 - CLI: per code read all silver layer files for the two tables (list blobs under the partition, read each, concat), build, write `gold/labels/code={code}/data.parquet` and `gold/_index_parts/code={code}.parquet`; at the end concat all index parts into `gold/label_index.parquet`. `--codes`, `--limit`. Reuse-or-mirror the CEMS gold writing pattern (`pipelines/cems_flood/gold.py`), but geometry columns per spec v2.
 
 - [ ] Tests on synthetic silver frames: water = flood ∪ pre-flood; flood separable; possible separate; valid mask subtracts clouds; aggregate rows excluded and counted; two acquisition intervals → two rows; areas positive; `label_day` set only when same day; round-trip write/read of the multi-geometry GeoParquet via `geopandas.read_parquet` preserves all four geometry columns.
-- [ ] ADR-0034 (MADR, from `docs/decisions/template.md`): shared gold v2 with `label_source`, `sensor_class`, separate water/flood/possible geometries; supersedes the gold section of ADR-0029; rejected: flood-only gold (loses the water target the fusion spec chose), per-source gold schemas (two readers).
-- [ ] Implement; lint; commit — `unosat: gold v2 — water/flood/possible geometries + valid mask per acquisition; label_index; ADR-0034`.
+- [ ] ADR-0036 (MADR, from `docs/decisions/template.md`): shared gold v2 with `label_source`, `sensor_class`, separate water/flood/possible geometries; supersedes the gold section of ADR-0029; rejected: flood-only gold (loses the water target the fusion spec chose), per-source gold schemas (two readers).
+- [ ] Implement; lint; commit — `unosat: gold v2 — water/flood/possible geometries + valid mask per acquisition; label_index; ADR-0036`.
 - [ ] **Run for real (controller):** full gold build; record label-set counts by `sensor_class` and `acq_precision`.
 
 ---

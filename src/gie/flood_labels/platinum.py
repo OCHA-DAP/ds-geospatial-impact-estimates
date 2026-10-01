@@ -5,7 +5,7 @@ The catalog is one thin **display** product over two corpora whose golds differ:
 * CEMS gold v1 (ADR-0029): per label set one flood ``geometry`` and one
   ``valid_geometry``; index columns ``area_km2``, ``sensor``... no
   ``label_source``, no water geometry, no ``sensor_class``.
-* UNOSAT gold v2 (ADR-0034): ``geom_water`` / ``geom_flood`` /
+* UNOSAT gold v2 (ADR-0036): ``geom_water`` / ``geom_flood`` /
   ``geom_possible`` / ``geom_valid``; index carries ``label_source``,
   ``sensor_class``, ``water_area_km2``, ``flood_area_km2``.
 
@@ -42,7 +42,7 @@ HDX_DATASETS = "unosat/bronze/_meta/datasets.parquet"
 
 # Display simplification tolerance in degrees, per source. CEMS is analyst
 # vector work: 1e-4 (~10 m) keeps the shoreline character. UNOSAT polygons are
-# polygonised rasters (ADR-0036): every vertex is a pixel corner, so a
+# polygonised rasters (ADR-0038): every vertex is a pixel corner, so a
 # tolerance below the pixel size removes nothing; 3e-4 (~33 m) flattens the
 # 10-30 m staircases and leaves the 375 m VIIRS products untouched.
 SIMPLIFY = {"cems": 1e-4, "unosat": 3e-4}

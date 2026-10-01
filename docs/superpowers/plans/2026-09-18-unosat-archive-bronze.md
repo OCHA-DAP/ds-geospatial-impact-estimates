@@ -48,7 +48,7 @@ tests/unosat/test_discovery.py
 tests/unosat/test_harvest.py
 tests/unosat/test_domains.py
 tests/unosat/test_audit.py
-docs/decisions/0033-unosat-flood-archive-content-addressed-bronze.md
+docs/decisions/0035-unosat-flood-archive-content-addressed-bronze.md
 pyproject.toml                      add hdx-python-api, platformdirs to the etl group
 ```
 
@@ -2060,7 +2060,7 @@ git commit -m "unosat: bronze audit — pending, two-way blob census with sizes,
 ### Task 8: Run the full harvest, README, ADR, data ledger
 
 **Files:**
-- Create: `pipelines/unosat/README.md`, `docs/decisions/0033-unosat-flood-archive-content-addressed-bronze.md`
+- Create: `pipelines/unosat/README.md`, `docs/decisions/0035-unosat-flood-archive-content-addressed-bronze.md`
 - Modify: `data_ledger.md` (append one row after the harvest completes)
 
 - [ ] **Step 1: Run the harvest to completion (unattended, resumable)**
@@ -2091,7 +2091,7 @@ Archives every UNOSAT product resource catalogued on HDX (all hazards) into a
 content-addressed bronze layer on blob, with a ledger that accounts for every
 resource version: fetched, deduplicated, or explicitly unavailable upstream.
 Design: `docs/superpowers/specs/2026-09-18-unosat-flood-archive-design.md`;
-decision record: ADR-0033.
+decision record: ADR-0035.
 
 HDX is the catalogue, not the store: bytes come from unosat.org and CERN hosts.
 
@@ -2145,7 +2145,7 @@ Re-running discovery is the backfill: new/re-published resources become
 pending, vanished ones are flagged `missing_upstream`, never dropped.
 ```
 
-- [ ] **Step 4: Write ADR-0033** `docs/decisions/0033-unosat-flood-archive-content-addressed-bronze.md` (copy the template frontmatter)
+- [ ] **Step 4: Write ADR-0035** `docs/decisions/0035-unosat-flood-archive-content-addressed-bronze.md` (copy the template frontmatter)
 
 ```markdown
 ---
@@ -2209,8 +2209,8 @@ upstream states are ledger statuses, never retries.
 
 ```bash
 uv run pytest tests -q && uv run ruff check src pipelines/unosat tests
-git add pipelines/unosat/README.md docs/decisions/0033-unosat-flood-archive-content-addressed-bronze.md data_ledger.md
-git commit -m "unosat: bronze archive complete — README, ADR-0033, data ledger row"
+git add pipelines/unosat/README.md docs/decisions/0035-unosat-flood-archive-content-addressed-bronze.md data_ledger.md
+git commit -m "unosat: bronze archive complete — README, ADR-0035, data ledger row"
 ```
 
 - [ ] **Step 7: Open the PR**

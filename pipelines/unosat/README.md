@@ -7,7 +7,7 @@ normalises the flood and cyclone ones into silver polygon tables; and dissolves
 those into the shared flood-label gold schema the fusion work reads alongside
 the CEMS archive. Design:
 `docs/superpowers/specs/2026-09-18-unosat-flood-archive-design.md`; decision
-records: ADR-0033 (bronze), ADR-0034 (gold v2).
+records: ADR-0035 (bronze), ADR-0036 (gold v2).
 
 HDX is the catalogue, not the store: bytes come from unosat.org and CERN hosts.
 
@@ -168,7 +168,7 @@ Reads silver only. Per event code it concatenates every layer file of the
 sets**: one row per `(label_source, code, area_label, acquisition interval)`,
 which is the shape a training-data reader wants — rasterise the geometries,
 rasterise the mask, treat everything outside the mask as unobserved rather
-than dry. Schema v2, shared with the CEMS archive (ADR-0034), so one reader
+than dry. Schema v2, shared with the CEMS archive (ADR-0036), so one reader
 serves both corpora.
 
 **Four geometry columns** on `labels/code=…/data.parquet` (primary
