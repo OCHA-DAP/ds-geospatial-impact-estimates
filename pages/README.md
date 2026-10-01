@@ -16,6 +16,9 @@ pages/
   slides/damage-evaluation/       -> /slides/damage-evaluation/
   manuscript/                     -> /manuscript/
   vantor-activations/             -> /vantor-activations/  (tracker page + data.json snapshot)
+  cems-flood-archive/             -> /cems-flood-archive/  (CEMS harvest-ledger status page)
+  cems-flood-labels/              -> /cems-flood-labels/   (CEMS-only label viewer; superseded by flood-labels/, kept until retired)
+  flood-labels/                   -> /flood-labels/        (CEMS + UNOSAT label viewer; reads global/flood_labels/platinum via the token issuer)
 ```
 
 One exception to "nothing is generated": `vantor-activations/data.json` (and its first-seen
