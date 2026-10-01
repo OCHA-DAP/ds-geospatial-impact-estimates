@@ -583,9 +583,6 @@ volunteers reviewed ~50 m cells for visible damage, which separates the two wher
   the crowd can raise precision but never lower it, and leaves recall alone.
 - When crowd-adjusted precision is used in the paper, the CEMS-only precision is the bottom of the
   range and the crowd-adjusted value sits above it.
-- The top of the range is generous. A verdict covers a whole cell, not a building, so a confirmed
-  flag means damage somewhere in that cell. For the same reason crowd verdicts are only used in
-  aggregate, never as building-level truth.
 
 ![How the MapSwipe crowd enters the precision calculation. Hexagons are the ~50 m crowd task
 cells in Catia La Mar, tinted by majority verdict. A flag matched by a CEMS point within 10 m
