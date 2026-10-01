@@ -10,7 +10,7 @@ per geometry and cost 13 h 58 min on one event without finishing. Burning is
 a logical OR, footprint-minus-cloud is AND NOT, and a scanline rasteriser
 needs no validity. Everything durable in gold (layer-name grammar, class
 resolution, acquisition intervals, coverage matching) is the grouping, which
-is free; only the dissolve is expensive. ADR-0037 records the decision.
+is free; only the dissolve is expensive. ADR-0039 records the decision.
 
 **Spec:** ds-flood-gfm `docs/superpowers/specs/2026-09-18-flood-fusion-design.md`
 (grid: 1/120°, EPSG:4326, integer row/col identity; labels rasterised with a
@@ -57,8 +57,8 @@ Acceptance for "really seconds": NER and ZAF each under 60 s end to end.
    equivalence check between contracts.
 5. **Fusion adapter (ds-flood-gfm).** `fusion/labels/unosat.py` reads
    `gold/v3/label_index.parquet` + tifs directly onto `Grid(res_arcsec=30)`.
-6. **ADR-0037 → accepted**; ADR-0034 marked superseded-in-part (v2 stays for
+6. **ADR-0039 → accepted**; ADR-0036 marked superseded-in-part (v2 stays for
    any vector consumer; v3 is the fusion path).
 
 Not in scope: rebuilding v2. It exists, is audited, and records its method per
-event (ADR-0036).
+event (ADR-0038).

@@ -1,4 +1,4 @@
-"""Gold v3 proof of concept: rasterise label sets directly, no dissolve (ADR-0037).
+"""Gold v3 proof of concept: rasterise label sets directly, no dissolve (ADR-0039).
 
 Same grouping as gold (area, acquisition interval), same class rules, but each
 label set is BURNED onto the 30 arcsec fusion grid instead of unioned in vector

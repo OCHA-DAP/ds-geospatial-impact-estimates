@@ -61,7 +61,7 @@ def main(argv: list[str] | None = None) -> None:
         choices=gold.GEOMETRY_METHODS,
         help="validate: make_valid + union_all (original). snap: explode, snap to a 1e-7 deg "
         "grid, coverage union -- orders of magnitude faster on polygonised-raster geometry, "
-        "same area to ~1e-8 (ADR-0036). Recorded per code in the run log.",
+        "same area to ~1e-8 (ADR-0038). Recorded per code in the run log.",
     )
     args = ap.parse_args(argv)
 

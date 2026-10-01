@@ -10,8 +10,8 @@ deciders: Zack Arno
 
 Two flood-label corpora now exist on blob with different gold schemas: CEMS
 gold v1 (ADR-0029: one flood `geometry` plus a valid mask, no `label_source`,
-no `sensor_class`) and UNOSAT gold v2 (ADR-0034: `geom_water`, `geom_flood`,
-`geom_possible`, `geom_valid`, `sensor_class`). The CEMS v2 rebuild ADR-0034
+no `sensor_class`) and UNOSAT gold v2 (ADR-0036: `geom_water`, `geom_flood`,
+`geom_possible`, `geom_valid`, `sensor_class`). The CEMS v2 rebuild ADR-0036
 promised has not been written. The viewer is a way to catalogue events and
 sense-check labels before the fusion work starts; the fusion work has not
 started. How does one viewer show both corpora without a rebuild of either
@@ -49,7 +49,7 @@ index carries CEMS `area_km2` as `flood_area_km2`, leaves `sensor_class` and
 `water_area_km2` null for CEMS, resolves UNOSAT ISO3 country codes to HDX's
 own dataset names, and unifies three country spellings through an explicit
 alias table. Deriving `sensor_class` for CEMS from its sensor strings is left
-for gold (ADR-0034's follow-up), not done in a display layer.
+for gold (ADR-0036's follow-up), not done in a display layer.
 
 Geometry is simplified per source (1e-4° CEMS, 3e-4° UNOSAT, 5e-4° masks),
 part by part, because GEOS's Douglas-Peucker on a whole MultiPolygon was
@@ -82,7 +82,7 @@ measured 140x slower than the same call over its exploded parts.
 
 ### Rebuild CEMS gold to v2 first
 * Good: one schema everywhere, no display harmonisation.
-* Bad: blocks the viewer on a gold decision that is itself pending (ADR-0037
+* Bad: blocks the viewer on a gold decision that is itself pending (ADR-0039
   proposes v3 rasters, which would make a v2 vector rebuild of CEMS wasted).
 
 ## More Information
@@ -90,6 +90,6 @@ measured 140x slower than the same call over its exploded parts.
 Implementation: `src/gie/flood_labels/platinum.py`,
 `pipelines/flood_labels/platinum.py`, `pages/flood-labels/`, the
 `flood-labels` entry in `token-issuer/function_app.py`. Related: ADR-0029,
-ADR-0034, ADR-0037, ADR-0022 (token issuer), ADR-0011 (client-side serving).
+ADR-0036, ADR-0039, ADR-0022 (token issuer), ADR-0011 (client-side serving).
 Revisit when CEMS gold is rebuilt (v2 or v3): the harmonisation layer should
 then shrink to nothing.
