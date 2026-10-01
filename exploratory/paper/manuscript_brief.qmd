@@ -651,8 +651,8 @@ and the geography nulls. The dashed line marks the paper's reference. The rise i
 mechanical (same flags, more reference points to be near); the finding is what does
 *not* change: `{python} N["basis_reversals_caption"]`.](figures/rq8c_basis_precision_r10.png){#fig-basis}
 
-- Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]`. A few
-  products that score close together swap places, but the findings stay the same: the combinations
+- Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]`. But the
+  key findings stay largely the same: the combinations
   stay well above every single product, and the geography benchmark stays inside the products' band
   under every definition.
 - Excluding *possibly damaged* is the more demanding choice, and it is the one kept.
