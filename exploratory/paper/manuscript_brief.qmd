@@ -576,10 +576,11 @@ volunteers reviewed ~50 m cells for visible damage, which separates the two wher
   from `{python} N["crowdcov_MS"]` for Microsoft and `{python} N["crowdcov_UNEP"]` for UNEP down to
   `{python} N["crowdcov_OSU"]` for OSU and `{python} N["crowdcov_UH"]` for UH, so the adjustment says the most about
   Microsoft and the least about UH.
-- The rule: a flagged building with a CEMS damage point within 10 m is a hit outright, and the crowd
-  plays no part. Every other flag sits in a crowd task cell and takes that cell's majority verdict: a
-  majority "yes, damaged" confirms it, a majority "no" or "not sure" leaves it a false alarm, and a
-  flag in a cell nobody voted on earns nothing.
+- The crowd only re-judges product flags that have no CEMS point within 10 m, which would otherwise
+  count as false alarms. If most volunteers who saw that flag's cell said damaged, the flag counts as
+  a hit; if they said no or not sure, or never saw the cell, it stays a false alarm. Flags a CEMS
+  point already confirms are never re-judged, and neither are buildings a product did not flag, so
+  the crowd can raise precision but never lower it, and leaves recall alone.
 - Crowd-adjusted precision adds the confirmed flags back to the numerator. The CEMS-only precision
   is the bottom of the range and the crowd-adjusted value sits above it. The upper bound in the main
   text also counts the CEMS points graded *possibly damaged*, and a flag that qualifies both ways is
