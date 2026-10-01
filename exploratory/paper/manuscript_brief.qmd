@@ -685,9 +685,9 @@ buildings). Open markers: the geography null under each target. The null is as s
 under fractions as under counts, and only OSU beats it under
 either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
 
-- Ranking by damage fraction rather than count changes no conclusion: damage rate is itself
-  geographically structured in this event, so dividing out building stock removes nothing the
-  benchmark relies on.
+- Ranking by damage fraction instead of count moves some products up and others down, but the
+  benchmark is as strong either way: damage rate is itself geographically structured in this
+  event, so dividing by building stock leaves its advantage in place.
 
 ### Additional tests {#app-tests .unnumbered}
 
@@ -765,7 +765,7 @@ gt
 - Every number rises with the radius, because a flag one or two buildings away starts to count.
 - The benchmark gains fastest: a wider radius spreads each CEMS point over a cluster of neighbours,
   making the target area-shaped, which is the shape a smooth spatial predictor captures well.
-- Combination stays ahead at every radius, so no conclusion depends on the choice.
+- Combination stays ahead at every radius, so the findings hold whichever radius is used.
 - The tighter 10 m label concentrates the positives onto individual buildings, which is where the
   case for combining products is strongest, and it is the reading in which a building-level claim
   means a building.
