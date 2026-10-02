@@ -19,7 +19,7 @@ owned = set(json.loads((HERE / ".numbers_owned.json").read_text()))
 
 # design constants and metadata that are legitimately typed by hand, with the reason
 ALLOW = {
-    "2026": "year", "24": "24 June, the event date", "72": "the 72-hour window (a design constant of the argument)",
+    "2026": "year", "24": "24 June, the event date", "30": "30 June, the opening photo's date (credit line)", "72": "the 72-hour window (a design constant of the argument)",
     "400": "400+ MapSwipe volunteers (campaign metadata)", "0": "axis tick", "50": "axis tick", "100": "axis tick",
     "1": "'any 1 of 6' / 'Day 1' labels", "2": "'2 or more' / 'Day 2'", "3": "labels", "4": "'4 or more' / 'Day 4'",
     "5": "'5 or more' / 'Day 5'", "6": "'all 6'", "7": "'Day 7'", "10": "10 m matching radius (design parameter)", "20": "20 m",

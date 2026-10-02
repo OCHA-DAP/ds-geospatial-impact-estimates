@@ -77,11 +77,6 @@ for name, key in [("Microsoft AI4G", "MS"), ("IMPACT", "IMPACT"), ("OSU / NASA",
     if len(re.findall(pat, t)) != 1: raise SystemExit(f"timeline row for {name!r} not found exactly once")
     t = re.sub(pat, lambda m: m.group(1) + str(int(tot[key])), t, count=1)
 sub1(r"the six assessments count anywhere from [\d,]+ to [\d,]+ damaged", f"the six assessments count anywhere from {int(prod.flagged.min()):,} to {int(prod.flagged.max()):,} damaged")
-# --- the shortlist test (rq3h, res 8): the voting rule with the best top-20 overlap vs the best single product
-WORDS_K = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
-best_top = h8.loc[votes, "top20"].idxmax(); best_single = h8.loc[list(singles), "top20"].idxmax()
-sub1(r"\w+-of-six agreement finds \d+ of the true worst 20; the best single assessment finds\s+\d+\.",
-     f"{WORDS_K[int(best_top[0])]}-of-six agreement finds {round(20 * h8.loc[best_top, 'top20'])} of the true worst 20; the best single assessment finds\n  {round(20 * h8.loc[best_single, 'top20'])}.")
 # --- the core region and the cell size (facts): three mentions of the area, one of the building count, two of the cell
 sub1(r"where all overlap \(~[\d.]+ km²\)", f"where all overlap (~{N['core_area_km2']} km²)")
 sub1(r"overlap: [\d.]+ km² and [\d,]+ shared", f"overlap: {N['core_area_km2']} km² and {N['core_n_buildings']} shared")
