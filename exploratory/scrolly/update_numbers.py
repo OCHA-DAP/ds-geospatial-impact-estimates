@@ -42,15 +42,19 @@ singles = {"Microsoft": "Microsoft", "IMPACT v2": "IMPACT", "OSU": "OSU", "UH": 
 rows = [f'["{best} agreement",{h8.loc[best, "rho"]:.3f},true]']
 rows += [f'["{short}",{h8.loc[lab, "rho"]:.3f},false]' for lab, short in sorted(singles.items(), key=lambda kv: -h8.loc[kv[0], "rho"])]
 sub1(r"const RANKDATA = \[.*?\];", "const RANKDATA = [" + ",".join(rows) + "];")
+if N["top20_vote_rule_8"] != "5-of-6":
+    raise SystemExit(f"the shortlist sentence says 'five of the six'; the best rule is now {N['top20_vote_rule_8']}")
+sub1(r"agree gets \d+ right", f"agree gets {N['top20_vote_8']} right")
+sub1(r"against \d+ for the best single assessment", f"against {N['top20_single_8']} for the best single assessment")
 n07 = int((h8.loc[list(singles), "rho"] >= 0.7).sum())
-sub1(r"\(\w+ of the six agree closely with", f"({words(n07)} of the six agree closely with")
+sub1(r"\(\w+ of the six assessments agree closely with", f"({words(n07)} of the six assessments agree closely with")
 # --- precision bounds (rq2r): floor and upper bound, per cent, sorted by floor
 b = rq2r.loc[PRODUCTS].sort_values("P_floor", ascending=False)
 bounds = ",".join(f'["{LONG[p]}",{100 * r.P_floor:.1f},{100 * r.P_upper:.1f}]' for p, r in b.iterrows())
 sub1(r"const BOUNDS = \[.*?\];", f"const BOUNDS = [{bounds}];")
-sub1(r"no assessment does better than about one in \w+", f"no assessment does better than about one in {words(round(1 / rq2r.P_upper.max()))}")
+sub1(r"no assessment does better than about one in \w+", f"no assessment does better than about one in {words(round(1 / rq2r.loc[PRODUCTS, 'P_floor'].max()))}")
 prod = core.loc[PRODUCTS]
-visits = prod.flagged / (rq5b[30].loc[PRODUCTS, "R_cems"] * N_CEMS_CORE)
+visits = 1 / rq2r.loc[PRODUCTS, "P_floor"]  # same basis as the leading "one in N": Copernicus-confirmed precision
 sub1(r"roughly \d+ to \d+ site visits", f"roughly {visits.min():.0f} to {visits.max():.0f} site visits")
 # --- arrivals: damaged buildings flagged AS DELIVERED (the brief's Table 1 convention: the provider's own
 # footprints for Microsoft/UH/UNEP, base ids for IMPACT/LIST, OSU v0). Core-region sentences stay on the shared base.
@@ -63,16 +67,16 @@ sub1(r"<strong>[\d,]+ buildings</strong> in the coastal strip", f"<strong>{tot['
 sub1(r"It flags <strong>[\d,]+ buildings</strong>\.", f"It flags <strong>{tot['IMPACT']:,} buildings</strong>.")
 sub1(r"a different area of interest:\s+<strong>[\d,]+ buildings</strong>", f"a different area of interest:\n    <strong>{tot['OSU']:,} buildings</strong>")
 sub1(r"debris tonnage \(<strong>[\d,]+</strong> buildings\)", f"debris tonnage (<strong>{tot['UNEP']:,}</strong> buildings)")
-sub1(r"WFP, LIST and CERN\s+\(<strong>[\d,]+</strong>\)", f"WFP, LIST and CERN\n    (<strong>{tot['LIST']:,}</strong>)")
+sub1(r"Nuclear Research \(CERN\) \(<strong>[\d,]+</strong>\)", f"Nuclear Research (CERN) (<strong>{tot['LIST']:,}</strong>)")
 sub1(r"<strong>[\d,]+ buildings flagged</strong>\. Two further", f"<strong>{tot['UH']:,} buildings flagged</strong>. Two further")
-sub1(r"answers from <strong>[\d,]+ to [\d,]+</strong>", f"answers from <strong>{tot.min():,} to {tot.max():,}</strong>")
-sub1(r"a factor of \w+\.", f"a factor of {words(round(tot.max() / tot.min()))}.")
-sub1(r"the six count anywhere from [\d,]+ to [\d,]+ damaged", f"the six count anywhere from {int(prod.flagged.min()):,} to {int(prod.flagged.max()):,} damaged")
-# --- the shortlist test (rq3h, res 8): the voting rule with the best top-20 overlap vs the best single product
-WORDS_K = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
-best_top = h8.loc[votes, "top20"].idxmax(); best_single = h8.loc[list(singles), "top20"].idxmax()
-sub1(r"\w+-of-six agreement finds \d+ of the true worst 20; the best single assessment finds\s+\d+\.",
-     f"{WORDS_K[int(best_top[0])]}-of-six agreement finds {round(20 * h8.loc[best_top, 'top20'])} of the true worst 20; the best single assessment finds\n  {round(20 * h8.loc[best_single, 'top20'])}.")
+sub1(r"ranging from\s+<strong>[\d,]+ to [\d,]+</strong>", f"ranging from\n    <strong>{tot.min():,} to {tot.max():,}</strong>")
+sub1(r"a factor of \w+,", f"a factor of {words(round(tot.max() / tot.min()))},")
+# --- timeline strip: the same per-product totals as the prose
+for name, key in [("Microsoft AI4G", "MS"), ("IMPACT", "IMPACT"), ("OSU / NASA", "OSU"), ("UNEP/OCHA", "UNEP"), ("WFP/LIST/CERN", "LIST"), ("UH SAIL", "UH")]:
+    pat = rf'(name:"{re.escape(name)}",[^\n]*?n:)\d+'
+    if len(re.findall(pat, t)) != 1: raise SystemExit(f"timeline row for {name!r} not found exactly once")
+    t = re.sub(pat, lambda m: m.group(1) + str(int(tot[key])), t, count=1)
+sub1(r"the six assessments count anywhere from [\d,]+ to [\d,]+ damaged", f"the six assessments count anywhere from {int(prod.flagged.min()):,} to {int(prod.flagged.max()):,} damaged")
 # --- the core region and the cell size (facts): three mentions of the area, one of the building count, two of the cell
 sub1(r"where all overlap \(~[\d.]+ km²\)", f"where all overlap (~{N['core_area_km2']} km²)")
 sub1(r"overlap: [\d.]+ km² and [\d,]+ shared", f"overlap: {N['core_area_km2']} km² and {N['core_n_buildings']} shared")
