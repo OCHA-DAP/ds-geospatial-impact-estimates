@@ -605,17 +605,17 @@ map.on("load", () => {
 // arrival order by our ingest dates (timeline_events.csv; LIST/UH tentative)
 const ARRIVALS = [
   { name:"Microsoft AI4G", date:"26 Jun", pct:19, bit:1,  col:"#2a78d6", n:8410,  tent:false },
-  { name:"IMPACT",     date:"28 Jun", pct:31, bit:2,  col:"#8a5cd6", n:81446, tent:false },
-  { name:"OSU / NASA", date:"29 Jun", pct:38, bit:4,  col:"#1b9e77", n:58870, tent:false },
+  { name:"IMPACT",     date:"29 Jun", pct:36, bit:2,  col:"#8a5cd6", n:81446, tent:false },
+  { name:"OSU / NASA", date:"29 Jun", pct:41, bit:4,  col:"#1b9e77", n:58870, tent:false },
   { name:"UNEP/OCHA",  date:"1 Jul",  pct:54, bit:32, col:"#c65d9e", n:96046,  tent:false },
   { name:"WFP/LIST/CERN", date:"1 Jul*", pct:58, bit:16, col:"#d95f02", n:163225, tent:true },
-  { name:"UH SAIL",    date:"3 Jul*", pct:69, bit:8,  col:"#e6a817", n:76378,  tent:true },
+  { name:"UH SAIL",    date:"4 Jul", pct:77, bit:8,  col:"#e6a817", n:76378,  tent:false },
 ];
 const P = ARRIVALS.map(a => ({ name:a.name, date:a.date, pct:a.pct, col:a.col, n:a.n.toLocaleString()+" flagged", tent:a.tent }));
 const TL = [
   { name:"Copernicus EMS", date:"24 Jun", pct:4, col:"#fafbfb", n:"activated", tent:false },
   P[0], P[1], P[2],
-  { name:"HOT fAIr", date:"29 Jun", pct:43, col:"#9db1b3", n:"not evaluated", tent:false, noeval:true },
+  { name:"HOT fAIr", date:"29 Jun", pct:46, col:"#9db1b3", n:"not evaluated", tent:false, noeval:true },
   P[3], P[4],
   { name:"DISHA", date:"2 Jul", pct:62, col:"#9db1b3", n:"not evaluated", tent:false, noeval:true },
   P[5],
