@@ -826,7 +826,15 @@ rows = [{"rule": labels.get(k, k),
 - Three providers released later versions of their products after the response: Microsoft, OSU and
   UH. None of them is a focus of this evaluation. The brief scores what was available in the first
   weeks, which is what responders actually had.
-- Microsoft's later version: **TBD.**
+- Microsoft's later version removed `{python} N["ms_v3_dups"]` duplicate building footprints and
+  raised the damage threshold for its Catia La Mar scene, which covers the western part of the
+  Caraballeda area; that switched off `{python} N["ms_v3_switched_off"]` flags. In the core region it
+  flags `{python} N["ms_v3_flags"]` buildings instead of `{python} N["core_flags_MS"]`. Precision
+  rises from `{python} N["core_P_MS"]` to `{python} N["ms_v3_P"]` and recall falls from
+  `{python} N["core_R_MS"]` to `{python} N["ms_v3_R"]`, so F1 rises from `{python} N["core_F1_MS"]`
+  to `{python} N["ms_v3_F1"]`. In the western part the share of buildings flagged falls from
+  `{python} N["strip_share_MS_west"]` to `{python} N["ms_v3_strip_share_west"]`, but precision there
+  is still `{python} N["ms_v3_strip_P_west"]`, against `{python} N["ms_v3_strip_P_east"]` in the east.
 - UH's later version: **TBD.**
 - OSU's second version was evaluated, and the result is the same shape. It turned over more than
   half the flag list and moved precision and recall barely at all (`{python} N["osu_v0_P"]` to
