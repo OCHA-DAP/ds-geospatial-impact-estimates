@@ -20,8 +20,11 @@ method?
   (72,162 records, 8,410 damaged).
 - v3: `ALL_AOIS_building_predictions_deduplicated_v3.gpkg`, received by email, SHA-256
   `2d53b4a14a5723b81ac3f58da2ec8ca49b69876738a220a3cb9d6149ea0a5ef3` (68,250 records, 4,796
-  damaged). Not yet landed in the lake; `analysis.py --v3 <path>` reads it locally and checks
-  the hash.
+  damaged). Landed 2026-10-14 at
+  `bronze/source=microsoft/adm0=VE/merged/version=v3/` (hash-checked by `gp.microsoft_v3()`).
+  The brief's product-updates bullet is computed by the paper pipeline from that copy
+  (`scorecards.ms_v3`, `facts.microsoft_v3_changes`, lens `ms-v3`); `analysis.py --v3 <path>` is
+  the original investigation and reads a local copy.
 
 ## Method
 
@@ -106,5 +109,4 @@ Microsoft's removed flags were mostly ones the other products did not share.
 
 ## What it feeds
 
-Nothing by default. If wanted, the brief's Product updates line "Microsoft's later version: TBD"
-could carry one sentence from findings 2 and 3, with numbers wired through `brief_numbers.py`.
+The brief's Product updates bullet (findings 2 and 3), through the pipeline as above.
