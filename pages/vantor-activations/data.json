@@ -1,11 +1,11 @@
 {
  "catalog_url": "https://vantor-opendata.s3.amazonaws.com/events/catalog.json",
- "checked_at": "2026-10-13T04:57:03Z",
+ "checked_at": "2026-10-14T04:50:08Z",
  "totals": {
   "activations": 11,
-  "images": 207,
+  "images": 212,
   "pre": 60,
-  "post": 147
+  "post": 152
  },
  "activations": [
   {
@@ -14,12 +14,12 @@
    "event_date": "2026-10-11",
    "event_date_raw": "2026-10-11T00:00:00Z",
    "event_date_quality": "ok",
-   "n_items": 5,
+   "n_items": 10,
    "n_pre": 0,
-   "n_post": 5,
+   "n_post": 10,
    "n_phase_unknown": 0,
    "first_published": "2026-10-10",
-   "last_published": "2026-10-12",
+   "last_published": "2026-10-13",
    "first_post_acquired": "2026-10-10",
    "first_post_published": "2026-10-10",
    "acq_lag_days": -1,
@@ -28,14 +28,16 @@
    "first_post_seen_source": "observed",
    "seen_lag_days": 0,
    "satellites": [
+    "GE01",
     "LG01",
+    "LG02",
     "LG03",
     "WV02"
    ],
    "bbox": [
-    -105.29826735393692,
-    17.886608579848126,
-    -102.11016012820312,
+    -105.29838029445011,
+    17.866281734604886,
+    -102.0428926577633,
     20.763542056230648
    ],
    "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Mexico-Hurricane-Simon-Oct-2026/collection.json",
