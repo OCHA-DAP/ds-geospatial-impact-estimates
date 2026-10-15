@@ -186,14 +186,15 @@ def flag_totals():
     return out
 
 
-def west_strip():
-    """Caraballeda split at Microsoft's scene boundary: UH and Microsoft, west vs east (rq2o)."""
-    b = pl.buildings()
+def west_strip(b=None, products=("UH", "MS"), lens="points"):
+    """Caraballeda split at Microsoft's scene boundary: UH and Microsoft, west vs east (rq2o).
+    The arguments exist for ms_v3(); called bare it is the paper's split."""
+    b = pl.buildings() if b is None else b
     ext = gp.to_metric(gp.cems_extent().query("is_latest"))
     cara = ext[ext.aoi_name == "Caraballeda"].geometry.make_valid().union_all()
     cems = pl.reference("floor")
     out = []
-    for p in ("UH", "MS"):
+    for p in products:
         reg = cara.intersection(pl.product_aois()[p])
         inb = b[pl.in_region(b, reg)]
         lon = pl.location(inb).to_crs(4326).x
@@ -203,8 +204,22 @@ def west_strip():
             sub, c = inb[mask.to_numpy()], ca[cmask.to_numpy()]
             fl = sub[sub[pl.PRODUCTS[p]] == 1]
             P = r3(gp.within_r(fl, c, 10).mean()) if len(fl) and len(c) else np.nan
-            out += rows(f"strip-{side}", "points", 10, p, n_bld=len(sub), n_flags=len(fl), flag_share=r3(len(fl) / len(sub)), n_cems=len(c), P=P)
+            out += rows(f"strip-{side}", lens, 10, p, n_bld=len(sub), n_flags=len(fl), flag_share=r3(len(fl) / len(sub)), n_cems=len(c), P=P)
     return out
+
+
+# ---------------------------------------------------------------- Microsoft's later version (auxiliary)
+def ms_v3():
+    """Microsoft's merged v3 (exploratory/0006) in place of v1, on a copy of the buildings: core at
+    10 m and the strip split, under lens "ms-v3". The paper's MS rows are never touched."""
+    ids = set(pd.read_csv(os.path.join(HERE, "..", "lib", "ms_v3_1to1_ids.csv")).id)
+    b = pl.buildings().copy()
+    b["ms_dmg"] = b["id"].isin(ids).astype("int64")
+    core, ref = pl.core_region(), pl.reference("floor")
+    inb = b[pl.in_region(b, core)]
+    s = pl.score(inb[inb.ms_dmg == 1], ref[ref.geometry.within(core)], 10)
+    return (rows("core", "ms-v3", 10, "MS", P=r3(s["P"]), R=r3(s["R"]), F1=r3(s["F1"]), n_flags=s["n_flags"])
+            + west_strip(b, products=("MS",), lens="ms-v3"))
 
 
 # ---------------------------------------------------------------- field reference (ChatMap)
@@ -254,7 +269,7 @@ def field_recall():
 
 
 PARTS = {f.__name__: f for f in (core_points, core_crowd, core_possibly, core_bounds, core_field_union, core_grade_recall,
-                                 as_delivered, flag_totals, west_strip, field_recall)}
+                                 as_delivered, flag_totals, west_strip, field_recall, ms_v3)}
 
 
 def main():

@@ -39,6 +39,12 @@ PRODUCTS = {
     "unep": lambda: gp.to_metric(gp._read_pq("silver", "source=unep_debris", "adm0=VE", "debris.parquet")),
     "uh": lambda: (lambda g: g[g.cls.isin([2, 3])])(gp.to_metric(gp._read_pq("silver", "source=uh", "adm0=VE", "footprints.parquet"))),
 }
+# Auxiliary deliveries: mapped with the same rule, but kept out of the default run and the manifest, so
+# rebuilding them never touches the paper's own id lists. Run one with `build_footprint_maps.py ms_v3`.
+AUX = {
+    # Microsoft's later merged file (exploratory/0006); routed through 4326 as the v1 silver is
+    "ms_v3": lambda: (lambda g: gp.to_metric(g[g.damaged == 1].to_crs(4326)))(gp.microsoft_v3()),
+}
 
 
 def base_in(src: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -59,7 +65,7 @@ def base_in(src: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 
 def map_product(key: str) -> dict:
-    src = PRODUCTS[key]().reset_index(drop=True).reset_index(names="sid")
+    src = {**PRODUCTS, **AUX}[key]().reset_index(drop=True).reset_index(names="sid")
     src["s_area"] = src.geometry.area
     base = base_in(src)
     inter = gpd.overlay(src[["sid", "s_area", "geometry"]], base[["id", "b_area", "geometry"]], how="intersection", keep_geom_type=False)
@@ -89,6 +95,12 @@ def map_product(key: str) -> dict:
 
 
 def main():
+    if len(sys.argv) > 1:                        # one auxiliary delivery: its id/orphan files only
+        for k in sys.argv[1:]:
+            if k not in AUX:
+                raise SystemExit(f"{k!r} is not an auxiliary delivery ({', '.join(AUX)})")
+            map_product(k)
+        return
     rows = [map_product(k) for k in PRODUCTS]
     pd.DataFrame(rows).to_csv(os.path.join(HERE, "footprint_map_manifest.csv"), index=False)
     print("wrote lib/<key>_1to1_ids.csv, lib/<key>_1to1_orphans.csv, lib/footprint_map_manifest.csv")
