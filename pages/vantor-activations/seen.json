@@ -427,6 +427,14 @@
   "seen": "2026-10-16",
   "source": "observed"
  },
+ "Mexico-Hurricane-Simon-Oct-2026/B040001100E0ED10": {
+  "seen": "2026-10-17",
+  "source": "observed"
+ },
+ "Mexico-Hurricane-Simon-Oct-2026/B040001100E0F910": {
+  "seen": "2026-10-17",
+  "source": "observed"
+ },
  "Mexico-Hurricane-Simon-Oct-2026/B0500011009C4110": {
   "seen": "2026-10-14",
   "source": "observed"
@@ -489,6 +497,10 @@
  },
  "Mexico-Hurricane-Simon-Oct-2026/B150001102120110": {
   "seen": "2026-10-16",
+  "source": "observed"
+ },
+ "Mexico-Hurricane-Simon-Oct-2026/B150001102133110": {
+  "seen": "2026-10-17",
   "source": "observed"
  },
  "Nepal-Flooding-Aug-2026/10300100C86CED00": {
