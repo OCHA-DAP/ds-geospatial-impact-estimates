@@ -150,8 +150,9 @@
   .article .lede { font:19px/1.6 Merriweather, Georgia, serif; color:var(--ink); max-width:720px; margin:0 0 34px; }
   .article .cols { columns:2; column-gap:48px; font:16px/1.7 Merriweather, Georgia, serif; color:#d6dee5; }
   .article .cols p { margin:0 0 1.1em; break-inside:avoid; }
-  .article .cols ol { margin:0 0 1.1em; padding-left:1.4em; break-inside:avoid; }
+  .article .cols ol, .article .cols ul { margin:0 0 1.1em; padding-left:1.4em; break-inside:avoid; }
   .article .cols li { margin:4px 0; }
+  .article .cols .rec { break-inside:avoid; } .article .cols .rec p { margin-bottom:.3em; }
   .article .cols a { color:var(--ink); text-decoration:underline; text-underline-offset:3px; }
   .article .cols h3 { font:700 16px/1.3 Roboto, sans-serif; color:var(--ink); margin:18px 0 8px; break-after:avoid; }
   .article .pull { border-left:3px solid var(--amber); padding:6px 0 6px 18px; margin:14px 0 22px;
@@ -529,12 +530,16 @@ earthquake and asks what responders can, and cannot, do with them.</p>
       analyses as they become available.</li>
     </ol>
     <h3>Recommendations</h3>
-    <p><strong class="aud">For responders and response coordinators:</strong> acting on a single flagged
-    building from any one product could be a mistake. Trust the neighbourhood ranking within a damage
-    zone that has already been identified, where it is most useful in the first days. Rather than
-    choosing one product, count how many of them agree, because this sharply raises the precision of
-    the damage classifications and gives more confidence that a flagged building is really damaged.
-    Finally, keep one shared, live picture of what has been analysed where.</p>
+    <div class="rec"><p><strong class="aud">For responders and response coordinators:</strong></p>
+    <ul>
+      <li>Acting on a single flagged building from any one product could be inaccurate.</li>
+      <li>Trust the neighbourhood ranking within an already-identified damage zone, where it is most
+      useful in the first days.</li>
+      <li>Rather than choosing a product, count agreement between them. This sharply raises the
+      precision of the damage classifications and gives more confidence that a flagged building is
+      really damaged.</li>
+      <li>Keep one shared, live picture of what has been analysed where.</li>
+    </ul></div>
     <p><strong class="aud">For providers:</strong> publish the analysed extent and per-building acquisition
     metadata, and keep a channel open for feedback during the activation while reprocessing can
     still help.</p>
