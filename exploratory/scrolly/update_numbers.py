@@ -55,7 +55,7 @@ sub1(r"const BOUNDS = \[.*?\];", f"const BOUNDS = [{bounds}];")
 sub1(r"no assessment does better than about one in \w+", f"no assessment does better than about one in {words(round(1 / rq2r.loc[PRODUCTS, 'P_floor'].max()))}")
 prod = core.loc[PRODUCTS]
 visits = 1 / rq2r.loc[PRODUCTS, "P_floor"]  # same basis as the leading "one in N": Copernicus-confirmed precision
-sub1(r"roughly \d+ to \d+ site visits", f"roughly {visits.min():.0f} to {visits.max():.0f} site visits")
+sub1(r"have to visit \d+ to \d+ flagged buildings", f"have to visit {visits.min():.0f} to {visits.max():.0f} flagged buildings")
 # --- arrivals: damaged buildings flagged AS DELIVERED (the brief's Table 1 convention: the provider's own
 # footprints for Microsoft/UH/UNEP, base ids for IMPACT/LIST, OSU v0). Core-region sentences stay on the shared base.
 import pandas as pd
@@ -67,7 +67,7 @@ sub1(r"<strong>[\d,]+ buildings</strong> in the coastal strip", f"<strong>{tot['
 sub1(r"It flags <strong>[\d,]+ buildings</strong>\.", f"It flags <strong>{tot['IMPACT']:,} buildings</strong>.")
 sub1(r"a different area of interest:\s+<strong>[\d,]+ buildings</strong>", f"a different area of interest:\n    <strong>{tot['OSU']:,} buildings</strong>")
 sub1(r"debris tonnage \(<strong>[\d,]+</strong> buildings\)", f"debris tonnage (<strong>{tot['UNEP']:,}</strong> buildings)")
-sub1(r"Nuclear Research \(CERN\) \(<strong>[\d,]+</strong>\)", f"Nuclear Research (CERN) (<strong>{tot['LIST']:,}</strong>)")
+sub1(r"Nuclear Research \(CERN\) \(<strong>[\d,]+</strong> buildings\)", f"Nuclear Research (CERN) (<strong>{tot['LIST']:,}</strong> buildings)")
 sub1(r"<strong>[\d,]+ buildings flagged</strong>\. Two further", f"<strong>{tot['UH']:,} buildings flagged</strong>. Two further")
 sub1(r"ranging from\s+<strong>[\d,]+ to [\d,]+</strong>", f"ranging from\n    <strong>{tot.min():,} to {tot.max():,}</strong>")
 sub1(r"a factor of \w+,", f"a factor of {words(round(tot.max() / tot.min()))},")
