@@ -85,6 +85,32 @@ def microsoft_cloud() -> list:
             + rows("core", "MS", n_footprints=len(inc), share_mostly_obscured=float((inc.unknown_pct > 0.5).mean())))
 
 
+def microsoft_v3_changes() -> list:
+    """What Microsoft's later merged file (v3, exploratory/0006) changed against v1, record by record
+    on source_file + orig_id. Fails unless the change is exactly duplicates removed plus flags
+    switched off; the scores are scorecards.ms_v3."""
+    import ocha_stratus as stratus
+    import tempfile
+    blob = gp.S.blob_path("bronze", "source=microsoft", "adm0=VE", "merged", "ALL_AOIS_building_predictions_deduplicated.gpkg", event=None)
+    with tempfile.NamedTemporaryFile(suffix=".gpkg") as f:
+        f.write(stratus.load_blob_data(blob, stage="dev", container_name=gp.S.container)); f.flush()
+        v1 = gpd.read_file(f.name)
+    v3 = gp.microsoft_v3()
+    key = ["source_file", "orig_id"]
+    m = v1[key + ["damaged"]].merge(v3[key + ["damaged"]], on=key, how="left", suffixes=("_1", "_3"), indicator=True)
+    if len(v3) != int((m._merge == "both").sum()):
+        raise RuntimeError("Microsoft v3 holds records absent from v1")
+    removed = m[m._merge == "left_only"]
+    kept = m[m._merge == "both"]
+    switched_off = int(((kept.damaged_1 == 1) & (kept.damaged_3 == 0)).sum())
+    if ((kept.damaged_1 == 0) & (kept.damaged_3 == 1)).any():
+        raise RuntimeError("Microsoft v3 switches flags on; expected only switches off")
+    if int(v1.damaged.sum()) - int(removed.damaged_1.sum()) - switched_off != int(v3.damaged.sum()):
+        raise RuntimeError("Microsoft v1 -> v3 flag counts do not reconcile")
+    return rows("all", "MS v3", removed_duplicates=len(removed), removed_damaged=int(removed.damaged_1.sum()),
+                flags_switched_off=switched_off, damaged_footprints=int(v3.damaged.sum()))
+
+
 def disha_extent() -> list:
     """DISHA's analysed extent (licence-gated points are never used): how much of the core it
     covers and how many reference points it holds — why it is not a comparison member."""
@@ -156,7 +182,7 @@ def field() -> list:
 
 def main():
     out = []
-    for fn in (regions, reference_points, h3_areas, microsoft_cloud, disha_extent, osu_versions, footprint_maps, product_scopes, native_frames, field):
+    for fn in (regions, reference_points, h3_areas, microsoft_cloud, microsoft_v3_changes, disha_extent, osu_versions, footprint_maps, product_scopes, native_frames, field):
         print(f"== {fn.__name__}", flush=True)
         out += fn()
     res = pd.DataFrame(out)

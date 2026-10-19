@@ -438,6 +438,12 @@ def _rq2_rest():
         for side in ("west", "east"):
             r = one(o, product=p, side=side)
             N[f"strip_share_{p}_{side}"] = pct(r.flag_share, 1); N[f"strip_P_{p}_{side}"] = f3(r.P_cems); N[f"strip_P2_{p}_{side}"] = f2(r.P_cems)
+    # Microsoft's later version (merged v3, exploratory/0006), product updates appendix: lens ms-v3
+    v = W("core", "ms-v3", 10).loc["MS"]
+    N["ms_v3_P"] = f3(v.P); N["ms_v3_R"] = f2(v.R); N["ms_v3_F1"] = f3(v.F1); N["ms_v3_flags"] = com(v.n_flags)
+    for side in ("west", "east"):
+        sv = W(f"strip-{side}", "ms-v3", 10).loc["MS"]
+        N[f"ms_v3_strip_share_{side}"] = pct(sv.flag_share, 1); N[f"ms_v3_strip_P_{side}"] = f3(sv.P)
     h = W("osu-versions", "points", 10)
     N["osu_v0_P"] = f3(h.loc["v0 (common extent)", "P"]); N["osu_v1_P"] = f3(h.loc["v1 (common extent)", "P"])
     N["osu_v0_R"] = f2(h.loc["v0 (common extent)", "R"]); N["osu_v1_R"] = f2(h.loc["v1 (common extent)", "R"])
@@ -513,6 +519,7 @@ def _facts():
     N["h3_res8_km2"] = f"{f('all', 'h3-res8', 'avg_area_km2'):.2f}"; N["h3_res8_km2_1"] = f"{f('all', 'h3-res8', 'avg_area_km2'):.1f}"
     N["h3_res9_km2"] = f"{f('all', 'h3-res9', 'avg_area_km2'):.1f}"
     N["ms_obscured_pct"] = pct(f("all", "MS", "share_mostly_obscured"), 1); N["ms_footprints"] = com(f("all", "MS", "n_footprints"))
+    N["ms_v3_dups"] = com(f("all", "MS v3", "removed_duplicates")); N["ms_v3_switched_off"] = com(f("all", "MS v3", "flags_switched_off"))
     N["disha_extent_km2"] = f"{f('core', 'DISHA', 'extent_km2'):.1f}"; N["disha_covers_km2"] = f"{f('core', 'DISHA', 'covers_km2'):.1f}"
     N["disha_share_pct"] = pct(f("core", "DISHA", "share_of_core")); N["disha_cems"] = com(f("core", "DISHA", "cems_in_extent"))
     N["disha_drop_pct"] = pct(1 - f("core", "DISHA", "cems_in_extent") / f("core", "DISHA", "cems_in_core"))

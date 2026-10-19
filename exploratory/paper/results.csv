@@ -510,6 +510,10 @@ all,facts,,MS,n_footprints,72162.0,pipeline/facts.py
 all,facts,,MS,orphans,0.0,pipeline/facts.py
 all,facts,,MS,scope_buildings,68115.0,pipeline/facts.py
 all,facts,,MS,share_mostly_obscured,0.0360577589312934,pipeline/facts.py
+all,facts,,MS v3,damaged_footprints,4796.0,pipeline/facts.py
+all,facts,,MS v3,flags_switched_off,3553.0,pipeline/facts.py
+all,facts,,MS v3,removed_damaged,61.0,pipeline/facts.py
+all,facts,,MS v3,removed_duplicates,3912.0,pipeline/facts.py
 all,facts,,OSU,added_v0_to_v1,42723.0,pipeline/facts.py
 all,facts,,OSU,aoi_km2,41463.16263237391,pipeline/facts.py
 all,facts,,OSU,coverage_growth,0.1793952777305929,pipeline/facts.py
@@ -2638,6 +2642,10 @@ core,labels-threshold,10.0,weighted fusion,precision_nested,0.3489,RQ8-learned-f
 core,labels-threshold,10.0,weighted fusion,recall_delta,-0.0111,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
 core,labels-threshold,10.0,weighted fusion,recall_hindsight,0.3517,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
 core,labels-threshold,10.0,weighted fusion,recall_nested,0.3406,RQ8-learned-fusion/rq8e_threshold_bias_r10.csv
+core,ms-v3,10.0,MS,F1,0.27,pipeline/scorecards.py
+core,ms-v3,10.0,MS,P,0.179,pipeline/scorecards.py
+core,ms-v3,10.0,MS,R,0.552,pipeline/scorecards.py
+core,ms-v3,10.0,MS,n_flags,4560.0,pipeline/scorecards.py
 core,points,10.0,1-of-6,F1,0.1,pipeline/scorecards.py
 core,points,10.0,1-of-6,P,0.053,pipeline/scorecards.py
 core,points,10.0,1-of-6,R,0.952,pipeline/scorecards.py
@@ -3446,6 +3454,11 @@ strip,crowd-round2,,MS,share_var_total_r1,0.0405711991524079,RQ7-mapswipe-valida
 strip,crowd-round2,,MS,share_var_total_r2,0.0310735013736939,RQ7-mapswipe-validation/rq7_round2_replication.csv
 strip,crowd-round2,,MS,votes_r1,20354.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
 strip,crowd-round2,,MS,votes_r2,54304.0,RQ7-mapswipe-validation/rq7_round2_replication.csv
+strip-east,ms-v3,10.0,MS,P,0.225,pipeline/scorecards.py
+strip-east,ms-v3,10.0,MS,flag_share,0.07,pipeline/scorecards.py
+strip-east,ms-v3,10.0,MS,n_bld,43355.0,pipeline/scorecards.py
+strip-east,ms-v3,10.0,MS,n_cems,1250.0,pipeline/scorecards.py
+strip-east,ms-v3,10.0,MS,n_flags,3044.0,pipeline/scorecards.py
 strip-east,points,10.0,MS,P,0.205,pipeline/scorecards.py
 strip-east,points,10.0,MS,flag_share,0.082,pipeline/scorecards.py
 strip-east,points,10.0,MS,n_bld,43355.0,pipeline/scorecards.py
@@ -3456,6 +3469,11 @@ strip-east,points,10.0,UH,flag_share,0.115,pipeline/scorecards.py
 strip-east,points,10.0,UH,n_bld,43075.0,pipeline/scorecards.py
 strip-east,points,10.0,UH,n_cems,1250.0,pipeline/scorecards.py
 strip-east,points,10.0,UH,n_flags,4968.0,pipeline/scorecards.py
+strip-west,ms-v3,10.0,MS,P,0.084,pipeline/scorecards.py
+strip-west,ms-v3,10.0,MS,flag_share,0.1,pipeline/scorecards.py
+strip-west,ms-v3,10.0,MS,n_bld,15350.0,pipeline/scorecards.py
+strip-west,ms-v3,10.0,MS,n_cems,217.0,pipeline/scorecards.py
+strip-west,ms-v3,10.0,MS,n_flags,1528.0,pipeline/scorecards.py
 strip-west,points,10.0,MS,P,0.052,pipeline/scorecards.py
 strip-west,points,10.0,MS,flag_share,0.287,pipeline/scorecards.py
 strip-west,points,10.0,MS,n_bld,15350.0,pipeline/scorecards.py

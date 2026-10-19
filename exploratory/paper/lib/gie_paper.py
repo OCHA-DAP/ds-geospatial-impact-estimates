@@ -189,6 +189,29 @@ def microsoft():
     return g[(g.damaged == 1) & (~g.superseded.astype(bool))].copy()
 
 
+MS_V3_SHA256 = "2d53b4a14a5723b81ac3f58da2ec8ca49b69876738a220a3cb9d6149ea0a5ef3"
+
+
+def microsoft_v3():
+    """Microsoft's later merged file (v3, received 2026-09-04; exploratory/0006), every record,
+    as delivered (EPSG:32619). v1 minus 3,912 duplicate footprints, with the Catia La Mar Vantor
+    scene re-thresholded to damage_pct_0m >= 0.8. Auxiliary: scored only under the ms-v3 lens,
+    never as MS. Fails if the bronze file is not the one received."""
+    import hashlib
+    import ocha_stratus as stratus
+    path = S.blob_path("bronze", "source=microsoft", "adm0=VE", "merged", "version=v3",
+                       "ALL_AOIS_building_predictions_deduplicated_v3.gpkg", event=None)
+    b = stratus.load_blob_data(path, stage="dev", container_name=S.container)
+    if hashlib.sha256(b).hexdigest() != MS_V3_SHA256:
+        raise RuntimeError(f"{path} is not the file received from Microsoft (sha256 mismatch)")
+    with tempfile.NamedTemporaryFile(suffix=".gpkg", delete=False) as f:
+        f.write(b); tmp = f.name
+    try:
+        return gpd.read_file(tmp)
+    finally:
+        os.unlink(tmp)
+
+
 def microsoft_aoi():
     return _read_pq("silver", "source=microsoft", "adm0=VE", "analysed_extent.parquet")
 

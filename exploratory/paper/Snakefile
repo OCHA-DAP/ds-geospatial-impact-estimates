@@ -101,6 +101,8 @@ LIB = [f"{P}/paperlib.py", "lib/gie_paper.py"]      # definitions + data loaders
 CONTEXT = f"{P}/context.py"                          # the geography null's features (ADR-0033): an input ONLY to the
                                                      # rules that fit a null, so a feature change never reruns scorecards/facts
 IDS = ["lib/ms_1to1_ids.csv", "lib/unep_1to1_ids.csv", "lib/uh_1to1_ids.csv", "lib/footprint_map_manifest.csv"]
+MS_V3_IDS = ["lib/ms_v3_1to1_ids.csv"]               # Microsoft's later file (exploratory/0006); scorecards only,
+                                                     # so it never reruns ranking
 
 
 def art(script, *args, env=""):
@@ -121,7 +123,7 @@ rule all:
 rule scorecards:
     # precision/recall of every predictor against the reference: core (3 radii), as delivered,
     # per AOI, the precision ladder (floor / +possibly / +crowd / both), field recall, flag totals
-    input: LIB, IDS, f"{P}/scorecards.py"
+    input: LIB, IDS, MS_V3_IDS, f"{P}/scorecards.py"
     output: f"{P}/results_scorecards.csv"
     shell: f"python {P}/scorecards.py"
 
