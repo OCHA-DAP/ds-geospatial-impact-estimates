@@ -1,11 +1,11 @@
 {
  "catalog_url": "https://vantor-opendata.s3.amazonaws.com/events/catalog.json",
- "checked_at": "2026-10-23T04:50:17Z",
+ "checked_at": "2026-10-24T04:48:27Z",
  "totals": {
   "activations": 11,
-  "images": 231,
+  "images": 232,
   "pre": 60,
-  "post": 171
+  "post": 172
  },
  "activations": [
   {
@@ -14,12 +14,12 @@
    "event_date": "2026-10-11",
    "event_date_raw": "2026-10-11T00:00:00Z",
    "event_date_quality": "ok",
-   "n_items": 29,
+   "n_items": 30,
    "n_pre": 0,
-   "n_post": 29,
+   "n_post": 30,
    "n_phase_unknown": 0,
    "first_published": "2026-10-10",
-   "last_published": "2026-10-22",
+   "last_published": "2026-10-23",
    "first_post_acquired": "2026-10-10",
    "first_post_published": "2026-10-10",
    "acq_lag_days": -1,
