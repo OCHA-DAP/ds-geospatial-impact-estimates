@@ -1,13 +1,45 @@
 {
  "catalog_url": "https://vantor-opendata.s3.amazonaws.com/events/catalog.json",
- "checked_at": "2026-10-25T04:49:24Z",
+ "checked_at": "2026-10-29T04:44:14Z",
  "totals": {
-  "activations": 11,
-  "images": 233,
+  "activations": 12,
+  "images": 235,
   "pre": 60,
-  "post": 173
+  "post": 175
  },
  "activations": [
+  {
+   "id": "Tibet-Earthquake-Oct-2026",
+   "title": "Tibet-Earthquake-Oct-2026",
+   "event_date": "2026-10-22",
+   "event_date_raw": "2026-10-22T14:33:39Z",
+   "event_date_quality": "ok",
+   "n_items": 2,
+   "n_pre": 0,
+   "n_post": 2,
+   "n_phase_unknown": 0,
+   "first_published": "2026-10-28",
+   "last_published": "2026-10-28",
+   "first_post_acquired": "2026-10-28",
+   "first_post_published": "2026-10-28",
+   "acq_lag_days": 6,
+   "pub_lag_days": 6,
+   "first_post_seen": "2026-10-29",
+   "first_post_seen_source": "observed",
+   "seen_lag_days": 7,
+   "satellites": [
+    "LG03",
+    "WV03"
+   ],
+   "bbox": [
+    91.91062887676183,
+    31.287818249612325,
+    92.2015196090354,
+    31.618077663034473
+   ],
+   "stac_url": "https://vantor-opendata.s3.amazonaws.com/events/Tibet-Earthquake-Oct-2026/collection.json",
+   "browse_url": "https://radiantearth.github.io/stac-browser/#/external/vantor-opendata.s3.amazonaws.com/events/Tibet-Earthquake-Oct-2026/collection.json"
+  },
   {
    "id": "Mexico-Hurricane-Simon-Oct-2026",
    "title": "Mexico-Hurricane-Simon-Oct-2026",
