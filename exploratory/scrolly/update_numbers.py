@@ -84,7 +84,7 @@ sub1(r"damage per cell \(~[\d.]+ km²\)", f"damage per cell (~{N['h3_res8_km2_1'
 sub1(r"neighbourhood cells of about [\d.]+ km² each", f"neighbourhood cells of about {N['h3_res8_km2_1']} km² each")
 # --- core labels and 4-of-6 count
 meta = re.search(r'"expert": (\d+)', (pathlib.Path(__file__).parent / "data.js").read_text()).group(1)
-sub1(r"The teal dots are the [\d,]+ buildings", f"The teal dots are the {int(meta):,} buildings")
+sub1(r"teal dots on the map: [\d,]+ buildings", f"teal dots on the map: {int(meta):,} buildings")
 sub1(r"more assessments agree \([\d,]+ of them\)", f"more assessments agree ({int(core.loc['4-of-6', 'flagged']):,} of them)")
 (pathlib.Path(__file__).parent / ".numbers_owned.json").write_text(__import__("json").dumps(sorted(OWNED)))
 if CHECK:
