@@ -58,6 +58,11 @@ main { padding:36px 44px 8px; }
 /* Not in the reference site — this repo gates two products, and every card states its access
  * up front so nobody meets an unexplained prompt. Built from the same tokens. */
 .chip-gate { background:#fff; color:var(--b7); border:1px solid var(--b5); }
+/* The experimental hub card: last in the grid and visibly quieter than the products — grey
+ * accent and title instead of the brand green — so it reads as an aside, not an offering. */
+.k-exp { border-top-color:var(--n7); background:var(--n05); }
+.k-exp h2 { color:var(--n8); }
+.k-exp .foot em { color:var(--n7); }
 
 /* ── notes / footer ───────────────────────────────────────────────────── */
 .note { margin:30px 44px 40px; padding:13px 17px; border-radius:4px;

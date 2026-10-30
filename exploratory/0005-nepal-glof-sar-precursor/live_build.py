@@ -14,7 +14,9 @@ tier is a rank statement against the region's own history.
 
 Output: dashboard HTML (from live_dashboard_template.html) with the facet
 polygons, per-facet histories, and a GEE hillshade basemap embedded — written
-to data/ and pages/langtang-facet-watch/.
+to data/ only. The site copy is ciphertext: scripts/publish_experimental.sh
+encrypts data/langtang-facet-watch.page.html into pages/experimental/ (the
+Nepal pages are gated; pages/ never holds their plaintext — see ADR-0041).
 
 Run: uv run --group etl --with rasterio,matplotlib,geopandas python \
        exploratory/0005-nepal-glof-sar-precursor/live_build.py
@@ -32,7 +34,7 @@ import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data")
-PAGES = os.path.join(HERE, "..", "..", "pages", "langtang-facet-watch")
+PAGE = os.path.join(DATA, "langtang-facet-watch.page.html")  # encrypt input, gitignored
 
 REGION = [84.9, 27.9, 86.3, 28.7]
 RUN_LEN, DOY_WIN, MIN_POOL, MIN_FACE_DATE = 3, 12, 10, 30
@@ -177,20 +179,17 @@ def main() -> None:
         f.write(html)
     print(f"{len(html) / 1e6:.1f} MB -> {dst}")
 
-    os.makedirs(PAGES, exist_ok=True)
+    # The finished page document, with the <title> lifted into <head>. No back-home link:
+    # the page is served gated, and gate.js injects the link into the decrypted document.
     page = ('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
             "<title>Langtang Facet Watch</title>\n</head>\n<body>\n"
-            "<style>.home-link{display:inline-block;margin:10px 12px;padding:6px 12px;"
-            "font:500 13px/1 'IBM Plex Mono',monospace;color:#2a78d6;background:#eaf2fb;"
-            "border:1px solid #c9ddf3;border-radius:4px;text-decoration:none}"
-            ".home-link:hover{background:#dcebf9}</style>\n"
-            '<a class="home-link" href="../">← All analysis &amp; tools</a>\n'
             + html.replace("<title>Langtang Facet Watch</title>", "", 1)
             + "\n</body>\n</html>\n")
-    with open(os.path.join(PAGES, "index.html"), "w") as f:
+    with open(PAGE, "w") as f:
         f.write(page)
-    print(f"pages copy -> {os.path.join(PAGES, 'index.html')}")
+    print(f"page document -> {PAGE}")
+    print("publish: ./scripts/publish_experimental.sh  (encrypts data/*.page.html into pages/experimental/)")
 
 
 if __name__ == "__main__":

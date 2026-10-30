@@ -19,6 +19,10 @@ pages/
   cems-flood-archive/             -> /cems-flood-archive/  (CEMS harvest-ledger status page)
   cems-flood-labels/              -> /cems-flood-labels/   (CEMS-only label viewer; superseded by flood-labels/, kept until retired)
   flood-labels/                   -> /flood-labels/        (CEMS + UNOSAT label viewer; reads global/flood_labels/platinum via the token issuer)
+  experimental/                   -> /experimental/        (gated hub for exploratory work, own passphrase — ADR-0041)
+    langtang-sar-precursors/      -> /experimental/langtang-sar-precursors/   (gated)
+    langtang-facet-watch/         -> /experimental/langtang-facet-watch/      (gated)
+    himalaya-facet-watch/         -> /experimental/himalaya-facet-watch/      (gated)
 ```
 
 One exception to "nothing is generated": `vantor-activations/data.json` (and its first-seen
@@ -33,6 +37,13 @@ browser, so a stalled cron shows up as a drift banner rather than silently stale
 Create a directory with an `index.html`, then add a card to `index.html` — copy an existing
 `<a class="k">` block and change the href, title, blurb and foot. Chips are optional:
 `chip-ext` for something hosted elsewhere, `chip-gate` for a passphrase-gated page.
+
+**Experimental work does not get a card on the landing grid.** It goes under `experimental/`
+and gets a card in the hub's source instead
+(`exploratory/0005-nepal-glof-sar-precursor/reports/experimental_hub.html`), encrypted under
+the experimental passphrase — see "The experimental pages" below. The landing grid presents
+the damage-evaluation line; the one "Experimental analyses" card at its end is the only door
+to the rest (ADR-0041).
 
 Every nested page links back to the landing page (team convention — KB
 `methods/static-data-apps.md` § "Nested pages link back home"). A plain page carries the link
@@ -143,6 +154,52 @@ leaving a reader with an unopenable page, and it never invents a passphrase.
 Re-run step 2 for both artefacts with the new passphrase and commit. Readers with the old one
 get "Wrong passphrase". Cached passphrases live in `sessionStorage` and are dropped
 automatically when they stop working, so no one gets stuck on a stale value.
+
+## The experimental pages
+
+`experimental/` is a second gated tree with its **own passphrase**, separate from the
+damage-evaluation one (ADR-0041). The hub (`experimental/index.html`) and each page under it
+are gate pages with a `content.enc`, exactly like the artefacts above. `gate.js` caches the
+passphrase for the tab, so a reader enters it once at the hub and the pages it lists open
+without prompting.
+
+The pages are build outputs of `exploratory/0005-nepal-glof-sar-precursor/`. The build scripts
+(`reports/build_reports.py`, `live_build.py`, `himalaya_build.py`) write the finished page
+document to that directory's gitignored `data/<name>.page.html` — **never into `pages/`**, so
+the plaintext is not in the repo. Publishing is then:
+
+```bash
+./scripts/publish_experimental.sh              # hub + all three pages
+./scripts/publish_experimental.sh langtang     # one of: hub | precursors | langtang | himalaya
+```
+
+It encrypts into `experimental/**/content.enc` with `--skip-if-unchanged`, and stops there:
+commit and open a PR against `v1` yourself. **Re-running a build script does not update the
+site** until this has run and merged — the same rule as the paper artefacts.
+
+Until a dashboard is rebuilt, the encrypt input in `data/` is a snapshot of the last page
+published in plaintext (the pre-ADR-0041 `pages/<name>/index.html`, with its inline back-home
+link stripped — the gate injects one, and two would overlap). If `data/` is gone, either
+rebuild, or recover the last plaintext from history and strip that link again:
+
+```bash
+git log --diff-filter=D --format=%h -- pages/langtang-facet-watch/index.html   # deletion commit
+git show <that>~1:pages/langtang-facet-watch/index.html > exploratory/0005-nepal-glof-sar-precursor/data/langtang-facet-watch.page.html
+```
+
+The passphrase is `GIE_PAGE_PASS_EXPERIMENTAL`, else `~/.gie-page-passphrase-experimental`.
+There is deliberately no fallback to the shared passphrase: external reviewers hold that one,
+and the experimental pages are not for them. The hub's own source,
+`reports/experimental_hub.html`, is tracked in git — it is only an index, and its cards are the
+place to add a new experimental page.
+
+The three pages carry no back-home link in their source; `gate.js` injects one into the
+decrypted document, pointing at the landing page. The hub is one click from there.
+
+One caveat worth knowing: the gate caches a single passphrase per tab. A reader who opens an
+experimental page and then a damage-evaluation page re-enters the latter's passphrase (the
+cached experimental one fails silently and the form appears). Accepted for now rather than
+changing `gate.js` for a rare path.
 
 ## Review and annotation
 
