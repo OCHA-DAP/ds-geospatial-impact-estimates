@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nepal glacier collapse, SAR precursor analysis — passphrase required</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="gate-page">
+
+<!-- The report itself is content.enc — AES-GCM ciphertext, not readable HTML. Built by
+     exploratory/0005-nepal-glof-sar-precursor/reports/build_reports.py into the gitignored
+     data/langtang-sar-precursors.page.html, then encrypted here with the EXPERIMENTAL
+     passphrase (not the damage-evaluation one):
+
+       ./scripts/publish_experimental.sh                                                  -->
+
+<form class="gate" data-gate data-enc="content.enc">
+  <p class="eyebrow">OCHA Centre for Humanitarian Data · Experimental</p>
+  <h1>Nepal glacier collapse — SAR precursor analysis</h1>
+  <p class="lede">Six years of Sentinel-1 radar over the Langtang Lirung face that collapsed on
+     26 Aug 2026. Exploratory; enter the experimental passphrase to open it.</p>
+
+  <label for="pass">Passphrase</label>
+  <input id="pass" type="password" autocomplete="current-password" data-gate-input
+         placeholder="Experimental passphrase">
+  <p class="msg" role="status" aria-live="polite" data-gate-message></p>
+  <button type="submit" data-gate-submit>Open</button>
+
+  <p class="back"><a href="../">← Experimental analyses</a></p>
+</form>
+
+<script type="module" src="../../assets/gate.js"></script>
+</body>
+</html>

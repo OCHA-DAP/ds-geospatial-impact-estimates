@@ -1,11 +1,13 @@
 """Build the combined HTML report (plain-language spine + expandable technical
 panels) from combined_template.html, embedding the figures from ../figs as data
-URIs. The page is fully self-contained and is written to two places:
+URIs. The page is fully self-contained and is written to two places, both in the
+git-ignored ../data/:
 
-  ../data/langtang-sar-precursors.html     local copy (data/ is git-ignored)
-  ../../../pages/langtang-sar-precursors/index.html
-                                           the pages-site copy (committed —
-                                           pages/ deploys as-is on push to v1)
+  ../data/langtang-sar-precursors.html        fragment (the claude.ai artifact copy)
+  ../data/langtang-sar-precursors.page.html   full document — the encrypt input for
+                                              scripts/publish_experimental.sh, which
+                                              writes the ciphertext the site serves
+                                              under pages/experimental/ (ADR-0041)
 
 A live copy is also published as a claude.ai artifact (account-private):
 https://claude.ai/code/artifact/8370a6df-724a-4a24-85fd-ea7e40065340
@@ -24,7 +26,7 @@ import re
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIGS = os.path.join(HERE, "..", "figs")
 OUT = os.path.join(HERE, "..", "data")
-PAGES = os.path.join(HERE, "..", "..", "..", "pages", "langtang-sar-precursors")
+PAGE = os.path.join(OUT, "langtang-sar-precursors.page.html")  # encrypt input, gitignored
 os.makedirs(OUT, exist_ok=True)
 
 ALTS = {
@@ -62,24 +64,15 @@ with open(dst, "w") as f:
     f.write(html)
 print(f"{len(html) / 1e6:.1f} MB -> {dst}")
 
-os.makedirs(PAGES, exist_ok=True)
 # a <title> inside <body> is ignored by browsers, so lift it into the head
 title = re.search(r"<title>.*?</title>", html).group(0)
-# per the team pages convention (KB: methods/static-data-apps.md, "Nested pages
-# link back home"): a self-contained back-to-home link as the first element in
-# <body>, relative href, labelled with what it links back to. Pages copy only —
-# the claude.ai artifact has no landing page above it.
-home_link = (
-    "<style>.home-link{display:inline-block;margin:10px 12px;padding:6px 12px;"
-    "font:500 13px/1 'IBM Plex Mono',monospace;color:#2a78d6;background:#eaf2fb;"
-    "border:1px solid #c9ddf3;border-radius:4px;text-decoration:none}"
-    ".home-link:hover{background:#dcebf9}</style>\n"
-    '<a class="home-link" href="../">← All analysis &amp; tools</a>\n'
-)
+# No back-home link here: the page is served gated, and gate.js injects the link into
+# the decrypted document (pages/README.md, "The gated pages").
 page = ('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        f"{title}\n</head>\n<body>\n{home_link}"
+        f"{title}\n</head>\n<body>\n"
         + html.replace(title, "", 1) + "\n</body>\n</html>\n")
-with open(os.path.join(PAGES, "index.html"), "w") as f:
+with open(PAGE, "w") as f:
     f.write(page)
-print(f"{len(page) / 1e6:.1f} MB -> {os.path.join(PAGES, 'index.html')}")
+print(f"{len(page) / 1e6:.1f} MB -> {PAGE}")
+print("publish: ./scripts/publish_experimental.sh  (encrypts data/*.page.html into pages/experimental/)")

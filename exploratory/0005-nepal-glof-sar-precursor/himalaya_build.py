@@ -5,6 +5,10 @@ in himalaya_tier2.tier1_z), the 2026 value placed as a percentile in the domain
 null of prior-year values; tier-2 validated stats attached where computed.
 Reuses live_dashboard_template.html with domain-specific copy swapped in.
 
+Written to data/ only. The site copy is ciphertext: scripts/publish_experimental.sh
+encrypts data/himalaya-facet-watch.page.html into pages/experimental/ (the Nepal
+pages are gated; pages/ never holds their plaintext — see ADR-0041).
+
 Run: uv run --group etl --with rasterio,matplotlib,geopandas python \
        exploratory/0005-nepal-glof-sar-precursor/himalaya_build.py
 """
@@ -24,7 +28,7 @@ from himalaya_tier2 import tier1_z
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data")
-PAGES = os.path.join(HERE, "..", "..", "pages", "himalaya-facet-watch")
+PAGE = os.path.join(DATA, "himalaya-facet-watch.page.html")  # encrypt input, gitignored
 TIERS = [(1, "critical"), (5, "elevated"), (15, "watch"), (100, "quiet")]
 
 
@@ -148,20 +152,17 @@ def main() -> None:
         f.write(html)
     print(f"{len(html) / 1e6:.1f} MB -> {dst}")
 
-    os.makedirs(PAGES, exist_ok=True)
+    # The finished page document, with the <title> lifted into <head>. No back-home link:
+    # the page is served gated, and gate.js injects the link into the decrypted document.
     page = ('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
             '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
             "<title>Central Himalaya - Experimental Facet Watch Analyses</title>\n</head>\n<body>\n"
-            "<style>.home-link{display:inline-block;margin:10px 12px;padding:6px 12px;"
-            "font:500 13px/1 'IBM Plex Mono',monospace;color:#2a78d6;background:#eaf2fb;"
-            "border:1px solid #c9ddf3;border-radius:4px;text-decoration:none}"
-            ".home-link:hover{background:#dcebf9}</style>\n"
-            '<a class="home-link" href="../">← All analysis &amp; tools</a>\n'
             + html.replace("<title>Central Himalaya - Experimental Facet Watch Analyses</title>", "", 1)
             + "\n</body>\n</html>\n")
-    with open(os.path.join(PAGES, "index.html"), "w") as f:
+    with open(PAGE, "w") as f:
         f.write(page)
-    print(f"pages copy -> {os.path.join(PAGES, 'index.html')}")
+    print(f"page document -> {PAGE}")
+    print("publish: ./scripts/publish_experimental.sh  (encrypts data/*.page.html into pages/experimental/)")
 
 
 if __name__ == "__main__":

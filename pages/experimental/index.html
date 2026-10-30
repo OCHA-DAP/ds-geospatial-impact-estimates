@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experimental analyses — passphrase required</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body class="gate-page">
+
+<!-- The hub itself is content.enc — AES-GCM ciphertext, not readable HTML. This form derives
+     the key from the EXPERIMENTAL passphrase (separate from the damage-evaluation one) and
+     decrypts it in the browser; the decrypted document then replaces this one. The pages it
+     lists are gated under the same passphrase, which gate.js caches for the tab, so a reader
+     enters it once here. Source: exploratory/0005-nepal-glof-sar-precursor/reports/
+     experimental_hub.html. Re-encrypt after editing it:
+
+       ./scripts/publish_experimental.sh                                                  -->
+
+<form class="gate" data-gate data-enc="content.enc">
+  <p class="eyebrow">OCHA Centre for Humanitarian Data</p>
+  <h1>Experimental analyses</h1>
+  <p class="lede">Exploratory work that is not part of the damage-evaluation line and has not
+     been through the same review. Enter the experimental passphrase to open the index; it
+     also opens the pages it lists.</p>
+
+  <label for="pass">Passphrase</label>
+  <input id="pass" type="password" autocomplete="current-password" data-gate-input
+         placeholder="Experimental passphrase">
+  <p class="msg" role="status" aria-live="polite" data-gate-message></p>
+  <button type="submit" data-gate-submit>Open</button>
+
+  <p class="back"><a href="../">← All analysis &amp; tools</a></p>
+</form>
+
+<script type="module" src="../assets/gate.js"></script>
+</body>
+</html>
