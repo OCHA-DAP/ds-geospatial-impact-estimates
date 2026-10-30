@@ -29,7 +29,8 @@
   strong.amber { color:var(--amber); } strong.red { color:var(--red); } strong.teal { color:#51ac92; }
   .spacer { height:1px; }
   .qstep { align-items:flex-start; padding-top:min(340px, 40vh); box-sizing:border-box; }  /* clears the tracker, which is tallest once all three answers show */
-  .card a { color:var(--ink); text-decoration:underline; text-underline-offset:3px; }
+  .card a { color:#a3c0ef; text-decoration:underline; text-decoration-color:rgba(163,192,239,.7); text-underline-offset:3px; }
+  .card a:hover { color:#cddcf5; }
   .card p { margin:0 0 10px; } .card p:last-child { margin-bottom:0; }
   .card ol.qs { margin:12px 0 0; padding-left:1.4em; }
   .card ol.qs li { margin:8px 0; }
@@ -419,17 +420,18 @@ earthquake and asks what responders can, and cannot, do with them.</p>
   </div></section>
 
   <section class="step" data-step="11"><div class="card">
-    <div class="kicker">The baseline</div>
+    <div class="kicker">The reference dataset</div>
     <p>Inside that shared strip, we measured every assessment against a reference dataset
     built from three sources that became more fully available in the weeks after the earthquake:
     1. manually mapped damaged buildings
-    (<strong class="teal">Copernicus EMS</strong>), 2. crowd-sourced volunteer
+    (<strong>Copernicus EMS</strong>), 2. crowd-sourced volunteer
     review (<strong>MapSwipe</strong>, 400+ volunteers), and 3. reports from field teams on
     the ground (<strong>ChatMap</strong>).</p>
-    <p>Copernicus EMS comprises the main part of the reference. The teal dots are the 2,064 buildings where
-    Copernicus EMS recorded potential damage.</p>
-    <p>For every assessment we then asked: of the buildings it flags, how many had damage recorded by
-    Copernicus EMS? And of the buildings where Copernicus EMS recorded damage, how many does it find?</p>
+    <p>Copernicus EMS-recorded potential damage (teal dots on the map: 2,064 buildings) comprises the main
+    part of the reference.</p>
+    <p>For every assessment we then asked: of the buildings it flags, how many had damage recorded in our
+    constructed reference dataset? And of the buildings where the reference dataset recorded damage, how
+    many does it find?</p>
     <p><b>Note:</b> this reference is not a complete, ground-verified count of damaged buildings. Copernicus experts
     mapped what they could see from above in very-high-resolution optical imagery, and optical analysis is
     <a href="https://www.hotosm.org/en/news/why-damage-assessments-can-vary-from-image-pixels-to-microwaves/"
