@@ -162,9 +162,9 @@ sources.
 
 MapSwipe is
 a crowd review of ~50 m cells at locations AI products had flagged, by more than 400
-volunteers: it can refute a false alarm but never reveal a miss, so it adjudicates disputed
+volunteers: it can vouch for an unmatched flag but never reveal a miss, so it adjudicates disputed
 flags and is never ground truth. ChatMap is `{python} N["field_n"]` damage reports from field
-teams, positives-only with no survey frame: it can reveal misses but not false alarms
+teams, positives-only with no survey frame: it can reveal misses but cannot judge an unmatched flag
 (the appendix [how MapSwipe and ChatMap were used](#app-reference) sets out how each is used). Because the reference is incomplete, every measured precision here is a
 lower bound and every recall an upper bound.
 
@@ -175,7 +175,7 @@ lower bound and every recall an upper bound.
 Building-level precision was low for every product. As delivered, precision across
 everything the CEMS reference mapped ran from `{python} N["asd_P_min"]` (`{python} N["asd_P_min_product"]`) to `{python} N["asd_P_max"]` (`{python} N["asd_P_max_product"]`). Even
 in the core region, where every product scores best, baseline precision reached only
-`{python} N["core_P_range"]` against recall of `{python} N["core_R_range"]`: `{python} N["core_fa_per_hit_range"]` false alarms for
+`{python} N["core_P_range"]` against recall of `{python} N["core_R_range"]`: `{python} N["core_fa_per_hit_range"]` flags with no recorded damage for
 every hit, in the products' most favourable region and before any loosening of the reference. While the products do find damage, they also produce an enormous number of flags
 with no reference record of damage underneath them. At this task a simple model of building
 density and terrain performs in the same range ([the geography
@@ -213,7 +213,7 @@ roughly the share of a product's flags placed in areas with little recorded dama
 (@tbl-frames).
 
 Those numbers come from the strictest configuration this study evaluates, and a defensible
-one: a flag counts as correct only where a CEMS point graded *damaged* or *destroyed* lies
+one: a flag counts as a hit only where a CEMS point graded *damaged* or *destroyed* lies
 within 10 m of it. The study loosens that criterion in two ways: by raising the distance
 threshold, and by relaxing the reference damage definition itself. Raising the threshold to
 30 m lifts the best single product's precision to `{python} N["core_P30_max"]`
@@ -222,7 +222,7 @@ three distances).
 
 Relaxing the reference itself is the more generous test, and @fig-bounds runs it using the
 other reference data this study collected: first adding the points CEMS graded *possibly
-damaged*, then instead crediting the flags the MapSwipe crowd reviewed and confirmed as
+damaged*, then instead crediting the flags the MapSwipe crowd reviewed and judged
 damaged, and finally both together. The result is a range of possible precision values per
 product, with a realistic upper bound at the top. Even at that upper bound every product
 stays below `{python} N["P_upper_max"]`. Neither loosening changes the conclusion: none of
@@ -248,7 +248,7 @@ disagreement among the products.
 The individual products do a much better job at ranking areas to prioritise than at
 identifying specific damaged buildings. In the core region, subset to the area already known to be damaged,
 every product orders ~`{python} N["h3_res8_km2"]` km² cells (H3 resolution 8) against the CEMS reference ordering achieving rank correlations
-of `{python} N["rank_core8_range"]`, and the best single product (`{python} N["top20_single_product_8"]`) correctly identifies most of the twenty worst-hit cells (`{python} N["top20_single_8"]` of 20; no other product reaches half).
+of `{python} N["rank_core8_range"]`, and the best single product (`{python} N["top20_single_product_8"]`) matches the reference ordering on most of the twenty worst-hit cells (`{python} N["top20_single_8"]` of 20; no other product reaches half).
 
 It is important to note that the ranking correlations deteriorate to
 `{python} N["rank_asd7_range"]` when we look at the full as-delivered analysis level (@fig-ranktests).
@@ -272,12 +272,12 @@ areas.](figures/rq3f_null_ranking_both_summary.png){#fig-ranktests}
 
 ### Count agreement between products {#sec-dial}
 
-The more products agree on a building, the more likely its flag is real, because each
-product's false alarms fall in different places. The number required to agree is a
+The more products agree on a building, the more likely its flag is real, because the
+products' unmatched flags fall in different places. The number required to agree is a
 threshold a responder/analyst can set. Flag every building any product marked and `{python} N["k1_R_pct"]` of
 known damage is covered, but a field team following those flags would make `{python} N["k1_visits10_int"]` site
-visits for each confirmed damaged building; require all six to agree and `{python} N["k6_P_pct"]` of flags
-are correct but only `{python} N["k6_R_pct"]` of the damage is covered. Between the extremes, each added
+visits for each building the reference records as damaged; require all six to agree and `{python} N["k6_P_pct"]` of flags
+sit on recorded damage but only `{python} N["k6_R_pct"]` of the recorded damage is covered. Between the extremes, each added
 agreeing product raises the odds that a flag is real, and setting the threshold fixes
 the size of the field job the same day (@tbl-dial). Setting the threshold fixes how
 many buildings field teams will visit; it does not fix how many of them will turn out
@@ -285,7 +285,7 @@ damaged.
 
 ```{python}
 #| label: tbl-dial
-#| tbl-cap: "The agreement dial: what each threshold costs and buys, core region. Share of flags correct and share of known damage covered at 10 m; visits per find at 30 m."
+#| tbl-cap: "The agreement dial: what each threshold costs and buys, core region. Share of flags on recorded damage and share of recorded damage covered at 10 m; visits per find at 30 m."
 import pandas as pd
 from great_tables import GT, html
 from brief_numbers import rq5b as five, N_CEMS_CORE as N_CEMS
@@ -297,7 +297,7 @@ for k in range(1, 7):
                      P=f"{100 * r10['P_cems']:.0f}%", R=f"{100 * r10['R_cems']:.0f}%",
                      visits=f"{r10['flagged'] / (r30['R_cems'] * N_CEMS):.1f}"))
 (GT(pd.DataFrame(rows), rowname_col="rule")
- .cols_label(flags="buildings flagged", P=html("share of flags<br>correct"), R=html("share of known<br>damage covered"), visits=html("field visits<br>per find"))
+ .cols_label(flags="buildings flagged", P=html("share of flags<br>on recorded damage"), R=html("share of recorded<br>damage covered"), visits=html("field visits<br>per find"))
  .cols_align("right", columns=["flags", "P", "R", "visits"])
  .tab_options(column_labels_font_weight="bold", table_font_size="13.5px", data_row_padding="5px"))
 ```
@@ -438,8 +438,8 @@ What the analysis should hand you is not one organisation's map but a count: for
 building, how many independent products flagged it. Read that count as a confidence
 level. The more products agree, the more likely the flag is real damage and the fewer
 buildings you are sent to. @tbl-dial gives, at each level of agreement, how many
-buildings are flagged, what share of them are really damaged, and how many visits each
-confirmed find costs. Ask for the level that matches what your teams can actually visit.
+buildings are flagged, what share of them sit on recorded damage, and how many visits each
+find costs. Ask for the level that matches what your teams can actually visit.
 
 This evaluation cannot see what you already have. A responder with local knowledge, field
 reporting or ground access may be able to use a single product sensibly in ways the
@@ -459,7 +459,8 @@ and magnitudes are hypotheses elsewhere until replicated.
 The references have limits of their own, and the largest was measured rather than
 assumed: the CEMS reference captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
 `{python} N["cems_field_significant_pct"]` of those significantly damaged ([how MapSwipe and ChatMap were used](#app-reference)),
-which is why every precision here is a lower bound and every recall an upper bound. The
+which is why every precision here is a lower bound and every recall an upper bound. Optical
+mapping of this kind is also [known to miss certain kinds of building damage](https://www.hotosm.org/en/news/why-damage-assessments-can-vary-from-image-pixels-to-microwaves/). The
 crowd campaign was seeded almost entirely on Microsoft's flags, so it scrutinises products very
 unevenly and can never see any product's misses; the field reports are undated, positives-only,
 skewed toward destruction, and come with no defined collection area.
@@ -501,7 +502,7 @@ footprint there. {#tbl-regions}
 ```{python}
 #| label: fig-matching
 #| fig-align: center
-#| fig-cap: "Counting hits, false alarms and misses. Left: a product is scored only where it and the reference both looked. Middle: each CEMS damage point is checked for a product flag within radius r, which gives recall. Right: each flagged building is checked for a CEMS point within r, which gives precision."
+#| fig-cap: "Counting hits, unmatched flags and misses. Left: a product is scored only where it and the reference both looked. Middle: each CEMS damage point is checked for a product flag within radius r, which gives recall. Right: each flagged building is checked for a CEMS point within r, which gives precision."
 import matplotlib.pyplot as plt
 import matplotlib.patches as mp
 import numpy as np
@@ -534,7 +535,7 @@ for x, y in [(-0.36, 0.25), (0.2, -0.14)]:
 for x, y, hit in [(-0.45, 0.32, True), (0.1, -0.2, True), (0.5, 0.45, False), (-0.15, -0.6, False)]:
     a2.add_patch(mp.Circle((x, y), R, fc="none", ec="grey", ls="--"))
     a2.scatter(x, y, marker="s", s=70, c="tab:orange", zorder=3)
-    a2.annotate("TP" if hit else "FP (false\nalarm)", (x + 0.05, y + 0.13), fontsize=7.5,
+    a2.annotate("TP" if hit else "FP (unmatched)", (x + 0.05, y + 0.13), fontsize=7.5,
                 color="#2e7d32" if hit else "#c62828", weight="bold")
 a2.set_title("3 · precision: check\neach product flag", fontsize=9)
 for a in ax:
@@ -566,8 +567,8 @@ plt.show()
 []{#app-crowd}
 
 **How MapSwipe was used.** MapSwipe turns the single precision figure measured against CEMS into
-a range. A flag with no CEMS point near it counts as a false alarm, but a gap in the reference and
-a genuine false alarm look the same. MapSwipe is a HOT volunteer platform, and in this event its
+a range. A flag with no CEMS point near it is an unmatched flag: it may be a genuine false alarm or a
+gap in the reference, and the two look the same. MapSwipe is a HOT volunteer platform, and in this event its
 volunteers reviewed ~50 m cells for visible damage, which separates the two wherever they looked.
 
 - The first campaign was built to review Microsoft's flags, with a few dozen cells from HOT's fAIr,
@@ -577,9 +578,9 @@ volunteers reviewed ~50 m cells for visible damage, which separates the two wher
   `{python} N["crowdcov_OSU"]` for OSU and `{python} N["crowdcov_UH"]` for UH, so the adjustment says the most about
   Microsoft and the least about UH.
 - The crowd only re-judges product flags that have no CEMS point within 10 m, which would otherwise
-  count as false alarms. If most volunteers who saw that flag's cell said damaged, the flag counts as
-  a hit; if they said no or not sure, or never saw the cell, it stays a false alarm. Flags a CEMS
-  point already confirms are never re-judged, and neither are buildings a product did not flag, so
+  count against precision. If most volunteers who saw that flag's cell said damaged, the flag counts as
+  a hit; if they said no or not sure, or never saw the cell, it stays unmatched. Flags a CEMS
+  point already matches are never re-judged, and neither are buildings a product did not flag, so
   the crowd can raise precision but never lower it, and leaves recall alone.
 - When crowd-adjusted precision is used in the paper, the CEMS-only precision is the bottom of the
   range and the crowd-adjusted value sits above it.
@@ -587,8 +588,8 @@ volunteers reviewed ~50 m cells for visible damage, which separates the two wher
 ![How the MapSwipe crowd enters the precision calculation. Hexagons are the ~50 m crowd task
 cells in Catia La Mar, tinted by majority verdict. A flag matched by a CEMS point within 10 m
 is a true positive and the crowd plays no part (green). An unmatched flag in a cell the crowd
-judged damaged is counted as confirmed and improves the adjusted precision (blue). In a cell
-judged undamaged or uncertain it stays a false alarm (orange), and a flag in a cell nobody voted
+judged damaged is counted as a hit and improves the adjusted precision (blue). In a cell
+judged undamaged or uncertain it stays an unmatched flag (orange), and a flag in a cell nobody voted
 on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech}
 
 - Every crowd-adjusted number in this brief comes from this first round. A second campaign re-voted

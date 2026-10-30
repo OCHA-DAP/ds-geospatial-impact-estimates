@@ -21,7 +21,7 @@ pb = pd.read_csv(os.path.join(HERE, "..", "legacy", "rq2r_precision_bounds.csv")
 
 DEFS = [("P_floor", "CEMS points graded Damaged or Destroyed\n(the baseline: lower bound)", "#8a5a00", "o", True),
         ("P_grade", "also counting points graded Possibly damaged", "#c98a1e", "o", False),
-        ("P_crowd", "also counting crowd-confirmed flags (MapSwipe)", "#2a78d6", "s", False),
+        ("P_crowd", "also counting flags the MapSwipe crowd judged damaged", "#2a78d6", "s", False),
         ("P_upper", "counting both additions  (upper bound)", "#1b4f8a", "D", True)]
 
 o = pb.sort_values("P_upper").reset_index(drop=True)
@@ -55,7 +55,7 @@ ax.legend(fontsize=9.5, loc="upper center", bbox_to_anchor=(0.5, -0.10), ncol=2,
 ax.spines[["top", "right", "left"]].set_visible(False)
 lift = pb.P_upper / pb.P_floor   # data-driven: the range was once typed by hand and went stale (2.2–3.6× under the old frame)
 ax.set_title("The baseline precision is a lower bound: crediting CEMS's own low-grade points and\n"
-             f"crowd-confirmed damage bounds each product's precision from above ({lift.min():.1f}–{lift.max():.1f}×)",
+             f"crowd-judged damage bounds each product's precision from above ({lift.min():.1f}–{lift.max():.1f}×)",
              fontsize=12.5)
 fig.text(0.99, 0.012,
          "a flag earns credit only where the crowd actually reviewed its location and judged it damaged;\n"
