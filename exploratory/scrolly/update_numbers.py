@@ -33,8 +33,8 @@ bars = ",".join(f'["{lab}",{int(core.loc[f"{k}-of-6", "flagged"])},{100 * core.l
                 for k, lab in zip(range(1, 7), labels))
 sub1(r"const BARDATA = \[.*?\];", f"const BARDATA = [{bars}];")
 k1, k6 = core.loc["1-of-6"], core.loc["6-of-6"]
-sub1(r"from [\d,]+ flags at \d+% confirmed to [\d,]+\s+at \d+%",
-     f"from {int(k1.flagged):,} flags at {100 * k1.P_cems:.0f}% confirmed to {int(k6.flagged):,}\n  at {100 * k6.P_cems:.0f}%")
+sub1(r"from [\d,]+ flags, \d+% with Copernicus-recorded damage, to [\d,]+\s+at \d+%",
+     f"from {int(k1.flagged):,} flags, {100 * k1.P_cems:.0f}% with Copernicus-recorded damage, to {int(k6.flagged):,}\n  at {100 * k6.P_cems:.0f}%")
 # --- ranking bars (rq3h, res 8): best agreement rule + the six products
 h8 = W("core", "cells-agreement", 8)
 votes = [p for p in h8.index if "-of-" in p]; best = h8.loc[votes, "rho"].idxmax()

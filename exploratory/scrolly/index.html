@@ -272,12 +272,12 @@
 <div class="panel" id="panel-bars"><div class="plot">
   <h3>The more the assessments agree, the more confidence we can have in each building flagged</h3>
   <div class="sub">We can fine-tune the number of assessments required to agree before a building counts as
-  flagged. As we raise that number we flag fewer buildings, but become more confident in each
-  flag: the share with Copernicus-confirmed damage underneath climbs.</div>
+  flagged. As we raise that number we flag <span style="color:var(--ink); font-weight:600">fewer buildings</span>, but become more confident in each
+  flag: <span style="color:#51ac92; font-weight:700">the share with Copernicus-recorded damage underneath</span> climbs.</div>
   <div class="bars" id="bars"></div>
   <div class="sub" style="margin-top:18px">The threshold is a choice responders can make to fit the stage of the response: wide
   coverage in the first hours, higher confidence once teams are being sent building by building.</div>
-  <div class="answerbox"><span class="answer"><b>In short</b> Requiring agreement trades coverage for confidence: from 37,346 flags at 5% confirmed to 211
+  <div class="answerbox"><span class="answer"><b>In short</b> Requiring agreement trades coverage for confidence: from 37,346 flags, 5% with Copernicus-recorded damage, to 211
   at 79%.</span></div>
 </div></div>
 
@@ -740,7 +740,7 @@ const barsEl = document.getElementById("bars");
 for (const [lab,v,pct] of BARDATA){ barsEl.insertAdjacentHTML("beforeend",
   `<div class="row"><div class="lab">${lab}</div><div class="bar" data-v="${v}"></div>
    <div class="val" style="opacity:0">${v.toLocaleString()}
-   <span style="color:#51ac92; font-weight:700; margin-left:8px">${pct}% confirmed</span></div></div>`); }
+   <span style="color:#51ac92; font-weight:700; margin-left:8px">${pct}%</span></div></div>`); }
 const RANKDATA = [["3-of-6 agreement",0.783,true],["LIST",0.737,false],["IMPACT",0.718,false],["OSU",0.703,false],["Microsoft",0.616,false],["UNEP",0.579,false],["UH",0.477,false]];
 const rankEl = document.getElementById("rank");
 for (const [lab,v,hot] of RANKDATA){ rankEl.insertAdjacentHTML("beforeend",
