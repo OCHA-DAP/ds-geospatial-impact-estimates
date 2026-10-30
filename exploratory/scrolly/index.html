@@ -282,11 +282,11 @@
 </div></div>
 
 <div class="panel" id="panel-bounds"><div class="plot">
-  <h3>How much of what an assessment flags is actually damage? <span style="font-weight:400; font-size:.68em; color:var(--mut)">(according to our mixed-reference dataset)</span></h3>
-  <div class="sub">Per map: the share of its flagged buildings with reference damage underneath.
-  The dot is what Copernicus EMS confirms; the bar extends to the most generous reading, crediting
-  Copernicus's own low-confidence points and crowd-confirmed sites, a generous check made by area rather
-  than building by building.</div>
+  <h3>How much of what an assessment flags has recorded damage underneath? <span style="font-weight:400; font-size:.68em; color:var(--mut)">(recorded in our mixed-reference dataset)</span></h3>
+  <div class="sub">The share of each product's flagged buildings with reference-recorded damage underneath.
+  The dot counts only buildings Copernicus EMS graded damaged or destroyed, the lower bound. The bar
+  extends to the upper bound, which also credits Copernicus's possibly-damaged points and flags in
+  cells the MapSwipe crowd judged damaged.</div>
   <div class="axisrow"><span>0%</span><span>50%</span><span>100% of flagged buildings</span></div>
   <div class="range" id="range"></div>
 </div></div>
@@ -377,8 +377,7 @@ earthquake and asks what responders can, and cannot, do with them.</p>
     classifies buildings from optical imagery across eight coastal areas.
     <strong>76,378 buildings flagged</strong>. Two further products arrived in the same window but are
     not evaluated here.
-    <span class="fn">HOT's fAIr publishes no analysed extent, so its misses and false alarms
-    cannot be counted fairly. DISHA (UN Global Pulse) covers less than half of the shared
+    <span class="fn">HOT's fAIr published no analysed extent. DISHA (UN Global Pulse) covers less than half of the shared
     comparison area; including it would have halved the ground on which all six assessments are compared.</span>
   </div></section>
 
@@ -430,8 +429,8 @@ earthquake and asks what responders can, and cannot, do with them.</p>
     <p>Copernicus EMS comprises the main part of the reference.</p>
     <p>The teal dots are the 2,064 buildings where
     Copernicus EMS recorded potential damage.<sup class="fnref">1</sup> For every assessment we then
-    asked: of the buildings it flags, how many are really damaged? And of the damaged buildings,
-    how many does it find?</p>
+    asked: of the buildings it flags, how many had damage recorded by Copernicus EMS? And of the
+    buildings where Copernicus EMS recorded damage, how many does it find?</p>
     <span class="fn"><sup class="fnref">1</sup> Only Copernicus EMS is drawn here. ChatMap accounts
     for a small share of the recorded damage, and MapSwipe's crowd review is not building-level.
     Both are still used in the analysis: to check how complete Copernicus EMS is as a reference, and
@@ -440,9 +439,8 @@ earthquake and asks what responders can, and cannot, do with them.</p>
 
   <section class="step qstep" data-step="12"><div class="card">
     <div class="kicker">Flagging damaged buildings</div>
-    Against what Copernicus EMS confirmed, no assessment does better than about one in eight. A
-    team checking one assessment's flags on the ground would have to visit 8 to 15 flagged buildings
-    to find one with confirmed damage, depending on the assessment.
+    A team following one assessment's flags on the ground would have to visit 8 to 15 flagged buildings
+    to find one that Copernicus EMS recorded as damaged, depending on the assessment.
   </div></section>
 
   <section class="step qstep" data-step="13"><div class="card">
@@ -505,8 +503,9 @@ earthquake and asks what responders can, and cannot, do with them.</p>
   <h2>Conclusion</h2>
   <div class="cols">
     <h3>1 · Identifying building-level damage</h3>
-    <p>Compared to our mixed reference dataset, all individual products appear to over-flag damaged
-    buildings, to such an extent that they would be challenging to use at the response level.</p>
+    <p>Compared with our mixed reference dataset, every product flags far more buildings than the
+    reference records as damaged, so acting on a single flagged building from any one product could
+    be inaccurate.</p>
     <h3>2 · Ranking neighbourhoods for triage</h3>
     <p>In the first 72 hours, search-and-rescue teams have a pressing need to quickly narrow
     down the worst-hit areas, and this is where the products are strongest. Within a subset area
