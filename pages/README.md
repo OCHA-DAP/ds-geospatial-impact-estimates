@@ -19,6 +19,9 @@ pages/
   cems-flood-archive/             -> /cems-flood-archive/  (CEMS harvest-ledger status page)
   cems-flood-labels/              -> /cems-flood-labels/   (CEMS-only label viewer; superseded by flood-labels/, kept until retired)
   flood-labels/                   -> /flood-labels/        (CEMS + UNOSAT label viewer; reads global/flood_labels/platinum via the token issuer)
+  venezuela-2026/                 -> /venezuela-2026/      (plain hub grouping the Venezuela artefacts above — ADR-0042)
+  venezuela-2026/archive/         -> /venezuela-2026/archive/  (superseded: story/, story-v2/, legacy viewer)
+  cems-unosat/                    -> /cems-unosat/         (plain hub grouping flood-labels/, cems-flood-archive/, cems-flood-labels/)
   experimental/                   -> /experimental/        (gated hub for exploratory work, own passphrase — ADR-0041)
     langtang-sar-precursors/      -> /experimental/langtang-sar-precursors/   (gated)
     langtang-facet-watch/         -> /experimental/langtang-facet-watch/      (gated)
@@ -34,16 +37,24 @@ browser, so a stalled cron shows up as a drift banner rather than silently stale
 
 ## Adding a page
 
-Create a directory with an `index.html`, then add a card to `index.html` — copy an existing
-`<a class="k">` block and change the href, title, blurb and foot. Chips are optional:
-`chip-ext` for something hosted elsewhere, `chip-gate` for a passphrase-gated page.
+Create a directory with an `index.html`, then add a card — copy an existing `<a class="k">`
+block and change the href, title, blurb and foot. Chips are optional: `chip-ext` for something
+hosted elsewhere, `chip-gate` for a passphrase-gated page; `k-muted` greys a card that is an
+aside (archive, superseded, experimental).
 
-**Experimental work does not get a card on the landing grid.** It goes under `experimental/`
-and gets a card in the hub's source instead
-(`exploratory/0005-nepal-glof-sar-precursor/reports/experimental_hub.html`), encrypted under
-the experimental passphrase — see "The experimental pages" below. The landing grid presents
-the damage-evaluation line; the one "Experimental analyses" card at its end is the only door
-to the rest (ADR-0041).
+**Where the card goes.** The landing grid is short on purpose: one card per line of work, and
+the few things still in review. New work gets its card in the hub it belongs to —
+`venezuela-2026/index.html` for the Venezuela damage evaluation, `cems-unosat/index.html` for
+the flood-label corpora — and only on the landing page if it fits neither. **Hubs are indexes,
+not containers** (ADR-0042): the page itself still lives at its own top-level directory, and
+the hub card links there with `../<dir>/`. The publish script, the Hypothesis annotations on
+the manuscript and the flood pipelines all address those top-level paths, so do not move a
+directory under a hub to "tidy up". Point the page's own back link at its hub.
+
+**Experimental work** is the one hub that differs: it is gated under its own passphrase, so
+its card goes in the hub's *source*
+(`exploratory/0005-nepal-glof-sar-precursor/reports/experimental_hub.html`) and is published
+encrypted — see "The experimental pages" below (ADR-0041).
 
 Every nested page links back to the landing page (team convention — KB
 `methods/static-data-apps.md` § "Nested pages link back home"). A plain page carries the link
