@@ -67,7 +67,10 @@ Every nested page links back to the landing page (team convention — KB
 itself, with a **relative** href (`../`, never `/` — project sites live under `/<repo>/`). The
 gated artefacts don't need it in their source: `gate.js` injects a fixed back-to-home pill into
 the decrypted document at display time, so it survives republishes without a re-render and
-appears even when a cached passphrase skips the gate page.
+appears even when a cached passphrase skips the gate page. The two publicised Venezuela pages
+(the public story and the brief) are the deliberate exception (Zack, 2026-11-02): no back link,
+because a reader sent that link should stay on the page rather than be invited back to the hub.
+The brief's gate form opts out with `data-no-home-link`; the story simply carries no link.
 
 That shared edit to `index.html` is the deliberate trade-off for having no build system. The
 sibling repo `ds-storm-impact-harmonisation` discovers products by globbing `page.toml`

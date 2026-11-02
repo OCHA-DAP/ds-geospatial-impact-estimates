@@ -77,15 +77,21 @@ const HOME_LINK = `
 </style>
 <a class="gie-home-link" href="${HOME_URL}">← Geospatial impact estimates</a>`;
 
+// Opt-out: a gate form carrying `data-no-home-link` gets no pill. Used by the publicised
+// Venezuela pages (decision 2026-11-02): readers sent the brief's link should stay on it,
+// not be invited back to the hub. Every other gated page keeps the convention.
+const NO_HOME_LINK = form.hasAttribute("data-no-home-link");
+
 function withHomeLink(html) {
   // First <body ...> tag only; the artefacts are complete HTML documents (encrypt_page.py
   // round-trips them), so a missing body tag means a malformed document — refuse rather than
-  // display it quietly without the link.
-  const injected = html.replace(/<body[^>]*>/i, (tag) => tag + HOME_LINK);
-  if (injected === html) {
+  // display it quietly, with or without the link.
+  const bodyTag = /<body[^>]*>/i;
+  if (!bodyTag.test(html)) {
     throw new GateError("load", "Decrypted document has no <body> tag; refusing to display it.");
   }
-  return injected;
+  if (NO_HOME_LINK) return html;
+  return html.replace(bodyTag, (tag) => tag + HOME_LINK);
 }
 
 function render(html) {
