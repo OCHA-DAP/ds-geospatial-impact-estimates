@@ -36,7 +36,7 @@ for col, res in enumerate((8, 9)):
     v = df[df.res == res].set_index("predictor")
     for row, (metric, mlab) in enumerate((
             ("rho", "Spearman ρ: how well each product ranks\nthe neighbourhood blocks/cells"),
-            ("top20_exp", "% share of cells correctly predicted\nas top 20 most damaged cells"))):
+            ("top20_exp", "% share of the reference's top 20\nmost damaged cells identified"))):
         ax = axes[row][col]
         pct = metric == "top20_exp"          # bottom row reads as a percentage
         fmt = (lambda x: f"{x:.0%}") if pct else (lambda x: f"{x:.2f}")

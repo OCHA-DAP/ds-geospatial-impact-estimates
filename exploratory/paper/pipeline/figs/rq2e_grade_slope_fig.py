@@ -59,8 +59,7 @@ ax.set_xticks([0, 1], ['field-assessed\n"complete" destruction',
 ax.set_ylabel("recall vs ChatMap field reports (field frame, r = 20 m)", fontsize=12)
 ax.tick_params(axis="y", labelsize=11)
 ax.set_title("Recall falls with damage grade — for the products AND the CEMS "
-             "reference.\nCEMS-frame recall inherits this skew: it is a ceiling, "
-             "not a floor.", fontsize=12.5)
+             "reference.\nCEMS-frame recall inherits this skew: it is a ceiling.", fontsize=12.5)
 fig.tight_layout()
 fig.savefig(os.path.join(FIGS, "rq2e_grade_slope.png"), dpi=150)
 print("wrote figures/rq2e_grade_slope.png")
