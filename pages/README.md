@@ -15,7 +15,7 @@ pages/
   assets/gate.js                  the passphrase form + back-to-home link injection
   venezuela-earthquake-2026/      -> /venezuela-earthquake-2026/          (hub: the publicised shortlist — ADR-0042)
     story/                        -> /venezuela-earthquake-2026/story/    (scroll story, public)
-    brief/                        -> /venezuela-earthquake-2026/brief/    (technical brief, gated, own passphrase)
+    brief/                        -> /venezuela-earthquake-2026/brief/    (technical brief, public; written by publish_pages.sh brief)
     archive/                      -> /venezuela-earthquake-2026/archive/  (gated index of everything superseded, below; source in pages-src/)
   slides/damage-evaluation/       -> /slides/damage-evaluation/ (archived; stays here — Hypothesis/links)
   slides/aa-cell-briefing*/       -> /slides/aa-cell-briefing*/ (archived)
@@ -124,12 +124,18 @@ re-renders, re-encrypts and lands it on `v1`. Nothing warns you if that is skipp
 keeps serving the older version.
 
 ```bash
-./scripts/publish_pages.sh            # both artefacts: render, encrypt, commit
+./scripts/publish_pages.sh            # all four artefacts: render, encrypt/copy, commit
 ./scripts/publish_pages.sh deck       # results deck only
 ./scripts/publish_pages.sh paper      # manuscript only
+./scripts/publish_pages.sh brief      # technical brief only (public: plain HTML, no passphrase)
 ./scripts/publish_pages.sh --ship     # ...and push + open a PR against v1
 ./scripts/publish_pages.sh deck --no-commit
 ```
+
+The brief and the story are **public**: `venezuela-earthquake-2026/brief/index.html` is the rendered
+document itself, not a gate, with the back-to-hub pill added at the top of `<body>` (the same pill
+`gate.js` injects on gated pages). The `brief` target writes it there directly; nothing is encrypted
+and no passphrase is read for it.
 
 `--ship` branches off `origin/v1`, commits, pushes and opens the PR, then prints the merge
 command. It stops there on purpose: **merging is what makes an artefact public**, so that stays a
@@ -177,7 +183,7 @@ automatically when they stop working, so no one gets stuck on a stale value.
 `venezuela-earthquake-2026/archive/` is a gate page too: the listing of superseded artefacts
 names and links every pre-publication item, so it is published as `content.enc` under the
 **shared** passphrase — the same one the archived decks, write-up and earlier stories use, so a
-reader who opens the index meets no second prompt on them. The brief keeps its own passphrase.
+reader who opens the index meets no second prompt on them.
 
 Its source is `pages-src/venezuela-earthquake-2026/archive.html` (it cannot sit under `pages/`,
 where everything deploys). Edit the source, then:
