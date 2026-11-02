@@ -13,10 +13,10 @@ pages/
   assets/hero.js                  particle-network hero canvas
   assets/decrypt.js               envelope parsing + AES-GCM/PBKDF2 (pure, no DOM)
   assets/gate.js                  the passphrase form + back-to-home link injection
-  venezuela-2026/                 -> /venezuela-2026/      (hub: the publicised shortlist — ADR-0042)
-    story/                        -> /venezuela-2026/story/     (scroll story, gated)
-    brief/                        -> /venezuela-2026/brief/     (technical brief, gated, own passphrase)
-    archive/                      -> /venezuela-2026/archive/   (index of everything superseded, below)
+  venezuela-earthquake-2026/      -> /venezuela-earthquake-2026/          (hub: the publicised shortlist — ADR-0042)
+    story/                        -> /venezuela-earthquake-2026/story/    (scroll story, public)
+    brief/                        -> /venezuela-earthquake-2026/brief/    (technical brief, gated, own passphrase)
+    archive/                      -> /venezuela-earthquake-2026/archive/  (index of everything superseded, below)
   slides/damage-evaluation/       -> /slides/damage-evaluation/ (archived; stays here — Hypothesis/links)
   slides/aa-cell-briefing*/       -> /slides/aa-cell-briefing*/ (archived)
   manuscript/                     -> /manuscript/            (archived; stays here — Hypothesis anchors)
@@ -26,7 +26,7 @@ pages/
     cems-flood-archive/           -> /cems-unosat/cems-flood-archive/ (harvest ledger; written by pipelines/cems_flood/report.py --pages)
     cems-flood-labels/            -> /cems-unosat/cems-flood-labels/  (CEMS-only viewer, superseded, kept until retired)
   vantor-activations/             -> /vantor-activations/  (tracker page + data.json snapshot)
-  story-v4/ brief/ flood-labels/ cems-flood-archive/ cems-flood-labels/
+  story-v4/ brief/ flood-labels/ cems-flood-archive/ cems-flood-labels/ venezuela-2026/
                                   -> forwarding pages only (old addresses; delete once unused)
   experimental/                   -> /experimental/        (gated hub for exploratory work, own passphrase — ADR-0041)
     langtang-sar-precursors/      -> /experimental/langtang-sar-precursors/   (gated)
@@ -49,9 +49,9 @@ hosted elsewhere, `chip-gate` for a passphrase-gated page; `k-muted` greys a car
 aside (archive, superseded, experimental).
 
 **Where the card goes.** The landing grid is one card per line of work. New work gets its card
-in the hub it belongs to — `venezuela-2026/index.html` for the Venezuela damage evaluation,
+in the hub it belongs to — `venezuela-earthquake-2026/index.html` for the Venezuela damage evaluation,
 `cems-unosat/index.html` for the flood-label corpora — and only on the landing page if it fits
-neither. **Current work lives under its hub** (`venezuela-2026/story/`, `cems-unosat/flood-labels/`),
+neither. **Current work lives under its hub** (`venezuela-earthquake-2026/story/`, `cems-unosat/flood-labels/`),
 so the address says where it belongs and `../` is the hub. **Archived work stays where it was**
 (`manuscript/`, `slides/*`, `story-v3/`…) and the archive page links out to it: moving those
 would break the Hypothesis annotations and the review links on them for no gain (ADR-0042).
