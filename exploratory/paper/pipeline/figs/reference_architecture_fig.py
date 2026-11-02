@@ -37,7 +37,7 @@ cards = [
          who="damage reported from the ground",
          geom="field POINTS  (~building level)",
          measures="misses ONLY\n(positives, no survey frame)",
-         blind="cannot judge an unmatched flag;\nsparse (415 pts)",
+         blind="cannot check unmatched flags;\nsparse (415 pts)",
          drives="recall by damage grade;\nunions with CEMS points\n→ precision +5–9%",
          note="the only source that reaches inland"),
 ]

@@ -162,9 +162,9 @@ sources.
 
 MapSwipe is
 a crowd review of ~50 m cells at locations AI products had flagged, by more than 400
-volunteers: it can vouch for an unmatched flag but never reveal a miss, so it adjudicates disputed
+volunteers: it can turn an unmatched flag into a hit but never reveal a miss, so it adjudicates disputed
 flags and is never ground truth. ChatMap is `{python} N["field_n"]` damage reports from field
-teams, positives-only with no survey frame: it can reveal misses but cannot judge an unmatched flag
+teams, positives-only with no survey frame: it can reveal misses but cannot check an unmatched flag
 (the appendix [how MapSwipe and ChatMap were used](#app-reference) sets out how each is used). Because the reference is incomplete, every measured precision here is a
 lower bound and every recall an upper bound.
 
@@ -248,7 +248,7 @@ disagreement among the products.
 The individual products do a much better job at ranking areas to prioritise than at
 identifying specific damaged buildings. In the core region, subset to the area already known to be damaged,
 every product orders ~`{python} N["h3_res8_km2"]` km² cells (H3 resolution 8) against the CEMS reference ordering achieving rank correlations
-of `{python} N["rank_core8_range"]`, and the best single product (`{python} N["top20_single_product_8"]`) matches the reference ordering on most of the twenty worst-hit cells (`{python} N["top20_single_8"]` of 20; no other product reaches half).
+of `{python} N["rank_core8_range"]`, and the best single product (`{python} N["top20_single_product_8"]`) finds most of the reference's twenty worst-hit cells (`{python} N["top20_single_8"]` of 20; no other product reaches half).
 
 It is important to note that the ranking correlations deteriorate to
 `{python} N["rank_asd7_range"]` when we look at the full as-delivered analysis level (@fig-ranktests).
@@ -277,7 +277,7 @@ products' unmatched flags fall in different places. The number required to agree
 threshold a responder/analyst can set. Flag every building any product marked and `{python} N["k1_R_pct"]` of
 known damage is covered, but a field team following those flags would make `{python} N["k1_visits10_int"]` site
 visits for each building the reference records as damaged; require all six to agree and `{python} N["k6_P_pct"]` of flags
-sit on recorded damage but only `{python} N["k6_R_pct"]` of the recorded damage is covered. Between the extremes, each added
+have recorded damage underneath but only `{python} N["k6_R_pct"]` of the recorded damage is covered. Between the extremes, each added
 agreeing product raises the odds that a flag is real, and setting the threshold fixes
 the size of the field job the same day (@tbl-dial). Setting the threshold fixes how
 many buildings field teams will visit; it does not fix how many of them will turn out
@@ -285,7 +285,7 @@ damaged.
 
 ```{python}
 #| label: tbl-dial
-#| tbl-cap: "The agreement dial: what each threshold costs and buys, core region. Share of flags on recorded damage and share of recorded damage covered at 10 m; visits per find at 30 m."
+#| tbl-cap: "The agreement dial: what each threshold costs and buys, core region. Share of flags with recorded damage underneath and share of recorded damage covered at 10 m; visits per find at 30 m."
 import pandas as pd
 from great_tables import GT, html
 from brief_numbers import rq5b as five, N_CEMS_CORE as N_CEMS
@@ -297,7 +297,7 @@ for k in range(1, 7):
                      P=f"{100 * r10['P_cems']:.0f}%", R=f"{100 * r10['R_cems']:.0f}%",
                      visits=f"{r10['flagged'] / (r30['R_cems'] * N_CEMS):.1f}"))
 (GT(pd.DataFrame(rows), rowname_col="rule")
- .cols_label(flags="buildings flagged", P=html("share of flags<br>on recorded damage"), R=html("share of recorded<br>damage covered"), visits=html("field visits<br>per find"))
+ .cols_label(flags="buildings flagged", P=html("share of flags with<br>recorded damage"), R=html("share of recorded<br>damage covered"), visits=html("field visits<br>per find"))
  .cols_align("right", columns=["flags", "P", "R", "visits"])
  .tab_options(column_labels_font_weight="bold", table_font_size="13.5px", data_row_padding="5px"))
 ```
@@ -438,7 +438,7 @@ What the analysis should hand you is not one organisation's map but a count: for
 building, how many independent products flagged it. Read that count as a confidence
 level. The more products agree, the more likely the flag is real damage and the fewer
 buildings you are sent to. @tbl-dial gives, at each level of agreement, how many
-buildings are flagged, what share of them sit on recorded damage, and how many visits each
+buildings are flagged, what share of them have recorded damage underneath, and how many visits each
 find costs. Ask for the level that matches what your teams can actually visit.
 
 This evaluation cannot see what you already have. A responder with local knowledge, field
