@@ -35,9 +35,10 @@ directories. Should the Venezuela and CEMS/UNOSAT work be grouped the same way?
 Chosen option 2. `pages/venezuela-2026/` and `pages/cems-unosat/` are plain index pages, each
 with its own card grid, linking to the artefacts where they already live. `venezuela-2026/
 archive/` lists superseded versions (story v1, story v2, the legacy single-event viewer) as
-muted cards. The landing grid keeps one card per hub plus the items still in review (story v3,
-v4, brief), which move into the Venezuela hub when their branches merge. The grouped pages' own
-back links point at their hub; pipeline-generated pages keep theirs.
+muted cards. The landing grid keeps one card per hub. Within the Venezuela hub the top level is
+the shortlist to publicise (story v4, brief, multi-event viewer); everything that led there
+(briefings, deck, write-up, earlier stories) sits in the archive. The grouped pages' own back
+links point at the hub or archive that lists them; pipeline-generated pages keep theirs.
 
 ADR-0041 moved directories because the point there was to put the plaintext behind a gate, and
 those pages had nothing addressing their paths but their own build scripts. Neither holds here.
