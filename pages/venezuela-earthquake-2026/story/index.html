@@ -293,7 +293,6 @@
   <div class="tl-line">
     <div class="tl-quake"></div><div class="tl-quake-lab">24 Jun · M7.5</div>
   </div>
-  <div class="tl-note">* dates are our ingest dates, to be confirmed with providers</div>
 </div>
 
 <div id="story">
@@ -480,10 +479,9 @@ earthquake and asks what responders can, and cannot, do with them.</p>
 
   <section class="step qstep" data-step="18"><div class="card">
     <div class="kicker">Combining also ranks best</div>
-    Back to the neighbourhood ranking from question two, with one more row: ranking cells
-    by how many assessments agree beats the ranking from any single assessment. So
-    combining helps at both levels that matter: fewer flags with no recorded damage underneath, building by building,
-    and a better answer to <em>where first</em>.
+    Ranking neighbourhoods by how many assessments agree beats the ranking from any single
+    assessment, a promising way to guide interpretation and to decide where to allocate
+    resources first.
   </div></section>
 
   <section class="step qstep" data-step="19"><div class="card">
@@ -651,13 +649,13 @@ map.on("load", () => {
   ["ext-cems","ext-core"].forEach(id => map.moveLayer(id));   // reference + core strip stay visible above the dots
 });
 
-// arrival order by our ingest dates (timeline_events.csv; LIST/UH tentative)
+// arrival order by provider-confirmed dates (timeline_events.csv)
 const ARRIVALS = [
   { name:"Microsoft AI4G", date:"26 Jun", pct:19, bit:1,  col:"#2a78d6", n:8410,  tent:false },
   { name:"IMPACT",     date:"29 Jun", pct:36, bit:2,  col:"#8a5cd6", n:81446, tent:false },
   { name:"OSU / NASA", date:"29 Jun", pct:41, bit:4,  col:"#1b9e77", n:58870, tent:false },
   { name:"UNEP/OCHA",  date:"1 Jul",  pct:54, bit:32, col:"#c65d9e", n:96046,  tent:false },
-  { name:"WFP/LIST/CERN", date:"1 Jul*", pct:58, bit:16, col:"#d95f02", n:163225, tent:true },
+  { name:"WFP/LIST/CERN", date:"1 Jul", pct:58, bit:16, col:"#d95f02", n:163225, tent:false },
   { name:"UH SAIL",    date:"4 Jul", pct:77, bit:8,  col:"#e6a817", n:76378,  tent:false },
 ];
 const P = ARRIVALS.map(a => ({ name:a.name, date:a.date, pct:a.pct, col:a.col, n:a.n.toLocaleString()+" flagged", tent:a.tent }));
