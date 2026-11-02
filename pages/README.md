@@ -16,7 +16,7 @@ pages/
   venezuela-earthquake-2026/      -> /venezuela-earthquake-2026/          (hub: the publicised shortlist — ADR-0042)
     story/                        -> /venezuela-earthquake-2026/story/    (scroll story, public)
     brief/                        -> /venezuela-earthquake-2026/brief/    (technical brief, gated, own passphrase)
-    archive/                      -> /venezuela-earthquake-2026/archive/  (index of everything superseded, below)
+    archive/                      -> /venezuela-earthquake-2026/archive/  (gated index of everything superseded, below; source in pages-src/)
   slides/damage-evaluation/       -> /slides/damage-evaluation/ (archived; stays here — Hypothesis/links)
   slides/aa-cell-briefing*/       -> /slides/aa-cell-briefing*/ (archived)
   manuscript/                     -> /manuscript/            (archived; stays here — Hypothesis anchors)
@@ -171,6 +171,22 @@ leaving a reader with an unopenable page, and it never invents a passphrase.
 Re-run step 2 for both artefacts with the new passphrase and commit. Readers with the old one
 get "Wrong passphrase". Cached passphrases live in `sessionStorage` and are dropped
 automatically when they stop working, so no one gets stuck on a stale value.
+
+## The Venezuela archive index
+
+`venezuela-earthquake-2026/archive/` is a gate page too: the listing of superseded artefacts
+names and links every pre-publication item, so it is published as `content.enc` under the
+**shared** passphrase — the same one the archived decks, write-up and earlier stories use, so a
+reader who opens the index meets no second prompt on them. The brief keeps its own passphrase.
+
+Its source is `pages-src/venezuela-earthquake-2026/archive.html` (it cannot sit under `pages/`,
+where everything deploys). Edit the source, then:
+
+```bash
+./scripts/publish_archive_index.sh      # encrypts into archive/content.enc; commit, PR to v1
+```
+
+`pages-src/` is the home for any other gated index page that needs a tracked plaintext source.
 
 ## The experimental pages
 
