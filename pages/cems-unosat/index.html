@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CEMS-UNOSAT — Geospatial Impact Estimates</title>
+<meta name="description" content="The Copernicus EMS and UNOSAT flood-label corpora: archive ledger and viewers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<div class="wrap">
+
+  <!-- A hub, not a container: the pages stay at their own top-level URLs because the flood
+       pipelines regenerate them in place (ADR-0042). This page only groups them. -->
+
+  <header class="hero flat">
+    <div class="inner">
+      <p class="crumb"><a href="../">← All analysis &amp; tools</a></p>
+      <p class="eyebrow">OCHA Centre for Humanitarian Data</p>
+      <h1>CEMS-UNOSAT</h1>
+      <p>The two public flood-label corpora — Copernicus Emergency Management Service rapid
+         mapping and UNOSAT — harvested, archived and catalogued as training and evaluation
+         data: what exists, what was archived, and what each label actually mapped.</p>
+    </div>
+  </header>
+
+  <main>
+    <p class="label">Flood labels</p>
+    <div class="grid">
+
+      <a class="k" href="../flood-labels/">
+        <h2>Flood labels — CEMS + UNOSAT viewer</h2>
+        <p>Both flood-label corpora on one globe: 2,715 CEMS label sets from 283 activations
+           (2012–) and 867 UNOSAT label sets from 180 flood and cyclone events (2014–), each with
+           its acquisition interval. Water at acquisition and flood extent drawn separately;
+           filter by source, region, country and period; step through an event acquisition by
+           acquisition.</p>
+        <span class="foot"><em>/flood-labels/</em></span>
+      </a>
+
+      <a class="k" href="../cems-flood-archive/">
+        <h2>CEMS flood archive — harvest ledger</h2>
+        <p>Every Copernicus EMS Rapid Mapping flood activation since 2012, archived to blob
+           with a transparency ledger: what exists, what we archived, what upstream lost, and
+           what is inside every zip. Regenerated from the ledger after each harvest run.</p>
+        <span class="foot"><em>/cems-flood-archive/</em></span>
+      </a>
+
+      <a class="k k-muted" href="../cems-flood-labels/">
+        <h2>CEMS flood labels — viewer (superseded)</h2>
+        <p>The CEMS-only predecessor of the combined viewer: 2,715 observed flood extents from
+           283 activations with per-image acquisition times. Kept until retired.</p>
+        <span class="foot"><em>/cems-flood-labels/</em></span>
+      </a>
+
+    </div>
+  </main>
+
+</div>
+</body>
+</html>

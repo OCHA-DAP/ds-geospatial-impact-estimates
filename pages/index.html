@@ -28,27 +28,13 @@
     <p class="label">Analysis &amp; tools</p>
     <div class="grid">
 
-      <a class="k" href="slides/aa-cell-briefing-public/">
-        <h2>Analysis of EQ Damage Products: Presentation to A&amp;A Cell 11 Aug 2026</h2>
-        <p>Satellite building-damage products from the M7.5 Venezuela earthquake, evaluated
-           against expert references: what arrived, what the products can and cannot support,
-           and what actually works.</p>
-        <span class="foot"><em>/slides/aa-cell-briefing-public/</em></span>
-      </a>
-
-      <a class="k" href="slides/aa-cell-briefing/">
-        <h2>Damage evaluation — A&amp;A Cell briefing<span class="chip chip-gate">Passphrase</span></h2>
-        <p>Five-slide briefing for the A&amp;A Cell, 11 August 2026: the headline results of the
-           damage product evaluation, with the full deck as backup slides.</p>
-        <span class="foot"><em>/slides/aa-cell-briefing/</em></span>
-      </a>
-
-      <a class="k" href="slides/damage-evaluation/">
-        <h2>Damage evaluation — full results deck<span class="chip chip-gate">Passphrase</span></h2>
-        <p>Six rapid building-damage products released after the M7.5 Venezuela earthquake,
-           scored against three reference datasets chosen for their non-overlapping blind
-           spots. The complete results deck.</p>
-        <span class="foot"><em>/slides/damage-evaluation/</em></span>
+      <a class="k" href="venezuela-2026/">
+        <h2>Venezuela Earthquake 2026</h2>
+        <p>The damage-product evaluation after the M7.5 earthquake: A&amp;A Cell briefings, the
+           full results deck, the technical write-up, the multi-event damage exposure viewer,
+           and an archive of superseded versions. The scroll story and brief below join it
+           once their review rounds close.</p>
+        <span class="foot"><em>/venezuela-2026/</em></span>
       </a>
 
       <a class="k" href="story-v4/">
@@ -70,13 +56,6 @@
         <span class="foot"><em>/brief/</em></span>
       </a>
 
-      <a class="k" href="manuscript/">
-        <h2>Damage evaluation — technical write-up<span class="chip chip-gate">Passphrase</span></h2>
-        <p>The manuscript behind the deck: matching basis, per-product scores, and the negative
-           results that shaped the method.</p>
-        <span class="foot"><em>/manuscript/</em></span>
-      </a>
-
       <a class="k" href="vantor-activations/">
         <h2>Vantor Open Data activation tracker</h2>
         <p>Which disasters Vantor (formerly Maxar) has released open imagery for, and how many
@@ -85,48 +64,15 @@
         <span class="foot"><em>/vantor-activations/</em></span>
       </a>
 
-      <a class="k" href="flood-labels/">
-        <h2>Flood labels — CEMS + UNOSAT viewer</h2>
-        <p>Both flood-label corpora on one globe: 2,715 CEMS label sets from 283 activations
-           (2012–) and 867 UNOSAT label sets from 180 flood and cyclone events (2014–), each with
-           its acquisition interval. Water at acquisition and flood extent drawn separately;
-           filter by source, region, country and period; step through an event acquisition by
-           acquisition.</p>
-        <span class="foot"><em>/flood-labels/</em></span>
+      <a class="k" href="cems-unosat/">
+        <h2>CEMS-UNOSAT</h2>
+        <p>The two public flood-label corpora, Copernicus EMS rapid mapping and UNOSAT, harvested
+           and catalogued: the combined label viewer, the CEMS archive ledger, and the
+           superseded CEMS-only viewer.</p>
+        <span class="foot"><em>/cems-unosat/</em></span>
       </a>
 
-      <a class="k" href="cems-flood-labels/">
-        <h2>CEMS flood labels — viewer</h2>
-        <p>The flood label corpus on a globe: 2,715 observed flood extents from 283 CEMS
-           activations, 2012–present, each with per-image acquisition times. Filter by
-           region, country and period; step through an event acquisition by acquisition.</p>
-        <span class="foot"><em>/cems-flood-labels/</em></span>
-      </a>
-
-      <a class="k" href="cems-flood-archive/">
-        <h2>CEMS flood archive — harvest ledger</h2>
-        <p>Every Copernicus EMS Rapid Mapping flood activation since 2012, archived to blob
-           with a transparency ledger: what exists, what we archived, what upstream lost, and
-           what is inside every zip. Regenerated from the ledger after each harvest run.</p>
-        <span class="foot"><em>/cems-flood-archive/</em></span>
-      </a>
-
-      <a class="k" href="https://ashy-sea-03134990f.7.azurestaticapps.net/" target="_blank" rel="noopener">
-        <h2>Damage exposure viewer — multi-event<span class="chip chip-ext">External</span></h2>
-        <p>The multi-event viewer: satellite building-damage sources compared on one exposure
-           base, with coverage-aware admin aggregation and spreadsheet export. Currently the
-           Venezuela (M7.5) and Colombia (M7.4) earthquakes.</p>
-        <span class="foot"><em>azurestaticapps.net ↗</em></span>
-      </a>
-
-      <a class="k" href="https://chd-ds-geospatial-impact-viewer.azurewebsites.net/" target="_blank" rel="noopener">
-        <h2>Geospatial impact viewer (legacy)<span class="chip chip-ext">External</span></h2>
-        <p>The original single-event (Venezuela) viewer on Azure App Service — superseded by
-           the multi-event viewer above; retained during the transition.</p>
-        <span class="foot"><em>azurewebsites.net ↗</em></span>
-      </a>
-
-      <a class="k k-exp" href="experimental/">
+      <a class="k k-muted" href="experimental/">
         <h2>Experimental analyses<span class="chip chip-gate">Passphrase</span></h2>
         <p>Exploratory work outside the damage-evaluation line, kept behind its own
            passphrase: methods still being tested, not products. Currently the Nepal
@@ -146,8 +92,8 @@
        them — but a passphrase is only as private as the people holding it. The experimental
        pages use a separate passphrase of their own.</p>
     <p><strong>Adding a page?</strong> Create a directory under <code>pages/</code> with an
-       <code>index.html</code> and add a card above; experimental work goes under the
-       experimental hub instead. See
+       <code>index.html</code> and add a card to the hub it belongs to (Venezuela, CEMS-UNOSAT,
+       experimental), or above if it fits none. See
        <a href="https://github.com/OCHA-DAP/ds-geospatial-impact-estimates/blob/v1/pages/README.md">pages/README.md</a>.</p>
   </div>
 
