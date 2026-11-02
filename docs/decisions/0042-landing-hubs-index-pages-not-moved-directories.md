@@ -32,8 +32,8 @@ directories. Should the Venezuela and CEMS/UNOSAT work be grouped the same way?
 
 ## Decision Outcome
 
-Chosen option 2. `pages/venezuela-2026/` and `pages/cems-unosat/` are plain index pages, each
-with its own card grid, linking to the artefacts where they already live. `venezuela-2026/
+Chosen option 2. `pages/venezuela-earthquake-2026/` and `pages/cems-unosat/` are plain index pages, each
+with its own card grid, linking to the artefacts where they already live. `venezuela-earthquake-2026/
 archive/` lists superseded versions (story v1, story v2, the legacy single-event viewer) as
 muted cards. The landing grid keeps one card per hub. Within the Venezuela hub the top level is
 the shortlist to publicise (story v4, brief, multi-event viewer); everything that led there
@@ -48,14 +48,14 @@ those pages had nothing addressing their paths but their own build scripts. Neit
 * Good: nothing in flight is touched; no URL any reviewer, script or annotation uses changes.
 * Good: a hub card is one HTML block to add; retiring a superseded page is deleting a card.
 * Bad: the URL structure no longer mirrors the grouping (`/manuscript/` sits beside
-  `/venezuela-2026/` rather than under it). The README says so, and says why.
+  `/venezuela-earthquake-2026/` rather than under it). The README says so, and says why.
 * Bad: the hub blurbs duplicate the artefacts' card text; a title change has to be made twice.
 
 ## Addendum (2026-11-02, same day)
 
 Option 2 was taken for everything on the morning deploy. In the afternoon the decision was
 narrowed: **current, publicised work lives under its hub; archived work stays in place.**
-`story-v4/` → `venezuela-2026/story/`, `brief/` → `venezuela-2026/brief/`, and the three flood
+`story-v4/` → `venezuela-earthquake-2026/story/`, `brief/` → `venezuela-earthquake-2026/brief/`, and the three flood
 pages → `cems-unosat/<name>/`. Reviewer links were not a constraint after all — new versions
 will be published and links re-sent — and a hub whose address never appears in the address bar
 was judged not to be doing its job. What stays put is what the move would actually hurt:

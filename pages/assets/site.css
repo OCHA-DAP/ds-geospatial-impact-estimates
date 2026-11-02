@@ -65,7 +65,7 @@ main { padding:36px 44px 8px; }
 .k-muted h2 { color:var(--n8); }
 .k-muted .foot em { color:var(--n7); }
 
-/* Hub pages (venezuela-2026/, cems-unosat/, the decrypted experimental index): same hero, no
+/* Hub pages (venezuela-earthquake-2026/, cems-unosat/, the decrypted experimental index): same hero, no
  * particle canvas, shorter; `muted` greys it for an archive. The crumb is the back-home link
  * every nested page carries (pages/README.md). */
 .hero.flat { padding:44px 44px 36px; }
