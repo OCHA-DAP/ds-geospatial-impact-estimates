@@ -1,6 +1,6 @@
 """Platinum: the published display catalog over BOTH flood-label corpora —
 CEMS gold v1 and UNOSAT gold v2 — a versioned Portolan catalog (STAC +
-GeoParquet + PMTiles) read by pages/flood-labels/ through the token issuer.
+GeoParquet + PMTiles) read by pages/cems-unosat/flood-labels/ through the token issuer.
 
 Collections (see gie.flood_labels.platinum for the rules):
   water        UNOSAT water at acquisition (geom_water), display-simplified. PMTiles.

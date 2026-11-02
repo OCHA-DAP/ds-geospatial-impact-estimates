@@ -51,6 +51,22 @@ those pages had nothing addressing their paths but their own build scripts. Neit
   `/venezuela-2026/` rather than under it). The README says so, and says why.
 * Bad: the hub blurbs duplicate the artefacts' card text; a title change has to be made twice.
 
+## Addendum (2026-11-02, same day)
+
+Option 2 was taken for everything on the morning deploy. In the afternoon the decision was
+narrowed: **current, publicised work lives under its hub; archived work stays in place.**
+`story-v4/` → `venezuela-2026/story/`, `brief/` → `venezuela-2026/brief/`, and the three flood
+pages → `cems-unosat/<name>/`. Reviewer links were not a constraint after all — new versions
+will be published and links re-sent — and a hub whose address never appears in the address bar
+was judged not to be doing its job. What stays put is what the move would actually hurt:
+`manuscript/`, `slides/*`, `story-v3/` and earlier carry Hypothesis annotations or are only
+reached from the archive, so they keep their paths and the archive links out to them.
+
+Forwarding pages sit at the five old addresses. `publish_pages.sh`'s brief target,
+`pipelines/cems_flood/report.py --pages`, the token-issuer comments and the pipeline docstrings
+follow the new paths. The sentence in the Decision Outcome about not moving anything is
+superseded by this addendum for the current items only.
+
 ## Pros and Cons of the Options
 
 ### 1. Move directories

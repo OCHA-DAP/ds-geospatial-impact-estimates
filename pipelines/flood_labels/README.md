@@ -1,6 +1,6 @@
 # Flood labels: one display catalog over two corpora
 
-`platinum.py` builds the **platinum** layer the `pages/flood-labels/` viewer
+`platinum.py` builds the **platinum** layer the `pages/cems-unosat/flood-labels/` viewer
 reads: a versioned Portolan catalog (STAC + GeoParquet + PMTiles) over the
 CEMS flood-label gold (v1, `copernicus_ems/flood/gold/`) and the UNOSAT
 flood-label gold (v2, `unosat/gold/`). It is a *display* product: geometry is
