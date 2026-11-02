@@ -13,15 +13,21 @@ pages/
   assets/hero.js                  particle-network hero canvas
   assets/decrypt.js               envelope parsing + AES-GCM/PBKDF2 (pure, no DOM)
   assets/gate.js                  the passphrase form + back-to-home link injection
-  slides/damage-evaluation/       -> /slides/damage-evaluation/
-  manuscript/                     -> /manuscript/
+  venezuela-2026/                 -> /venezuela-2026/      (hub: the publicised shortlist — ADR-0042)
+    story/                        -> /venezuela-2026/story/     (scroll story, gated)
+    brief/                        -> /venezuela-2026/brief/     (technical brief, gated, own passphrase)
+    archive/                      -> /venezuela-2026/archive/   (index of everything superseded, below)
+  slides/damage-evaluation/       -> /slides/damage-evaluation/ (archived; stays here — Hypothesis/links)
+  slides/aa-cell-briefing*/       -> /slides/aa-cell-briefing*/ (archived)
+  manuscript/                     -> /manuscript/            (archived; stays here — Hypothesis anchors)
+  story-v3/ story-v2/ story/      -> archived earlier scroll stories
+  cems-unosat/                    -> /cems-unosat/           (hub)
+    flood-labels/                 -> /cems-unosat/flood-labels/       (CEMS + UNOSAT viewer; reads global/flood_labels/platinum via the token issuer)
+    cems-flood-archive/           -> /cems-unosat/cems-flood-archive/ (harvest ledger; written by pipelines/cems_flood/report.py --pages)
+    cems-flood-labels/            -> /cems-unosat/cems-flood-labels/  (CEMS-only viewer, superseded, kept until retired)
   vantor-activations/             -> /vantor-activations/  (tracker page + data.json snapshot)
-  cems-flood-archive/             -> /cems-flood-archive/  (CEMS harvest-ledger status page)
-  cems-flood-labels/              -> /cems-flood-labels/   (CEMS-only label viewer; superseded by flood-labels/, kept until retired)
-  flood-labels/                   -> /flood-labels/        (CEMS + UNOSAT label viewer; reads global/flood_labels/platinum via the token issuer)
-  venezuela-2026/                 -> /venezuela-2026/      (plain hub: story-v4/, brief/, multi-event viewer — the publicised shortlist; ADR-0042)
-  venezuela-2026/archive/         -> /venezuela-2026/archive/  (slides/*, manuscript/, story-v3/, story-v2/, story/, legacy viewer)
-  cems-unosat/                    -> /cems-unosat/         (plain hub grouping flood-labels/, cems-flood-archive/, cems-flood-labels/)
+  story-v4/ brief/ flood-labels/ cems-flood-archive/ cems-flood-labels/
+                                  -> forwarding pages only (old addresses; delete once unused)
   experimental/                   -> /experimental/        (gated hub for exploratory work, own passphrase — ADR-0041)
     langtang-sar-precursors/      -> /experimental/langtang-sar-precursors/   (gated)
     langtang-facet-watch/         -> /experimental/langtang-facet-watch/      (gated)
@@ -42,14 +48,14 @@ block and change the href, title, blurb and foot. Chips are optional: `chip-ext`
 hosted elsewhere, `chip-gate` for a passphrase-gated page; `k-muted` greys a card that is an
 aside (archive, superseded, experimental).
 
-**Where the card goes.** The landing grid is short on purpose: one card per line of work, and
-the few things still in review. New work gets its card in the hub it belongs to —
-`venezuela-2026/index.html` for the Venezuela damage evaluation, `cems-unosat/index.html` for
-the flood-label corpora — and only on the landing page if it fits neither. **Hubs are indexes,
-not containers** (ADR-0042): the page itself still lives at its own top-level directory, and
-the hub card links there with `../<dir>/`. The publish script, the Hypothesis annotations on
-the manuscript and the flood pipelines all address those top-level paths, so do not move a
-directory under a hub to "tidy up". Point the page's own back link at its hub.
+**Where the card goes.** The landing grid is one card per line of work. New work gets its card
+in the hub it belongs to — `venezuela-2026/index.html` for the Venezuela damage evaluation,
+`cems-unosat/index.html` for the flood-label corpora — and only on the landing page if it fits
+neither. **Current work lives under its hub** (`venezuela-2026/story/`, `cems-unosat/flood-labels/`),
+so the address says where it belongs and `../` is the hub. **Archived work stays where it was**
+(`manuscript/`, `slides/*`, `story-v3/`…) and the archive page links out to it: moving those
+would break the Hypothesis annotations and the review links on them for no gain (ADR-0042).
+When something is superseded, move its card to the archive page; leave its directory alone.
 
 **Experimental work** is the one hub that differs: it is gated under its own passphrase, so
 its card goes in the hub's *source*

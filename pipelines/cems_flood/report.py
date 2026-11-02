@@ -4,7 +4,7 @@ after a harvest to see the true current state.
 
 Reads {work_dir}/products.parquet (+ zip_contents.parquet, transfers.jsonl,
 activations.parquet when present) and writes {work_dir}/status_report.html —
-or, with --pages, pages/cems-flood-archive/index.html (with the site's
+or, with --pages, pages/cems-unosat/cems-flood-archive/index.html (with the site's
 back-home crumb), which deploys via GitHub Pages on push to v1.
 
 Run:  uv run --group etl --group api python pipelines/cems_flood/report.py [--pages]
@@ -135,7 +135,7 @@ def sample_rows_html(led: pd.DataFrame) -> str:
     return "\n".join(out)
 
 
-CRUMB = '<p class="crumb"><a href="../">← Geospatial Impact Estimates</a></p>'
+CRUMB = '<p class="crumb"><a href="../">← CEMS-UNOSAT</a></p>'  # ../ is the cems-unosat/ hub
 
 DROP_REASONS = {
     # per-code explanation when an activation never reaches the label corpus
@@ -343,12 +343,12 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument(
         "--pages",
         action="store_true",
-        help="write to pages/cems-flood-archive/index.html (deploys on push to v1)",
+        help="write to pages/cems-unosat/cems-flood-archive/index.html (deploys on push to v1)",
     )
     args = ap.parse_args(argv)
     dest = None
     if args.pages:
-        dest = Path(__file__).parents[2] / "pages" / "cems-flood-archive" / "index.html"
+        dest = Path(__file__).parents[2] / "pages" / "cems-unosat" / "cems-flood-archive" / "index.html"
     build(args.work_dir, dest=dest, crumb=args.pages)
 
 

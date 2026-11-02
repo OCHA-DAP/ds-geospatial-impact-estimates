@@ -150,9 +150,9 @@ if [[ $TARGET == all || $TARGET == brief ]]; then
     && BRIEF_PASS="$(< "$HOME/.gie-page-passphrase-brief")"
   if [[ -n $BRIEF_PASS ]]; then
     echo "brief passphrase: its own (not the shared one)"
-    GIE_PAGE_PASS="$BRIEF_PASS" encrypt manuscript_brief.html "$PAGES_DIR/brief/content.enc"
+    GIE_PAGE_PASS="$BRIEF_PASS" encrypt manuscript_brief.html "$PAGES_DIR/venezuela-2026/brief/content.enc"
   else
-    encrypt manuscript_brief.html "$PAGES_DIR/brief/content.enc"
+    encrypt manuscript_brief.html "$PAGES_DIR/venezuela-2026/brief/content.enc"
   fi
 fi
 

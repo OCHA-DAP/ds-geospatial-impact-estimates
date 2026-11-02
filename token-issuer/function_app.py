@@ -44,7 +44,7 @@ ALLOWLIST = {
         "project_prefix": "ds-regional-forecasts",
         "dirs": {"assets": "processed/site-assets", "raw": "raw"},
     },
-    # CEMS flood label corpus viewer (GitHub Pages, pages/cems-flood-labels/) ONLY — the
+    # CEMS flood label corpus viewer (GitHub Pages, pages/cems-unosat/cems-flood-labels/) ONLY — the
     # academic partner gets files directly, not via tokens. Scoped to the
     # published platinum layer (a versioned Portolan catalog: labels
     # GeoParquet + PMTiles + index); gold/silver/bronze stay internal. Same
@@ -57,7 +57,7 @@ ALLOWLIST = {
         "project_prefix": "copernicus_ems/flood",
         "dirs": {"platinum": "platinum"},
     },
-    # Combined flood-label corpus viewer (GitHub Pages, pages/flood-labels/):
+    # Combined flood-label corpus viewer (GitHub Pages, pages/cems-unosat/flood-labels/):
     # CEMS + UNOSAT in one Portolan catalog (pipelines/flood_labels/platinum.py).
     # Same scoping rule as cems-flood-labels: the platinum directory only.
     "flood-labels": {
