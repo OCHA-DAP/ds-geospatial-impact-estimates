@@ -67,7 +67,11 @@ Every nested page links back to the landing page (team convention — KB
 itself, with a **relative** href (`../`, never `/` — project sites live under `/<repo>/`). The
 gated artefacts don't need it in their source: `gate.js` injects a fixed back-to-home pill into
 the decrypted document at display time, so it survives republishes without a re-render and
-appears even when a cached passphrase skips the gate page.
+appears even when a cached passphrase skips the gate page. The two publicised Venezuela pages
+(the public story and the brief) are the deliberate exception (Zack, 2026-11-02): no back link,
+because a reader sent that link should stay on the page rather than be invited back to the hub.
+Neither page has a gate any more, so neither carries a link; the `data-no-home-link` opt-out
+in `gate.js` stays for any future gated page that wants the same.
 
 That shared edit to `index.html` is the deliberate trade-off for having no build system. The
 sibling repo `ds-storm-impact-harmonisation` discovers products by globbing `page.toml`
@@ -133,9 +137,9 @@ keeps serving the older version.
 ```
 
 The brief and the story are **public**: `venezuela-earthquake-2026/brief/index.html` is the rendered
-document itself, not a gate, with the back-to-hub pill added at the top of `<body>` (the same pill
-`gate.js` injects on gated pages). The `brief` target writes it there directly; nothing is encrypted
-and no passphrase is read for it.
+document itself, not a gate, and carries no back-to-hub link (the deliberate exception noted
+above). The `brief` target copies it there directly; nothing is encrypted and no passphrase is
+read for it.
 
 `--ship` branches off `origin/v1`, commits, pushes and opens the PR, then prints the merge
 command. It stops there on purpose: **merging is what makes an artefact public**, so that stays a

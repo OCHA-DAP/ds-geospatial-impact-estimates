@@ -122,39 +122,25 @@ encrypt() {
   CHANGED+=("$out")
 }
 
-# Public pages have no gate.js to inject the back-to-hub pill, so add the same pill here (keep it
-# in step with HOME_LINK in pages/assets/gate.js). Refuses the superseded password.html gate for
-# the reason encrypt_page.py does: it would publish a page that denies every reader.
+# A public page is the rendered document itself, copied as-is. No back-to-hub pill: the two
+# publicised Venezuela pages deliberately carry none (Zack, 2026-11-02; see pages/README.md).
+# Refuses the superseded password.html gate for the reason encrypt_page.py does: it would
+# publish a page that denies every reader. Leaves the file alone when nothing changed, so a
+# no-op run makes no commit.
 publish_plain() {
-  local html=$1 out=$2 back_href=$3 back_label=$4
+  local html=$1 out=$2
   step "Publishing $(basename "$html") as plain HTML"
   grep -q 'password.html' "$PAPER_DIR/$html" \
     && die "$html still carries the superseded password.html gate — the site is unchanged"
+  grep -qi '<body' "$PAPER_DIR/$html" \
+    || die "$html has no <body> tag — not a complete document; the site is unchanged"
   mkdir -p "$(dirname "$out")"
-  uv run --project "$REPO_ROOT" python - "$PAPER_DIR/$html" "$out" "$back_href" "$back_label" <<'PY' \
-    || die "publishing $html failed — the site is unchanged"
-import pathlib, re, sys
-src, out, href, label = sys.argv[1:5]
-html = pathlib.Path(src).read_text()
-pill = f"""
-<style>
-  .gie-home-link {{ position:fixed; top:10px; left:10px; z-index:1000; padding:6px 12px;
-    font:500 13px/1 'Roboto',system-ui,sans-serif; color:#1e795f; background:#e9f5f1;
-    border:1px solid #d4eae4; border-radius:4px; text-decoration:none; }}
-  .gie-home-link:hover {{ background:#d4eae4; }}
-  @media print {{ .gie-home-link {{ display:none; }} }}
-</style>
-<a class="gie-home-link" href="{href}">← {label}</a>"""
-new, n = re.subn(r"<body[^>]*>", lambda m: m.group(0) + pill, html, count=1, flags=re.I)
-if n != 1:
-    sys.exit(f"error: {src} has no <body> tag")
-dest = pathlib.Path(out)
-if dest.exists() and dest.read_text() == new:
-    print("unchanged: byte-identical to what is published")
-else:
-    dest.write_text(new)
-    print(f"wrote {out} ({len(new)/1e6:.2f} MB)")
-PY
+  if [[ -f $out ]] && cmp -s "$PAPER_DIR/$html" "$out"; then
+    echo "unchanged: byte-identical to what is published"
+  else
+    cp "$PAPER_DIR/$html" "$out" || die "copy failed for $html — the site is unchanged"
+    echo "wrote $out ($(du -h "$out" | cut -f1))"
+  fi
   CHANGED+=("$out")
 }
 
@@ -181,8 +167,7 @@ if [[ $TARGET == all || $TARGET == brief ]]; then
   # rendered document is published as-is at the hub path. Do not reintroduce an encrypt call
   # here — it would write a dead content.enc beside the plain page and the site would silently
   # keep serving the old brief.
-  publish_plain manuscript_brief.html "$PAGES_DIR/venezuela-earthquake-2026/brief/index.html" \
-    "../" "Venezuela Earthquake 2026"
+  publish_plain manuscript_brief.html "$PAGES_DIR/venezuela-earthquake-2026/brief/index.html"
 fi
 
 step "Result"
