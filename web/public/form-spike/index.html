@@ -37,14 +37,15 @@ fetch("/api/session", { cache: "no-store" }).then((r) => r.json()).then((d) => {
     ? `<span class="chip chip-ok">signed in by link</span> <b>${d.email}</b> · session until ${new Date(d.exp * 1000).toLocaleString()} · <a href="/form-spike/submit.html">open the form</a> · <a href="/api/logout">sign out</a>`
     : '<span class="chip chip-info">no session</span> Ask for a link below, then open it from your email.');
 }).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + e; });
-document.getElementById("req").onsubmit = async () => {
+document.getElementById("req").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
   const email = document.getElementById("email").value, btn = document.getElementById("send"), msg = document.getElementById("reqmsg");
   btn.disabled = true; msg.textContent = "sending …";
   try {
     const r = await fetch("/api/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
     const d = await r.json(); msg.textContent = d.message;
   } catch (e) { msg.textContent = "Request failed: " + e; }
-  btn.disabled = false; return false;
-};
+  btn.disabled = false;
+});
 </script>
 </body></html>
