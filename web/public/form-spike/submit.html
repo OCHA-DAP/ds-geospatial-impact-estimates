@@ -82,20 +82,22 @@
 <label><input type="checkbox" name="licence_ok" checked> This version is released under the organisation's default licence</label>
 </fieldset>
 
-<button class="btn" id="show" type="button">Show what would be sent to the registry</button>
+<button class="btn" id="show" type="button">Submit (echoed back, nothing stored)</button>
 <pre id="out" hidden></pre>
 </form>
 </main></div>
 <script>
 let sess = null;
-try { sess = JSON.parse(sessionStorage.getItem("magic_session") || "null"); } catch (e) {}
 const sbox = document.getElementById("session");
-if (sess && sess.exp * 1000 > Date.now()) {
-  sbox.innerHTML = `<span class="chip chip-ok">signed in by link</span> <b>${sess.email}</b> · session until ${new Date(sess.exp * 1000).toLocaleString()}`;
-  document.querySelector("[name=contact]").value = sess.email;
-} else {
-  sbox.innerHTML = '<span class="chip chip-warn">no session</span> Open the link from your email first. The form is readable without it, but in the real build nothing can be submitted.';
-}
+fetch("/api/session", { cache: "no-store" }).then((r) => r.json()).then((d) => {
+  sess = d.email ? d : null;
+  if (sess) {
+    sbox.innerHTML = `<span class="chip chip-ok">signed in by link</span> <b>${sess.email}</b> · session until ${new Date(sess.exp * 1000).toLocaleString()} · <a href="/api/logout">sign out</a>`;
+    document.querySelector("[name=contact]").value = sess.email;
+  } else {
+    sbox.innerHTML = '<span class="chip chip-warn">no session</span> <a href="/form-spike/index.html">Ask for a sign-in link</a> first. You can read the form, but the submit call will be refused.';
+  }
+});
 // Mock introspection: parse a GeoJSON in the browser and offer its columns as dropdowns.
 const $ = (id) => document.getElementById(id);
 const CLASSES = ["0 no damage", "1 possibly damaged", "2 damaged", "3 destroyed", "not assessed"];
@@ -143,9 +145,11 @@ $("show").onclick = () => {
     const s = tr.querySelector("select"); const c = tr.querySelector("input");
     return s ? { native: s.dataset.v, class: s.value, damaged: c.checked } : null;
   }).filter(Boolean);
-  o.submitted_by = window.__principal || null;
-  $("out").textContent = JSON.stringify(o, null, 2); $("out").hidden = false;
+  $("out").hidden = false; $("out").textContent = "submitting …";
+  fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) })
+    .then(async (r) => ({ status: r.status, body: await r.json() }))
+    .then((res) => { $("out").textContent = `HTTP ${res.status}\n` + JSON.stringify(res.body, null, 2); })
+    .catch((e) => { $("out").textContent = "submit failed: " + e; });
 };
-window.__principal = sess ? { email: sess.email, via: "magic-link" } : null;
 </script>
 </body></html>

@@ -23,5 +23,8 @@
       "redirect": "/form-spike/index.html?forbidden=1",
       "statusCode": 302
     }
+  },
+  "platform": {
+    "apiRuntime": "node:18"
   }
 }

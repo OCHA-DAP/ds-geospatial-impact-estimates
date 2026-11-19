@@ -18,7 +18,7 @@
 <div class="row"><div><input type="email" id="email" placeholder="you@organisation.org" required></div><div><button class="btn" id="send" type="submit">Send me a link</button></div></div>
 </form>
 <p id="reqmsg" class="muted"></p>
-<p class="muted">In this spike the link is issued by a script on the team's side rather than by this page, because the Function that would do it is not deployed. The three test addresses have a live link in their inbox; the request above only shows the message a provider would see.</p>
+<p class="muted">The link signs in the browser it is opened in and the session then lasts 30 days on that device. Only three test addresses are on the list for this spike.</p>
 
 <h2>Also tested: sign-in through Microsoft or GitHub accounts</h2>
 <p>The Static Web App's built-in sign-in. It works, including for Microsoft accounts outside the UN tenant, but it requires an account with one of those providers and an invitation per person, so the emailed link above is the preferred path. Kept here as the fallback.</p>
@@ -28,18 +28,23 @@
 <script src="/form-spike/_auth.js"></script>
 <script>
 const s = document.getElementById("session");
-let sess = null;
-try { sess = JSON.parse(sessionStorage.getItem("magic_session") || "null"); } catch (e) {}
-if (sess && sess.exp * 1000 > Date.now()) {
-  s.innerHTML = `<span class="chip chip-ok">signed in by link</span> <b>${sess.email}</b> · link session until ${new Date(sess.exp * 1000).toLocaleString()} · <a href="/form-spike/submit.html">open the form</a> · <a href="#" id="out">sign out</a>`;
-  document.getElementById("out").onclick = (e) => { e.preventDefault(); sessionStorage.removeItem("magic_session"); location.reload(); };
-} else {
-  s.innerHTML = '<span class="chip chip-info">no session</span> Open the link from your email to sign in.';
-}
-document.getElementById("req").onsubmit = () => {
-  const v = document.getElementById("email").value;
-  document.getElementById("reqmsg").textContent = v ? `If ${v} is on the provider list, a sign-in link is on its way. Check your junk folder if it has not arrived in a few minutes.` : "";
-  return false;
+const q = new URLSearchParams(location.search);
+const note = q.get("bad") ? '<p><span class="chip chip-warn">link rejected</span> That link is invalid or has expired. Request a new one below.</p>'
+  : q.get("denied") ? '<p><span class="chip chip-warn">401</span> That page uses the Static Web App sign-in, below.</p>'
+  : q.get("forbidden") ? '<p><span class="chip chip-warn">403</span> Signed in, but that page needs the <code>provider</code> role from an invitation.</p>' : "";
+fetch("/api/session", { cache: "no-store" }).then((r) => r.json()).then((d) => {
+  s.innerHTML = note + (d.email
+    ? `<span class="chip chip-ok">signed in by link</span> <b>${d.email}</b> · session until ${new Date(d.exp * 1000).toLocaleString()} · <a href="/form-spike/submit.html">open the form</a> · <a href="/api/logout">sign out</a>`
+    : '<span class="chip chip-info">no session</span> Ask for a link below, then open it from your email.');
+}).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + e; });
+document.getElementById("req").onsubmit = async () => {
+  const email = document.getElementById("email").value, btn = document.getElementById("send"), msg = document.getElementById("reqmsg");
+  btn.disabled = true; msg.textContent = "sending …";
+  try {
+    const r = await fetch("/api/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+    const d = await r.json(); msg.textContent = d.message;
+  } catch (e) { msg.textContent = "Request failed: " + e; }
+  btn.disabled = false; return false;
 };
 </script>
 </body></html>
