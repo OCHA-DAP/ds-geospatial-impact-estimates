@@ -8,12 +8,6 @@
   },
   "routes": [
     {
-      "route": "/form-spike/submit.html",
-      "allowedRoles": [
-        "authenticated"
-      ]
-    },
-    {
       "route": "/form-spike/provider.html",
       "allowedRoles": [
         "provider"

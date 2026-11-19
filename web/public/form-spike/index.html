@@ -1,31 +1,45 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Provider form spike</title>
+<title>Provider sign-in</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/form-spike/_shared.css">
 </head><body><div class="wrap">
 <header class="hero"><p class="eyebrow">OCHA Centre for Humanitarian Data · Data Science · throwaway spike</p>
-<h1>Provider submission form: auth test</h1>
-<p>Does the Static Web App's built-in sign-in work for external providers without any change to the UN directory? This page and the two behind it are the test.</p></header>
+<h1>Damage analysis submission: sign in</h1>
+<p>Providers sign in with a link sent to the address on the provider list. No account with any identity provider is needed.</p></header>
 <main>
+<div id="session" class="auth">checking for a session …</div>
+
+<h2>Sign in with an emailed link</h2>
+<p>Enter the address your organisation registered. If it is on the provider list in Listmonk, a one-time link arrives from the team's un.org address. Addresses not on the list get nothing, and the page says the same thing either way so the list cannot be probed.</p>
+<form id="req" onsubmit="return false">
+<label>Email address</label>
+<div class="row"><div><input type="email" id="email" placeholder="you@organisation.org" required></div><div><button class="btn" id="send" type="submit">Send me a link</button></div></div>
+</form>
+<p id="reqmsg" class="muted"></p>
+<p class="muted">In this spike the link is issued by a script on the team's side rather than by this page, because the Function that would do it is not deployed. The three test addresses have a live link in their inbox; the request above only shows the message a provider would see.</p>
+
+<h2>Also tested: sign-in through Microsoft or GitHub accounts</h2>
+<p>The Static Web App's built-in sign-in. It works, including for Microsoft accounts outside the UN tenant, but it requires an account with one of those providers and an invitation per person, so the emailed link above is the preferred path. Kept here as the fallback.</p>
 <div id="auth" class="auth">checking /.auth/me …</div>
-
-<h2>What is being tested</h2>
-<table>
-<thead><tr><th>Claim</th><th>How this spike checks it</th></tr></thead>
-<tbody>
-<tr><td>Any Microsoft account can sign in, not only UN tenant users</td><td>The Microsoft button goes to the pre-configured provider. Sign in with a non-UN account (personal, or another organisation's) and the box above should show you.</td></tr>
-<tr><td>GitHub works as a second provider</td><td>The GitHub button. For labs without Microsoft accounts.</td></tr>
-<tr><td>Anonymous users are blocked from the form</td><td><a href="/form-spike/submit.html">submit.html</a> requires the <code>authenticated</code> role. Signed out you land back here with a 401 note.</td></tr>
-<tr><td>Invitations are the provider list</td><td><a href="/form-spike/provider.html">provider.html</a> requires a custom <code>provider</code> role. Nobody has it until an invitation is created for this hostname, so expect 403.</td></tr>
-</tbody>
-</table>
-
-<h2>Pages</h2>
-<p><a class="btn" href="/form-spike/submit.html">Open the form mockup (signed-in users)</a>
-<a class="btn btn-2" href="/form-spike/provider.html">Open the provider-only page (invited role)</a></p>
-<p class="muted">Links use explicit <code>.html</code> paths on purpose: the viewer's navigation fallback rewrites unknown extensionless paths to the map.</p>
+<p><a class="btn btn-2" href="/form-spike/provider.html">Provider-only page (needs an invited role; expect 403)</a></p>
 </main></div>
 <script src="/form-spike/_auth.js"></script>
+<script>
+const s = document.getElementById("session");
+let sess = null;
+try { sess = JSON.parse(sessionStorage.getItem("magic_session") || "null"); } catch (e) {}
+if (sess && sess.exp * 1000 > Date.now()) {
+  s.innerHTML = `<span class="chip chip-ok">signed in by link</span> <b>${sess.email}</b> · link session until ${new Date(sess.exp * 1000).toLocaleString()} · <a href="/form-spike/submit.html">open the form</a> · <a href="#" id="out">sign out</a>`;
+  document.getElementById("out").onclick = (e) => { e.preventDefault(); sessionStorage.removeItem("magic_session"); location.reload(); };
+} else {
+  s.innerHTML = '<span class="chip chip-info">no session</span> Open the link from your email to sign in.';
+}
+document.getElementById("req").onsubmit = () => {
+  const v = document.getElementById("email").value;
+  document.getElementById("reqmsg").textContent = v ? `If ${v} is on the provider list, a sign-in link is on its way. Check your junk folder if it has not arrived in a few minutes.` : "";
+  return false;
+};
+</script>
 </body></html>

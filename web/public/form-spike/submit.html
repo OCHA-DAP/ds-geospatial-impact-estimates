@@ -8,8 +8,8 @@
 <h1>Damage analysis submission</h1>
 <p>The three levels from the metadata spec. In the real form levels 1 and 2 are filled once and reused; here they are shown together so the whole shape is visible.</p></header>
 <main>
-<div id="auth" class="auth">checking /.auth/me …</div>
-<p class="nav"><a href="/form-spike/index.html">Back to the test page</a></p>
+<div id="session" class="auth">checking for a session …</div>
+<p class="nav"><a href="/form-spike/index.html">Sign-in page</a></p>
 
 <form id="f" onsubmit="return false">
 <fieldset><legend>1 · Organisation (once)</legend>
@@ -86,8 +86,16 @@
 <pre id="out" hidden></pre>
 </form>
 </main></div>
-<script src="/form-spike/_auth.js"></script>
 <script>
+let sess = null;
+try { sess = JSON.parse(sessionStorage.getItem("magic_session") || "null"); } catch (e) {}
+const sbox = document.getElementById("session");
+if (sess && sess.exp * 1000 > Date.now()) {
+  sbox.innerHTML = `<span class="chip chip-ok">signed in by link</span> <b>${sess.email}</b> · session until ${new Date(sess.exp * 1000).toLocaleString()}`;
+  document.querySelector("[name=contact]").value = sess.email;
+} else {
+  sbox.innerHTML = '<span class="chip chip-warn">no session</span> Open the link from your email first. The form is readable without it, but in the real build nothing can be submitted.';
+}
 // Mock introspection: parse a GeoJSON in the browser and offer its columns as dropdowns.
 const $ = (id) => document.getElementById(id);
 const CLASSES = ["0 no damage", "1 possibly damaged", "2 damaged", "3 destroyed", "not assessed"];
@@ -138,6 +146,6 @@ $("show").onclick = () => {
   o.submitted_by = window.__principal || null;
   $("out").textContent = JSON.stringify(o, null, 2); $("out").hidden = false;
 };
-fetch("/.auth/me").then((r) => (r.ok ? r.json() : { clientPrincipal: null })).then((d) => { window.__principal = d.clientPrincipal && { id: d.clientPrincipal.userId, provider: d.clientPrincipal.identityProvider, user: d.clientPrincipal.userDetails }; });
+window.__principal = sess ? { email: sess.email, via: "magic-link" } : null;
 </script>
 </body></html>
