@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Submission form mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/form-spike/_shared.css">
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">throwaway spike · mockup, nothing is stored</p>
+<h1>Damage analysis submission</h1>
+<p>The three levels from the metadata spec. In the real form levels 1 and 2 are filled once and reused; here they are shown together so the whole shape is visible.</p></header>
+<main>
+<div id="auth" class="auth">checking /.auth/me …</div>
+<p class="nav"><a href="/form-spike/index.html">Back to the test page</a></p>
+
+<form id="f" onsubmit="return false">
+<fieldset><legend>1 · Organisation (once)</legend>
+<div class="row">
+<div><label>Organisation name</label><input type="text" name="org_name" value="Example Lab"></div>
+<div><label>Short slug</label><input type="text" name="org_slug" value="example_lab" pattern="[a-z0-9_]+"><p class="help">Lowercase, used in every path and legend entry.</p></div>
+<div><label>Organisation type</label><select name="org_type"><option>UN agency</option><option>NGO</option><option selected>academic</option><option>private sector</option><option>government</option><option>network</option></select></div>
+<div><label>Primary contact email</label><input type="email" name="contact" value="" placeholder="prefilled from the signed-in identity"></div>
+</div>
+<label>Methods the organisation runs</label>
+<div class="row"><div>
+<label><input type="checkbox" name="m" value="optical_ml" checked> optical VHR machine learning</label>
+<label><input type="checkbox" name="m" value="sar_change"> SAR change detection</label>
+<label><input type="checkbox" name="m" value="sar_coherence"> SAR coherence</label></div><div>
+<label><input type="checkbox" name="m" value="expert"> expert visual interpretation</label>
+<label><input type="checkbox" name="m" value="crowd"> crowd mapping</label>
+<label><input type="checkbox" name="m" value="field"> field survey</label></div></div>
+<div class="row">
+<div><label>Default licence</label><select name="licence"><option>CC BY</option><option>CC BY-SA</option><option>ODbL</option><option>provider terms (link)</option><option>restricted</option></select></div>
+<div><label>May be shown publicly</label><select name="public"><option>yes</option><option>no</option></select></div>
+</div>
+</fieldset>
+
+<fieldset><legend>2 · Product definition (once per product)</legend>
+<div class="row">
+<div><label>Product name</label><input type="text" name="product" value="QuakeDamage graded footprints"></div>
+<div><label>Category</label><select name="category"><option>analysis</option><option>reference</option></select></div>
+<div><label>Sensing method</label><select name="method"><option>optical VHR machine learning</option><option>SAR change detection</option><option>SAR coherence</option><option>expert visual interpretation</option><option>crowd mapping</option><option>field survey</option></select></div>
+<div><label>Imagery source and resolution</label><input type="text" name="imagery" value="Vantor WorldView-3, 30 cm"></div>
+<div><label>File format</label><select name="format"><option>GeoJSON</option><option>GeoPackage</option><option>zipped Shapefile</option><option>GeoParquet</option><option>CSV with lon/lat</option><option>GeoTIFF / COG</option></select></div>
+<div><label>Geometry mode</label><select name="geom"><option>building footprints (polygons)</option><option>points</option><option>building ids keyed to a base, no geometry</option><option>damage areas or blocks</option><option>raster</option></select></div>
+<div><label>Footprint base and release</label><input type="text" name="base" value="Overture 2026-05"></div>
+<div><label>Damage encoding</label><select name="enc"><option>categorical class</option><option>binary flag</option><option>continuous score</option><option>mass with units</option></select></div>
+<div><label>Analysed extent</label><select name="extent"><option>separate polygon</option><option selected>every assessed building is in the file</option><option>none, damaged buildings only</option></select></div>
+<div><label>Confidence column meaning</label><select name="conf"><option>none</option><option>continuous, higher = more likely damaged</option><option>categorical, ordered</option></select></div>
+</div>
+<label>Method description</label><textarea name="desc">Deep-learning model classifying building footprints from pre- and post-event imagery.</textarea>
+<label>Known limitations</label><textarea name="limits">Lighter damage under-detected; single-scene areas less reliable.</textarea>
+</fieldset>
+
+<fieldset><legend>3 · This delivery</legend>
+<div class="row">
+<div><label>Event</label><select name="event"><option>20260624-ve-earthquake · Venezuela earthquake</option><option>20260810-co-earthquake · Colombia earthquake</option></select></div>
+<div><label>Version label</label><input type="text" name="version" value="v1"></div>
+<div><label>Supersedes</label><select name="supersedes"><option>none</option><option>v0 (25 Jun 2026)</option></select></div>
+<div><label>Status</label><select name="status"><option>preliminary</option><option>final</option></select></div>
+<div><label>Earliest post-event image</label><input type="date" name="post_from" value="2026-06-25"></div>
+<div><label>Latest post-event image</label><input type="date" name="post_to" value="2026-06-28"></div>
+</div>
+<label>Product URL on HDX (or direct download)</label>
+<input type="text" name="url" value="/form-spike/sample.geojson">
+<p class="help">The real form calls an introspection endpoint that reads the file. This mockup tries to read a GeoJSON directly in the browser, which only works where the host allows cross-origin reads; HDX resources will not, so the default above is a 300-feature sample served next to this page.</p>
+<button class="btn btn-2" id="read" type="button">Read the file</button> <span id="readmsg" class="muted"></span>
+<div id="mapping" hidden>
+<div class="row">
+<div><label>Damage column</label><select name="dmg_col" id="dmg_col"></select></div>
+<div><label>Building id column</label><select name="id_col" id="id_col"></select></div>
+</div>
+<label>Value mapping: each native value to our scale</label>
+<table id="map"><thead><tr><th>Native value</th><th>Count</th><th>Our class</th><th>Counts as damaged in the headline</th></tr></thead><tbody></tbody></table>
+<div class="row">
+<div><label>Confidence column</label><select name="conf_col" id="conf_col"></select></div>
+<div><label>Scene count column (optional)</label><select name="scene_col" id="scene_col"></select></div>
+</div>
+</div>
+<div class="row">
+<div><label>Headline: buildings analysed</label><input type="number" name="n_analysed" value="478000"></div>
+<div><label>Headline: buildings damaged</label><input type="number" name="n_damaged" value="61000"></div>
+</div>
+<label><input type="checkbox" name="licence_ok" checked> This version is released under the organisation's default licence</label>
+</fieldset>
+
+<button class="btn" id="show" type="button">Show what would be sent to the registry</button>
+<pre id="out" hidden></pre>
+</form>
+</main></div>
+<script src="/form-spike/_auth.js"></script>
+<script>
+// Mock introspection: parse a GeoJSON in the browser and offer its columns as dropdowns.
+const $ = (id) => document.getElementById(id);
+const CLASSES = ["0 no damage", "1 possibly damaged", "2 damaged", "3 destroyed", "not assessed"];
+function fill(sel, cols, none) {
+  sel.innerHTML = (none ? '<option value="">(none)</option>' : "") + cols.map((c) => `<option>${c}</option>`).join("");
+}
+function values(feats, col) {
+  const m = new Map();
+  for (const f of feats) { const v = String(f.properties?.[col]); m.set(v, (m.get(v) || 0) + 1); }
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+}
+let feats = [];
+$("read").onclick = async () => {
+  const url = document.querySelector("[name=url]").value;
+  $("readmsg").textContent = "reading …";
+  let gj;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    gj = await r.json();
+  } catch (e) {
+    $("readmsg").textContent = "Could not read it from the browser (" + e.message + "). The real form does this server-side.";
+    return;
+  }
+  feats = gj.features || [];
+  const cols = Object.keys(feats[0]?.properties || {});
+  $("readmsg").textContent = `${feats.length.toLocaleString()} features · columns: ${cols.join(", ")}`;
+  fill($("dmg_col"), cols); fill($("id_col"), cols, true); fill($("conf_col"), cols, true); fill($("scene_col"), cols, true);
+  $("mapping").hidden = false;
+  const guess = cols.find((c) => /dmg|damage|grade|class/i.test(c)) || cols[0];
+  $("dmg_col").value = guess; $("dmg_col").onchange(); 
+};
+$("dmg_col").onchange = () => {
+  const tb = $("map").querySelector("tbody"); tb.innerHTML = "";
+  const vals = values(feats, $("dmg_col").value);
+  if (vals.length > 50) { tb.innerHTML = `<tr><td colspan="4">${vals.length} distinct values: this looks continuous, use a threshold instead.</td></tr>`; return; }
+  for (const [v, n] of vals) {
+    tb.insertAdjacentHTML("beforeend", `<tr><td><code>${v}</code></td><td>${n.toLocaleString()}</td><td><select data-v="${v}">${CLASSES.map((c) => `<option>${c}</option>`).join("")}</select></td><td><input type="checkbox" data-d="${v}"></td></tr>`);
+  }
+};
+$("show").onclick = () => {
+  const fd = new FormData($("f")); const o = {};
+  for (const [k, v] of fd.entries()) { if (o[k] !== undefined) { o[k] = [].concat(o[k], v); } else { o[k] = v; } }
+  o.value_mapping = [...$("map").querySelectorAll("tbody tr")].map((tr) => {
+    const s = tr.querySelector("select"); const c = tr.querySelector("input");
+    return s ? { native: s.dataset.v, class: s.value, damaged: c.checked } : null;
+  }).filter(Boolean);
+  o.submitted_by = window.__principal || null;
+  $("out").textContent = JSON.stringify(o, null, 2); $("out").hidden = false;
+};
+fetch("/.auth/me").then((r) => (r.ok ? r.json() : { clientPrincipal: null })).then((d) => { window.__principal = d.clientPrincipal && { id: d.clientPrincipal.userId, provider: d.clientPrincipal.identityProvider, user: d.clientPrincipal.userDetails }; });
+</script>
+</body></html>

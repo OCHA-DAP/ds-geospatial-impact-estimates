@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Provider form spike</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/form-spike/_shared.css">
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">OCHA Centre for Humanitarian Data · Data Science · throwaway spike</p>
+<h1>Provider submission form: auth test</h1>
+<p>Does the Static Web App's built-in sign-in work for external providers without any change to the UN directory? This page and the two behind it are the test.</p></header>
+<main>
+<div id="auth" class="auth">checking /.auth/me …</div>
+
+<h2>What is being tested</h2>
+<table>
+<thead><tr><th>Claim</th><th>How this spike checks it</th></tr></thead>
+<tbody>
+<tr><td>Any Microsoft account can sign in, not only UN tenant users</td><td>The Microsoft button goes to the pre-configured provider. Sign in with a non-UN account (personal, or another organisation's) and the box above should show you.</td></tr>
+<tr><td>GitHub works as a second provider</td><td>The GitHub button. For labs without Microsoft accounts.</td></tr>
+<tr><td>Anonymous users are blocked from the form</td><td><a href="/form-spike/submit.html">submit.html</a> requires the <code>authenticated</code> role. Signed out you land back here with a 401 note.</td></tr>
+<tr><td>Invitations are the provider list</td><td><a href="/form-spike/provider.html">provider.html</a> requires a custom <code>provider</code> role. Nobody has it until an invitation is created for this hostname, so expect 403.</td></tr>
+</tbody>
+</table>
+
+<h2>Pages</h2>
+<p><a class="btn" href="/form-spike/submit.html">Open the form mockup (signed-in users)</a>
+<a class="btn btn-2" href="/form-spike/provider.html">Open the provider-only page (invited role)</a></p>
+<p class="muted">Links use explicit <code>.html</code> paths on purpose: the viewer's navigation fallback rewrites unknown extensionless paths to the map.</p>
+</main></div>
+<script src="/form-spike/_auth.js"></script>
+</body></html>
