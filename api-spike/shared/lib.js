@@ -10,6 +10,7 @@ function secrets() {
   if (SECRETS) return SECRETS;
   if (!fs.existsSync(SECRETS_PATH)) throw new Error("secrets.json missing: the deploy workflow did not write it");
   SECRETS = JSON.parse(fs.readFileSync(SECRETS_PATH, "utf8"));
+  if (SECRETS.blob_sas) SECRETS.blob_sas = SECRETS.blob_sas.replace(/^\?/, ""); // team SAS values carry a leading ?
   for (const k of ["listmonk_base_url", "listmonk_user", "listmonk_key", "signing_secret"]) {
     if (!SECRETS[k]) throw new Error(`secrets.json is missing ${k}`);
   }
