@@ -22,8 +22,8 @@
 <form id="f" onsubmit="return false">
 <fieldset><legend>1 · Organisation (once)</legend>
 <div class="row">
-<div><label>Organisation name</label><input type="text" name="org_name" value="Example Lab"></div>
-<div><label>Short slug</label><input type="text" name="org_slug" value="example_lab" pattern="[a-z0-9_]+"><p class="help">Lowercase, used in every path and legend entry.</p></div>
+<div><label>Organisation name</label><input type="text" name="org_name" value="Example Lab"><p class="help">The registry derives the machine key from this (<code id="slugprev">example_lab</code>); providers never type identifiers.</p></div>
+<input type="hidden" name="org_slug" id="org_slug" value="example_lab">
 <div><label>Organisation type</label><select name="org_type"><option>UN agency</option><option>NGO</option><option selected>academic</option><option>private sector</option><option>government</option><option>network</option></select></div>
 <div><label>Primary contact email</label><input type="email" name="contact" value="" placeholder="prefilled from the signed-in session"></div>
 </div>
@@ -82,15 +82,18 @@
 
 <fieldset><legend>3 · This delivery</legend>
 <div class="row">
-<div><label>Event</label><select name="event"><option>20260624-ve-earthquake · Venezuela earthquake</option><option>20260810-co-earthquake · Colombia earthquake</option></select></div>
-<div><label>Version label</label><input type="text" name="version" value="v1"></div>
-<div><label>Is this a revision of an earlier delivery?</label><select name="revision" id="revision"><option value="no">no, first delivery for this event</option><option value="yes">yes</option></select></div>
-<div data-show="revision=yes"><label>Supersedes</label><select name="supersedes"><option>v0 (25 Jun 2026)</option></select><p class="help">The earlier version stays available; the viewer shows the latest.</p></div>
+<div><label>Event</label><select name="event" id="event"><option value="20260624-ve-earthquake" data-onset="2026-06-24">20260624-ve-earthquake · Venezuela earthquake</option><option value="20260810-co-earthquake" data-onset="2026-08-10">20260810-co-earthquake · Colombia earthquake</option></select></div>
+<div><label>Delivery</label><input type="text" name="delivery" id="delivery" readonly value=""><p class="help">Assigned by the registry: product, event, delivery number and the moment of submission. The file's checksum is recorded with it. This is the version; nothing the provider types can change it.</p></div>
+<div><label>Your own version name (optional)</label><input type="text" name="provider_version" placeholder="as it appears in your release notes, e.g. v1.2"></div>
 <div><label>Status</label><select name="status"><option>preliminary</option><option>final</option></select></div>
-<div><label>Earliest post-event image</label><input type="date" name="post_from" value="2026-06-25"></div>
-<div><label>Latest post-event image</label><input type="date" name="post_to" value="2026-06-28"></div>
-<div data-show="method=optical_ml|sar_change|sar_coherence"><label>Pre-event imagery used</label><select name="pre"><option>yes, dates below</option><option>no, post-event only</option></select></div>
+<div data-show="prior=yes"><label>Earlier deliveries of this product for this event</label><select name="supersedes" id="supersedes"></select><p class="help">A new delivery supersedes the latest one by default; the earlier version stays available and the viewer shows the latest. Choose "alternate" only for a genuinely parallel product.</p></div>
+<div><label>Earliest post-event image</label><input type="date" name="post_from" id="post_from" value="2026-06-25"></div>
+<div><label>Latest post-event image</label><input type="date" name="post_to" id="post_to" value="2026-06-28"></div>
+<div data-show="method=optical_ml|sar_change|sar_coherence"><label>Pre-event imagery used</label><select name="pre" id="pre"><option value="yes">yes, dates below</option><option value="no">no, post-event only</option></select></div>
+<div data-show="pre=yes"><label>Earliest pre-event image</label><input type="date" name="pre_from" id="pre_from" value="2026-05-10"></div>
+<div data-show="pre=yes"><label>Latest pre-event image</label><input type="date" name="pre_to" id="pre_to" value="2026-06-20"></div>
 </div>
+<p class="help" id="datemsg"></p>
 <label>Product URL on HDX (or direct download)</label>
 <input type="text" name="url" value="/form-spike/sample.geojson">
 <p class="help">The real form calls an introspection endpoint that reads the file. This mockup reads a GeoJSON in the browser, which only works where the host allows it; HDX resources will not, so the default is a 300-feature sample served next to this page.</p>
@@ -144,6 +147,19 @@ function val(name) {
   const e = els[0]; return e ? e.value : "";
 }
 function applyConditions() {
+  // values other fields depend on, computed before visibility is evaluated
+  F.org_slug.value = (F.org_name.value || "org").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  $("slugprev").textContent = F.org_slug.value;
+  const cat = F.category.value;
+  const declared = [...F.querySelectorAll("[name=m]:checked")].map((c) => c.value);
+  const LABELS = { optical_ml: "optical VHR machine learning", sar_change: "SAR change detection", sar_coherence: "SAR coherence", expert: "expert visual interpretation", crowd: "crowd mapping", field: "field survey" };
+  const allowed = declared.filter((m) => (cat === "reference") === ["expert", "crowd", "field"].includes(m));
+  const cur = $("method").value;
+  $("method").innerHTML = allowed.length ? allowed.map((m) => `<option value="${m}">${LABELS[m]}</option>`).join("") : '<option value="">(no declared method fits this category)</option>';
+  if (allowed.includes(cur)) $("method").value = cur;
+  const ev = $("event"), onset = ev.selectedOptions[0].dataset.onset;
+  const prior = PRIOR[`${F.org_slug.value}|${F.product.value}|${ev.value}`] || [];
+  state.prior = prior.length ? "yes" : "no";
   for (let pass = 0; pass < 3; pass++) {
     for (const el of document.querySelectorAll("[data-show]")) {
       const [field, list] = el.dataset.show.split("=");
@@ -152,20 +168,34 @@ function applyConditions() {
     }
   }
   // dependent lists and rules
-  const cat = F.category.value;
-  const declared = [...F.querySelectorAll("[name=m]:checked")].map((c) => c.value);
-  const LABELS = { optical_ml: "optical VHR machine learning", sar_change: "SAR change detection", sar_coherence: "SAR coherence", expert: "expert visual interpretation", crowd: "crowd mapping", field: "field survey" };
-  const allowed = declared.filter((m) => (cat === "reference") === ["expert", "crowd", "field"].includes(m));
-  const cur = $("method").value;
-  $("method").innerHTML = allowed.length ? allowed.map((m) => `<option value="${m}">${LABELS[m]}</option>`).join("") : '<option value="">(no declared method fits this category)</option>';
-  if (allowed.includes(cur)) $("method").value = cur;
   if (F.licence.value === "restricted") { F.public.value = "no"; F.public.disabled = true; } else { F.public.disabled = false; }
   // extent follows the rows choice: damaged-only files cannot be their own extent
   const rowsOpt = $("extent").querySelector('[value=rows]');
   if (val("rows") === "damaged") { rowsOpt.disabled = true; if ($("extent").value === "rows") $("extent").value = "none"; } else { rowsOpt.disabled = false; }
   $("dmg_label").textContent = { class: "Damage class column", flag: "Damaged flag column", score: "Damage score column", mass: "Mass column" }[F.enc.value] || "Damage column";
-  for (const [id, n] of [["st1", ["org_name", "org_slug"]], ["st2", ["product"]], ["st3", ["url"]]]) $(id).classList.toggle("done", n.every((k) => F[k] && F[k].value));
+  for (const [id, n] of [["st1", ["org_name"]], ["st2", ["product"]], ["st3", ["url"]]]) $(id).classList.toggle("done", n.every((k) => F[k] && F[k].value));
+  // delivery identity and date constraints, keyed to the event's onset
+  const n = prior.length + 1;
+  $("delivery").value = `${F.org_slug.value || "slug"} / ${ev.value} / delivery ${n} · timestamp and checksum assigned on submit`;
+  if (prior.length) $("supersedes").innerHTML = prior.map((d, i) => `<option value="${d.id}" ${i === prior.length - 1 ? "selected" : ""}>supersedes ${d.id} (${d.when}, latest image ${d.post_to})</option>`).join("") + '<option value="">alternate: supersedes nothing</option>';
+  const dayBefore = (d) => { const t = new Date(d); t.setUTCDate(t.getUTCDate() - 1); return t.toISOString().slice(0, 10); };
+  const today = new Date().toISOString().slice(0, 10);
+  $("post_from").min = onset; $("post_to").min = onset; $("post_from").max = today; $("post_to").max = today;
+  $("pre_from").max = dayBefore(onset); $("pre_to").max = dayBefore(onset);
+  const problems = [];
+  if (F.post_from.value && F.post_from.value < onset) problems.push(`earliest post-event image is before the event onset (${onset})`);
+  if (F.post_to.value && F.post_from.value && F.post_to.value < F.post_from.value) problems.push("latest post-event image is before the earliest");
+  if (F.post_to.value && F.post_to.value > today) problems.push("latest post-event image is in the future");
+  if (val("pre") === "yes") {
+    if (F.pre_to.value && F.pre_to.value >= onset) problems.push(`latest pre-event image is on or after the onset (${onset})`);
+    if (F.pre_to.value && F.pre_from.value && F.pre_to.value < F.pre_from.value) problems.push("latest pre-event image is before the earliest");
+  }
+  $("datemsg").textContent = problems.length ? "Cannot submit: " + problems.join("; ") + "." : "";
+  $("datemsg").style.color = problems.length ? "#aa7222" : "";
+  $("show").disabled = problems.length > 0;
 }
+// Earlier deliveries the registry would know about (mock). Key: slug|product|event.
+const PRIOR = { "example_lab|QuakeDamage graded footprints|20260624-ve-earthquake": [{ id: "delivery 1", when: "25 Jun 2026 14:02", post_to: "2026-06-25" }] };
 F.addEventListener("change", applyConditions); F.addEventListener("input", applyConditions);
 const once = () => applyConditions();
 
