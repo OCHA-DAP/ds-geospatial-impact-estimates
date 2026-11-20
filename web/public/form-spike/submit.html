@@ -8,6 +8,16 @@
 .row > [data-show].on { display: block; }
 .why { font-size:12px; color:var(--n7); border-left:3px solid var(--b1); padding:2px 8px; margin:6px 0 10px; }
 .steps { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px; font-size:12.5px; }
+.files { border:2px solid var(--b5); background:var(--b05); padding:14px 18px 10px; margin:10px 0 14px; }
+.files-h { font-family:'Merriweather',Georgia,serif; font-weight:900; color:var(--b8); font-size:16px; margin:0 0 8px; }
+.slot:not([data-show]), .slot[data-show].on { display:grid; grid-template-columns:34px 1fr; gap:0 10px; align-items:start; margin:0 0 10px; }
+.slot .num { width:28px; height:28px; margin-top:6px; background:var(--b6); color:#fff; font-weight:700; text-align:center; line-height:28px; font-size:14px; }
+.slot label { font-size:15px; font-weight:700; color:var(--b8); margin:4px 0 4px; }
+.slot input[type=url] { font-size:15px; padding:10px 11px; border:1px solid var(--b5); background:#fff; }
+.slot input.bad { border-color:var(--w6); background:var(--w1); }
+.slot .urlmsg { font-size:12.5px; margin:3px 0 0; }
+.slot .urlmsg.ok { color:var(--b7); } .slot .urlmsg.warn { color:var(--w6); }
+.slot-off { background:#fff; border:1px dashed var(--n2); padding:8px 10px 2px; } .slot-off .num { background:var(--n2); color:var(--n8); }
 .steps span { border:1px solid var(--n2); padding:3px 9px; color:var(--n7); } .steps span.done { background:var(--b1); color:var(--b8); border-color:var(--b1); }
 </style>
 </head><body><div class="wrap">
@@ -74,6 +84,28 @@
 <fieldset><legend>3 · This delivery</legend>
 <div class="row">
 <div><label>Event</label><select name="event" id="event"><option value="20260624-ve-earthquake" data-onset="2026-06-24">20260624-ve-earthquake · Venezuela earthquake</option><option value="20260810-co-earthquake" data-onset="2026-08-10">20260810-co-earthquake · Colombia earthquake</option></select></div>
+</div>
+<div class="files">
+<p class="files-h">The two files this delivery points to</p>
+<p class="help" style="margin:0 0 10px">Publish both on the event's HDX crisis page first, then paste each resource link here. These two links are what the pipeline fetches; everything else on this page describes them.</p>
+<div class="slot"><span class="num">1</span><div>
+<label for="url">Analysis product · HDX resource link</label>
+<input type="url" name="url" id="url" value="/form-spike/sample.geojson" placeholder="https://data.humdata.org/dataset/…/resource/…">
+<p class="urlmsg" id="urlmsg"></p>
+<div data-show="geom=footprints|points|ids|blocks"><button class="btn btn-2" id="read" type="button" style="margin-top:8px">Read the file</button> <span id="readmsg" class="muted"></span></div>
+</div></div>
+<div class="slot" data-show="extent=polygon"><span class="num">2</span><div>
+<label for="extent_url">Analysed extent (AOI) · HDX resource link</label>
+<input type="url" name="extent_url" id="extent_url" placeholder="https://data.humdata.org/dataset/…/resource/…">
+<p class="urlmsg" id="extmsg"></p>
+<p class="help">The polygon of everything your team looked at. Without it the product has no coverage, no rate and cannot be evaluated.</p>
+</div></div>
+<div class="slot slot-off" data-show="extent=rows|none"><span class="num">2</span><div>
+<p data-show="extent=rows" class="help" style="margin:8px 0">No separate extent file: level 2 says every assessed building is in the analysis file, so its rows are the extent.</p>
+<p data-show="extent=none" class="help" style="margin:8px 0">No extent file: level 2 declares this product detected-only. It will be shown without coverage or rates. If your team does have an AOI, change "Analysed extent" in level 2.</p>
+</div></div>
+</div>
+<div class="row">
 <div><label>Delivery</label><input type="text" name="delivery" id="delivery" readonly value=""><p class="help">Assigned by the registry: product, event, delivery number and the moment of submission. The file's checksum is recorded with it. This is the version; nothing the provider types can change it.</p></div>
 <div><label>Your own version name (optional)</label><input type="text" name="provider_version" placeholder="as it appears in your release notes, e.g. v1.2"></div>
 <div><label>Status</label><select name="status"><option>preliminary</option><option>final</option></select></div>
@@ -85,10 +117,6 @@
 <div data-show="pre=yes"><label>Latest pre-event image</label><input type="date" name="pre_to" id="pre_to" value="2026-06-20"></div>
 </div>
 <p class="help" id="datemsg"></p>
-<label>Product URL on HDX (or direct download)</label>
-<input type="text" name="url" value="/form-spike/sample.geojson">
-<p class="help">The real form calls an introspection endpoint that reads the file. This mockup reads a GeoJSON in the browser, which only works where the host allows it; HDX resources will not, so the default is a 300-feature sample served next to this page.</p>
-<div data-show="geom=footprints|points|ids|blocks"><button class="btn btn-2" id="read" type="button">Read the file</button> <span id="readmsg" class="muted"></span></div>
 <div data-show="geom=raster">
 <h2 style="font-size:15px;margin:1.2rem 0 .4rem">Map the raster's values to the spec</h2>
 <p class="help">This mockup cannot read rasters in the browser. The real form lists the band's unique values here, the way the vector path lists column values.</p>
@@ -115,9 +143,6 @@
 </div>
 <div class="row" data-show="enc=flag"><div><label>Value that means damaged</label><select name="flag_value" id="flag_value"></select></div></div>
 <div class="row" data-show="enc=score"><div><label>Threshold: counts as damaged at or above</label><input type="number" name="threshold" id="threshold" step="any"><p class="help" id="range"></p></div></div>
-</div>
-<div class="row" data-show="extent=polygon">
-<div><label>Analysed extent file</label><input type="text" name="extent_url" placeholder="URL or upload"></div>
 </div>
 <h2 style="font-size:15px;margin:1.2rem 0 .4rem">Your published headline numbers</h2>
 <p class="help">As you report them. We recount on the common building base and show both; a large gap is flagged for review, not rejected.</p>
@@ -196,6 +221,19 @@ function applyConditions() {
     if (F.pre_to.value && F.pre_to.value >= onset) problems.push(`latest pre-event image is on or after the onset (${onset})`);
     if (F.pre_to.value && F.pre_from.value && F.pre_to.value < F.pre_from.value) problems.push("latest pre-event image is before the earliest");
   }
+  // the two file links: HDX confirmed, other hosts accepted with a note, anything else blocks
+  const checkUrl = (input, msg, what) => {
+    const v = input.value.trim(); let cls = "", text = "", bad = false;
+    if (!v) { text = "required"; bad = true; }
+    else if (v.startsWith("/form-spike/")) { cls = "warn"; text = "spike sample file, stands in for an HDX resource in this mockup"; }
+    else if (/^https:\/\/data\.humdata\.org\/dataset\/[^/]+\/resource\/[^/]+/.test(v)) { cls = "ok"; text = "HDX resource link"; }
+    else if (/^https?:\/\/\S+$/.test(v)) { cls = "warn"; text = "not an HDX link: accepted, but the event's HDX crisis page is where products should be published"; }
+    else { text = "not a link"; bad = true; }
+    input.classList.toggle("bad", bad); msg.className = "urlmsg " + cls; msg.textContent = text;
+    if (bad) problems.push(`${what} link is ${text}`);
+  };
+  checkUrl($("url"), $("urlmsg"), "analysis product");
+  if (val("extent") === "polygon") checkUrl($("extent_url"), $("extmsg"), "analysed extent");
   $("datemsg").textContent = problems.length ? "Cannot submit: " + problems.join("; ") + "." : "";
   $("datemsg").style.color = problems.length ? "#aa7222" : "";
   $("show").disabled = problems.length > 0;
