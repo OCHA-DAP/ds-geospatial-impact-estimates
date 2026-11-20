@@ -27,15 +27,6 @@
 <div><label>Organisation type</label><select name="org_type"><option>UN agency</option><option>NGO</option><option selected>academic</option><option>private sector</option><option>government</option><option>network</option></select></div>
 <div><label>Primary contact email</label><input type="email" name="contact" value="" placeholder="prefilled from the signed-in session"></div>
 </div>
-<label>Methods the organisation runs</label>
-<p class="why">Drives the sensing-method choices in level 2: a product can only use a method its organisation declared.</p>
-<div class="row"><div>
-<label><input type="checkbox" name="m" value="optical_ml" checked> optical VHR machine learning</label>
-<label><input type="checkbox" name="m" value="sar_change" checked> SAR change detection</label>
-<label><input type="checkbox" name="m" value="sar_coherence"> SAR coherence</label></div><div>
-<label><input type="checkbox" name="m" value="expert"> expert visual interpretation</label>
-<label><input type="checkbox" name="m" value="crowd"> crowd mapping</label>
-<label><input type="checkbox" name="m" value="field"> field survey</label></div></div>
 <div class="row">
 <div><label>Default licence</label><select name="licence"><option>CC BY</option><option>CC BY-SA</option><option>ODbL</option><option value="terms">provider terms (link)</option><option value="restricted">restricted</option></select></div>
 <div data-show="licence=terms"><label>Link to the terms</label><input type="text" name="licence_url" placeholder="https://…"></div>
@@ -166,11 +157,11 @@ function applyConditions() {
   F.org_slug.value = (F.org_name.value || "org").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
   $("slugprev").textContent = F.org_slug.value;
   const cat = F.category.value;
-  const declared = [...F.querySelectorAll("[name=m]:checked")].map((c) => c.value);
+  // one method per product, filtered by category: reference = human methods, analysis = automated
   const LABELS = { optical_ml: "optical VHR machine learning", sar_change: "SAR change detection", sar_coherence: "SAR coherence", expert: "expert visual interpretation", crowd: "crowd mapping", field: "field survey" };
-  const allowed = declared.filter((m) => (cat === "reference") === ["expert", "crowd", "field"].includes(m));
+  const allowed = Object.keys(LABELS).filter((m) => (cat === "reference") === ["expert", "crowd", "field"].includes(m));
   const cur = $("method").value;
-  $("method").innerHTML = allowed.length ? allowed.map((m) => `<option value="${m}">${LABELS[m]}</option>`).join("") : '<option value="">(no declared method fits this category)</option>';
+  $("method").innerHTML = allowed.map((m) => `<option value="${m}">${LABELS[m]}</option>`).join("");
   if (allowed.includes(cur)) $("method").value = cur;
   const ev = $("event"), onset = ev.selectedOptions[0].dataset.onset;
   const prior = PRIOR[`${F.org_slug.value}|${F.product.value}|${ev.value}`] || [];
