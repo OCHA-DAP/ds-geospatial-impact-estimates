@@ -97,8 +97,20 @@
 <label>Product URL on HDX (or direct download)</label>
 <input type="text" name="url" value="/form-spike/sample.geojson">
 <p class="help">The real form calls an introspection endpoint that reads the file. This mockup reads a GeoJSON in the browser, which only works where the host allows it; HDX resources will not, so the default is a 300-feature sample served next to this page.</p>
-<button class="btn btn-2" id="read" type="button">Read the file</button> <span id="readmsg" class="muted"></span>
+<div data-show="geom=footprints|points|ids|blocks"><button class="btn btn-2" id="read" type="button">Read the file</button> <span id="readmsg" class="muted"></span></div>
+<div data-show="geom=raster">
+<h2 style="font-size:15px;margin:1.2rem 0 .4rem">Map the raster's values to the spec</h2>
+<p class="help">This mockup cannot read rasters in the browser. The real form lists the band's unique values here, the way the vector path lists column values.</p>
+<div class="row">
+<div><label>Band</label><input type="number" name="band" value="1" min="1"></div>
+<div data-show="raster_values=class"><label>Pixel values that mean damaged (comma separated)</label><input type="text" name="raster_damaged" placeholder="2"></div>
+<div data-show="raster_values=class"><label>Pixel values that mean destroyed, if any</label><input type="text" name="raster_destroyed" placeholder="3"></div>
+<div data-show="raster_values=class"><label>Pixel value for not assessed / no data</label><input type="text" name="raster_nodata" placeholder="0 or nodata"></div>
+<div data-show="raster_values=prob"><label>Threshold: damaged at or above</label><input type="number" name="raster_threshold" step="any" placeholder="0.5"></div>
+</div></div>
 <div id="mapping" data-show="read=yes">
+<h2 style="font-size:15px;margin:1.2rem 0 .4rem">Map the file's columns to the spec</h2>
+<p class="help">Everything below is a dropdown of what the file actually contains. The choices in level 2 decide which roles need a column.</p>
 <div class="row">
 <div data-show="enc=class|flag|score|mass"><label id="dmg_label">Damage column</label><select name="dmg_col" id="dmg_col"></select></div>
 <div data-show="geom=ids"><label>Building id column</label><select name="id_col" id="id_col"></select></div>
@@ -116,14 +128,17 @@
 <div class="row" data-show="extent=polygon">
 <div><label>Analysed extent file</label><input type="text" name="extent_url" placeholder="URL or upload"></div>
 </div>
+<h2 style="font-size:15px;margin:1.2rem 0 .4rem">Your published headline numbers</h2>
+<p class="help">As you report them. We recount on the common building base and show both; a large gap is flagged for review, not rejected.</p>
 <div class="row">
-<div><label>Headline: buildings analysed</label><input type="number" name="n_analysed" value="478000"></div>
-<div><label>Headline: buildings damaged</label><input type="number" name="n_damaged" value="61000"></div>
+<div><label>Buildings analysed</label><input type="number" name="n_analysed" value="478000"></div>
+<div><label>Buildings damaged</label><input type="number" name="n_damaged" value="61000"></div>
 </div>
 <label><input type="checkbox" name="licence_ok" checked> This version is released under the organisation's default licence</label>
 </fieldset>
 
-<button class="btn" id="show" type="button">Submit (echoed back, nothing stored)</button>
+<button class="btn" id="show" type="button">Submit delivery</button> <a class="btn btn-2" href="/api/submissions" target="_blank" rel="noopener">List saved submissions</a>
+<p class="help">In this spike each submission is written as a JSON record to a test folder on the team's dev blob storage. The real build writes the registry rows and fetches the file into bronze.</p>
 <pre id="out" hidden></pre>
 </form>
 </main></div>
@@ -241,7 +256,7 @@ $("show").onclick = () => {
   $("out").hidden = false; $("out").textContent = "submitting …";
   fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) })
     .then(async (r) => ({ status: r.status, body: await r.json() }))
-    .then((res) => { $("out").textContent = `HTTP ${res.status}\n` + JSON.stringify(res.body, null, 2); })
+    .then((res) => { $("out").textContent = (res.body.ok ? `Saved: ${res.body.saved_to}\n\n` : `HTTP ${res.status}\n`) + JSON.stringify(res.body, null, 2); })
     .catch((e) => { $("out").textContent = "submit failed: " + e; });
 };
 once();
