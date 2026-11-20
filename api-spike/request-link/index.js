@@ -1,7 +1,7 @@
 const lib = require("../shared/lib");
 const recent = new Map(); // best-effort throttle per instance: one link per address per minute
 const NEUTRAL = "If that address is on the provider list, a sign-in link is on its way. Check your junk folder if nothing arrives within a few minutes.";
-module.exports = async function (context, req) {
+module.exports = lib.guarded(async function (context, req) {
   const email = String((req.body && req.body.email) || "").trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     context.res = { status: 400, headers: { "Content-Type": "application/json" }, body: { ok: false, message: "That does not look like an email address." } };
@@ -26,4 +26,4 @@ module.exports = async function (context, req) {
     }
   }
   context.res = { status: 200, headers: { "Content-Type": "application/json" }, body: { ok: true, message: NEUTRAL } };
-};
+});

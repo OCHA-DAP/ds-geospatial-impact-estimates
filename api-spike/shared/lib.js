@@ -98,4 +98,14 @@ function origin(req) {
   throw new Error("cannot determine the public site address from the request headers; refusing to build a link");
 }
 
-module.exports = { LIST_ID, LINK_TTL_S, SESSION_TTL_S, mint, verify, onProviderList, sendLink, sessionFrom, setCookie, origin };
+// Wrap a handler so an unexpected throw becomes a JSON 500 instead of an empty response.
+function guarded(fn) {
+  return async function (context, req) {
+    try { await fn(context, req); }
+    catch (e) {
+      context.log.error(e);
+      context.res = { status: 500, headers: { "Content-Type": "application/json" }, body: { ok: false, message: `Function error: ${e.message}` } };
+    }
+  };
+}
+module.exports = { LIST_ID, LINK_TTL_S, SESSION_TTL_S, secrets, mint, verify, onProviderList, sendLink, sessionFrom, setCookie, origin, guarded };

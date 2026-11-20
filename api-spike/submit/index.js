@@ -2,7 +2,7 @@ const lib = require("../shared/lib");
 // Spike persistence: one JSON blob per submission in a test folder on the dev account.
 // The real build writes the registry rows in Postgres and fetches the file into bronze.
 const BLOB_BASE = "https://imb0chd0dev.blob.core.windows.net/projects/ds-geospatial-impact-estimates/spike/submissions";
-module.exports = async function (context, req) {
+module.exports = lib.guarded(async function (context, req) {
   const s = lib.sessionFrom(req);
   if (!s) { context.res = { status: 401, headers: { "Content-Type": "application/json" }, body: { ok: false, message: "Sign in with an emailed link first." } }; return; }
   const sas = lib.secrets().blob_sas;
@@ -22,4 +22,4 @@ module.exports = async function (context, req) {
   }
   context.res = { status: 200, headers: { "Content-Type": "application/json" },
     body: { ok: true, saved_to: `projects/ds-geospatial-impact-estimates/spike/submissions/${name}`, received_at: record.received_at, submitted_by: s.email, delivery: rec.delivery || null } };
-};
+});
