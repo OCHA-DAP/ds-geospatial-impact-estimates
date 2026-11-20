@@ -86,8 +86,15 @@ function setCookie(value, maxAge) {
   return `${COOKIE}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 }
 function origin(req) {
-  const host = req.headers["x-forwarded-host"] || req.headers.host;
-  return `https://${host}`;
+  // Inside a managed Function the Host header is the Function app's internal
+  // <guid>.azurewebsites.net, which must never appear in an emailed link (Safe Browsing flags it
+  // wholesale). Static Web Apps forwards the original URL; use that or refuse.
+  const h = req.headers || {};
+  const orig = h["x-ms-original-url"] || h["X-MS-ORIGINAL-URL"];
+  if (orig) return new URL(orig).origin;
+  const fwd = h["x-forwarded-host"];
+  if (fwd && !/\.azurewebsites\.net$/i.test(fwd)) return `https://${fwd}`;
+  throw new Error("cannot determine the public site address from the request headers; refusing to build a link");
 }
 
 module.exports = { LIST_ID, LINK_TTL_S, SESSION_TTL_S, mint, verify, onProviderList, sendLink, sessionFrom, setCookie, origin };
