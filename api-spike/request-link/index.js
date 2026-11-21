@@ -12,7 +12,7 @@ module.exports = lib.guarded(async function (context, req) {
     recent.set(email, Date.now());
     try {
       if (await lib.onProviderList(email)) {
-        const link = `${lib.origin(req)}/api/redeem?t=${lib.mint({ email, list: lib.LIST_ID }, lib.LINK_TTL_S)}`;
+        const link = `${lib.origin(req)}/api/redeem?t=${lib.mint("link", { email, list: lib.LIST_ID }, lib.LINK_TTL_S)}`;
         await lib.sendLink(email, link);
         context.log(`link sent to ${email}`);
       } else {

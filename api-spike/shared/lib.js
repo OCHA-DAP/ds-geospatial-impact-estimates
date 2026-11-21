@@ -27,12 +27,14 @@ function b64u(buf) { return Buffer.from(buf).toString("base64url"); }
 function sign(payloadB64) {
   return crypto.createHmac("sha256", secrets().signing_secret).update(payloadB64).digest("base64url");
 }
-function mint(claims, ttl) {
+// Every token carries its kind ("link" = 15-minute emailed token, "session" = 30-day cookie) and
+// verify() demands the kind the caller expects, so one can never be presented as the other.
+function mint(typ, claims, ttl) {
   const now = Math.floor(Date.now() / 1000);
-  const p = b64u(JSON.stringify({ ...claims, iat: now, exp: now + ttl, nonce: crypto.randomBytes(8).toString("hex") }));
+  const p = b64u(JSON.stringify({ typ, ...claims, iat: now, exp: now + ttl, nonce: crypto.randomBytes(8).toString("hex") }));
   return `${p}.${sign(p)}`;
 }
-function verify(token) {
+function verify(token, typ) {
   if (typeof token !== "string" || !token.includes(".")) return null;
   const [p, sig] = token.split(".");
   const want = sign(p);
@@ -40,6 +42,7 @@ function verify(token) {
   let claims;
   try { claims = JSON.parse(Buffer.from(p, "base64url").toString("utf8")); } catch { return null; }
   if (!claims.exp || claims.exp * 1000 < Date.now()) return null;
+  if (claims.typ !== typ) return null;
   return claims;
 }
 
@@ -81,21 +84,25 @@ function readCookie(req) {
 }
 function sessionFrom(req) {
   const c = readCookie(req);
-  return c ? verify(c) : null;
+  return c ? verify(c, "session") : null;
 }
 function setCookie(value, maxAge) {
   return `${COOKIE}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 }
+// Hosts an emailed link may point at: this Static Web App's production and PR-preview hostnames.
+// Static Web Apps overwrites x-ms-original-url itself (verified: a client-supplied value is
+// replaced), so this allowlist is defence in depth, not the only barrier.
+const SITE_HOST = /^ashy-sea-03134990f(-\d+)?(\.[a-z0-9]+)*\.azurestaticapps\.net$/;
 function origin(req) {
   // Inside a managed Function the Host header is the Function app's internal
   // <guid>.azurewebsites.net, which must never appear in an emailed link (Safe Browsing flags it
   // wholesale). Static Web Apps forwards the original URL; use that or refuse.
   const h = req.headers || {};
   const orig = h["x-ms-original-url"] || h["X-MS-ORIGINAL-URL"];
-  if (orig) return new URL(orig).origin;
-  const fwd = h["x-forwarded-host"];
-  if (fwd && !/\.azurewebsites\.net$/i.test(fwd)) return `https://${fwd}`;
-  throw new Error("cannot determine the public site address from the request headers; refusing to build a link");
+  if (!orig) throw new Error("x-ms-original-url missing: not behind Static Web Apps; refusing to build a link");
+  const u = new URL(orig);
+  if (u.protocol !== "https:" || !SITE_HOST.test(u.hostname)) throw new Error(`refusing to build a link for host ${u.hostname}: not this site`);
+  return u.origin;
 }
 
 // Wrap a handler so an unexpected throw becomes a JSON 500 instead of an empty response.

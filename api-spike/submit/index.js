@@ -7,10 +7,21 @@ module.exports = lib.guarded(async function (context, req) {
   if (!s) { context.res = { status: 401, headers: { "Content-Type": "application/json" }, body: { ok: false, message: "Sign in with an emailed link first." } }; return; }
   const sas = lib.secrets().blob_sas;
   if (!sas) { context.res = { status: 500, headers: { "Content-Type": "application/json" }, body: { ok: false, message: "blob_sas missing from the Function's secrets; nothing saved." } }; return; }
-  const rec = req.body || {};
+  const rec = (req.body && typeof req.body === "object" && !Array.isArray(req.body)) ? req.body : null;
+  if (!rec) { context.res = { status: 400, headers: { "Content-Type": "application/json" }, body: { ok: false, message: "Body must be a JSON object." } }; return; }
+  // The blob name is built from the organisation slug and event id. Both come from the client, so
+  // they are accepted only in their canonical form; a dot, slash or anything else is refused rather
+  // than cleaned, because the SAS can write anywhere on the dev account.
+  const SAFE = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+  for (const k of ["org_slug", "event"]) {
+    if (typeof rec[k] !== "string" || !SAFE.test(rec[k])) {
+      context.res = { status: 400, headers: { "Content-Type": "application/json" }, body: { ok: false, message: `${k} must be lowercase letters, digits, _ or - (got ${JSON.stringify(rec[k]).slice(0, 80)}). Nothing saved.` } };
+      return;
+    }
+  }
   const ts = new Date();
   const record = { received_at: ts.toISOString(), submitted_by: s.email, form: rec };
-  const name = `${ts.toISOString().slice(0, 10)}/${(rec.org_slug || "org")}_${(rec.event || "event")}_${ts.toISOString().replace(/[:.]/g, "-")}.json`;
+  const name = `${ts.toISOString().slice(0, 10)}/${rec.org_slug}_${rec.event}_${ts.toISOString().replace(/[:.]/g, "-")}.json`;
   const r = await fetch(`${BLOB_BASE}/${name}?${sas}`, {
     method: "PUT", headers: { "x-ms-blob-type": "BlockBlob", "Content-Type": "application/json", "x-ms-version": "2021-08-06" },
     body: JSON.stringify(record, null, 2),

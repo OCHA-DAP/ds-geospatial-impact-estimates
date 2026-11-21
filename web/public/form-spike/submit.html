@@ -160,12 +160,13 @@
 </main></div>
 <script>
 const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const F = $("f");
 let sess = null;
 fetch("/api/session", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { email: null })).catch(() => ({ email: null })).then((d) => {
   sess = d.email ? d : null;
   $("session").innerHTML = sess
-    ? `<span class="chip chip-ok">signed in by link</span> <b>${sess.email}</b> · session until ${new Date(sess.exp * 1000).toLocaleString()} · <a href="/api/logout">sign out</a>`
+    ? `<span class="chip chip-ok">signed in by link</span> <b>${esc(sess.email)}</b> · session until ${new Date(sess.exp * 1000).toLocaleString()} · <a href="/api/logout">sign out</a>`
     : '<span class="chip chip-warn">no session</span> <a href="/form-spike/index.html">Ask for a sign-in link</a> first. You can read the form, but the submit call will be refused.';
   if (sess) F.contact.value = sess.email;
 });
@@ -246,7 +247,7 @@ const once = () => applyConditions();
 // ---- mock introspection
 const CLASSES = ["0 no damage", "1 possibly damaged", "2 damaged", "3 destroyed", "not assessed"];
 let feats = [];
-function fill(sel, cols, none) { sel.innerHTML = (none ? '<option value="">(none)</option>' : "") + cols.map((c) => `<option>${c}</option>`).join(""); }
+function fill(sel, cols, none) { sel.innerHTML = (none ? '<option value="">(none)</option>' : "") + cols.map((c) => `<option>${esc(c)}</option>`).join(""); }
 function values(col) { const m = new Map(); for (const f of feats) { const v = String(f.properties?.[col]); m.set(v, (m.get(v) || 0) + 1); } return [...m.entries()].sort((a, b) => b[1] - a[1]); }
 $("read").onclick = async () => {
   $("readmsg").textContent = "reading …";
@@ -266,7 +267,7 @@ $("read").onclick = async () => {
 function onDamageColumn() {
   const vals = values($("dmg_col").value);
   const tb = $("map").querySelector("tbody"); tb.innerHTML = "";
-  for (const [v, n] of vals.slice(0, 50)) tb.insertAdjacentHTML("beforeend", `<tr><td><code>${v}</code></td><td>${n.toLocaleString()}</td><td><select data-v="${v}">${CLASSES.map((c) => `<option>${c}</option>`).join("")}</select></td><td><input type="checkbox" data-d="${v}"></td></tr>`);
+  for (const [v, n] of vals.slice(0, 50)) tb.insertAdjacentHTML("beforeend", `<tr><td><code>${esc(v)}</code></td><td>${n.toLocaleString()}</td><td><select data-v="${esc(v)}">${CLASSES.map((c) => `<option>${c}</option>`).join("")}</select></td><td><input type="checkbox" data-d="${esc(v)}"></td></tr>`);
   if (vals.length > 50) tb.insertAdjacentHTML("beforeend", `<tr><td colspan="4">${vals.length} distinct values: this looks continuous. Choose "continuous score" as the encoding and set a threshold.</td></tr>`);
   fill($("flag_value"), vals.map(([v]) => v));
   const nums = feats.map((f) => Number(f.properties?.[$("dmg_col").value])).filter((x) => !Number.isNaN(x));
