@@ -1,0 +1,1 @@
+{"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"name": "spike sample analysed extent", "note": "bounding box of sample.geojson plus a margin"}, "geometry": {"type": "Polygon", "coordinates": [[[-66.85164, 10.58803], [-66.74856, 10.58803], [-66.74856, 10.64174], [-66.85164, 10.64174], [-66.85164, 10.58803]]]}}]}
