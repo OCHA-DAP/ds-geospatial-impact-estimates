@@ -26,5 +26,9 @@
   },
   "platform": {
     "apiRuntime": "node:18"
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
   }
 }
