@@ -1,0 +1,83 @@
+# Weekly check of the SAS tokens this repo's workflows depend on. Reads each token's own expiry
+# field (se=) from the secret, never prints the token, and opens or updates one issue when any
+# token expires within the warning window. Runs from the default branch (v1) only, as all
+# scheduled workflows do.
+#
+# To watch another token: add it to the env block of the "Check expiry dates" step.
+# A secret that is not set is reported as "not set" and skipped (the SPIKE_* ones go away when the
+# spike closes); a token without a readable se= field fails the run.
+name: SAS expiry reminder
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Mondays 09:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check expiry dates
+        id: check
+        env:
+          WARN_DAYS: "21"
+          SAS_SPIKE_BLOB_SAS: ${{ secrets.SPIKE_BLOB_SAS }}
+          SAS_DSCI_AZ_BLOB_DEV_SAS_WRITE: ${{ secrets.DSCI_AZ_BLOB_DEV_SAS_WRITE }}
+          SAS_DSCI_AZ_BLOB_DEV_SAS: ${{ secrets.DSCI_AZ_BLOB_DEV_SAS }}
+        shell: python {0}
+        run: |
+          import os, sys, json
+          from datetime import datetime, timezone
+          from urllib.parse import parse_qs
+
+          warn_days = int(os.environ["WARN_DAYS"])
+          now = datetime.now(timezone.utc)
+          rows, warnings, broken = [], [], []
+          for key, value in sorted(os.environ.items()):
+              if not key.startswith("SAS_"):
+                  continue
+              name = key[4:]
+              if not value:
+                  rows.append(f"| `{name}` | not set | skipped |")
+                  continue
+              se = parse_qs(value.lstrip("?")).get("se", [None])[0]
+              if not se:
+                  broken.append(name)
+                  rows.append(f"| `{name}` | no `se=` field | **cannot read expiry** |")
+                  continue
+              exp = datetime.fromisoformat(se.replace("Z", "+00:00"))
+              days = (exp - now).days
+              state = "EXPIRED" if days < 0 else ("expires soon" if days <= warn_days else "ok")
+              rows.append(f"| `{name}` | {exp.date()} | {days} days, {state} |")
+              if days <= warn_days:
+                  warnings.append(f"- `{name}` expires {exp.date()} ({days} days)")
+
+          table = "| secret | expiry | status |\n|---|---|---|\n" + "\n".join(rows)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write("## SAS expiry\n\n" + table + "\n")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"warn={'true' if warnings else 'false'}\n")
+              f.write("body<<EOF\n" + "\n".join(warnings) + "\n\n" + table + "\nEOF\n")
+          print(table)
+          if broken:
+              sys.exit(f"could not read an expiry from: {', '.join(broken)}")
+
+      - name: Open or update the reminder issue
+        if: steps.check.outputs.warn == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BODY: ${{ steps.check.outputs.body }}
+        run: |
+          title="SAS token expiring: rotate and update the repo secret"
+          existing=$(gh issue list -R "$GITHUB_REPOSITORY" --state open --label sas-expiry --json number --jq '.[0].number')
+          text="$(printf '%s\n\nChecked by the sas-expiry-reminder workflow on %s. Mint a replacement, update the repo secret, then close this issue.' "$BODY" "$(date -u +%F)")"
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" -R "$GITHUB_REPOSITORY" --body "$text"
+          else
+            gh label create sas-expiry -R "$GITHUB_REPOSITORY" --color D93F0B --description "A SAS token this repo depends on is about to expire" --force
+            gh issue create -R "$GITHUB_REPOSITORY" --title "$title" --label sas-expiry --body "$text"
+          fi
