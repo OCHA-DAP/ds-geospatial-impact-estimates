@@ -61,3 +61,4 @@ scripts/publish_pages.env
 
 # Superpowers SDD scratch (ledgers, briefs, review packages)
 .superpowers/
+api-spike/secrets.json

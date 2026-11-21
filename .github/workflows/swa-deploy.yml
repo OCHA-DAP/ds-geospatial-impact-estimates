@@ -15,11 +15,11 @@ name: Deploy SWA (satellite-impact-viewer)
 on:
   push:
     branches: [v1]
-    paths: ["web/**", ".github/workflows/swa-deploy.yml"]
+    paths: ["web/**", "api-spike/**", ".github/workflows/swa-deploy.yml"]
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches: [v1]
-    paths: ["web/**", ".github/workflows/swa-deploy.yml"]
+    paths: ["web/**", "api-spike/**", ".github/workflows/swa-deploy.yml"]
 
 jobs:
   deploy:
@@ -27,6 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # SPIKE ONLY (branch spike/form-auth): the managed Function reads its secrets from a file written
+      # here, because the spike cannot set Static Web App settings. Not the production pattern.
+      - name: Write spike secrets for the managed Function
+        run: |
+          test -n "${{ secrets.SPIKE_LISTMONK_KEY }}" || { echo "SPIKE_* secrets not set"; exit 1; }
+          printf '%s' '{"listmonk_base_url":"${{ secrets.SPIKE_LISTMONK_BASE_URL }}","listmonk_user":"${{ secrets.SPIKE_LISTMONK_USER }}","listmonk_key":"${{ secrets.SPIKE_LISTMONK_KEY }}","signing_secret":"${{ secrets.SPIKE_SIGNING_SECRET }}","blob_sas":"${{ secrets.DSCI_AZ_BLOB_DEV_SAS_WRITE }}"}' > api-spike/secrets.json
       - name: Build and deploy
         uses: Azure/static-web-apps-deploy@v1
         with:
@@ -34,6 +40,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }} # lets the action comment the preview URL on PRs
           action: upload
           app_location: web
+          api_location: api-spike
           output_location: dist
           production_branch: v1
         env:

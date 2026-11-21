@@ -1,6 +1,34 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "*.{css,js,map,png,svg,ico,json,woff2}"]
+    "exclude": [
+      "/assets/*",
+      "*.{css,js,map,png,svg,ico,json,woff2}"
+    ]
+  },
+  "routes": [
+    {
+      "route": "/form-spike/provider.html",
+      "allowedRoles": [
+        "provider"
+      ]
+    }
+  ],
+  "responseOverrides": {
+    "401": {
+      "redirect": "/form-spike/index.html?denied=1",
+      "statusCode": 302
+    },
+    "403": {
+      "redirect": "/form-spike/index.html?forbidden=1",
+      "statusCode": 302
+    }
+  },
+  "platform": {
+    "apiRuntime": "node:18"
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
   }
 }

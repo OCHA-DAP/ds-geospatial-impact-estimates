@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Provider sign-in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/form-spike/_shared.css">
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">OCHA Centre for Humanitarian Data · Data Science · throwaway spike</p>
+<h1>Damage analysis submission: sign in</h1>
+<p>Providers sign in with a link sent to the address on the provider list. No account with any identity provider is needed.</p></header>
+<main>
+<div id="session" class="auth">checking for a session …</div>
+
+<h2>Sign in with an emailed link</h2>
+<p>Enter the address your organisation registered. If it is on the provider list in Listmonk, a one-time link arrives from the team's un.org address. Addresses not on the list get nothing, and the page says the same thing either way so the list cannot be probed.</p>
+<form id="req" onsubmit="return false">
+<label>Email address</label>
+<div class="row"><div><input type="email" id="email" placeholder="you@organisation.org" required></div><div><button class="btn" id="send" type="submit">Send me a link</button></div></div>
+</form>
+<p id="reqmsg" class="muted"></p>
+<p class="muted">The link signs in the browser it is opened in and the session then lasts 30 days on that device. Only three test addresses are on the list for this spike.</p>
+
+<h2>Also tested: sign-in through Microsoft or GitHub accounts</h2>
+<p>The Static Web App's built-in sign-in. It works, including for Microsoft accounts outside the UN tenant, but it requires an account with one of those providers and an invitation per person, so the emailed link above is the preferred path. Kept here as the fallback.</p>
+<div id="auth" class="auth">checking /.auth/me …</div>
+<p><a class="btn btn-2" href="/form-spike/provider.html">Provider-only page (needs an invited role; expect 403)</a></p>
+</main></div>
+<script src="/form-spike/_auth.js"></script>
+<script>
+const s = document.getElementById("session");
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const q = new URLSearchParams(location.search);
+const note = q.get("bad") ? '<p><span class="chip chip-warn">link rejected</span> That link is invalid or has expired. Request a new one below.</p>'
+  : q.get("denied") ? '<p><span class="chip chip-warn">401</span> That page uses the Static Web App sign-in, below.</p>'
+  : q.get("forbidden") ? '<p><span class="chip chip-warn">403</span> Signed in, but that page needs the <code>provider</code> role from an invitation.</p>' : "";
+fetch("/api/session", { cache: "no-store" }).then((r) => r.json()).then((d) => {
+  s.innerHTML = note + (d.email
+    ? `<span class="chip chip-ok">signed in by link</span> <b>${esc(d.email)}</b> · session until ${new Date(d.exp * 1000).toLocaleString()} · <a href="/form-spike/submit.html">open the form</a> · <a href="/api/logout">sign out</a>`
+    : '<span class="chip chip-info">no session</span> Ask for a link below, then open it from your email.');
+}).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + e; });
+document.getElementById("req").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const email = document.getElementById("email").value, btn = document.getElementById("send"), msg = document.getElementById("reqmsg");
+  btn.disabled = true; msg.textContent = "sending …";
+  try {
+    const r = await fetch("/api/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+    const d = await r.json(); msg.textContent = d.message;
+  } catch (e) { msg.textContent = "Request failed: " + e; }
+  btn.disabled = false;
+});
+</script>
+</body></html>
