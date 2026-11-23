@@ -21,27 +21,17 @@
 .steps span { border:1px solid var(--n2); padding:3px 9px; color:var(--n7); } .steps span.done { background:var(--b1); color:var(--b8); border-color:var(--b1); }
 </style>
 </head><body><div class="wrap">
-<header class="hero"><p class="eyebrow">throwaway spike · mockup, nothing is stored</p>
+<header class="hero"><p class="eyebrow">throwaway spike · step 2 of 2 · records go to a test folder</p>
 <h1>Damage analysis submission</h1>
-<p>Three levels. Each choice narrows the next, so a provider only sees the fields their product needs. Levels 1 and 2 are remembered between deliveries in the real build; here they are on one page so the whole shape is visible.</p></header>
+<p>Three levels. Each choice narrows the next, so a provider only sees the fields their product needs. Level 1 is your registration; level 2 is remembered between deliveries in the real build. Here levels 2 and 3 are on one page so the whole shape is visible.</p></header>
 <main>
 <div id="session" class="auth">checking for a session …</div>
-<p class="nav"><a href="/form-spike/index.html">Sign-in page</a></p>
+<p class="topnav"><a href="/form-spike/providers.html">← For data providers</a> · <a href="/form-spike/index.html">Sign in</a></p>
 <div class="steps"><span id="st1">1 · organisation</span><span id="st2">2 · product</span><span id="st3">3 · delivery</span></div>
 
 <form id="f" onsubmit="return false">
-<fieldset><legend>1 · Organisation (once)</legend>
-<div class="row">
-<div><label>Organisation name</label><input type="text" name="org_name" value="Example Lab"><p class="help">The registry derives the machine key from this (<code id="slugprev">example_lab</code>); providers never type identifiers.</p></div>
-<input type="hidden" name="org_slug" id="org_slug" value="example_lab">
-<div><label>Organisation type</label><select name="org_type"><option>UN agency</option><option>NGO</option><option selected>academic</option><option>private sector</option><option>government</option><option>network</option></select></div>
-<div><label>Primary contact email</label><input type="email" name="contact" value="" placeholder="prefilled from the signed-in session"></div>
-</div>
-<div class="row">
-<div><label>Default licence</label><select name="licence"><option>CC BY</option><option>CC BY-SA</option><option>ODbL</option><option value="terms">provider terms (link)</option><option value="restricted">restricted</option></select></div>
-<div data-show="licence=terms"><label>Link to the terms</label><input type="text" name="licence_url" placeholder="https://…"></div>
-<div><label>May be shown publicly</label><select name="public"><option>yes</option><option>no</option></select><p class="help" data-show="licence=restricted">Forced to "no" while the licence is restricted; products stay on staging until cleared.</p></div>
-</div>
+<fieldset><legend>1 · Organisation (from your registration)</legend>
+<div id="org" class="auth">looking up the organisation registered for this address …</div>
 </fieldset>
 
 <fieldset><legend>2 · Product definition (once per product)</legend>
@@ -150,7 +140,7 @@
 <div><label>Buildings analysed</label><input type="number" name="n_analysed" value="478000"></div>
 <div><label>Buildings damaged</label><input type="number" name="n_damaged" value="61000"></div>
 </div>
-<label><input type="checkbox" name="licence_ok" checked> This version is released under the organisation's default licence</label>
+<label><input type="checkbox" name="licence_ok" checked> This version is released under the organisation's default licence (<span id="licname">…</span>)</label>
 </fieldset>
 
 <button class="btn" id="show" type="button">Submit delivery</button> <a class="btn btn-2" href="/api/submissions" target="_blank" rel="noopener">List saved submissions</a>
@@ -162,13 +152,17 @@
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const F = $("f");
-let sess = null;
+let sess = null, ORG = null;
 fetch("/api/session", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { email: null })).catch(() => ({ email: null })).then((d) => {
-  sess = d.email ? d : null;
+  sess = d.email ? d : null; ORG = (sess && sess.org) || null;
   $("session").innerHTML = sess
     ? `<span class="chip chip-ok">signed in by link</span> <b>${esc(sess.email)}</b> · session until ${new Date(sess.exp * 1000).toLocaleString()} · <a href="/api/logout">sign out</a>`
     : '<span class="chip chip-warn">no session</span> <a href="/form-spike/index.html">Ask for a sign-in link</a> first. You can read the form, but the submit call will be refused.';
-  if (sess) F.contact.value = sess.email;
+  $("org").innerHTML = ORG
+    ? `<span class="chip chip-ok">registered</span> <b>${esc(ORG.name)}</b> · ${esc(ORG.type)} · licence ${esc(ORG.licence)}${ORG.licence_url ? ` (<a href="${esc(ORG.licence_url)}" rel="noopener" target="_blank">terms</a>)` : ""} · public: ${esc(ORG.public)} · key <code>${esc(ORG.slug)}</code> · <a href="/form-spike/signup.html">edit</a>`
+    : sess ? '<span class="chip chip-warn">no organisation registered for this address</span> <a href="/form-spike/signup.html">Register it</a> first; the submit call is refused until then.'
+    : '<span class="chip chip-info">sign in to see it</span> The organisation comes from the registration behind the signed-in address, never from this form.';
+  applyConditions();
 });
 
 // ---- conditional visibility: data-show="field=v1|v2" shows the element when the named field has one of the values.
@@ -180,8 +174,8 @@ function val(name) {
 }
 function applyConditions() {
   // values other fields depend on, computed before visibility is evaluated
-  F.org_slug.value = (F.org_name.value || "org").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-  $("slugprev").textContent = F.org_slug.value;
+  const slug = ORG ? ORG.slug : "unregistered";
+  $("licname").textContent = ORG ? ORG.licence : "from your registration";
   const cat = F.category.value;
   // one method per product, filtered by category: reference = human methods, analysis = automated
   const LABELS = { optical_ml: "optical VHR machine learning", sar_change: "SAR change detection", sar_coherence: "SAR coherence", expert: "expert visual interpretation", crowd: "crowd mapping", field: "field survey" };
@@ -190,7 +184,7 @@ function applyConditions() {
   $("method").innerHTML = allowed.map((m) => `<option value="${m}">${LABELS[m]}</option>`).join("");
   if (allowed.includes(cur)) $("method").value = cur;
   const ev = $("event"), onset = ev.selectedOptions[0].dataset.onset;
-  const prior = PRIOR[`${F.org_slug.value}|${F.product.value}|${ev.value}`] || [];
+  const prior = PRIOR[`${slug}|${F.product.value}|${ev.value}`] || [];
   state.prior = prior.length ? "yes" : "no";
   for (let pass = 0; pass < 3; pass++) {
     for (const el of document.querySelectorAll("[data-show]")) {
@@ -200,21 +194,21 @@ function applyConditions() {
     }
   }
   // dependent lists and rules
-  if (F.licence.value === "restricted") { F.public.value = "no"; F.public.disabled = true; } else { F.public.disabled = false; }
   // extent follows the rows choice: damaged-only files cannot be their own extent
   const rowsOpt = $("extent").querySelector('[value=rows]');
   if (val("rows") === "damaged") { rowsOpt.disabled = true; if ($("extent").value === "rows") $("extent").value = "none"; } else { rowsOpt.disabled = false; }
   $("dmg_label").textContent = { class: "Damage class column", flag: "Damaged flag column", score: "Damage score column", mass: "Mass column" }[F.enc.value] || "Damage column";
-  for (const [id, n] of [["st1", ["org_name"]], ["st2", ["product"]], ["st3", ["url"]]]) $(id).classList.toggle("done", n.every((k) => F[k] && F[k].value));
+  $("st1").classList.toggle("done", !!ORG); for (const [id, n] of [["st2", ["product"]], ["st3", ["url"]]]) $(id).classList.toggle("done", n.every((k) => F[k] && F[k].value));
   // delivery identity and date constraints, keyed to the event's onset
   const n = prior.length + 1;
-  $("delivery").value = `${F.org_slug.value || "slug"} / ${ev.value} / delivery ${n} · timestamp and checksum assigned on submit`;
+  $("delivery").value = `${slug} / ${ev.value} / delivery ${n} · timestamp and checksum assigned on submit`;
   if (prior.length) $("supersedes").innerHTML = prior.map((d, i) => `<option value="${d.id}" ${i === prior.length - 1 ? "selected" : ""}>supersedes ${d.id} (${d.when}, latest image ${d.post_to})</option>`).join("") + '<option value="">alternate: supersedes nothing</option>';
   const dayBefore = (d) => { const t = new Date(d); t.setUTCDate(t.getUTCDate() - 1); return t.toISOString().slice(0, 10); };
   const today = new Date().toISOString().slice(0, 10);
   $("post_from").min = onset; $("post_to").min = onset; $("post_from").max = today; $("post_to").max = today;
   $("pre_from").max = dayBefore(onset); $("pre_to").max = dayBefore(onset);
   const problems = [];
+  if (sess && !ORG) problems.push("no organisation is registered for this address (register first)");
   if (F.post_from.value && F.post_from.value < onset) problems.push(`earliest post-event image is before the event onset (${onset})`);
   if (F.post_to.value && F.post_from.value && F.post_to.value < F.post_from.value) problems.push("latest post-event image is before the earliest");
   if (F.post_to.value && F.post_to.value > today) problems.push("latest post-event image is in the future");
@@ -289,6 +283,8 @@ $("show").onclick = () => {
     .then((res) => { $("out").textContent = (res.body.ok ? `Saved: ${res.body.saved_to}\n\n` : `HTTP ${res.status}\n`) + JSON.stringify(res.body, null, 2); })
     .catch((e) => { $("out").textContent = "submit failed: " + e; });
 };
+const q = new URLSearchParams(location.search);
+if (["analysis", "reference"].includes(q.get("category"))) F.category.value = q.get("category");
 once();
 </script>
 </body></html>

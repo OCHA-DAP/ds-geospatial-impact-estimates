@@ -36,3 +36,4 @@ th, td { text-align:left; border-bottom:1px solid var(--n1); padding:6px 8px; ve
 th { background:var(--n1); font-size:12px; }
 .nav { font-size:13px; margin:0 0 1rem; } .nav a { color:var(--b7); }
 @media (max-width:640px) { .hero, main { padding-left:18px; padding-right:18px; } .row { grid-template-columns:1fr; } }
+.topnav { font-size:13px; margin:0 0 1rem; } .topnav a { color:var(--b7); text-decoration:none; font-weight:500; } .topnav a:hover { text-decoration:underline; }

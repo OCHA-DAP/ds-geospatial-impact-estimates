@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>For data providers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/form-spike/_shared.css">
+<style>
+.cards { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:0 0 1.6rem; }
+.card { display:block; border:1px solid var(--n2); background:#fff; padding:16px 18px 14px; text-decoration:none; color:var(--n9); position:relative; }
+.card:hover { border-color:var(--b5); background:var(--b05); }
+.card .step { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--b6); margin:0 0 4px; }
+.card h3 { font-family:'Merriweather',Georgia,serif; font-weight:900; font-size:16px; color:var(--b8); margin:0 0 6px; }
+.card p { font-size:13.5px; color:var(--n8); margin:0; }
+.card .need { font-size:12px; color:var(--n7); margin-top:8px; }
+.card.primary { border:2px solid var(--b5); grid-column:1 / -1; }
+.card.off { opacity:.55; }
+@media (max-width:640px) { .cards { grid-template-columns:1fr; } }
+</style>
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">OCHA Centre for Humanitarian Data · Data Science · throwaway spike</p>
+<h1>For data providers</h1>
+<p>Your files live on the event's HDX crisis page. This is where you tell us about them: register your organisation once, describe each product once, and send a short delivery note every time you ship.</p></header>
+<main>
+<p class="topnav"><a href="/">← Damage Exposure Viewer</a></p>
+<div id="session" class="auth">checking for a session …</div>
+
+<h2>What would you like to do?</h2>
+<div class="cards">
+<a class="card primary" href="/form-spike/signup.html" id="c-signup"><p class="step">Step 1 · once per organisation</p><h3>Register your organisation</h3>
+<p>Name, type, default licence and a contact address. Registering puts the contact on the provider list and emails a sign-in link, so there is no separate account to create.</p><p class="need">Needs: nothing. Start here if you have never submitted.</p></a>
+<a class="card" href="/form-spike/submit.html?category=analysis" id="c-analysis"><p class="step">Step 2 · per product and delivery</p><h3>Submit an analysis product</h3>
+<p>Automated or model-derived damage: optical machine learning, SAR change detection, SAR coherence. Defines the product, then the delivery with its two HDX links.</p><p class="need">Needs: a registered organisation and a sign-in.</p></a>
+<a class="card" href="/form-spike/submit.html?category=reference" id="c-reference"><p class="step">Step 2 · per product and delivery</p><h3>Submit a reference product</h3>
+<p>Human-made damage assessment: expert visual interpretation, crowd mapping, field survey. Same form, with the human methods preselected.</p><p class="need">Needs: a registered organisation and a sign-in.</p></a>
+<a class="card" href="/form-spike/index.html" id="c-signin"><p class="step">Any time</p><h3>Sign in</h3>
+<p>Already registered? Get a fresh sign-in link emailed to the registered address. The link signs this browser in for 30 days.</p></a>
+<a class="card" href="/api/submissions" target="_blank" rel="noopener" id="c-list"><p class="step">Any time</p><h3>Your submissions</h3>
+<p>The records saved so far (spike: raw JSON listing, every organisation's records). The real build shows your organisation's deliveries and their validation state.</p><p class="need">Needs: a sign-in.</p></a>
+</div>
+
+<h2>How it fits together</h2>
+<p class="muted">Register → open the emailed link → describe the product and paste the two HDX links → submit. The registration is what the sign-in checks against: a link is only sent to addresses that registered. A late AOI, a corrected file or a new version is a new delivery of the same product, not a new registration.</p>
+</main></div>
+<script>
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const s = document.getElementById("session");
+fetch("/api/session", { cache: "no-store" }).then((r) => r.json()).then((d) => {
+  if (!d.email) { s.innerHTML = '<span class="chip chip-info">not signed in</span> Register (step 1) if you are new, or sign in if your organisation is already registered.'; return; }
+  const org = d.org;
+  s.innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${org ? `submitting as <b>${esc(org.name)}</b> (${esc(org.type)}, ${esc(org.licence)})` : '<span class="chip chip-warn">no organisation registered for this address</span> register it in step 1 before submitting'} · <a href="/api/logout">sign out</a>`;
+  if (org) { document.getElementById("c-signup").querySelector("h3").textContent = "Update your organisation"; document.getElementById("c-signup").classList.remove("primary"); }
+  else { for (const id of ["c-analysis", "c-reference"]) document.getElementById(id).classList.add("off"); }
+}).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e); });
+</script>
+</body></html>

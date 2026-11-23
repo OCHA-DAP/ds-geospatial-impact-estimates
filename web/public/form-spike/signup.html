@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Register your organisation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/form-spike/_shared.css">
+<style>
+[data-show] { display:none; } [data-show].on { display:block; }
+.contact { border:2px solid var(--b5); background:var(--b05); padding:12px 18px 6px; margin:12px 0 16px; }
+.contact label { font-size:14px; font-weight:700; color:var(--b8); }
+.contact input { font-size:15px; padding:10px 11px; border:1px solid var(--b5); }
+#msg { font-size:14px; margin:10px 0; } #msg.ok { color:var(--b7); font-weight:500; } #msg.bad { color:var(--w6); }
+</style>
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">throwaway spike · step 1 of 2</p>
+<h1 id="title">Register your organisation</h1>
+<p>Once per organisation. The contact address becomes the sign-in address: it goes onto the provider list and receives a sign-in link straight away, so registering and signing in are the same step.</p></header>
+<main>
+<p class="topnav"><a href="/form-spike/providers.html">← For data providers</a></p>
+<div id="session" class="auth">checking for a session …</div>
+
+<form id="f" onsubmit="return false">
+<fieldset><legend>Organisation</legend>
+<div class="row">
+<div><label>Organisation name</label><input type="text" name="org_name" id="org_name" placeholder="as it should appear on the methods card" required><p class="help">The registry derives the machine key from this (<code id="slugprev">…</code>); you never type identifiers.</p></div>
+<div><label>Organisation type</label><select name="org_type"><option>UN agency</option><option>NGO</option><option>academic</option><option>private sector</option><option>government</option><option>network</option></select></div>
+</div>
+<div class="row">
+<div><label>Default licence for your products</label><select name="licence" id="licence"><option>CC BY</option><option>CC BY-SA</option><option>ODbL</option><option value="terms">provider terms (link)</option><option value="restricted">restricted</option></select><p class="help">Each delivery confirms it is released under this licence; a product with a different licence is registered separately.</p></div>
+<div data-show="licence=terms"><label>Link to the terms</label><input type="url" name="licence_url" placeholder="https://…"></div>
+<div><label>May be shown publicly</label><select name="public" id="public"><option>yes</option><option>no</option></select><p class="help" data-show="licence=restricted">Forced to "no" while the licence is restricted; products stay on staging until cleared.</p></div>
+</div>
+</fieldset>
+<fieldset><legend>Contact</legend>
+<div class="contact">
+<div class="row">
+<div><label for="contact_name">Contact name</label><input type="text" name="contact_name" id="contact_name" placeholder="who we write to about deliveries" required></div>
+<div><label for="contact">Contact email · this becomes the sign-in address</label><input type="email" name="contact" id="contact" placeholder="you@organisation.org" required></div>
+</div>
+<p class="help">Use a mailbox you can open now: the sign-in link arrives there. In the real build more addresses can be added later; here it is one per organisation.</p>
+</div>
+</fieldset>
+<button class="btn" id="go" type="submit">Register and email me a sign-in link</button>
+<p id="msg"></p>
+<p class="help">What happens: the contact is added to the provider list in Listmonk with the organisation attached, an organisation record is written to the spike folder on dev storage, and a sign-in link is sent. Spike shortcut: no staff approval before you can submit; the real build has one.</p>
+</form>
+</main></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const F = $("f");
+const val = (name) => { const e = F.querySelector(`[name=${name}]`); return e ? e.value : ""; };
+function apply() {
+  $("slugprev").textContent = (F.org_name.value || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "…";
+  for (const el of document.querySelectorAll("[data-show]")) { const [k, list] = el.dataset.show.split("="); el.classList.toggle("on", list.split("|").includes(val(k))); }
+  if (F.licence.value === "restricted") { F.public.value = "no"; F.public.disabled = true; } else { F.public.disabled = false; }
+}
+F.addEventListener("input", apply); F.addEventListener("change", apply); apply();
+let sess = null;
+fetch("/api/session", { cache: "no-store" }).then((r) => r.json()).then((d) => {
+  sess = d.email ? d : null;
+  if (!sess) { $("session").innerHTML = '<span class="chip chip-info">not signed in</span> New organisation: fill in the form. Already registered: <a href="/form-spike/index.html">sign in</a> instead.'; return; }
+  F.contact.value = sess.email; if (sess.name) F.contact_name.value = sess.name;
+  if (sess.org) {
+    const o = sess.org; $("title").textContent = "Update your organisation";
+    F.org_name.value = o.name; F.org_type.value = o.type; F.licence.value = o.licence; F.licence_url.value = o.licence_url || ""; F.public.value = o.public;
+    $("go").textContent = "Save changes and email me a sign-in link"; apply();
+    $("session").innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(sess.email)}</b> · registered as <b>${esc(o.name)}</b>. Edit and save, or <a href="/form-spike/submit.html">go to the submission form</a>.`;
+  } else {
+    $("session").innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(sess.email)}</b> · <span class="chip chip-warn">no organisation yet</span> this address is on the list from before registration existed. Register it here once.`;
+  }
+}).catch((e) => { $("session").innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e); });
+F.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const o = {}; for (const el of F.querySelectorAll("input, select")) if (el.name) o[el.name] = el.value;
+  o.public = F.public.value; // a disabled select is still the answer
+  $("go").disabled = true; $("msg").className = ""; $("msg").textContent = "registering …";
+  try {
+    const r = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) });
+    const text = await r.text(); let d; try { d = JSON.parse(text); } catch { d = { ok: false, message: `non-JSON response (HTTP ${r.status}): ${text.slice(0, 200)}` }; }
+    $("msg").className = d.ok ? "ok" : "bad"; $("msg").textContent = d.message + (d.ok ? " Then come back to the submission form from the link." : "");
+  } catch (e) { $("msg").className = "bad"; $("msg").textContent = "Request failed: " + e; }
+  $("go").disabled = false;
+});
+</script>
+</body></html>

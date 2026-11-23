@@ -9,10 +9,11 @@
 <h1>Damage analysis submission: sign in</h1>
 <p>Providers sign in with a link sent to the address on the provider list. No account with any identity provider is needed.</p></header>
 <main>
+<p class="topnav"><a href="/form-spike/providers.html">← For data providers</a> · <a href="/form-spike/signup.html">Register an organisation</a></p>
 <div id="session" class="auth">checking for a session …</div>
 
 <h2>Sign in with an emailed link</h2>
-<p>Enter the address your organisation registered. If it is on the provider list in Listmonk, a one-time link arrives from the team's un.org address. Addresses not on the list get nothing, and the page says the same thing either way so the list cannot be probed.</p>
+<p>Enter the address your organisation registered. If it is on the provider list, a one-time link arrives from the team's un.org address. Not registered yet? <a href="/form-spike/signup.html">Register your organisation</a>: that sends the first link. Addresses not on the list get nothing, and the page says the same thing either way so the list cannot be probed.</p>
 <form id="req" onsubmit="return false">
 <label>Email address</label>
 <div class="row"><div><input type="email" id="email" placeholder="you@organisation.org" required></div><div><button class="btn" id="send" type="submit">Send me a link</button></div></div>
