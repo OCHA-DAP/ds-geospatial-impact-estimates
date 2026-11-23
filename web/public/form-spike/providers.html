@@ -11,7 +11,7 @@
 .gate input[type=email] { font-size:16px; padding:11px 12px; border:1px solid var(--b5); }
 .gate button { font-size:15px; padding:11px 18px; margin:0 0 1px; white-space:nowrap; }
 #msg { font-size:14px; margin:10px 0 0; min-height:1.4em; } #msg.ok { color:var(--b7); font-weight:500; } #msg.bad { color:var(--w6); }
-.cont { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+.cont { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; } .cont[hidden] { display:none; }
 figure { margin:0 0 1.4rem; } figure svg { width:100%; max-width:800px; height:auto; display:block; color:var(--n9); }
 figcaption { font-size:12.5px; color:var(--n7); margin-top:4px; max-width:80ch; }
 .levels { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:0 0 1.4rem; }
@@ -53,8 +53,8 @@ figcaption { font-size:12.5px; color:var(--n7); margin-top:4px; max-width:80ch; 
 <line x1="520" y1="120" x2="590" y2="120" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="555" y="112" text-anchor="middle">open it</text>
 <rect x="590" y="95" width="120" height="50" rx="4" fill="none" stroke="currentColor"/><text x="650" y="116" text-anchor="middle">Product and</text><text x="650" y="132" text-anchor="middle">delivery form</text>
 <line x1="650" y1="95" x2="650" y2="55" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="662" y="78">submit</text>
-<rect x="590" y="10" width="120" height="45" rx="4" fill="none" stroke="currentColor" stroke-dasharray="4 3"/><text x="650" y="29" text-anchor="middle">Record saved,</text><text x="650" y="44" text-anchor="middle">files fetched from HDX</text>
-<text x="460" y="170" text-anchor="middle" font-size="11" fill="#5e6a6b">signed in for 30 days on this device</text>
+<rect x="575" y="10" width="150" height="45" rx="4" fill="none" stroke="currentColor" stroke-dasharray="4 3"/><text x="650" y="29" text-anchor="middle">Record saved,</text><text x="650" y="44" text-anchor="middle">files fetched from HDX</text>
+<text x="555" y="140" text-anchor="middle" font-size="10.5" fill="#5e6a6b">30-day session</text>
 </g></svg>
 <figcaption>One door for everyone. The email decides the path: a registered address goes straight to the link, a new one registers first and then gets the same link. The form behind the link is the only place products and deliveries are described.</figcaption>
 </figure>
