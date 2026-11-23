@@ -34,11 +34,11 @@ const q = new URLSearchParams(location.search);
 const note = q.get("bad") ? '<p><span class="chip chip-warn">link rejected</span> That link is invalid or has expired. Request a new one below.</p>'
   : q.get("denied") ? '<p><span class="chip chip-warn">401</span> That page uses the Static Web App sign-in, below.</p>'
   : q.get("forbidden") ? '<p><span class="chip chip-warn">403</span> Signed in, but that page needs the <code>provider</code> role from an invitation.</p>' : "";
-fetch("/api/session", { cache: "no-store" }).then((r) => r.json()).then((d) => {
+fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
   s.innerHTML = note + (d.email
     ? `<span class="chip chip-ok">signed in by link</span> <b>${esc(d.email)}</b> · session until ${new Date(d.exp * 1000).toLocaleString()} · <a href="/form-spike/submit.html">open the form</a> · <a href="/api/logout">sign out</a>`
     : '<span class="chip chip-info">no session</span> Ask for a link below, then open it from your email.');
-}).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + e; });
+}).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
 document.getElementById("req").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const email = document.getElementById("email").value, btn = document.getElementById("send"), msg = document.getElementById("reqmsg");

@@ -44,12 +44,13 @@
 <script>
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const s = document.getElementById("session");
-fetch("/api/session", { cache: "no-store" }).then((r) => r.json()).then((d) => {
+fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
+  if (d.org_error) { s.innerHTML = `<span class="chip chip-warn">provider list unreachable</span> signed in as <b>${esc(d.email)}</b>, but the organisation could not be looked up: ${esc(d.org_error)}. Try again in a minute.`; return; }
   if (!d.email) { s.innerHTML = '<span class="chip chip-info">not signed in</span> Register (step 1) if you are new, or sign in if your organisation is already registered.'; return; }
   const org = d.org;
   s.innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${org ? `submitting as <b>${esc(org.name)}</b> (${esc(org.type)}, ${esc(org.licence)})` : '<span class="chip chip-warn">no organisation registered for this address</span> register it in step 1 before submitting'} · <a href="/api/logout">sign out</a>`;
-  if (org) { document.getElementById("c-signup").querySelector("h3").textContent = "Update your organisation"; document.getElementById("c-signup").classList.remove("primary"); }
+  if (org) { const c = document.getElementById("c-signup"); c.querySelector("h3").textContent = "Update your organisation"; c.querySelector(".need").textContent = "Signed in: edit and save."; c.classList.remove("primary"); }
   else { for (const id of ["c-analysis", "c-reference"]) document.getElementById(id).classList.add("off"); }
-}).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e); });
+}).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
 </script>
 </body></html>
