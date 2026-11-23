@@ -17,8 +17,11 @@ function secrets() {
   return SECRETS;
 }
 
-const LIST_ID = 147; // "[TEST] Damage platform providers"
+// Listmonk is a mail relay only. The allowlist is the registry on blob (organisation records plus
+// a per-address index); no Listmonk list is consulted. A subscriber record still has to exist for
+// the transactional endpoint to deliver, so sign-up creates one, on no list, tagged for cleanup.
 const TEMPLATE_ID = 12; // base_transactional, renders .Tx.Data.content
+const SUBSCRIBER_TAG = { source: "damage-platform-spike" };
 const LINK_TTL_S = 15 * 60;
 const SESSION_TTL_S = 30 * 24 * 3600;
 const COOKIE = "spike_session";
@@ -26,6 +29,7 @@ const COOKIE = "spike_session";
 const BLOB_DIR = "https://imb0chd0dev.blob.core.windows.net/projects/ds-geospatial-impact-estimates/spike/submissions";
 const BLOB_REL = "projects/ds-geospatial-impact-estimates/spike/submissions";
 const ORG_PREFIX = "_organisations";
+const CONTACT_PREFIX = "_contacts"; // <sha256(email)>.json -> { email, slug }
 const ORG_TYPES = ["UN agency", "NGO", "academic", "private sector", "government", "network"];
 const LICENCES = ["CC BY", "CC BY-SA", "ODbL", "terms", "restricted"];
 const SLUG = /^[a-z0-9][a-z0-9_-]{0,63}$/;
@@ -68,32 +72,34 @@ async function findSubscriber(email) {
   if (!r.ok) throw new Error(`Listmonk subscriber lookup failed: HTTP ${r.status}`);
   return (await r.json()).data.results.find((h) => h.email.toLowerCase() === email.toLowerCase()) || null;
 }
-function onList(hit) {
-  return !!hit && hit.status === "enabled" && hit.lists.some((l) => l.id === LIST_ID && l.subscription_status !== "unsubscribed");
-}
-async function onProviderList(email) { return onList(await findSubscriber(email)); }
-// The organisation a provider registered, kept in the subscriber's attributes by sign-up.
-function orgFrom(hit) {
-  const o = hit && hit.attribs && hit.attribs.org;
-  return o && typeof o === "object" && SLUG.test(o.slug || "") ? o : null;
-}
-// Create the subscriber on the provider list, or update an existing one; the organisation goes in attribs.
-async function upsertSubscriber(email, name, org) {
-  const base = secrets().listmonk_base_url, hdr = { Authorization: manageAuthHeader(), "Content-Type": "application/json" };
+// Make sure Listmonk can deliver to this address: create the subscriber record if it is missing.
+// No list membership; the record exists only so /tx accepts the address.
+async function ensureSubscriber(email, name) {
   const existing = await findSubscriber(email);
-  if (!existing) {
-    const r = await fetch(`${base}/subscribers`, { method: "POST", headers: hdr,
-      body: JSON.stringify({ email, name, status: "enabled", lists: [LIST_ID], attribs: { org }, preconfirm_subscriptions: true }) });
-    if (!r.ok) throw new Error(`Listmonk subscriber create failed: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
-    return "created";
-  }
-  const lists = [...new Set([...existing.lists.map((l) => l.id), LIST_ID])];
-  const r = await fetch(`${base}/subscribers/${existing.id}`, { method: "PUT", headers: hdr,
-    body: JSON.stringify({ email: existing.email, name: name || existing.name, status: "enabled", lists, attribs: { ...(existing.attribs || {}), org }, preconfirm_subscriptions: true }) });
-  if (!r.ok) throw new Error(`Listmonk subscriber update failed: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
-  return "updated";
+  if (existing) return "exists";
+  const r = await fetch(`${secrets().listmonk_base_url}/subscribers`, { method: "POST",
+    headers: { Authorization: manageAuthHeader(), "Content-Type": "application/json" },
+    body: JSON.stringify({ email, name, status: "enabled", lists: [], attribs: SUBSCRIBER_TAG, preconfirm_subscriptions: true }) });
+  if (!r.ok) throw new Error(`Listmonk subscriber create failed: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
+  return "created";
+}
+// The registry: who may sign in and which organisation they belong to. Null when the address is
+// not registered. A read failure throws; callers must not treat it as "not registered".
+function contactRel(email) { return `${CONTACT_PREFIX}/${crypto.createHash("sha256").update(email.toLowerCase()).digest("hex")}.json`; }
+function orgRel(slug) { return `${ORG_PREFIX}/${slug}.json`; }
+async function registryFor(email) {
+  const idx = await getJson(contactRel(email));
+  if (!idx || !SLUG.test(idx.slug || "")) return null;
+  const rec = await getJson(orgRel(idx.slug));
+  if (!rec) throw new Error(`registry inconsistent: contact index points at ${idx.slug} but that organisation record is missing`);
+  if (String(rec.contact).toLowerCase() !== email.toLowerCase()) return null; // contact was replaced; the old address is out
+  return rec;
 }
 async function sendLink(email, link, intro) {
+  // Invariant: exactly one recipient, the address this request is about. Only the singular
+  // `subscriber_email` field of the transactional endpoint is ever used; never `subscriber_emails`,
+  // `subscriber_ids` or a campaign.
+  if (typeof email !== "string" || !email.includes("@") || email.includes(",")) throw new Error("sendLink needs exactly one address");
   const content = `
 <p>${intro || "You asked for a sign-in link to the <b>damage analysis submission form</b>."}</p>
 <p style="margin:24px 0"><a href="${link}" style="background:#1e795f;color:#fff;padding:12px 18px;text-decoration:none;font-weight:600">Open the form</a></p>
@@ -107,7 +113,7 @@ async function sendLink(email, link, intro) {
   if (!r.ok) throw new Error(`Listmonk tx send failed: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
 }
 function linkFor(req, email) {
-  return `${origin(req)}/api/redeem?t=${mint("link", { email, list: LIST_ID }, LINK_TTL_S)}`;
+  return `${origin(req)}/api/redeem?t=${mint("link", { email }, LINK_TTL_S)}`;
 }
 
 // Blob helpers for the spike folder. `rel` is a path under the folder; callers build it from
@@ -191,6 +197,6 @@ function guarded(fn) {
     }
   };
 }
-module.exports = { LIST_ID, LINK_TTL_S, SESSION_TTL_S, ORG_PREFIX, ORG_TYPES, LICENCES, SLUG, secrets, mint, verify,
-  findSubscriber, onList, onProviderList, orgFrom, upsertSubscriber, sendLink, linkFor, putJson, getJson, listBlobs,
+module.exports = { LINK_TTL_S, SESSION_TTL_S, ORG_PREFIX, CONTACT_PREFIX, ORG_TYPES, LICENCES, SLUG, secrets, mint, verify,
+  findSubscriber, ensureSubscriber, registryFor, contactRel, orgRel, sendLink, linkFor, putJson, getJson, listBlobs,
   sessionFrom, setCookie, origin, json, throttled, clientIp, guarded };

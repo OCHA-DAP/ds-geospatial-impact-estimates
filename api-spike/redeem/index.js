@@ -1,7 +1,7 @@
 const lib = require("../shared/lib");
 module.exports = lib.guarded(async function (context, req) {
   const claims = lib.verify(req.query && req.query.t, "link");
-  if (!claims || claims.list !== lib.LIST_ID) {
+  if (!claims || !claims.email) {
     context.res = { status: 302, headers: { Location: "/form-spike/index.html?bad=1" } };
     return;
   }

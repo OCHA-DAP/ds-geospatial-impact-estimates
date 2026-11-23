@@ -161,7 +161,7 @@ fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) thro
     : sessFail ? `<span class="chip chip-warn">session check failed</span> ${esc(sessFail)}. This is a server problem, not a missing sign-in; the submit call will fail the same way.`
     : '<span class="chip chip-warn">no session</span> <a href="/form-spike/index.html">Ask for a sign-in link</a> first. You can read the form, but the submit call will be refused.';
   $("org").innerHTML = sessFail ? `<span class="chip chip-warn">session check failed</span> ${esc(sessFail)}; the organisation cannot be looked up.`
-    : sess && sess.org_error ? `<span class="chip chip-warn">provider list unreachable</span> ${esc(sess.org_error)}. Submit is blocked until the lookup works; this is not "unregistered".`
+    : sess && sess.org_error ? `<span class="chip chip-warn">registry unreachable</span> ${esc(sess.org_error)}. Submit is blocked until the lookup works; this is not "unregistered".`
     : ORG
     ? `<span class="chip chip-ok">registered</span> <b>${esc(ORG.name)}</b> · ${esc(ORG.type)} · licence ${esc(ORG.licence)}${ORG.licence_url ? ` (<a href="${esc(ORG.licence_url)}" rel="noopener" target="_blank">terms</a>)` : ""} · public: ${esc(ORG.public)} · key <code>${esc(ORG.slug)}</code> · <a href="/form-spike/signup.html">edit</a>`
     : sess ? '<span class="chip chip-warn">no organisation registered for this address</span> <a href="/form-spike/signup.html">Register it</a> first; the submit call is refused until then.'
@@ -213,7 +213,7 @@ function applyConditions() {
   $("pre_from").max = dayBefore(onset); $("pre_to").max = dayBefore(onset);
   const problems = [];
   if (sessFail) problems.push("the session check failed (server problem)");
-  else if (sess && sess.org_error) problems.push("the provider list could not be read, so the organisation is unknown");
+  else if (sess && sess.org_error) problems.push("the registry could not be read, so the organisation is unknown");
   else if (sess && !ORG) problems.push("no organisation is registered for this address (register first)");
   if (F.post_from.value && F.post_from.value < onset) problems.push(`earliest post-event image is before the event onset (${onset})`);
   if (F.post_to.value && F.post_from.value && F.post_to.value < F.post_from.value) problems.push("latest post-event image is before the earliest");

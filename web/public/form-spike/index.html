@@ -7,19 +7,19 @@
 </head><body><div class="wrap">
 <header class="hero"><p class="eyebrow">OCHA Centre for Humanitarian Data · Data Science · throwaway spike</p>
 <h1>Damage analysis submission: sign in</h1>
-<p>Providers sign in with a link sent to the address on the provider list. No account with any identity provider is needed.</p></header>
+<p>Providers sign in with a link sent to the address they registered. No account with any identity provider is needed.</p></header>
 <main>
 <p class="topnav"><a href="/form-spike/providers.html">← For data providers</a> · <a href="/form-spike/signup.html">Register an organisation</a></p>
 <div id="session" class="auth">checking for a session …</div>
 
 <h2>Sign in with an emailed link</h2>
-<p>Enter the address your organisation registered. If it is on the provider list, a one-time link arrives from the team's un.org address. Not registered yet? <a href="/form-spike/signup.html">Register your organisation</a>: that sends the first link. Addresses not on the list get nothing, and the page says the same thing either way so the list cannot be probed.</p>
+<p>Enter the address your organisation registered. If it is in the registry, a one-time link arrives from the team's un.org address, to that address only. Not registered yet? <a href="/form-spike/signup.html">Register your organisation</a>: that sends the first link. Unregistered addresses get nothing, and the page says the same thing either way so the registry cannot be probed.</p>
 <form id="req" onsubmit="return false">
 <label>Email address</label>
 <div class="row"><div><input type="email" id="email" placeholder="you@organisation.org" required></div><div><button class="btn" id="send" type="submit">Send me a link</button></div></div>
 </form>
 <p id="reqmsg" class="muted"></p>
-<p class="muted">The link signs in the browser it is opened in and the session then lasts 30 days on that device. Only three test addresses are on the list for this spike.</p>
+<p class="muted">The link signs in the browser it is opened in and the session then lasts 30 days on that device.</p>
 
 <h2>Also tested: sign-in through Microsoft or GitHub accounts</h2>
 <p>The Static Web App's built-in sign-in. It works, including for Microsoft accounts outside the UN tenant, but it requires an account with one of those providers and an invitation per person, so the emailed link above is the preferred path. Kept here as the fallback.</p>

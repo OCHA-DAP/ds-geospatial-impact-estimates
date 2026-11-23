@@ -27,7 +27,7 @@
 <h2>What would you like to do?</h2>
 <div class="cards">
 <a class="card primary" href="/form-spike/signup.html" id="c-signup"><p class="step">Step 1 · once per organisation</p><h3>Register your organisation</h3>
-<p>Name, type, default licence and a contact address. Registering puts the contact on the provider list and emails a sign-in link, so there is no separate account to create.</p><p class="need">Needs: nothing. Start here if you have never submitted.</p></a>
+<p>Name, type, default licence and a contact address. Registering puts the contact in the registry and emails a sign-in link, so there is no separate account to create.</p><p class="need">Needs: nothing. Start here if you have never submitted.</p></a>
 <a class="card" href="/form-spike/submit.html?category=analysis" id="c-analysis"><p class="step">Step 2 · per product and delivery</p><h3>Submit an analysis product</h3>
 <p>Automated or model-derived damage: optical machine learning, SAR change detection, SAR coherence. Defines the product, then the delivery with its two HDX links.</p><p class="need">Needs: a registered organisation and a sign-in.</p></a>
 <a class="card" href="/form-spike/submit.html?category=reference" id="c-reference"><p class="step">Step 2 · per product and delivery</p><h3>Submit a reference product</h3>
@@ -45,7 +45,7 @@
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const s = document.getElementById("session");
 fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
-  if (d.org_error) { s.innerHTML = `<span class="chip chip-warn">provider list unreachable</span> signed in as <b>${esc(d.email)}</b>, but the organisation could not be looked up: ${esc(d.org_error)}. Try again in a minute.`; return; }
+  if (d.org_error) { s.innerHTML = `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(d.email)}</b>, but the organisation could not be looked up: ${esc(d.org_error)}. Try again in a minute.`; return; }
   if (!d.email) { s.innerHTML = '<span class="chip chip-info">not signed in</span> Register (step 1) if you are new, or sign in if your organisation is already registered.'; return; }
   const org = d.org;
   s.innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${org ? `submitting as <b>${esc(org.name)}</b> (${esc(org.type)}, ${esc(org.licence)})` : '<span class="chip chip-warn">no organisation registered for this address</span> register it in step 1 before submitting'} · <a href="/api/logout">sign out</a>`;

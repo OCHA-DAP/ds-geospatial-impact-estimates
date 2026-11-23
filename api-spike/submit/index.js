@@ -4,8 +4,9 @@ const lib = require("../shared/lib");
 module.exports = lib.guarded(async function (context, req) {
   const s = lib.sessionFrom(req);
   if (!s) return lib.json(context, 401, { ok: false, message: "Sign in with an emailed link first." });
-  // The organisation comes from the registration behind the signed-in address, never from the body.
-  const org = lib.orgFrom(await lib.findSubscriber(s.email));
+  // The organisation comes from the registry record behind the signed-in address, never from the body.
+  const reg = await lib.registryFor(s.email);
+  const org = reg ? reg.organisation : null;
   if (!org) return lib.json(context, 403, { ok: false, message: "No organisation is registered for this address. Register it first (For data providers > Register), then submit." });
   const rec = (req.body && typeof req.body === "object" && !Array.isArray(req.body)) ? req.body : null;
   if (!rec) return lib.json(context, 400, { ok: false, message: "Body must be a JSON object." });

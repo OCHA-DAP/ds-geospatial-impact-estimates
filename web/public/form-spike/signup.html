@@ -14,7 +14,7 @@
 </head><body><div class="wrap">
 <header class="hero"><p class="eyebrow">throwaway spike · step 1 of 2</p>
 <h1 id="title">Register your organisation</h1>
-<p>Once per organisation. The contact address becomes the sign-in address: it goes onto the provider list and receives a sign-in link straight away, so registering and signing in are the same step.</p></header>
+<p>Once per organisation. The contact address becomes the sign-in address: it goes into the registry and receives a sign-in link straight away, so registering and signing in are the same step.</p></header>
 <main>
 <p class="topnav"><a href="/form-spike/providers.html">← For data providers</a></p>
 <div id="session" class="auth">checking for a session …</div>
@@ -42,7 +42,7 @@
 </fieldset>
 <button class="btn" id="go" type="submit">Register and email me a sign-in link</button>
 <p id="msg"></p>
-<p class="help">What happens: the contact is added to the provider list in Listmonk with the organisation attached, an organisation record is written to the spike folder on dev storage, and a sign-in link is sent. Spike shortcut: no staff approval before you can submit; the real build has one.</p>
+<p class="help">What happens: the organisation record and the contact are written to the registry (spike: a folder on dev storage), Listmonk gets a subscriber record for the address so it can relay mail to it (no list, no campaigns), and a sign-in link is sent to that one address. Spike shortcut: no staff approval before you can submit; the real build has one.</p>
 </form>
 </main></div>
 <script>
@@ -59,7 +59,7 @@ F.addEventListener("input", apply); F.addEventListener("change", apply); apply()
 let sess = null;
 fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
   sess = d.email ? d : null;
-  if (sess && sess.org_error) { $("session").innerHTML = `<span class="chip chip-warn">provider list unreachable</span> signed in as <b>${esc(sess.email)}</b>, but the organisation could not be looked up: ${esc(sess.org_error)}. Saving would still work; reload first to see the current record.`; F.contact.value = sess.email; return; }
+  if (sess && sess.org_error) { $("session").innerHTML = `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(sess.email)}</b>, but the organisation could not be looked up: ${esc(sess.org_error)}. Saving would still work; reload first to see the current record.`; F.contact.value = sess.email; return; }
   if (!sess) { $("session").innerHTML = '<span class="chip chip-info">not signed in</span> New organisation: fill in the form. Already registered: <a href="/form-spike/index.html">sign in</a> instead.'; return; }
   F.contact.value = sess.email; if (sess.name) F.contact_name.value = sess.name;
   if (sess.org) {
@@ -68,7 +68,7 @@ fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) thro
     $("go").textContent = "Save changes and email me a sign-in link"; apply();
     $("session").innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(sess.email)}</b> · registered as <b>${esc(o.name)}</b>. Edit and save, or <a href="/form-spike/submit.html">go to the submission form</a>.`;
   } else {
-    $("session").innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(sess.email)}</b> · <span class="chip chip-warn">no organisation yet</span> this address is on the list from before registration existed. Register it here once.`;
+    $("session").innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(sess.email)}</b> · <span class="chip chip-warn">no organisation yet</span> this address can sign in from before registration existed. Register it here once.`;
   }
 }).catch((e) => { $("session").innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
 F.addEventListener("submit", async (ev) => {

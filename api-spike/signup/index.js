@@ -1,8 +1,8 @@
 const lib = require("../shared/lib");
-// Organisation sign-up. Unauthenticated by design: this is how a provider gets onto the list.
-// It (1) validates the organisation fields, (2) creates or updates the contact as a subscriber
-// on the provider list with the organisation in its attributes, (3) writes an organisation record
-// to the spike folder, (4) emails the contact the same sign-in link the sign-in page sends.
+// Organisation sign-up. Unauthenticated by design: this is how a provider gets into the registry.
+// It (1) validates the organisation fields, (2) makes sure Listmonk has a subscriber record for the
+// contact so the relay can deliver (no list membership), (3) writes the organisation record and the
+// per-address index to the registry on blob, (4) emails the contact the sign-in link.
 // So registering and first sign-in are one step, and the emailed link proves the address.
 // Spike shortcut: no staff approval. Anyone who registers can submit. The real build gates on review.
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -37,13 +37,20 @@ module.exports = lib.guarded(async function (context, req) {
   const { errs, org, contact, contact_name } = validate(body);
   if (errs.length) return lib.json(context, 400, { ok: false, message: "Cannot register: " + errs.join("; ") + ".", errors: errs });
 
-  // Who may write this organisation's record: a new slug is free for anyone; an existing one only
-  // for its registered contact or a signed-in session that belongs to it.
-  const rel = `${lib.ORG_PREFIX}/${org.slug}.json`;
-  const existing = await lib.getJson(rel);
+  // Ownership rules. An address belongs to one organisation: if it is already indexed to another
+  // slug, refuse. A slug already registered can be rewritten only by its contact or by a session
+  // that belongs to it.
+  const mine = await lib.getJson(lib.contactRel(contact));
+  if (mine && mine.slug !== org.slug) {
+    const theirs = await lib.getJson(lib.orgRel(mine.slug));
+    if (theirs && String(theirs.contact).toLowerCase() === contact) {
+      return lib.json(context, 409, { ok: false, message: `${contact} is already registered as the contact for "${theirs.organisation.name}". Sign in and edit that registration, or use another address for a second organisation.` });
+    }
+  }
+  const existing = await lib.getJson(lib.orgRel(org.slug));
   const session = lib.sessionFrom(req);
-  const sessionOrg = session ? lib.orgFrom(await lib.findSubscriber(session.email)) : null;
-  if (existing && existing.contact !== contact && !(sessionOrg && sessionOrg.slug === org.slug)) {
+  const sessionRec = session ? await lib.registryFor(session.email) : null;
+  if (existing && String(existing.contact).toLowerCase() !== contact && !(sessionRec && sessionRec.organisation.slug === org.slug)) {
     return lib.json(context, 409, { ok: false, message: `"${org.name}" is already registered by another address. Sign in with that address to change it, or ask the team to add you.` });
   }
   if (lib.throttled(`signup:${contact}`) || lib.throttled(`signup-ip:${lib.clientIp(req)}`)) {
@@ -51,13 +58,14 @@ module.exports = lib.guarded(async function (context, req) {
   }
 
   const now = new Date().toISOString();
-  const how = await lib.upsertSubscriber(contact, contact_name, org);
+  const how = await lib.ensureSubscriber(contact, contact_name);
   const record = { organisation: org, contact, contact_name, registered_at: existing ? existing.registered_at : now, updated_at: now,
-    ...(existing && existing.contact !== contact ? { previous_contact: existing.contact } : {}) };
-  const saved_to = await lib.putJson(rel, record);
+    ...(existing && String(existing.contact).toLowerCase() !== contact ? { previous_contact: existing.contact } : {}) };
+  const saved_to = await lib.putJson(lib.orgRel(org.slug), record);
+  await lib.putJson(lib.contactRel(contact), { email: contact, slug: org.slug, updated_at: now });
   const link = lib.linkFor(req, contact);
   await lib.sendLink(contact, link, `<b>${org.name.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}</b> is ${existing ? "updated" : "registered"} on the damage analysis platform. This link signs you in so you can submit.`);
-  context.log(`signup ${how} ${contact} for ${org.slug}`);
+  context.log(`signup ${contact} for ${org.slug} (subscriber ${how})`);
   lib.json(context, 200, { ok: true, message: `${existing ? "Updated" : "Registered"} ${org.name}. A sign-in link is on its way to ${contact}; open it to submit.`,
     organisation: org, subscriber: how, saved_to });
 });
