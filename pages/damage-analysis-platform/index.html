@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Damage Analysis Platform — Geospatial Impact Estimates</title>
+<meta name="description" content="The next-event coordination platform for satellite damage analyses: how providers register, describe and deliver products, and the working proof of concept.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero flat">
+    <div class="inner">
+      <p class="crumb"><a href="../">← All analysis &amp; tools</a></p>
+      <p class="eyebrow">OCHA Centre for Humanitarian Data</p>
+      <h1>Damage Analysis Platform</h1>
+      <p>What comes after the Venezuela evaluation: one place where every organisation that
+         produces a satellite damage analysis for an event registers once, describes each product
+         once, and sends a short delivery note each time it ships. The files stay on the event's
+         HDX crisis page; the platform holds the description, checks the files against it, and
+         feeds the comparison viewer. Replaces one bespoke ingest script per provider.</p>
+    </div>
+  </header>
+
+  <main>
+    <p class="label">Proof of concept</p>
+    <div class="grid">
+
+      <a class="k" href="https://ashy-sea-03134990f-174.eastus2.7.azurestaticapps.net/form-spike/providers.html" target="_blank" rel="noopener">
+        <h2>Proof of concept<span class="chip chip-ext">External</span></h2>
+        <p>The provider side, working end to end on a preview environment: register an
+           organisation, receive a sign-in link by email, describe a product and its delivery
+           with the two HDX links, submit. Throwaway build for colleagues to try and grade the
+           form: records go to a test folder, nothing touches production, and the address changes
+           when the real build lands.</p>
+        <span class="foot"><em>azurestaticapps.net ↗</em></span>
+      </a>
+
+    </div>
+  </main>
+
+  <div class="note">
+    <p><strong>What is settled.</strong> HDX hosts the files and gives each product a public link.
+       Provider sign-up, the metadata specification, validation and notifications are ours.
+       Three levels so nobody repeats themselves: organisation once, product once, delivery each
+       time. Links only, never uploads.</p>
+    <p><strong>What the real build changes.</strong> A domain of our own for the emailed links,
+       a registry database for events, providers, sessions and each submission's state, a
+       validator that reads every submitted file in isolation and accepts or rejects it with a
+       named reason, and a staff review step before a new organisation can submit.</p>
+  </div>
+
+</div>
+</body>
+</html>
