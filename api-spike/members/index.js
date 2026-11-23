@@ -13,6 +13,7 @@ module.exports = lib.guarded(async function (context, req) {
   const action = String(b.action || ""), email = String(b.email || "").trim().toLowerCase(), name = String(b.name || "").trim();
   if (!EMAIL.test(email)) return lib.json(context, 400, { ok: false, message: "That does not look like an email address." });
   const now = new Date().toISOString(), slug = rec.organisation.slug;
+  rec.members = lib.membersOf(rec); // normalise a pre-members record before any write
   if (action === "add") {
     if (name.length < 1 || name.length > 120) return lib.json(context, 400, { ok: false, message: "A name is required." });
     if (lib.memberOf(rec, email)) return lib.json(context, 200, { ok: true, message: `${email} is already a member.`, members: rec.members });

@@ -11,5 +11,5 @@ module.exports = lib.guarded(async function (context, req) {
   catch (e) { context.log.error(e); org_error = `could not read the registry: ${e.message}`; }
   const me = lib.memberEntry(rec, s.email);
   lib.json(context, 200, { email: s.email, name: (me && me.name) || "", exp: s.exp, via: s.via, org: rec ? rec.organisation : null,
-    members: rec ? rec.members.map((m) => ({ email: m.email, name: m.name, added_at: m.added_at })) : [], ...(org_error ? { org_error } : {}), link_origin: safeOrigin(req) });
+    members: lib.membersOf(rec).map((m) => ({ email: m.email, name: m.name, added_at: m.added_at })), ...(org_error ? { org_error } : {}), link_origin: safeOrigin(req) });
 });

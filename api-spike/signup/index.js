@@ -54,7 +54,7 @@ module.exports = lib.guarded(async function (context, req) {
   if (existing && !isMember) {
     // Someone else's organisation. Offer the join path instead of a dead end.
     return lib.json(context, 409, { ok: false, joinable: true, slug: org.slug, organisation: existing.organisation.name,
-      members: existing.members.map((m) => lib.maskEmail(m.email)),
+      members: lib.membersOf(existing).map((m) => lib.maskEmail(m.email)),
       message: `"${existing.organisation.name}" is already registered. Ask a member to add you, or send them a request from here.` });
   }
   if (lib.throttled(`signup:${contact}`) || lib.throttled(`signup-ip:${lib.clientIp(req)}`)) {
@@ -64,7 +64,7 @@ module.exports = lib.guarded(async function (context, req) {
   const now = new Date().toISOString();
   const how = await lib.ensureSubscriber(contact, contact_name);
   // Members: on create, the registrant; on update, the existing list with this contact's name refreshed.
-  const members = existing ? existing.members.map((m) => (String(m.email).toLowerCase() === contact ? { ...m, name: contact_name } : m)) : [{ email: contact, name: contact_name, added_at: now, added_by: "registration" }];
+  const members = existing ? lib.membersOf(existing).map((m) => (String(m.email).toLowerCase() === contact ? { ...m, name: contact_name } : m)) : [{ email: contact, name: contact_name, added_at: now, added_by: "registration" }];
   if (!members.some((m) => String(m.email).toLowerCase() === contact)) members.push({ email: contact, name: contact_name, added_at: now, added_by: session ? session.email : "registration" });
   const record = { organisation: org, contact: existing ? existing.contact : contact, contact_name: existing ? existing.contact_name : contact_name, members,
     registered_at: existing ? existing.registered_at : now, updated_at: now };

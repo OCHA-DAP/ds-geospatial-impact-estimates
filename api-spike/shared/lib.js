@@ -90,8 +90,15 @@ function orgRel(slug) { return `${ORG_PREFIX}/${slug}.json`; }
 // An organisation has members; the registrant is the first. The per-address index points at the
 // organisation, and the organisation record's member list is the authority (an index left behind
 // after a removal does not sign anyone in).
+// Records written before members existed (2026-11-23 afternoon) carry only `contact`; they read
+// as an organisation whose sole member is that contact. Writers normalise before saving.
+function membersOf(rec) {
+  if (!rec) return [];
+  if (Array.isArray(rec.members)) return rec.members;
+  return rec.contact ? [{ email: String(rec.contact).toLowerCase(), name: rec.contact_name || "", added_at: rec.registered_at || null, added_by: "registration" }] : [];
+}
 function memberOf(rec, email) {
-  return !!rec && Array.isArray(rec.members) && rec.members.some((m) => String(m.email).toLowerCase() === email.toLowerCase());
+  return membersOf(rec).some((m) => String(m.email).toLowerCase() === email.toLowerCase());
 }
 async function registryFor(email) {
   const idx = await getJson(contactRel(email));
@@ -102,7 +109,7 @@ async function registryFor(email) {
 }
 // One member's record (name etc.) from an organisation record.
 function memberEntry(rec, email) {
-  return (rec && rec.members || []).find((m) => String(m.email).toLowerCase() === email.toLowerCase()) || null;
+  return membersOf(rec).find((m) => String(m.email).toLowerCase() === email.toLowerCase()) || null;
 }
 const maskEmail = (e) => String(e).replace(/^(.)[^@]*(@.*)$/, "$1***$2");
 async function sendLink(email, link, intro, subject) {
@@ -218,5 +225,5 @@ function guarded(fn) {
   };
 }
 module.exports = { LINK_TTL_S, SESSION_TTL_S, ORG_PREFIX, CONTACT_PREFIX, ORG_TYPES, LICENCES, SLUG, secrets, mint, verify,
-  findSubscriber, ensureSubscriber, registryFor, memberOf, memberEntry, maskEmail, contactRel, orgRel, sendLink, sendNote, escHtml, linkFor, putJson, getJson, listBlobs,
+  findSubscriber, ensureSubscriber, registryFor, membersOf, memberOf, memberEntry, maskEmail, contactRel, orgRel, sendLink, sendNote, escHtml, linkFor, putJson, getJson, listBlobs,
   sessionFrom, setCookie, origin, json, throttled, clientIp, guarded };

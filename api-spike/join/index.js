@@ -20,7 +20,8 @@ module.exports = lib.guarded(async function (context, req) {
 <p>If they belong to your organisation, sign in and add them under Members on your organisation page:</p>
 <p style="margin:20px 0"><a href="${origin}/form-spike/providers.html" style="background:#1e795f;color:#fff;padding:12px 18px;text-decoration:none;font-weight:600">Open the platform</a></p>
 <p style="color:#5e6a6b;font-size:13px">If you do not know this person, ignore this email; nothing happens unless a member adds them. This is a test of the next-event platform.</p>`;
-  for (const m of rec.members) await lib.sendNote(m.email, `[test] ${name} asks to join ${rec.organisation.name} on the damage analysis platform`, html);
-  context.log(`join request from ${email} to ${slug} (${rec.members.length} members notified)`);
-  lib.json(context, 200, { ok: true, message: `Request sent to the ${rec.members.length === 1 ? "member" : rec.members.length + " members"} of ${rec.organisation.name}. Once one of them adds you, a sign-in link arrives by email.` });
+  const members = lib.membersOf(rec);
+  for (const m of members) await lib.sendNote(m.email, `[test] ${name} asks to join ${rec.organisation.name} on the damage analysis platform`, html);
+  context.log(`join request from ${email} to ${slug} (${members.length} members notified)`);
+  lib.json(context, 200, { ok: true, message: `Request sent to the ${members.length === 1 ? "member" : members.length + " members"} of ${rec.organisation.name}. Once one of them adds you, a sign-in link arrives by email.` });
 });
