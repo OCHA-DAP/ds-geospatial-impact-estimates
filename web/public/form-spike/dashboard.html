@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your organisation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/form-spike/_shared.css">
+<style>
+.head { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin:0 0 1rem; }
+.head .meta { font-size:13.5px; color:var(--n7); }
+.cta { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:0 0 1.4rem; } .cta .btn { margin:0; font-size:15px; padding:10px 18px; }
+table.subs th { white-space:nowrap; } table.subs td { font-size:13px; } table.subs td.num { text-align:right; font-variant-numeric:tabular-nums; }
+table.subs a { color:var(--b7); } .st { font-size:11px; font-weight:500; padding:2px 7px; border-radius:4px; background:var(--n1); color:var(--n8); } .st.final { background:var(--b1); color:var(--b8); }
+.empty { border:1px dashed var(--n2); padding:18px; color:var(--n7); font-size:14px; margin:0 0 1rem; }
+.members li { margin:0 0 4px; font-size:13.5px; } .members button { font:inherit; font-size:12px; background:none; border:0; color:var(--w6); cursor:pointer; padding:0 4px; }
+.addm { display:grid; grid-template-columns:1fr 1.4fr auto; gap:10px; align-items:end; margin:8px 0 4px; max-width:720px; } .addm .btn { margin:0 0 1px; }
+#mmsg { font-size:13px; margin:4px 0 0; min-height:1.2em; } #mmsg.ok { color:var(--b7); } #mmsg.bad { color:var(--w6); }
+@media (max-width:640px) { .addm { grid-template-columns:1fr; } table.subs { font-size:12px; } }
+</style>
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">OCHA Centre for Humanitarian Data · Data Science · throwaway spike</p>
+<h1 id="title">Your organisation</h1>
+<p id="lead">Everything your organisation has submitted, the people who can submit for it, and the button for the next delivery.</p></header>
+<main>
+<p class="topnav"><a href="/">← Damage Exposure Viewer</a></p>
+<div id="session" class="auth">checking for a session …</div>
+
+<div id="body" hidden>
+<div class="head"><div><h2 style="margin:0;border:0;padding:0" id="orgname"></h2><div class="meta" id="orgmeta"></div></div><div><a class="btn btn-2" href="/form-spike/signup.html">Edit organisation</a></div></div>
+<div class="cta"><a class="btn" href="/form-spike/submit.html">Submit a new delivery</a><span class="muted">a product described before, or a new product: the form covers both</span></div>
+
+<h2>Submissions</h2>
+<div id="subs">loading …</div>
+
+<h2>Members</h2>
+<p class="help">Anyone listed here can sign in with their address and submit for the organisation. Adding someone emails them a sign-in link straight away.</p>
+<ul class="members" id="members"></ul>
+<form class="addm" id="addf" onsubmit="return false">
+<div><label for="mname">Name</label><input type="text" id="mname" placeholder="colleague's name" required></div>
+<div><label for="memail">Email</label><input type="email" id="memail" placeholder="colleague@organisation.org" required></div>
+<div><button class="btn" id="madd" type="submit">Add member</button></div>
+</form>
+<p id="mmsg"></p>
+</div>
+</main></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const api = async (url, opts) => { const r = await fetch(url, { cache: "no-store", ...(opts || {}) }); const t = await r.text(); let d; try { d = JSON.parse(t); } catch { d = { ok: false, message: `non-JSON response (HTTP ${r.status}): ${t.slice(0, 200)}` }; } return { status: r.status, ...d }; };
+const fmtDate = (iso) => iso ? new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "";
+const fmtN = (v) => (v === undefined || v === "" || v === null || isNaN(Number(v))) ? "" : Number(v).toLocaleString();
+const linkCell = (u, label) => u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}</a>` : '<span class="muted">none</span>';
+let ME = null;
+function renderMembers(ms) {
+  $("members").innerHTML = ms.map((m) => `<li><b>${esc(m.name || "")}</b> ${esc(m.email)}${m.email === ME ? ' <span class="chip chip-ok">you</span>' : ""} <button type="button" data-rm="${esc(m.email)}" title="remove">remove</button></li>`).join("");
+}
+function renderSubs(d) {
+  if (!d.ok) { $("subs").innerHTML = `<div class="empty"><span class="chip chip-warn">could not load submissions</span> ${esc(d.message)}</div>`; return; }
+  if (!d.submissions.length) { $("subs").innerHTML = '<div class="empty">Nothing submitted yet. "Submit a new delivery" above opens the form.</div>'; return; }
+  const rows = d.submissions.map((r) => r.error
+    ? `<tr><td colspan="7"><span class="chip chip-warn">unreadable record</span> ${esc(r.saved_to)}: ${esc(r.error)}</td></tr>`
+    : `<tr><td>${esc(fmtDate(r.received_at))}<br><span class="muted">${esc(r.submitted_by || "")}</span></td><td>${esc(r.event || "")}</td><td>${esc(r.product || "")}<br><span class="muted">${esc([r.category, r.method].filter(Boolean).join(" · "))}</span></td><td><span class="st ${r.status === "final" ? "final" : ""}">${esc(r.status || "")}</span>${r.provider_version ? `<br><span class="muted">${esc(r.provider_version)}</span>` : ""}</td><td>${linkCell(r.url, "product")} · ${r.extent === "polygon" ? linkCell(r.extent_url, "extent") : `<span class="muted">${esc(r.extent === "rows" ? "rows are the extent" : "no extent")}</span>`}</td><td>${esc(r.post_from || "")}${r.post_to ? " → " + esc(r.post_to) : ""}</td><td class="num">${fmtN(r.n_damaged)}${r.n_analysed ? ` / ${fmtN(r.n_analysed)}` : ""}</td></tr>`).join("");
+  $("subs").innerHTML = `<table class="subs"><thead><tr><th>Submitted</th><th>Event</th><th>Product</th><th>Status</th><th>Files on HDX</th><th>Post-event imagery</th><th>Damaged / analysed</th></tr></thead><tbody>${rows}</tbody></table><p class="help">${d.count} ${d.count === 1 ? "delivery" : "deliveries"}. Spike: read back from the JSON records in the test folder; the real build shows each delivery's validation state here too.</p>`;
+}
+(async () => {
+  const d = await api("/api/session");
+  if (d.status !== 200) { $("session").innerHTML = `<span class="chip chip-warn">session check failed</span> HTTP ${d.status}: ${esc(d.message || "")}. This is a server problem, not a missing sign-in.`; return; }
+  if (!d.email) { location.replace("/form-spike/providers.html?signin=1"); return; }
+  if (d.org_error) { $("session").innerHTML = `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(d.email)}</b>, but the organisation could not be looked up: ${esc(d.org_error)}.`; return; }
+  if (!d.org) { location.replace("/form-spike/providers.html?signin=1"); return; }
+  ME = d.email;
+  $("session").innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b>${d.name ? ` (${esc(d.name)})` : ""} · session until ${new Date(d.exp * 1000).toLocaleDateString()} · <a href="/api/logout">sign out</a>`;
+  $("title").textContent = d.org.name; $("orgname").textContent = d.org.name;
+  $("orgmeta").innerHTML = `${esc(d.org.type)} · default licence ${esc(d.org.licence)}${d.org.licence_url ? ` (<a href="${esc(d.org.licence_url)}" target="_blank" rel="noopener">terms</a>)` : ""} · public: ${esc(d.org.public)} · key <code>${esc(d.org.slug)}</code>`;
+  renderMembers(d.members || []); $("body").hidden = false;
+  renderSubs(await api("/api/submissions"));
+})();
+$("addf").addEventListener("submit", async (ev) => {
+  ev.preventDefault(); $("madd").disabled = true; $("mmsg").className = ""; $("mmsg").textContent = "adding …";
+  const d = await api("/api/members", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "add", name: $("mname").value, email: $("memail").value }) });
+  $("mmsg").className = d.ok ? "ok" : "bad"; $("mmsg").textContent = d.message; if (d.ok) { renderMembers(d.members); $("mname").value = ""; $("memail").value = ""; }
+  $("madd").disabled = false;
+});
+$("members").addEventListener("click", async (ev) => {
+  const b = ev.target.closest("button[data-rm]"); if (!b) return;
+  if (!confirm(`Remove ${b.dataset.rm} from the organisation?`)) return;
+  const d = await api("/api/members", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "remove", email: b.dataset.rm }) });
+  $("mmsg").className = d.ok ? "ok" : "bad"; $("mmsg").textContent = d.message; if (d.ok) { if (b.dataset.rm === ME) { location.href = "/api/logout"; return; } renderMembers(d.members); }
+});
+</script>
+</body></html>

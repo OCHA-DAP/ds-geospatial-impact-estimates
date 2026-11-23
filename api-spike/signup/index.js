@@ -50,8 +50,12 @@ module.exports = lib.guarded(async function (context, req) {
   const existing = await lib.getJson(lib.orgRel(org.slug));
   const session = lib.sessionFrom(req);
   const sessionRec = session ? await lib.registryFor(session.email) : null;
-  if (existing && String(existing.contact).toLowerCase() !== contact && !(sessionRec && sessionRec.organisation.slug === org.slug)) {
-    return lib.json(context, 409, { ok: false, message: `"${org.name}" is already registered by another address. Sign in with that address to change it, or ask the team to add you.` });
+  const isMember = existing && (lib.memberOf(existing, contact) || (sessionRec && sessionRec.organisation.slug === org.slug));
+  if (existing && !isMember) {
+    // Someone else's organisation. Offer the join path instead of a dead end.
+    return lib.json(context, 409, { ok: false, joinable: true, slug: org.slug, organisation: existing.organisation.name,
+      members: existing.members.map((m) => lib.maskEmail(m.email)),
+      message: `"${existing.organisation.name}" is already registered. Ask a member to add you, or send them a request from here.` });
   }
   if (lib.throttled(`signup:${contact}`) || lib.throttled(`signup-ip:${lib.clientIp(req)}`)) {
     return lib.json(context, 429, { ok: false, message: "One registration per minute. Try again shortly." });
@@ -59,8 +63,11 @@ module.exports = lib.guarded(async function (context, req) {
 
   const now = new Date().toISOString();
   const how = await lib.ensureSubscriber(contact, contact_name);
-  const record = { organisation: org, contact, contact_name, registered_at: existing ? existing.registered_at : now, updated_at: now,
-    ...(existing && String(existing.contact).toLowerCase() !== contact ? { previous_contact: existing.contact } : {}) };
+  // Members: on create, the registrant; on update, the existing list with this contact's name refreshed.
+  const members = existing ? existing.members.map((m) => (String(m.email).toLowerCase() === contact ? { ...m, name: contact_name } : m)) : [{ email: contact, name: contact_name, added_at: now, added_by: "registration" }];
+  if (!members.some((m) => String(m.email).toLowerCase() === contact)) members.push({ email: contact, name: contact_name, added_at: now, added_by: session ? session.email : "registration" });
+  const record = { organisation: org, contact: existing ? existing.contact : contact, contact_name: existing ? existing.contact_name : contact_name, members,
+    registered_at: existing ? existing.registered_at : now, updated_at: now };
   const saved_to = await lib.putJson(lib.orgRel(org.slug), record);
   await lib.putJson(lib.contactRel(contact), { email: contact, slug: org.slug, updated_at: now });
   const link = lib.linkFor(req, contact);

@@ -45,7 +45,7 @@ const s = $("session");
 fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
   if (!d.email) { s.innerHTML = note + '<span class="chip chip-info">not signed in</span> Enter your email to continue.'; return; }
   if (d.org_error) { s.innerHTML = note + `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(d.email)}</b>, but the organisation could not be looked up: ${esc(d.org_error)}. Try again in a minute.`; return; }
-  if (d.org) { s.innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${esc(d.org.name)} · opening the form …`; location.replace("/form-spike/submit.html"); return; }
+  if (d.org) { s.innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${esc(d.org.name)} · opening your organisation page …`; location.replace("/form-spike/dashboard.html"); return; }
   // A session whose address is no longer in the registry (contact replaced): not a signed-in state. Sign it out.
   s.innerHTML = note + `<span class="chip chip-warn">sign-in no longer valid</span> <b>${esc(d.email)}</b> is not a registered contact any more. Enter your email below. <a href="/api/logout">Clear the old sign-in</a>.`;
 }).catch((e) => { s.innerHTML = note + '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });

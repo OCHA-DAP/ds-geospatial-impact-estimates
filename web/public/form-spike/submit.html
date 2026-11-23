@@ -26,7 +26,7 @@
 <p>Three levels. Each choice narrows the next, so a provider only sees the fields their product needs. Level 1 is your registration; level 2 is remembered between deliveries in the real build. Here levels 2 and 3 are on one page so the whole shape is visible.</p></header>
 <main>
 <div id="session" class="auth">checking for a session …</div>
-<p class="topnav"><a href="/form-spike/providers.html">← Submit an analysis</a></p>
+<p class="topnav"><a href="/form-spike/dashboard.html">← Your organisation</a></p>
 <div class="steps"><span id="st1">1 · organisation</span><span id="st2">2 · product</span><span id="st3">3 · delivery</span></div>
 
 <form id="f" onsubmit="return false">
@@ -143,9 +143,10 @@
 <label><input type="checkbox" name="licence_ok" checked> This version is released under the organisation's default licence (<span id="licname">…</span>)</label>
 </fieldset>
 
-<button class="btn" id="show" type="button">Submit delivery</button> <a class="btn btn-2" href="/api/submissions" target="_blank" rel="noopener">List saved submissions</a>
+<button class="btn" id="show" type="button">Submit delivery</button>
 <p class="help">In this spike each submission is written as a JSON record to a test folder on the team's dev blob storage. The real build writes the registry rows and fetches the file into bronze.</p>
 <pre id="out" hidden></pre>
+<p id="after" hidden><a class="btn" href="/form-spike/dashboard.html">Back to your organisation page</a> <span class="muted">the new delivery is in the table there</span></p>
 </form>
 </main></div>
 <script>
@@ -165,7 +166,7 @@ fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) thro
   $("org").innerHTML = sessFail ? `<span class="chip chip-warn">session check failed</span> ${esc(sessFail)}; the organisation cannot be looked up.`
     : sess && sess.org_error ? `<span class="chip chip-warn">registry unreachable</span> ${esc(sess.org_error)}. Submit is blocked until the lookup works; this is not "unregistered".`
     : ORG
-    ? `<span class="chip chip-ok">registered</span> <b>${esc(ORG.name)}</b> · ${esc(ORG.type)} · licence ${esc(ORG.licence)}${ORG.licence_url ? ` (<a href="${esc(ORG.licence_url)}" rel="noopener" target="_blank">terms</a>)` : ""} · public: ${esc(ORG.public)} · key <code>${esc(ORG.slug)}</code> · <a href="/form-spike/signup.html">edit</a>`
+    ? `<span class="chip chip-ok">registered</span> <b>${esc(ORG.name)}</b> · ${esc(ORG.type)} · licence ${esc(ORG.licence)}${ORG.licence_url ? ` (<a href="${esc(ORG.licence_url)}" rel="noopener" target="_blank">terms</a>)` : ""} · public: ${esc(ORG.public)} · key <code>${esc(ORG.slug)}</code> · <a href="/form-spike/dashboard.html">organisation page</a>`
     : sess ? '<span class="chip chip-warn">no organisation registered for this address</span> <a href="/form-spike/signup.html">Register it</a> first; the submit call is refused until then.'
     : '<span class="chip chip-info">sign in to see it</span> The organisation comes from the registration behind the signed-in address, never from this form.';
   applyConditions();
@@ -288,7 +289,7 @@ $("show").onclick = () => {
   $("out").hidden = false; $("out").textContent = "submitting …";
   fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) })
     .then(async (r) => { const text = await r.text(); let body; try { body = JSON.parse(text); } catch { body = { ok: false, message: `non-JSON response: ${text.slice(0, 300) || "(empty body)"}` }; } return { status: r.status, body }; })
-    .then((res) => { $("out").textContent = (res.body.ok ? `Saved: ${res.body.saved_to}\n\n` : `HTTP ${res.status}\n`) + JSON.stringify(res.body, null, 2); })
+    .then((res) => { $("out").textContent = (res.body.ok ? `Saved: ${res.body.saved_to}\n\n` : `HTTP ${res.status}\n`) + JSON.stringify(res.body, null, 2); if (res.body.ok) $("after").hidden = false; })
     .catch((e) => { $("out").textContent = "submit failed: " + e; });
 };
 const q = new URLSearchParams(location.search);

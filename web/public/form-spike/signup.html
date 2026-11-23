@@ -16,7 +16,7 @@
 <h1 id="title">Register your organisation</h1>
 <p>Once per organisation. The contact address becomes the sign-in address: it goes into the registry and receives a sign-in link straight away, so registering and signing in are the same step.</p></header>
 <main>
-<p class="topnav"><a href="/form-spike/providers.html">← Submit an analysis</a></p>
+<p class="topnav"><a href="/form-spike/providers.html">← Sign in</a> · <a href="/form-spike/dashboard.html">Your organisation</a></p>
 <div id="session" class="auth">checking for a session …</div>
 
 <form id="f" onsubmit="return false">
@@ -42,6 +42,7 @@
 </fieldset>
 <button class="btn" id="go" type="submit">Register and email me a sign-in link</button>
 <p id="msg"></p>
+<div id="join" class="contact" hidden><p style="margin:0 0 8px"><b id="joinorg"></b> is already registered. If that is your organisation, ask the members to add you, or send them a request from here with your name and address above.</p><p class="help" id="joinmembers"></p><button class="btn" id="joinbtn" type="button">Request to join</button><span id="joinmsg" class="help" style="display:inline-block;margin-left:10px"></span></div>
 <p class="help">What happens: the organisation record and the contact are written to the registry (spike: a folder on dev storage), Listmonk gets a subscriber record for the address so it can relay mail to it (no list, no campaigns), and a sign-in link is sent to that one address. Spike shortcut: no staff approval before you can submit; the real build has one.</p>
 </form>
 </main></div>
@@ -72,6 +73,15 @@ fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) thro
     $("session").innerHTML = '<span class="chip chip-info">registration</span> Fill in the form; the sign-in link follows.';
   }
 }).catch((e) => { $("session").innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
+let JOIN = null;
+$("joinbtn").onclick = async () => {
+  $("joinbtn").disabled = true; $("joinmsg").textContent = "sending …";
+  try {
+    const r = await fetch("/api/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: JOIN.slug, email: F.contact.value, name: F.contact_name.value }) });
+    const d = await r.json(); $("joinmsg").textContent = d.message;
+  } catch (e) { $("joinmsg").textContent = "Request failed: " + e; }
+  $("joinbtn").disabled = false;
+};
 F.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const o = {}; for (const el of F.querySelectorAll("input, select")) if (el.name) o[el.name] = el.value;
@@ -80,7 +90,8 @@ F.addEventListener("submit", async (ev) => {
   try {
     const r = await fetch("/api/signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) });
     const text = await r.text(); let d; try { d = JSON.parse(text); } catch { d = { ok: false, message: `non-JSON response (HTTP ${r.status}): ${text.slice(0, 200)}` }; }
-    $("msg").className = d.ok ? "ok" : "bad"; $("msg").textContent = d.message + (d.ok ? " Then come back to the submission form from the link." : "");
+    $("msg").className = d.ok ? "ok" : "bad"; $("msg").textContent = d.message + (d.ok ? " The link opens your organisation page." : "");
+    $("join").hidden = !(d.joinable); if (d.joinable) { JOIN = d; $("joinorg").textContent = d.organisation; $("joinmembers").textContent = "Current members: " + d.members.join(", "); $("joinmsg").textContent = ""; }
   } catch (e) { $("msg").className = "bad"; $("msg").textContent = "Request failed: " + e; }
   $("go").disabled = false;
 });

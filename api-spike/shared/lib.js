@@ -87,15 +87,25 @@ async function ensureSubscriber(email, name) {
 // not registered. A read failure throws; callers must not treat it as "not registered".
 function contactRel(email) { return `${CONTACT_PREFIX}/${crypto.createHash("sha256").update(email.toLowerCase()).digest("hex")}.json`; }
 function orgRel(slug) { return `${ORG_PREFIX}/${slug}.json`; }
+// An organisation has members; the registrant is the first. The per-address index points at the
+// organisation, and the organisation record's member list is the authority (an index left behind
+// after a removal does not sign anyone in).
+function memberOf(rec, email) {
+  return !!rec && Array.isArray(rec.members) && rec.members.some((m) => String(m.email).toLowerCase() === email.toLowerCase());
+}
 async function registryFor(email) {
   const idx = await getJson(contactRel(email));
   if (!idx || !SLUG.test(idx.slug || "")) return null;
   const rec = await getJson(orgRel(idx.slug));
   if (!rec) throw new Error(`registry inconsistent: contact index points at ${idx.slug} but that organisation record is missing`);
-  if (String(rec.contact).toLowerCase() !== email.toLowerCase()) return null; // contact was replaced; the old address is out
-  return rec;
+  return memberOf(rec, email) ? rec : null;
 }
-async function sendLink(email, link, intro) {
+// One member's record (name etc.) from an organisation record.
+function memberEntry(rec, email) {
+  return (rec && rec.members || []).find((m) => String(m.email).toLowerCase() === email.toLowerCase()) || null;
+}
+const maskEmail = (e) => String(e).replace(/^(.)[^@]*(@.*)$/, "$1***$2");
+async function sendLink(email, link, intro, subject) {
   // Invariant: exactly one recipient, the address this request is about. Only the singular
   // `subscriber_email` field of the transactional endpoint is ever used; never `subscriber_emails`,
   // `subscriber_ids` or a campaign.
@@ -108,10 +118,20 @@ async function sendLink(email, link, intro) {
   const r = await fetch(`${secrets().listmonk_base_url}/tx`, {
     method: "POST", headers: { Authorization: authHeader(), "Content-Type": "application/json" },
     body: JSON.stringify({ subscriber_email: email, template_id: TEMPLATE_ID, content_type: "html",
-      subject: "[test] Your sign-in link for the damage analysis submission form", data: { content } }),
+      subject: subject || "[test] Your sign-in link for the damage analysis submission form", data: { content } }),
   });
   if (!r.ok) throw new Error(`Listmonk tx send failed: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
 }
+// A plain transactional email to one address (no sign-in link). Same single-recipient rule.
+async function sendNote(email, subject, html) {
+  if (typeof email !== "string" || !email.includes("@") || email.includes(",")) throw new Error("sendNote needs exactly one address");
+  const r = await fetch(`${secrets().listmonk_base_url}/tx`, {
+    method: "POST", headers: { Authorization: authHeader(), "Content-Type": "application/json" },
+    body: JSON.stringify({ subscriber_email: email, template_id: TEMPLATE_ID, content_type: "html", subject, data: { content: html } }),
+  });
+  if (!r.ok) throw new Error(`Listmonk tx send failed: HTTP ${r.status} ${(await r.text()).slice(0, 200)}`);
+}
+const escHtml = (v) => String(v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 function linkFor(req, email) {
   return `${origin(req)}/api/redeem?t=${mint("link", { email }, LINK_TTL_S)}`;
 }
@@ -198,5 +218,5 @@ function guarded(fn) {
   };
 }
 module.exports = { LINK_TTL_S, SESSION_TTL_S, ORG_PREFIX, CONTACT_PREFIX, ORG_TYPES, LICENCES, SLUG, secrets, mint, verify,
-  findSubscriber, ensureSubscriber, registryFor, contactRel, orgRel, sendLink, linkFor, putJson, getJson, listBlobs,
+  findSubscriber, ensureSubscriber, registryFor, memberOf, memberEntry, maskEmail, contactRel, orgRel, sendLink, sendNote, escHtml, linkFor, putJson, getJson, listBlobs,
   sessionFrom, setCookie, origin, json, throttled, clientIp, guarded };

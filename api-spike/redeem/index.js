@@ -6,5 +6,5 @@ module.exports = lib.guarded(async function (context, req) {
     return;
   }
   const session = lib.mint("session", { email: claims.email, via: "magic-link" }, lib.SESSION_TTL_S);
-  context.res = { status: 302, headers: { Location: "/form-spike/submit.html", "Set-Cookie": lib.setCookie(session, lib.SESSION_TTL_S) } };
+  context.res = { status: 302, headers: { Location: "/form-spike/dashboard.html", "Set-Cookie": lib.setCookie(session, lib.SESSION_TTL_S) } };
 });

@@ -9,5 +9,7 @@ module.exports = lib.guarded(async function (context, req) {
   let rec = null, org_error = null;
   try { rec = await lib.registryFor(s.email); }
   catch (e) { context.log.error(e); org_error = `could not read the registry: ${e.message}`; }
-  lib.json(context, 200, { email: s.email, name: (rec && rec.contact_name) || "", exp: s.exp, via: s.via, org: rec ? rec.organisation : null, ...(org_error ? { org_error } : {}), link_origin: safeOrigin(req) });
+  const me = lib.memberEntry(rec, s.email);
+  lib.json(context, 200, { email: s.email, name: (me && me.name) || "", exp: s.exp, via: s.via, org: rec ? rec.organisation : null,
+    members: rec ? rec.members.map((m) => ({ email: m.email, name: m.name, added_at: m.added_at })) : [], ...(org_error ? { org_error } : {}), link_origin: safeOrigin(req) });
 });
