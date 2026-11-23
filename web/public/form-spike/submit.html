@@ -26,7 +26,7 @@
 <p>Three levels. Each choice narrows the next, so a provider only sees the fields their product needs. Level 1 is your registration; level 2 is remembered between deliveries in the real build. Here levels 2 and 3 are on one page so the whole shape is visible.</p></header>
 <main>
 <div id="session" class="auth">checking for a session …</div>
-<p class="topnav"><a href="/form-spike/providers.html">← For data providers</a> · <a href="/form-spike/index.html">Sign in</a></p>
+<p class="topnav"><a href="/form-spike/providers.html">← Submit an analysis</a></p>
 <div class="steps"><span id="st1">1 · organisation</span><span id="st2">2 · product</span><span id="st3">3 · delivery</span></div>
 
 <form id="f" onsubmit="return false">
@@ -159,7 +159,8 @@ fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) thro
   $("session").innerHTML = sess
     ? `<span class="chip chip-ok">signed in by link</span> <b>${esc(sess.email)}</b> · session until ${new Date(sess.exp * 1000).toLocaleString()} · <a href="/api/logout">sign out</a>`
     : sessFail ? `<span class="chip chip-warn">session check failed</span> ${esc(sessFail)}. This is a server problem, not a missing sign-in; the submit call will fail the same way.`
-    : '<span class="chip chip-warn">no session</span> <a href="/form-spike/index.html">Ask for a sign-in link</a> first. You can read the form, but the submit call will be refused.';
+    : '<span class="chip chip-warn">no session</span> redirecting to sign in …';
+  if (!sess && !sessFail) { location.replace("/form-spike/providers.html?signin=1"); return; }
   $("org").innerHTML = sessFail ? `<span class="chip chip-warn">session check failed</span> ${esc(sessFail)}; the organisation cannot be looked up.`
     : sess && sess.org_error ? `<span class="chip chip-warn">registry unreachable</span> ${esc(sess.org_error)}. Submit is blocked until the lookup works; this is not "unregistered".`
     : ORG

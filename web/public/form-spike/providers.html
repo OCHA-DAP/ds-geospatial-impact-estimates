@@ -1,54 +1,99 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>For data providers</title>
+<title>Submit an analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/form-spike/_shared.css">
 <style>
-.cards { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:0 0 1.6rem; }
-.card { display:block; border:1px solid var(--n2); background:#fff; padding:16px 18px 14px; text-decoration:none; color:var(--n9); position:relative; }
-.card:hover { border-color:var(--b5); background:var(--b05); }
-.card .step { font-size:11px; letter-spacing:.12em; text-transform:uppercase; font-weight:700; color:var(--b6); margin:0 0 4px; }
-.card h3 { font-family:'Merriweather',Georgia,serif; font-weight:900; font-size:16px; color:var(--b8); margin:0 0 6px; }
-.card p { font-size:13.5px; color:var(--n8); margin:0; }
-.card .need { font-size:12px; color:var(--n7); margin-top:8px; }
-.card.primary { border:2px solid var(--b5); grid-column:1 / -1; }
-.card.off { opacity:.55; }
-@media (max-width:640px) { .cards { grid-template-columns:1fr; } }
+.gate { border:2px solid var(--b5); background:var(--b05); padding:18px 20px 14px; margin:0 0 1.6rem; }
+.gate h2 { border:0; margin:0 0 4px; padding:0; }
+.gate .row { grid-template-columns:1fr auto; align-items:end; }
+.gate input[type=email] { font-size:16px; padding:11px 12px; border:1px solid var(--b5); }
+.gate button { font-size:15px; padding:11px 18px; margin:0 0 1px; white-space:nowrap; }
+#msg { font-size:14px; margin:10px 0 0; min-height:1.4em; } #msg.ok { color:var(--b7); font-weight:500; } #msg.bad { color:var(--w6); }
+.cont { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+figure { margin:0 0 1.4rem; } figure svg { width:100%; max-width:800px; height:auto; display:block; color:var(--n9); }
+figcaption { font-size:12.5px; color:var(--n7); margin-top:4px; max-width:80ch; }
+.levels { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:0 0 1.4rem; }
+.lv { border:1px solid var(--n2); padding:12px 14px; font-size:13.5px; } .lv b { display:block; color:var(--b8); margin-bottom:3px; }
+.lv .when { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--b6); font-weight:700; }
+@media (max-width:640px) { .levels { grid-template-columns:1fr; } .gate .row { grid-template-columns:1fr; } }
 </style>
 </head><body><div class="wrap">
 <header class="hero"><p class="eyebrow">OCHA Centre for Humanitarian Data · Data Science · throwaway spike</p>
-<h1>For data providers</h1>
-<p>Your files live on the event's HDX crisis page. This is where you tell us about them: register your organisation once, describe each product once, and send a short delivery note every time you ship.</p></header>
+<h1>Submit a damage analysis</h1>
+<p>Your files live on the event's HDX crisis page. This is where you tell us about them. Start with your email: if we know it, a sign-in link is on its way; if not, you register your organisation first.</p></header>
 <main>
 <p class="topnav"><a href="/">← Damage Exposure Viewer</a></p>
 <div id="session" class="auth">checking for a session …</div>
 
-<h2>What would you like to do?</h2>
-<div class="cards">
-<a class="card primary" href="/form-spike/signup.html" id="c-signup"><p class="step">Step 1 · once per organisation</p><h3>Register your organisation</h3>
-<p>Name, type, default licence and a contact address. Registering puts the contact in the registry and emails a sign-in link, so there is no separate account to create.</p><p class="need">Needs: nothing. Start here if you have never submitted.</p></a>
-<a class="card" href="/form-spike/submit.html" id="c-submit"><p class="step">Step 2 · per product and delivery</p><h3>Submit a product</h3>
-<p>Describe the product once (analysis or reference, method, geometry, how damage is encoded), then the delivery: event, dates, headline numbers and the two HDX links. Later deliveries of the same product reuse the definition.</p><p class="need">Needs: a registered organisation and a sign-in.</p></a>
-<a class="card" href="/form-spike/index.html" id="c-signin"><p class="step">Any time</p><h3>Sign in</h3>
-<p>Already registered? Get a fresh sign-in link emailed to the registered address. The link signs this browser in for 30 days.</p></a>
-<a class="card" href="/api/submissions" target="_blank" rel="noopener" id="c-list"><p class="step">Any time</p><h3>Your submissions</h3>
-<p>The records saved so far (spike: raw JSON listing, every organisation's records). The real build shows your organisation's deliveries and their validation state.</p><p class="need">Needs: a sign-in.</p></a>
+<div class="gate" id="gate">
+<h2>Your email</h2>
+<p class="help" style="margin:0 0 10px">No password. The address is checked against the provider registry and a one-time link is emailed to it, to that address only.</p>
+<form id="req" onsubmit="return false">
+<div class="row"><div><label for="email">Email address</label><input type="email" id="email" placeholder="you@organisation.org" required autocomplete="email"></div><div><button class="btn" id="send" type="submit">Continue</button></div></div>
+</form>
+<p id="msg"></p>
+<div class="cont" id="goreg" hidden><a class="btn" id="reglink" href="/form-spike/signup.html">Register your organisation</a><span class="muted">takes a minute; the sign-in link follows</span></div>
 </div>
 
-<h2>How it fits together</h2>
-<p class="muted">Register → open the emailed link → describe the product and paste the two HDX links → submit. The registration is what the sign-in checks against: a link is only sent to addresses that registered. A late AOI, a corrected file or a new version is a new delivery of the same product, not a new registration.</p>
+<h2>How it works</h2>
+<figure>
+<svg viewBox="0 0 800 250" role="img" aria-label="Flow: enter your email; a known address gets a sign-in link, an unknown address goes to registration, which then sends the link; the link opens the product and delivery form; submitting saves a record.">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
+<g font-family="Roboto, system-ui, sans-serif" font-size="12" fill="currentColor">
+<rect x="10" y="95" width="120" height="50" rx="4" fill="none" stroke="currentColor"/><text x="70" y="116" text-anchor="middle">Enter your</text><text x="70" y="132" text-anchor="middle">email</text>
+<line x1="130" y1="120" x2="200" y2="120" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/>
+<polygon points="260,90 320,120 260,150 200,120" fill="none" stroke="currentColor"/><text x="260" y="117" text-anchor="middle">address</text><text x="260" y="131" text-anchor="middle">known?</text>
+<line x1="320" y1="120" x2="400" y2="120" stroke="#1e795f" stroke-width="2" marker-end="url(#arr)"/><text x="360" y="112" text-anchor="middle" fill="#1e795f" font-weight="700">yes</text>
+<line x1="260" y1="150" x2="260" y2="195" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="276" y="178" fill="currentColor" font-weight="700">no</text>
+<rect x="200" y="195" width="120" height="45" rx="4" fill="none" stroke="currentColor"/><text x="260" y="214" text-anchor="middle">Register your</text><text x="260" y="229" text-anchor="middle">organisation</text>
+<path d="M320 217 L460 217 L460 145" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="392" y="210" text-anchor="middle">once</text>
+<rect x="400" y="95" width="120" height="50" rx="4" fill="#e9f5f1" stroke="#1e795f"/><text x="460" y="116" text-anchor="middle">Sign-in link</text><text x="460" y="132" text-anchor="middle">emailed to you</text>
+<line x1="520" y1="120" x2="590" y2="120" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="555" y="112" text-anchor="middle">open it</text>
+<rect x="590" y="95" width="120" height="50" rx="4" fill="none" stroke="currentColor"/><text x="650" y="116" text-anchor="middle">Product and</text><text x="650" y="132" text-anchor="middle">delivery form</text>
+<line x1="650" y1="95" x2="650" y2="55" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="662" y="78">submit</text>
+<rect x="590" y="10" width="120" height="45" rx="4" fill="none" stroke="currentColor" stroke-dasharray="4 3"/><text x="650" y="29" text-anchor="middle">Record saved,</text><text x="650" y="44" text-anchor="middle">files fetched from HDX</text>
+<text x="460" y="170" text-anchor="middle" font-size="11" fill="#5e6a6b">signed in for 30 days on this device</text>
+</g></svg>
+<figcaption>One door for everyone. The email decides the path: a registered address goes straight to the link, a new one registers first and then gets the same link. The form behind the link is the only place products and deliveries are described.</figcaption>
+</figure>
+
+<h2>What the form asks</h2>
+<div class="levels">
+<div class="lv"><span class="when">once per organisation</span><b>1 · Organisation</b>Name, type, default licence, contact address. This is the registration; it never has to be repeated.</div>
+<div class="lv"><span class="when">once per product</span><b>2 · Product</b>Category and method, geometry, file format, how damage is encoded, how the analysed extent is given, confidence.</div>
+<div class="lv"><span class="when">every delivery</span><b>3 · Delivery</b>Event, the two HDX links (analysis product and analysed extent), image dates, headline numbers.</div>
+</div>
+<p class="muted">A late AOI, a corrected file or a new version is a new delivery of the same product. Links only, never uploads. Spike: records go to a test folder on dev storage; <a href="/api/submissions" target="_blank" rel="noopener">list them</a> once signed in.</p>
 </main></div>
 <script>
+const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const s = document.getElementById("session");
+const q = new URLSearchParams(location.search);
+const note = q.get("bad") ? '<p><span class="chip chip-warn">link rejected</span> That link is invalid or has expired. Enter your email below for a new one.</p>'
+  : q.get("signin") ? '<p><span class="chip chip-info">sign in first</span> The form needs a signed-in session. Enter your email below.</p>'
+  : q.get("denied") || q.get("forbidden") ? '<p><span class="chip chip-warn">not signed in</span> Enter your email below.</p>' : "";
+const s = $("session");
 fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
-  if (d.org_error) { s.innerHTML = `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(d.email)}</b>, but the organisation could not be looked up: ${esc(d.org_error)}. Try again in a minute.`; return; }
-  if (!d.email) { s.innerHTML = '<span class="chip chip-info">not signed in</span> Register (step 1) if you are new, or sign in if your organisation is already registered.'; return; }
-  const org = d.org;
-  s.innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${org ? `submitting as <b>${esc(org.name)}</b> (${esc(org.type)}, ${esc(org.licence)})` : '<span class="chip chip-warn">no organisation registered for this address</span> register it in step 1 before submitting'} · <a href="/api/logout">sign out</a>`;
-  if (org) { const c = document.getElementById("c-signup"); c.querySelector("h3").textContent = "Update your organisation"; c.querySelector(".need").textContent = "Signed in: edit and save."; c.classList.remove("primary"); }
-  else { document.getElementById("c-submit").classList.add("off"); }
-}).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
+  if (!d.email) { s.innerHTML = note + '<span class="chip chip-info">not signed in</span> Enter your email to continue.'; return; }
+  if (d.org_error) { s.innerHTML = note + `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(d.email)}</b>, but the organisation could not be looked up: ${esc(d.org_error)}. Try again in a minute.`; return; }
+  $("gate").hidden = true;
+  s.innerHTML = note + (d.org
+    ? `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${esc(d.org.name)} · <a href="/api/logout">sign out</a><div class="cont"><a class="btn" href="/form-spike/submit.html">Continue to the product and delivery form</a><a class="btn btn-2" href="/form-spike/signup.html">Edit organisation</a></div>`
+    : `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · <span class="chip chip-warn">no organisation registered</span> · <a href="/api/logout">sign out</a><div class="cont"><a class="btn" href="/form-spike/signup.html">Register your organisation</a><span class="muted">needed once before the form opens</span></div>`);
+}).catch((e) => { s.innerHTML = note + '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
+$("req").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const email = $("email").value.trim(), btn = $("send"), msg = $("msg");
+  btn.disabled = true; msg.className = ""; msg.textContent = "checking …"; $("goreg").hidden = true;
+  try {
+    const r = await fetch("/api/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+    const text = await r.text(); let d; try { d = JSON.parse(text); } catch { d = { ok: false, message: `non-JSON response (HTTP ${r.status}): ${text.slice(0, 200)}` }; }
+    msg.className = d.ok ? (d.registered === false ? "bad" : "ok") : "bad"; msg.textContent = d.message;
+    if (d.ok && d.registered === false) { $("reglink").href = "/form-spike/signup.html?email=" + encodeURIComponent(email); $("goreg").hidden = false; }
+  } catch (e) { msg.className = "bad"; msg.textContent = "Request failed: " + e; }
+  btn.disabled = false;
+});
 </script>
 </body></html>

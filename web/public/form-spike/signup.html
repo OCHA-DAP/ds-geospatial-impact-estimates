@@ -12,11 +12,11 @@
 #msg { font-size:14px; margin:10px 0; } #msg.ok { color:var(--b7); font-weight:500; } #msg.bad { color:var(--w6); }
 </style>
 </head><body><div class="wrap">
-<header class="hero"><p class="eyebrow">throwaway spike · step 1 of 2</p>
+<header class="hero"><p class="eyebrow">throwaway spike · registration, once per organisation</p>
 <h1 id="title">Register your organisation</h1>
 <p>Once per organisation. The contact address becomes the sign-in address: it goes into the registry and receives a sign-in link straight away, so registering and signing in are the same step.</p></header>
 <main>
-<p class="topnav"><a href="/form-spike/providers.html">← For data providers</a></p>
+<p class="topnav"><a href="/form-spike/providers.html">← Submit an analysis</a></p>
 <div id="session" class="auth">checking for a session …</div>
 
 <form id="f" onsubmit="return false">
@@ -56,11 +56,12 @@ function apply() {
   if (F.licence.value === "restricted") { F.public.value = "no"; F.public.disabled = true; } else { F.public.disabled = false; }
 }
 F.addEventListener("input", apply); F.addEventListener("change", apply); apply();
+const pre = new URLSearchParams(location.search).get("email"); if (pre) F.contact.value = pre;
 let sess = null;
 fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
   sess = d.email ? d : null;
   if (sess && sess.org_error) { $("session").innerHTML = `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(sess.email)}</b>, but the organisation could not be looked up: ${esc(sess.org_error)}. Saving would still work; reload first to see the current record.`; F.contact.value = sess.email; return; }
-  if (!sess) { $("session").innerHTML = '<span class="chip chip-info">not signed in</span> New organisation: fill in the form. Already registered: <a href="/form-spike/index.html">sign in</a> instead.'; return; }
+  if (!sess) { if (pre) F.contact.value = pre; $("session").innerHTML = '<span class="chip chip-info">not signed in</span> Your address is not registered yet, so this is the one-time registration. Already registered under another address? <a href="/form-spike/providers.html">Go back and use that one</a>.'; return; }
   F.contact.value = sess.email; if (sess.name) F.contact_name.value = sess.name;
   if (sess.org) {
     const o = sess.org; $("title").textContent = "Update your organisation";

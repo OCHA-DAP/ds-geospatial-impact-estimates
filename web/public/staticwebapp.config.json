@@ -16,11 +16,11 @@
   ],
   "responseOverrides": {
     "401": {
-      "redirect": "/form-spike/index.html?denied=1",
+      "redirect": "/form-spike/providers.html?denied=1",
       "statusCode": 302
     },
     "403": {
-      "redirect": "/form-spike/index.html?forbidden=1",
+      "redirect": "/form-spike/providers.html?forbidden=1",
       "statusCode": 302
     }
   },
