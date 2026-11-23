@@ -161,6 +161,7 @@ fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) thro
     : sessFail ? `<span class="chip chip-warn">session check failed</span> ${esc(sessFail)}. This is a server problem, not a missing sign-in; the submit call will fail the same way.`
     : '<span class="chip chip-warn">no session</span> redirecting to sign in …';
   if (!sess && !sessFail) { location.replace("/form-spike/providers.html?signin=1"); return; }
+  if (sess && !ORG && !sess.org_error) { location.replace("/form-spike/providers.html?signin=1"); return; } // signed in means registered; anything else goes back to the door
   $("org").innerHTML = sessFail ? `<span class="chip chip-warn">session check failed</span> ${esc(sessFail)}; the organisation cannot be looked up.`
     : sess && sess.org_error ? `<span class="chip chip-warn">registry unreachable</span> ${esc(sess.org_error)}. Submit is blocked until the lookup works; this is not "unregistered".`
     : ORG

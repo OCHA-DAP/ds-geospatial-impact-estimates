@@ -11,61 +11,28 @@
 .gate input[type=email] { font-size:16px; padding:11px 12px; border:1px solid var(--b5); }
 .gate button { font-size:15px; padding:11px 18px; margin:0 0 1px; white-space:nowrap; }
 #msg { font-size:14px; margin:10px 0 0; min-height:1.4em; } #msg.ok { color:var(--b7); font-weight:500; } #msg.bad { color:var(--w6); }
-.cont { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; } .cont[hidden] { display:none; }
-figure { margin:0 0 1.4rem; } figure svg { width:100%; max-width:800px; height:auto; display:block; color:var(--n9); }
-figcaption { font-size:12.5px; color:var(--n7); margin-top:4px; max-width:80ch; }
-.levels { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin:0 0 1.4rem; }
-.lv { border:1px solid var(--n2); padding:12px 14px; font-size:13.5px; } .lv b { display:block; color:var(--b8); margin-bottom:3px; }
-.lv .when { font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--b6); font-weight:700; }
-@media (max-width:640px) { .levels { grid-template-columns:1fr; } .gate .row { grid-template-columns:1fr; } }
+.cont { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; font-size:14px; } .cont .btn { margin:0; } .cont[hidden] { display:none; }
+@media (max-width:640px) { .gate .row { grid-template-columns:1fr; } }
 </style>
 </head><body><div class="wrap">
 <header class="hero"><p class="eyebrow">OCHA Centre for Humanitarian Data · Data Science · throwaway spike</p>
 <h1>Submit a damage analysis</h1>
-<p>Your files live on the event's HDX crisis page. This is where you tell us about them. Start with your email: if we know it, a sign-in link is on its way; if not, you register your organisation first.</p></header>
+<p>Enter the email address your organisation uses with us. Registered providers get a sign-in link; new providers are asked to register first.</p></header>
 <main>
 <p class="topnav"><a href="/">← Damage Exposure Viewer</a></p>
 <div id="session" class="auth">checking for a session …</div>
 
 <div class="gate" id="gate">
 <h2>Your email</h2>
-<p class="help" style="margin:0 0 10px">No password. The address is checked against the provider registry and a one-time link is emailed to it, to that address only.</p>
+
 <form id="req" onsubmit="return false">
 <div class="row"><div><label for="email">Email address</label><input type="email" id="email" placeholder="you@organisation.org" required autocomplete="email"></div><div><button class="btn" id="send" type="submit">Continue</button></div></div>
 </form>
 <p id="msg"></p>
-<div class="cont" id="goreg" hidden><a class="btn" id="reglink" href="/form-spike/signup.html">Register your organisation</a><span class="muted">takes a minute; the sign-in link follows</span></div>
+<div class="cont" id="goreg" hidden><span>Register your organisation as a provider?</span><a class="btn" id="reglink" href="/form-spike/signup.html">Yes, register</a><button class="btn btn-2" id="noreg" type="button">No, try another address</button></div>
 </div>
 
-<h2>How it works</h2>
-<figure>
-<svg viewBox="0 0 800 250" role="img" aria-label="Flow: enter your email; a known address gets a sign-in link, an unknown address goes to registration, which then sends the link; the link opens the product and delivery form; submitting saves a record.">
-<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor"/></marker></defs>
-<g font-family="Roboto, system-ui, sans-serif" font-size="12" fill="currentColor">
-<rect x="10" y="95" width="120" height="50" rx="4" fill="none" stroke="currentColor"/><text x="70" y="116" text-anchor="middle">Enter your</text><text x="70" y="132" text-anchor="middle">email</text>
-<line x1="130" y1="120" x2="200" y2="120" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/>
-<polygon points="260,90 320,120 260,150 200,120" fill="none" stroke="currentColor"/><text x="260" y="117" text-anchor="middle">address</text><text x="260" y="131" text-anchor="middle">known?</text>
-<line x1="320" y1="120" x2="400" y2="120" stroke="#1e795f" stroke-width="2" marker-end="url(#arr)"/><text x="360" y="112" text-anchor="middle" fill="#1e795f" font-weight="700">yes</text>
-<line x1="260" y1="150" x2="260" y2="195" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="276" y="178" fill="currentColor" font-weight="700">no</text>
-<rect x="200" y="195" width="120" height="45" rx="4" fill="none" stroke="currentColor"/><text x="260" y="214" text-anchor="middle">Register your</text><text x="260" y="229" text-anchor="middle">organisation</text>
-<path d="M320 217 L460 217 L460 145" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="392" y="210" text-anchor="middle">once</text>
-<rect x="400" y="95" width="120" height="50" rx="4" fill="#e9f5f1" stroke="#1e795f"/><text x="460" y="116" text-anchor="middle">Sign-in link</text><text x="460" y="132" text-anchor="middle">emailed to you</text>
-<line x1="520" y1="120" x2="590" y2="120" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="555" y="112" text-anchor="middle">open it</text>
-<rect x="590" y="95" width="120" height="50" rx="4" fill="none" stroke="currentColor"/><text x="650" y="116" text-anchor="middle">Product and</text><text x="650" y="132" text-anchor="middle">delivery form</text>
-<line x1="650" y1="95" x2="650" y2="55" stroke="currentColor" stroke-width="1.5" marker-end="url(#arr)"/><text x="662" y="78">submit</text>
-<rect x="575" y="10" width="150" height="45" rx="4" fill="none" stroke="currentColor" stroke-dasharray="4 3"/><text x="650" y="29" text-anchor="middle">Record saved,</text><text x="650" y="44" text-anchor="middle">files fetched from HDX</text>
-<text x="555" y="140" text-anchor="middle" font-size="10.5" fill="#5e6a6b">30-day session</text>
-</g></svg>
-<figcaption>One door for everyone. The email decides the path: a registered address goes straight to the link, a new one registers first and then gets the same link. The form behind the link is the only place products and deliveries are described.</figcaption>
-</figure>
-
-<h2>What the form asks</h2>
-<div class="levels">
-<div class="lv"><span class="when">once per organisation</span><b>1 · Organisation</b>Name, type, default licence, contact address. This is the registration; it never has to be repeated.</div>
-<div class="lv"><span class="when">once per product</span><b>2 · Product</b>Category and method, geometry, file format, how damage is encoded, how the analysed extent is given, confidence.</div>
-<div class="lv"><span class="when">every delivery</span><b>3 · Delivery</b>Event, the two HDX links (analysis product and analysed extent), image dates, headline numbers.</div>
-</div>
-<p class="muted">A late AOI, a corrected file or a new version is a new delivery of the same product. Links only, never uploads. Spike: records go to a test folder on dev storage; <a href="/api/submissions" target="_blank" rel="noopener">list them</a> once signed in.</p>
+<p class="muted">Your files stay on the event's HDX crisis page; the form behind the link is where you describe the product and the delivery. No password: a one-time link is emailed to the address you enter, and this browser then stays signed in for 30 days.</p>
 </main></div>
 <script>
 const $ = (id) => document.getElementById(id);
@@ -78,10 +45,9 @@ const s = $("session");
 fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
   if (!d.email) { s.innerHTML = note + '<span class="chip chip-info">not signed in</span> Enter your email to continue.'; return; }
   if (d.org_error) { s.innerHTML = note + `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(d.email)}</b>, but the organisation could not be looked up: ${esc(d.org_error)}. Try again in a minute.`; return; }
-  $("gate").hidden = true;
-  s.innerHTML = note + (d.org
-    ? `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${esc(d.org.name)} · <a href="/api/logout">sign out</a><div class="cont"><a class="btn" href="/form-spike/submit.html">Continue to the product and delivery form</a><a class="btn btn-2" href="/form-spike/signup.html">Edit organisation</a></div>`
-    : `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · <span class="chip chip-warn">no organisation registered</span> · <a href="/api/logout">sign out</a><div class="cont"><a class="btn" href="/form-spike/signup.html">Register your organisation</a><span class="muted">needed once before the form opens</span></div>`);
+  if (d.org) { s.innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${esc(d.org.name)} · opening the form …`; location.replace("/form-spike/submit.html"); return; }
+  // A session whose address is no longer in the registry (contact replaced): not a signed-in state. Sign it out.
+  s.innerHTML = note + `<span class="chip chip-warn">sign-in no longer valid</span> <b>${esc(d.email)}</b> is not a registered contact any more. Enter your email below. <a href="/api/logout">Clear the old sign-in</a>.`;
 }).catch((e) => { s.innerHTML = note + '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
 $("req").addEventListener("submit", async (ev) => {
   ev.preventDefault();
@@ -91,9 +57,10 @@ $("req").addEventListener("submit", async (ev) => {
     const r = await fetch("/api/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
     const text = await r.text(); let d; try { d = JSON.parse(text); } catch { d = { ok: false, message: `non-JSON response (HTTP ${r.status}): ${text.slice(0, 200)}` }; }
     msg.className = d.ok ? (d.registered === false ? "bad" : "ok") : "bad"; msg.textContent = d.message;
-    if (d.ok && d.registered === false) { $("reglink").href = "/form-spike/signup.html?email=" + encodeURIComponent(email); $("goreg").hidden = false; }
+    if (d.ok && d.registered === false) { msg.textContent = "That address is not registered."; $("reglink").href = "/form-spike/signup.html?email=" + encodeURIComponent(email); $("goreg").hidden = false; }
   } catch (e) { msg.className = "bad"; msg.textContent = "Request failed: " + e; }
   btn.disabled = false;
 });
+$("noreg").onclick = () => { $("goreg").hidden = true; $("msg").textContent = ""; $("email").value = ""; $("email").focus(); };
 </script>
 </body></html>

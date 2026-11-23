@@ -69,7 +69,7 @@ fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) thro
     $("go").textContent = "Save changes and email me a sign-in link"; apply();
     $("session").innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(sess.email)}</b> · registered as <b>${esc(o.name)}</b>. Edit and save, or <a href="/form-spike/submit.html">go to the submission form</a>.`;
   } else {
-    $("session").innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(sess.email)}</b> · <span class="chip chip-warn">no organisation yet</span> this address can sign in from before registration existed. Register it here once.`;
+    $("session").innerHTML = '<span class="chip chip-info">registration</span> Fill in the form; the sign-in link follows.';
   }
 }).catch((e) => { $("session").innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
 F.addEventListener("submit", async (ev) => {
