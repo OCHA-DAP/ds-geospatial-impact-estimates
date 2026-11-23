@@ -28,10 +28,8 @@
 <div class="cards">
 <a class="card primary" href="/form-spike/signup.html" id="c-signup"><p class="step">Step 1 · once per organisation</p><h3>Register your organisation</h3>
 <p>Name, type, default licence and a contact address. Registering puts the contact in the registry and emails a sign-in link, so there is no separate account to create.</p><p class="need">Needs: nothing. Start here if you have never submitted.</p></a>
-<a class="card" href="/form-spike/submit.html?category=analysis" id="c-analysis"><p class="step">Step 2 · per product and delivery</p><h3>Submit an analysis product</h3>
-<p>Automated or model-derived damage: optical machine learning, SAR change detection, SAR coherence. Defines the product, then the delivery with its two HDX links.</p><p class="need">Needs: a registered organisation and a sign-in.</p></a>
-<a class="card" href="/form-spike/submit.html?category=reference" id="c-reference"><p class="step">Step 2 · per product and delivery</p><h3>Submit a reference product</h3>
-<p>Human-made damage assessment: expert visual interpretation, crowd mapping, field survey. Same form, with the human methods preselected.</p><p class="need">Needs: a registered organisation and a sign-in.</p></a>
+<a class="card" href="/form-spike/submit.html" id="c-submit"><p class="step">Step 2 · per product and delivery</p><h3>Submit a product</h3>
+<p>Describe the product once (analysis or reference, method, geometry, how damage is encoded), then the delivery: event, dates, headline numbers and the two HDX links. Later deliveries of the same product reuse the definition.</p><p class="need">Needs: a registered organisation and a sign-in.</p></a>
 <a class="card" href="/form-spike/index.html" id="c-signin"><p class="step">Any time</p><h3>Sign in</h3>
 <p>Already registered? Get a fresh sign-in link emailed to the registered address. The link signs this browser in for 30 days.</p></a>
 <a class="card" href="/api/submissions" target="_blank" rel="noopener" id="c-list"><p class="step">Any time</p><h3>Your submissions</h3>
@@ -50,7 +48,7 @@ fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) thro
   const org = d.org;
   s.innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${org ? `submitting as <b>${esc(org.name)}</b> (${esc(org.type)}, ${esc(org.licence)})` : '<span class="chip chip-warn">no organisation registered for this address</span> register it in step 1 before submitting'} · <a href="/api/logout">sign out</a>`;
   if (org) { const c = document.getElementById("c-signup"); c.querySelector("h3").textContent = "Update your organisation"; c.querySelector(".need").textContent = "Signed in: edit and save."; c.classList.remove("primary"); }
-  else { for (const id of ["c-analysis", "c-reference"]) document.getElementById(id).classList.add("off"); }
+  else { document.getElementById("c-submit").classList.add("off"); }
 }).catch((e) => { s.innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
 </script>
 </body></html>
