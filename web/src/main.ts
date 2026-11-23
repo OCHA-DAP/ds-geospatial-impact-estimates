@@ -1439,7 +1439,9 @@ function hideViewer() {
 
 // The hash is known synchronously, before any async token/registry fetch — hide
 // the viewer chrome immediately for the empty-hash (landing) case so there's no
-// flash of the map/panel shell while boot() is still in flight. (An unknown-but-
+// flash of the map/panel shell while boot() is still in flight. This module runs
+// after the first paint, though, so index.html also sets html[data-route] in the
+// head and a style rule there hides the chrome from the very first frame. (An unknown-but-
 // non-empty id, e.g. #/e/garbage, can't be resolved this early — the registry is
 // the only authority on that, so that one flash is unavoidable without it.)
 if (!currentEventId()) hideViewer();

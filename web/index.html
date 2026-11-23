@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Damage Exposure Viewer</title>
     <link rel="icon" href="data:," />
+    <!-- Route is known from the hash before the body exists. Mark it here, synchronously, so the
+         rule below hides the map chrome from the FIRST paint on the landing route; the module
+         bundle (main.ts) arrives later and used to let the panel flash first. Every hash change
+         reloads the page (main.ts), so the attribute stays correct for the page's lifetime. -->
+    <script>document.documentElement.dataset.route = /^#\/e\/[^/]+/.test(location.hash) ? "event" : "landing";</script>
+    <style>html[data-route="landing"] #map, html[data-route="landing"] #panel, html[data-route="landing"] #methods-open { display: none !important; }</style>
   </head>
   <body>
     <div id="landing" hidden></div>
