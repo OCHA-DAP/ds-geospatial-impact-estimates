@@ -54,8 +54,7 @@ module.exports = lib.guarded(async function (context, req) {
   if (existing && !isMember) {
     // Someone else's organisation. Offer the join path instead of a dead end.
     return lib.json(context, 409, { ok: false, joinable: true, slug: org.slug, organisation: existing.organisation.name,
-      members: lib.membersOf(existing).map((m) => lib.maskEmail(m.email)),
-      message: `"${existing.organisation.name}" is already registered. Ask a member to add you, or send them a request from here.` });
+      message: `"${existing.organisation.name}" is already registered. Choose it in the list above and request to join instead.` });
   }
   if (lib.throttled(`signup:${contact}`) || lib.throttled(`signup-ip:${lib.clientIp(req)}`)) {
     return lib.json(context, 429, { ok: false, message: "One registration per minute. Try again shortly." });
