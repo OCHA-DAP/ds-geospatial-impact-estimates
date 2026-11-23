@@ -1,9 +1,3 @@
-test -n "${{ secrets.SPIKE_BLOB_SAS }}" || { echo "SPIKE_BLOB_SAS not set: the directory-scoped SAS for the spike submissions folder"; exit 1; }
-          test -n "${{ secrets.SPIKE_LISTMONK_MANAGE_KEY }}" || { echo "SPIKE_LISTMONK_MANAGE_USER/KEY not set: sign-up needs a Listmonk key with subscribers:manage (see PR #174)"; exit 1; }
-          test -n "${{ secrets.SPIKE_LISTMONK_MANAGE_KEY }}" || { echo "SPIKE_LISTMONK_MANAGE_USER/KEY not set: sign-up needs a Listmonk key with subscribers:manage"; exit 1; }
-|| { echo "SPIKE_BLOB_SAS not set: the directory-scoped SAS for the spike submissions folder"; exit 1; }
-          test -n "${{ secrets.SPIKE_LISTMONK_MANAGE_KEY }}" || { echo "SPIKE_LISTMONK_MANAGE_USER/KEY not set: sign-up needs a Listmonk key with subscribers:manage (see PR #174)"; exit 1; }
-          test -n "${{ secrets.SPIKE_LISTMONK_MANAGE_KEY }}" || { echo "SPIKE_LISTMONK_MANAGE_USER/KEY not set: sign-up needs a Listmonk key with subscribers:manage"; exit 1; }
 # Deploy the SPA to the Static Web App (chd-ds-satellite-impact-viewer) — the parallel
 # v2 host (ADR-0011 Phase 3 / ADR-0020). Runs ALONGSIDE the classic App Service deploy
 # (azure-deploy.yml, v1 branch), which is untouched.
