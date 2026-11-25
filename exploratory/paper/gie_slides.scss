@@ -1,0 +1,117 @@
+/*-- scss:defaults --*/
+// Palette + type taken from the HDX v2 design tokens (ds-knowledge-base-internal/
+// style-reference/tokens.md). Structure/animation borrowed from
+// ds-aa-lac-dry-corridor/analysis/2026_cadc_drought_v3.
+//
+// brand-5  #269777   primary brand green      brand-6 #1e795f   brand-7 #18614c
+// brand-4  #51ac92   lighter accent           brand-05 #e9f5f1  brand-1 #d4eae4
+// error-5  #c44536   alert / "read this"      error-05 #f9eceb
+// neutral-9 #1f2324  body text                neutral-7 #5e6a6b  neutral-05 #f5f7f7
+//
+// Roboto / Merriweather are the brand faces but are not installed locally, and this deck
+// must stay self-contained + offline, so they are declared with system fallbacks rather
+// than fetched from a CDN.
+
+$presentation-font-size-root: 26px;            // revealjs default 40px is far too big
+$font-family-sans-serif: 'Roboto', system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+$link-color: #269777;                          // --hdx-brand-5
+$presentation-heading-color: #1e795f;          // --hdx-brand-6
+$presentation-heading-font-weight: 700;        // --hdx-fw-bold
+$body-color: #1f2324;                          // --hdx-neutral-9
+
+/*-- scss:rules --*/
+.reveal .slides { text-align: left; }
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+  color: #1e795f;                              // --hdx-brand-6
+  font-family: 'Merriweather', Georgia, 'Times New Roman', serif;   // --hdx-font-display
+  line-height: 1.2;                            // --hdx-lh-tight
+}
+.reveal h2 { font-size: 1.45em; }
+.reveal ul, .reveal ol { margin-left: 0.4em; }
+.reveal li { margin-bottom: 0.3em; line-height: 1.3; }   // --hdx-lh-normal
+.reveal blockquote {
+  color: #3f4748;                              // --hdx-neutral-8
+  font-size: 0.85em;
+  border-left: 4px solid #269777;
+  background: #f5f7f7;                         // --hdx-neutral-05
+  padding: 0.5em 0.8em;
+  border-radius: 4px;                          // --hdx-radius-md
+}
+.reveal .slide-number { color: #269777; }
+.reveal strong { color: #18614c; }             // --hdx-brand-7
+
+/* figure-dominant slides: let images use the full remaining height */
+.reveal .slides section img { margin: 0.15em auto; }
+.reveal figure figcaption { font-size: 0.62em; color: #5e6a6b; }   // --hdx-neutral-7
+
+/* the single-number callout used on the headline slides */
+.bignum {
+  font-size: 2.1em; font-weight: 700; color: #1e795f; line-height: 1.1;
+  font-family: 'Merriweather', Georgia, serif;
+}
+.bignum-sub { font-size: 0.82em; color: #3f4748; }
+
+/* oversized version for the one slide that carries the whole argument */
+.hero {
+  font-size: 4.6em; font-weight: 700; color: #269777; line-height: 1; text-align: center;
+  margin: 0.05em 0 0.1em; font-family: 'Merriweather', Georgia, serif;
+}
+.hero-sub {
+  font-size: 1.0em; color: #1f2324; text-align: center; max-width: 24em;
+  margin: 0 auto 0.5em;
+}
+
+/* takeaway strip at the foot of a slide */
+.takeaway {
+  background: #e9f5f1;                         // --hdx-brand-05
+  border-left: 5px solid #269777;              // --hdx-brand-5
+  padding: 0.45em 0.75em; font-size: 0.82em; margin-top: 0.4em;
+  border-radius: 4px;
+}
+/* the "this is the one to remember" variant */
+.takeaway-hot {
+  background: #f9eceb;                         // --hdx-error-05
+  border-left: 5px solid #c44536;              // --hdx-error-5
+  padding: 0.45em 0.75em; font-size: 0.82em; margin-top: 0.4em;
+  border-radius: 4px;
+}
+.smaller { font-size: 0.78em; }
+.tiny { font-size: 0.62em; color: #5e6a6b; }
+
+/* two-column helper */
+.cols { display: flex; gap: 1.2em; align-items: flex-start; }
+.col { flex: 1; }
+
+/* tables: brand-tinted header, quiet rules */
+.reveal table th { border-bottom: 2px solid #269777; color: #18614c; }
+.reveal table td, .reveal table th { padding: 0.28em 0.5em; }
+
+/* Animated particle-network background (inline canvas, see hdx-bg.html). The whole background
+   chain is transparent so the fixed z-index:-1 canvas shows through; html stays white as base.
+   JS toggles `.on-title` on <body> so the network only appears on the title slide. */
+html { background: #ffffff; }
+body, .reveal-viewport, .reveal, .reveal .backgrounds, .reveal .backgrounds .slide-background {
+  background: transparent !important;
+}
+#hdx-bg {
+  position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;
+  opacity: 0; transition: opacity 0.7s ease;
+}
+body.on-title #hdx-bg { opacity: 1; }
+
+/* Diagonal "internal" watermark, tiled over every slide (tile generated in hdx-bg.html).
+   Sits ABOVE slide content so it survives a screenshot, but pointer-events:none and
+   low-opacity so it never obstructs reading or clicking. */
+#wm-layer {
+  position: fixed; inset: 0; z-index: 40; pointer-events: none;
+  background-repeat: repeat; background-position: center;
+}
+body.on-title #wm-layer { opacity: 0.55; }
+@media print { #wm-layer { opacity: 1; } }
+
+/* title slide sits on the green canvas -> white text */
+#title-slide .title, #title-slide h1.title { color: #ffffff !important;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.28); }
+#title-slide .subtitle, #title-slide .date, #title-slide p,
+#title-slide .quarto-title-authors, #title-slide .author { color: #ffffff !important;
+  text-shadow: 0 1px 10px rgba(0,0,0,0.25); }

@@ -1,0 +1,845 @@
+---
+title: "How satellite damage assessment can effectively support relief operations: a technical brief"
+author: "Z. Arno, L. Milano · OCHA Centre for Humanitarian Data *(technical brief, internal)*"
+date: last-modified
+format:
+  html:
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+    number-sections: true
+    include-in-header: hdx-brief-style.html
+    include-after-body: appendix-fold.html
+    comments:
+      hypothesis:
+        showHighlights: whenSidebarOpen
+        # the review group is selected by URL fragment in appendix-fold.html (Quarto's schema has no `group` key)
+execute:
+  echo: false
+  warning: false
+jupyter: python3
+---
+
+<!-- Editors' note (not rendered): this is the TECHNICAL BRIEF derived from the frozen
+manuscript v3 (ADR-0029): the source a writer condenses into the public summary. It is
+built by subtraction: same frozen numbers and artefact CSVs, fewer methodological
+defences. The full technical record, including the geography benchmark and every
+sensitivity analysis, is v3 at pages/manuscript/. -->
+
+```{python}
+#| include: false
+# Every number in the prose is read from the artefact CSVs through brief_numbers.py (ADR-0030).
+import sys; sys.path.insert(0, ".")
+from brief_numbers import N
+```
+
+## Abstract {.unnumbered}
+
+After the M7.5 earthquake that struck coastal Venezuela on 24 June 2026, a large number of
+satellite-derived building-damage products were released in the first days of the response.
+We evaluated six damage classification products that were published and available within
+the first ten days, from the technology sector, academia, the NGO community and the UN
+system, against a reference dataset built from three sources: Copernicus EMS manually
+mapped damage, an area-level crowd review (MapSwipe), and building-level field reports
+(ChatMap).
+
+No product supports acting on a single flagged building: baseline precision ran `{python} N["core_P_range2"]`
+even in each product's most favourable region, and even under the most generous defensible
+reading of the reference every product stays below `{python} N["P_upper_max"]`. The products do rank neighbourhoods well enough to triage, within a damage zone
+that is already identified. The practical way to use them is to count agreement between
+independent products. Flagging buildings at the better agreement thresholds roughly doubles the building-level performance (F1) of any single product, ranking neighbourhoods by three- or four-product agreement beats every single product's ranking (at both cell sizes tested), and the method needs no weights, training data or reference, so it can be run as soon as several products are in hand.
+
+## The event, the products, and the references
+
+An M7.5 earthquake struck the Venezuelan coast 20 km west of Catia La Mar at 22:05 UTC
+on 24 June 2026, 32 seconds after an M7.2 inland near San Felipe, well to the west
+(USGS events us6000t7zp and us6000t7zc; solutions as published on 10 September 2026).
+Severe damage was concentrated along
+the La Guaira coastal strip, in western Caracas, and in several inland towns. Copernicus
+EMS rapid mapping was activated the same night (EMSR884). Products came from a variety
+of organisations. The EU's rapid-mapping service, the Copernicus Emergency Management
+Service (CEMS); a technology company, Microsoft AI for Good; universities, Oregon State
+University working with NASA, and the University of Houston; an NGO, IMPACT Initiatives;
+UN bodies, the United Nations Environment Programme / Office for the Coordination of
+Humanitarian Affairs (UNEP/OCHA) Joint Environment Unit, the World Food Programme working
+with the Luxembourg Institute of Science and Technology (LIST) and the European
+Organization for Nuclear Research (CERN), and Data Insights for Social and
+Humanitarian Action (DISHA), an initiative of UN Global Pulse; and a volunteer AI platform, the
+Humanitarian OpenStreetMap Team's fAIr. These products disagree with each other,
+sometimes by a wide margin. A coordinator of search-and-rescue (SAR) teams receiving
+several of them in the same week has no established way to decide which to trust, for
+what purpose, and at what spatial scale.
+
+We evaluate six damage classification products that were published and available within
+the first ten days of the response (@tbl-products). A few products were excluded because
+they had no accompanying area of analysis, or because the area they covered was too small
+to support the comparison ([analysis extents](#app-regions) gives the specifics).
+Throughout, a *flag* is a building a product marked as damaged to any extent.
+
+```{python}
+#| label: tbl-products
+#| tbl-cap: "Damage products evaluated."
+import pandas as pd
+from great_tables import GT, style, loc, md
+
+from brief_numbers import N
+
+# (product, provider, sensing basis, sensor and native resolution, key). Resolution as stated by the
+# provider or visible in the delivery; "not stated" where neither applies — the gap is the point of the column.
+P = [("Microsoft AI4G", "Microsoft", "VHR optical + AI classifier", "Vantor WorldView-3 and Planet SkySat scenes, sub-metre", "MS"),
+     ("IMPACT v2", "IMPACT Initiatives", "Sentinel-1 radar backscatter amplitude change, intersected with building footprints (provider-confirmed)", "Sentinel-1, 10 m", "IMPACT"),
+     ("OSU", "Oregon State Univ. / NASA", "Sentinel-1 radar coherence change", "Sentinel-1; product resolution not stated", "OSU"),
+     ("UH QuakeDamage", "Univ. of Houston", "VHR optical (Vantor imagery, author-confirmed) + AI classifier grading every footprint", "Vantor, sub-metre", "UH"),
+     ("LIST", "WFP / LIST / CERN", "AI change detection on before/after radar imagery (provider-stated)", "radar (sensor not stated); 10 m delivery grid", "LIST"),
+     ("UNEP debris", "UNEP/OCHA JEU", "Sentinel-1 radar amplitude change detection on building footprints (debris tonnage modelled from the detected damage)", "Sentinel-1; product resolution not stated", "UNEP")]
+rows = [dict(product=f"**{n}**<br><span style='font-size:11.5px;color:#666'>{pr}</span>", basis=b, sensor=s,
+             scope=f'{N["scope_bld_" + k]} buildings · {N["scope_km2_" + k]} km²' if k != "UNEP" else "no published extent",
+             flags=N["native_" + k]) for n, pr, b, s, k in P]
+(GT(pd.DataFrame(rows))
+ .fmt_markdown(columns=["product"])
+ .cols_label(product="Product", basis="Sensing basis", sensor="Sensor and native resolution", scope="Analysis scope", flags="Damaged buildings flagged")
+ .cols_align("right", columns=["flags"])
+ .tab_source_note(md("Analysis scope counts Overture base buildings and area inside the provider's published extent. "
+                     "Damaged buildings flagged is the provider's own count: its own footprints for Microsoft, UH and UNEP, base-building ids for IMPACT, OSU and LIST. "
+                     "OSU figures refer to its v0 delivery, the version available during the response. UNEP publishes no extent and is scored under a stated coverage assumption. "
+                     "Sensor and resolution are as stated by the provider or visible in the delivery; \"not stated\" marks the products for which neither applies."))
+ .tab_style(style.text(color="#555", size="12px"), loc.body(columns=["provider", "basis", "sensor"]))
+ .tab_options(table_font_size="13px", column_labels_font_weight="bold", data_row_padding="4px"))
+```
+
+![Product and analysis extents. Top: each provider's analysed extent and the CEMS-mapped
+Copernicus EMS areas (dashed black). Bottom: the ~`{python} N["core_area_km2"]` km² area where all products
+overlap (red), where every product can be evaluated against the same reference and
+compared with the others. The paper calls this the core
+region.](figures/fig_extents_map.png){#fig-extents}
+
+We use two reporting regions throughout (@tbl-scope). *As delivered* evaluates each product
+across the whole area it delivered, wherever that overlaps the CEMS-mapped areas. This is
+the view that matches what responders actually received. The *core region* is the
+~`{python} N["core_area_km2"]` km² where all six products and the reference overlap: one shared area where each
+product can be compared against all the others. It holds `{python} N["cara_share_pct"]` of the
+CEMS-recorded damage. The core region is the main scope for the rest of the paper; where a
+section or caption uses the as-delivered frame instead, it says so.
+
+```{python}
+#| label: tbl-scope
+#| tbl-cap: "The building-level scope of the two analysis frames used throughout this paper: as delivered, and the core region."
+import pandas as pd
+from great_tables import GT, md, style, loc
+
+from brief_numbers import N
+
+K = [("Microsoft", "MS"), ("IMPACT v2", "IMPACT"), ("OSU", "OSU"), ("UH", "UH"), ("LIST", "LIST"), ("UNEP", "UNEP")]
+rows = [dict(product=n, asd_b=N["asd_bld_" + k], asd_f=N["asd_flags_" + k], core_b=N["core_n_buildings"], core_f=N["core_flags_" + k]) for n, k in K]
+(GT(pd.DataFrame(rows), rowname_col="product")
+ .tab_spanner(label=md("**As delivered** (product-variable area)"), columns=["asd_b", "asd_f"])
+ .tab_spanner(label=md(f'**Core region** ({N["core_area_km2"]} km²)'), columns=["core_b", "core_f"])
+ .cols_label(asd_b="buildings", asd_f="flags", core_b="buildings", core_f="flags")
+ .cols_align("right", columns=["asd_b", "asd_f", "core_b", "core_f"])
+ .tab_style(style.fill("#e8f0f4"), loc.body(columns=["asd_b", "asd_f"]))
+ .tab_style(style.fill("#f7e3e1"), loc.body(columns=["core_b", "core_f"]))
+ .tab_source_note(md("Buildings: the Overture building footprints inside each area, the same base for every product. Flags: the buildings the product marked as damaged."))
+ .tab_options(table_font_size="13px", column_labels_font_weight="bold", data_row_padding="4px"))
+```
+
+The reference dataset, against which every product is evaluated, is built from three
+sources. They are used both to supplement one another and to evaluate one another.
+
+The Copernicus EMS manually mapped damaged buildings are the most comprehensive building-level
+source. The baseline reference is restricted to the buildings CEMS graded *damaged* or
+*destroyed*: the strictest definition used in this study, though not the strictest
+conceivable, since a destroyed-only reference would sit lower still, and the matching
+convention pushes the other way (ADR-0034). Against these each
+product's baseline precision and recall are set under one matching radius, applied from
+both sides. For precision, a flagged building counts as a hit if a CEMS
+damage point lies within 10 m of it; for recall, a CEMS damage point counts as found if a
+flagged building lies within 10 m of it, so a miss is a CEMS point with no flag nearby.
+
+From that baseline the performance calculations are extended in two ways, to give a range
+of possible values rather than a single figure: by widening the reference to include the
+buildings CEMS graded only *possibly damaged*, and by bringing in the two supplementary
+sources.
+
+MapSwipe is
+a crowd review of ~50 m cells at locations AI products had flagged, by more than 400
+volunteers: it can turn an unmatched flag into a hit but never reveal a miss, so it adjudicates disputed
+flags and is never ground truth. ChatMap is `{python} N["field_n"]` damage reports from field
+teams, positives-only with no survey frame: it can reveal misses but cannot check an unmatched flag
+(the appendix [how MapSwipe and ChatMap were used](#app-reference) sets out how each is used). Because the reference is incomplete, every measured precision here is a
+lower bound and every recall an upper bound.
+
+## Results
+
+### No product supports acting on a single flagged building {#sec-flags}
+
+Building-level precision was low for every product. As delivered, precision across
+everything the CEMS reference mapped ran from `{python} N["asd_P_min"]` (`{python} N["asd_P_min_product"]`) to `{python} N["asd_P_max"]` (`{python} N["asd_P_max_product"]`). Even
+in the core region, where every product scores best, baseline precision reached only
+`{python} N["core_P_range"]` against recall of `{python} N["core_R_range"]`: `{python} N["core_fa_per_hit_range"]` flags with no recorded damage for
+every hit, in the products' most favourable region and before any loosening of the reference. While the products do find damage, they also produce an enormous number of flags
+with no reference record of damage underneath them. At this task a simple model of building
+density and terrain performs in the same range ([the geography
+benchmark](#app-null-brief)), so single-product flags should be treated as weak
+evidence on their own.
+
+```{python}
+#| label: tbl-frames
+#| tbl-cap: "Building-level precision and recall for each product, in the two analysis frames."
+import pandas as pd
+from great_tables import GT, md, style, loc
+
+from brief_numbers import rq5b as five, asd, PRODUCTS, LONG
+
+rows = [dict(product=LONG[k],
+             asd_p=f"{asd.loc[k]['P_cems']:.3f}", asd_r=f"{asd.loc[k]['R_cems']:.2f}",
+             core_p=f"{five[10].loc[k]['P_cems']:.3f}", core_r=f"{five[10].loc[k]['R_cems']:.2f}")
+        for k in PRODUCTS]
+(GT(pd.DataFrame(rows), rowname_col="product")
+ .tab_spanner(label=md("**As delivered**"), columns=["asd_p", "asd_r"])
+ .tab_spanner(label=md("**Core region**"), columns=["core_p", "core_r"])
+ .cols_label(asd_p="precision", asd_r="recall", core_p="precision", core_r="recall")
+ .cols_align("right", columns=["asd_p", "asd_r", "core_p", "core_r"])
+ .tab_style(style.fill("#e8f0f4"), loc.body(columns=["asd_p", "asd_r"]))
+ .tab_style(style.fill("#f7e3e1"), loc.body(columns=["core_p", "core_r"]))
+ .tab_source_note(md("Baseline reference (CEMS *damaged* or *destroyed*) at a 10 m matching radius. Precision is the share of a product's flags with reference damage underneath; recall the share of reference damage it flagged."))
+ .tab_options(table_font_size="13px", column_labels_font_weight="bold", data_row_padding="4px"))
+```
+
+The area a provider chooses to analyse matters a great deal: the same product's
+performance varies widely from region to region. Core-region numbers are each
+product's favourable case; as delivered, the same product can be several times weaker
+(UH: `{python} N["core_P_UH"]` in the core against `{python} N["asd_P_UH"]` across its delivery), because precision falls by
+roughly the share of a product's flags placed in areas with little recorded damage
+(@tbl-frames).
+
+Those numbers come from the strictest configuration this study evaluates, and a defensible
+one: a flag counts as a hit only where a CEMS point graded *damaged* or *destroyed* lies
+within 10 m of it. The study loosens that criterion in two ways: by raising the distance
+threshold, and by relaxing the reference damage definition itself. Raising the threshold to
+30 m lifts the best single product's precision to `{python} N["core_P30_max"]`
+([performance versus matching radius](#app-radius) scores every product and rule at all
+three distances).
+
+Relaxing the reference itself is the more generous test, and @fig-bounds runs it using the
+other reference data this study collected: first adding the points CEMS graded *possibly
+damaged*, then instead crediting the flags the MapSwipe crowd reviewed and judged
+damaged, and finally both together. The result is a range of possible precision values per
+product, with a realistic upper bound at the top. Even at that upper bound every product
+stays below `{python} N["P_upper_max"]`. Neither loosening changes the conclusion: none of
+these products is reliable enough to send a team to a single building it has flagged.
+
+![Each product's precision under four reference
+definitions, flags fixed, read left to right. Filled brown dot: the baseline, CEMS points graded
+*damaged* or *destroyed*. Open circle: the reference widened to include points graded *possibly
+damaged*. Open blue square: the baseline plus the flags the MapSwipe crowd reviewed and judged
+damaged, an area-level check that can only raise precision ([how it works](#app-crowd)). Filled
+blue diamond: both additions, the upper bound. ChatMap is left off the ladder because adding its
+field points to the reference raises precision by only `{python} N["field_union_gain_range"]`
+([how ChatMap was used](#app-chatmap)).](figures/rq2r_bounds_ladder.png){#fig-bounds}
+
+These findings are in line with an [independent analysis](https://storymaps.arcgis.com/stories/0f31285dcc4241d0a33f6ef768e16d1e) by the UN Global
+Service Centre (UNGSC), which examined the same damage products and several others. It also found
+individual products unreliable for identifying individual damaged buildings, and found wide
+disagreement among the products.
+<!-- placeholder: add a link to the UNGSC analysis paper here, beside the story map, once published -->
+
+### The products rank neighbourhoods well enough to triage, within the damage zone {#sec-ranking}
+
+The individual products do a much better job at ranking areas to prioritise than at
+identifying specific damaged buildings. In the core region, subset to the area already known to be damaged,
+every product orders ~`{python} N["h3_res8_km2"]` km² cells (H3 resolution 8) against the CEMS reference ordering achieving rank correlations
+of `{python} N["rank_core8_range"]`, and the best single product (`{python} N["top20_single_product_8"]`) finds most of the reference's twenty worst-hit cells (`{python} N["top20_single_8"]` of 20; no other product reaches half).
+
+It is important to note that the ranking correlations deteriorate to
+`{python} N["rank_asd7_range"]` when we look at the full as-delivered analysis level (@fig-ranktests).
+The ranking value is really shown once the response has already narrowed down to a known
+damage area. Without that subsetting, the products do not outperform a simple
+[geography benchmark](#app-null-brief), so at this scale they are at best a supplementary
+confirmation of it, not a way to find the damage zone.
+
+Which product to trust is not knowable while it matters. Across the four contests in this
+brief, building level and ranking in each of the two frames, there are three different
+winners: `{python} N["core_P_best_product"]` has the highest building-level precision in the
+core region and `{python} N["asd_P_max_product"]` as delivered, while `{python} N["rank_best_single"]`
+ranks the core region best and `{python} N["rank_asd7_best"]` ranks best across full delivered
+extents. `{python} N["core_P_best_product"]` moves from the best precision in the core region to
+the weakest as delivered (`{python} N["core_P_UH"]` against `{python} N["asd_P_UH"]`). Every one of those
+orderings was established against the CEMS reference weeks after the response needed it.
+
+![Each product's Spearman rank correlation with the CEMS reference ordering, across both
+analysis levels, at the two H3 resolutions used to define neighbourhood
+areas.](figures/rq3f_null_ranking_both_summary.png){#fig-ranktests}
+
+### Count agreement between products {#sec-dial}
+
+The more products agree on a building, the more likely its flag is real, because the
+products' unmatched flags fall in different places. The number required to agree is a
+threshold a responder/analyst can set. Flag every building any product marked and `{python} N["k1_R_pct"]` of
+known damage is covered, but a field team following those flags would make `{python} N["k1_visits10_int"]` site
+visits for each building the reference records as damaged; require all six to agree and `{python} N["k6_P_pct"]` of flags
+have recorded damage underneath but only `{python} N["k6_R_pct"]` of the recorded damage is covered. Between the extremes, each added
+agreeing product raises the odds that a flag is real, and setting the threshold fixes
+the size of the field job the same day (@tbl-dial). Setting the threshold fixes how
+many buildings field teams will visit; it does not fix how many of them will turn out
+damaged.
+
+```{python}
+#| label: tbl-dial
+#| tbl-cap: "The agreement dial: what each threshold costs and buys, core region. Share of flags with recorded damage underneath and share of recorded damage covered at 10 m; visits per find at 30 m."
+import pandas as pd
+from great_tables import GT, html
+from brief_numbers import rq5b as five, N_CEMS_CORE as N_CEMS
+
+rows = []
+for k in range(1, 7):
+    key = f"{k}-of-6"; r10 = five[10].loc[key]; r30 = five[30].loc[key]
+    rows.append(dict(rule=f"{k} of 6", flags=f"{int(r10['flagged']):,}",
+                     P=f"{100 * r10['P_cems']:.0f}%", R=f"{100 * r10['R_cems']:.0f}%",
+                     visits=f"{r10['flagged'] / (r30['R_cems'] * N_CEMS):.1f}"))
+(GT(pd.DataFrame(rows), rowname_col="rule")
+ .cols_label(flags="buildings flagged", P=html("share of flags with<br>recorded damage"), R=html("share of recorded<br>damage covered"), visits=html("field visits<br>per find"))
+ .cols_align("right", columns=["flags", "P", "R", "visits"])
+ .tab_options(column_labels_font_weight="bold", table_font_size="13.5px", data_row_padding="5px"))
+```
+
+Weight the count toward products that *fail differently*. Scoring all `{python} N["pair_n"]` two-product
+rules in this event (@fig-frontier), the `{python} N["pair_radar_n"]` pairs built from two radar products added
+the least (precision `{python} N["pair_radar_P_range"]`), and every pair above a precision of `{python} N["pair_P_thresh"]` contained
+one of the two high-resolution optical products. The best pair mixed an optical and a
+radar product (`{python} N["pair_best"]`, `{python} N["pair_P_best"]`); the next best paired the two optical products,
+which share a sensor class but not a method (`{python} N["pair_second"]`, `{python} N["pair_P_second"]`). Sensor
+alone does not predict which pair will work, and one event cannot settle it: treat this
+as a reason to mix sensing methods, not as a ranking of providers.
+
+![The six products as shipped (grey), all `{python} N["pair_n"]` two-product agreement rules (open
+circles, labelled) and the six k-of-6 rules (blue squares, k inside), in the core region. Precision
+and recall are measured against CEMS points graded *damaged* or *destroyed*, matched within 10 m;
+whiskers run from measured to crowd-adjusted precision. Pairs of two radar products sit lowest; pairs
+that include a high-resolution optical product sit highest.](figures/rq5b_frontier_r10.png){#fig-frontier}
+
+Counting agreement is also close to the ceiling of what any combination can achieve. A
+statistically fitted combination of the six products scores about `{python} N["fusion_over_vote_pct"]` higher on F1 than counting, both scored on the building labels the model is fitted to (`{python} N["fusion_over_vote_pct_nested"]` when its cutoff is chosen without sight of the test data), but
+fitting it requires the damage map a responder is still waiting for, so it explains the
+event afterwards and cannot run during one; flat counting can be done as soon as
+several products are in hand (@fig-bestf1).
+
+![F1 at each product's own threshold, at both analysis levels, beside the best of the six
+agreement rules (green), which exists only in the core region. Bar labels give F1, precision
+and recall, counted as in @tbl-frames.](figures/best_f1_points_r10.png){#fig-bestf1}
+
+Counting agreement helps the area ranking too, not just the building-level decision
+(@fig-agreerank). Ranking cells by their count of buildings with three or four products agreeing beats every
+single product's ordering (ρ `{python} N["rank_best_vote_rho"]` against the best single's `{python} N["rank_best_single_rho"]` at ~`{python} N["h3_res8_km2"]` km² cells),
+and for a shortlist, "which 20 cells first", high agreement is clearly better:
+the best agreement rule shortlists `{python} N["top20_vote_8"]` of the 20 worst-hit cells against the best single
+product's `{python} N["top20_single_8"]`, and `{python} N["top20_vote_9"]` against `{python} N["top20_single_9"]` at the finer scale.
+
+![Rank correlations (top) of each product (grey) at two block scales (left and right)
+against the combined product at different k-of-6 agreement configurations (green). The
+bottom row shows the percentage of the 20 worst-hit neighbourhood blocks also identified
+as the worst 20, for each product and each combined
+configuration.](figures/rq3h_agreement_ranking_summary.png){#fig-agreerank}
+
+## Recommendations
+
+```{=html}
+<style>
+.rec { border-top: 1px solid #c9d2da; padding: 1.15rem 0 0.35rem; margin: 1.6rem 0 0; }
+.rec-who { display: block; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.13em;
+           text-transform: uppercase; color: #1d5c8a; margin-bottom: 0.55rem; }
+.rec > p { margin-bottom: 0.7rem; }
+.rec ol { margin: 0.2rem 0 0.7rem 1.15rem; padding-left: 0.35rem; }
+.rec ol > li { margin-bottom: 0.45rem; padding-left: 0.2rem; }
+.rec ol > li::marker { font-weight: 700; color: #1d5c8a; }
+@media (prefers-color-scheme: dark) {
+  .rec { border-top-color: #33404d; }
+  .rec-who { color: #7fb8ea; }
+  .rec ol > li::marker { color: #7fb8ea; }
+}
+</style>
+```
+
+::: {.rec}
+[Coordinators]{.rec-who}
+
+The coordination has to come before the analysis. Everything the procedure above asks for
+was assembled during and after the response rather than being in place before it: a common
+building base, each product's analysed extent, the agreement count across products. It should be standing
+infrastructure that runs as deliveries arrive, with a shared picture of who has analysed
+where, a consolidation point that receives products against a stated template (analysed
+extent, metadata, a common basemap and footprint set), and the combination produced
+automatically rather than by a retrospective study.
+:::
+
+::: {.rec}
+[Providers]{.rec-who}
+
+Publish an analysed extent; without one, a user cannot tell "no flag" from "not
+analysed", so the product cannot be fairly evaluated or confidently used. Publish the
+sensor and its native spatial resolution alongside the method.
+Publish per-building acquisition metadata (scene count and dates). Where the product is
+delivered on its own building footprints, publish those footprints and say where they came
+from, so a user can map them onto whatever base they are working with. Where the method
+produces a confidence value, publish it, along with a clear statement of how it was
+derived and what it means. And accept feedback during the activation: a crowd campaign
+rejected `{python} N["r1_no_share_pct"]` of one zone's flagged locations within days, and there was no mechanism for returning that
+result to the provider while reprocessing could still help.
+:::
+
+::: {.rec}
+[Analysts supporting the response]{.rec-who}
+
+Someone has to turn several disagreeing products into something a responder can act on.
+This is the procedure this evaluation supports for the first days, when products arrive
+with very different extents.
+
+1. **Establish the worst-hit zone from shaking and exposure, not from the products.**
+   Triangulate a shaking model and building density with field and media reports. Ranking
+   a product across its full delivered scope may support or contradict that picture, but
+   it cannot establish it: at that scale a simple
+   [geography benchmark](#app-null-brief) ranked these areas better than all six products.
+2. **Narrow to that zone before using the products for triage.** Every ranking result
+   here holds inside a zone already known to be damaged and weakens outside it
+   (@sec-ranking).
+3. **Do not spend the first days choosing a product.** Which one is strongest changes
+   with the task and the area, and was only established against the CEMS reference
+   weeks later (@sec-ranking).
+4. **Count agreement instead.** Counting needs no weights, no training data and no
+   reference, so it runs as soon as several products are in hand. Two are not enough on
+   their own: the fifteen possible pairs here ranged from `{python} N["pair_P_worst"]` to
+   `{python} N["pair_P_best"]` in precision depending on which two. Weight the count toward
+   products with independent sensing methods (@sec-dial).
+5. **Rank at several agreement levels rather than one.** The best level is no more
+   knowable in advance than the best product: here `{python} N["rank_best_vote"]` ranked
+   cells best while `{python} N["top20_vote_rule_8"]` shortlisted the worst 20 best
+   (@fig-agreerank). Read them together, and set the acting threshold from @tbl-dial
+   against the field team's capacity.
+
+Steps 2 to 5 rest on core-region results: the agreement rules were never scored across
+full delivered extents. When reporting what you find, a single CEMS reference
+understates precision where damage is lighter: publish measured precision as a lower
+bound, or adjudicate the disputed flags against a second reference and publish the
+interval.
+:::
+
+::: {.rec}
+[Responders]{.rec-who}
+
+Expect several damage products within days of an earthquake, covering different areas by
+different methods, and disagreeing with each other.
+
+Where other sources already point to the worst-hit zone, shaking, exposure, field and
+media reports, it is reasonable to expect most of these products to rank neighbourhoods
+usefully *inside* that zone in the first 72 hours. None of them is a reliable way to find
+the zone in the first place, and no product evaluated here supports acting on an
+individual flagged building.
+
+What the analysis should hand you is not one organisation's map but a count: for each
+building, how many independent products flagged it. Read that count as a confidence
+level. The more products agree, the more likely the flag is real damage and the fewer
+buildings you are sent to. @tbl-dial gives, at each level of agreement, how many
+buildings are flagged, what share of them have recorded damage underneath, and how many visits each
+find costs. Ask for the level that matches what your teams can actually visit.
+
+This evaluation cannot see what you already have. A responder with local knowledge, field
+reporting or ground access may be able to use a single product sensibly in ways the
+numbers here cannot anticipate; what the numbers can say is what the products support on
+their own. Nothing currently available sees lighter damage reliably, so plan shelter
+assessments accordingly.
+
+:::
+
+## Limitations
+
+This is one event, one geography, and mostly one damage zone: a single earthquake
+in a coastal, dense-urban setting, and the core comparison region is only ~`{python} N["core_area_km2"]` km², with
+`{python} N["cara_share_pct"]` of the CEMS reference in a single AOI (Caraballeda). The specific rule orderings
+and magnitudes are hypotheses elsewhere until replicated.
+
+The references have limits of their own, and the largest was measured rather than
+assumed: the CEMS reference captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
+`{python} N["cems_field_significant_pct"]` of those significantly damaged ([how MapSwipe and ChatMap were used](#app-reference)),
+which is why every precision here is a lower bound and every recall an upper bound. Optical
+mapping of this kind is also [known to miss certain kinds of building damage](https://www.hotosm.org/en/news/why-damage-assessments-can-vary-from-image-pixels-to-microwaves/). The
+crowd campaign was seeded almost entirely on Microsoft's flags, so it scrutinises products very
+unevenly and can never see any product's misses; the field reports are undated, positives-only,
+skewed toward destruction, and come with no defined collection area.
+
+## Appendix {.unnumbered}
+
+::: {.callout-note collapse="true" appearance="simple" icon="false" title="Show the full appendix"}
+
+### Analysis extents {#app-regions .unnumbered}
+
+| reporting region | what it is | used for |
+|---|---|---|
+| **Core region** | the ~`{python} N["core_area_km2"]` km² intersection of the CEMS extents with all five extent-publishing products (@fig-extents): one shared cell set | voting, the pairwise rules, fusion, and the best-F1 geography comparison |
+| **As delivered** | each product's full delivered footprint, wherever CEMS mapped: a different region per product | as-delivered precision and recall, and the geography benchmark; ranking test 1 |
+
+: The two reporting regions. Sections and captions state which they use. The core
+region gives every predictor an identical cell set (one geography score); as-delivered
+is per-product by design, so the geography model is re-scored on each product's own
+footprint there. {#tbl-regions}
+
+- UNEP and UH published no extents, and are handled differently. UNEP flagged buildings in every
+  CEMS-mapped area, so it is treated as covering them. UH's extent is the polygon around its
+  own classified footprints, which does not reach every CEMS-mapped area: it has no flags in
+  San Felipe.
+- Two products in the same window are not evaluated. HOT's fAIr published no extent, so its
+  misses cannot be counted. DISHA published one, but it covers `{python} N["disha_share_pct"]` of the core
+  region and holds `{python} N["disha_cems"]` of its `{python} N["core_cems"]` CEMS damage points; admitting it
+  would have halved the shared comparison area.
+
+### How performance was measured {#app-matching .unnumbered}
+
+- The product and the reference have different geometries, so there is no shared instance list
+  and no single confusion matrix. Scoring is by proximity.
+- Precision anchors on the product, recall on the reference, each with its own denominator.
+  Neither uses the undamaged background, so its size affects no score.
+- A product is accountable only where it and the reference both looked, so scoring is restricted
+  to the intersection of analysed extents.
+
+```{python}
+#| label: fig-matching
+#| fig-align: center
+#| fig-cap: "Counting hits, unmatched flags and misses. Left: a product is scored only where it and the reference both looked. Middle: each CEMS damage point is checked for a product flag within radius r, which gives recall. Right: each flagged building is checked for a CEMS point within r, which gives precision."
+import matplotlib.pyplot as plt
+import matplotlib.patches as mp
+import numpy as np
+from shapely.geometry import Point
+
+R = 0.16
+fig, ax = plt.subplots(1, 3, figsize=(6.6, 2.95))   # drawn at about the appendix column's width   # stacked: side by side ran past the page margin
+a0 = ax[0]
+c1, c2 = Point(-0.28, 0).buffer(0.75), Point(0.28, 0).buffer(0.75)
+inter = c1.intersection(c2)
+a0.add_patch(mp.Polygon(np.asarray(inter.exterior.coords), closed=True, fc="#c8e6c9", ec="none"))
+for c, col, lab, xy in ((c1, "tab:blue", "CEMS\nextent", (-0.98, 0.55)),
+                        (c2, "tab:orange", "product\nextent", (0.5, 0.55))):
+    a0.add_patch(mp.Polygon(np.asarray(c.exterior.coords), closed=True, fc="none", ec=col, lw=2))
+    a0.annotate(lab, xy, fontsize=8, color=col)
+a0.annotate("scored\nhere only", (0, -0.1), fontsize=8.5, ha="center", weight="bold", color="#2e7d32")
+a0.set_title("1 · where scoring\nhappens", fontsize=9)
+a1 = ax[1]
+for x, y in [(-0.38, 0.22), (0.05, -0.32), (-0.6, -0.5), (0.62, -0.15)]:
+    a1.scatter(x, y, marker="s", s=70, c="tab:orange", zorder=3)
+for x, y, hit in [(-0.45, 0.3, True), (0.15, -0.25, True), (0.45, 0.42, False)]:
+    a1.add_patch(mp.Circle((x, y), R, fc="none", ec="grey", ls="--"))
+    a1.scatter(x, y, marker="*", s=180, c="k", zorder=4)
+    a1.annotate("TP" if hit else "FN (missed)", (x + 0.05, y + 0.13), fontsize=7.5,
+                color="#2e7d32" if hit else "#c62828", weight="bold")
+a1.set_title("2 · recall: check\neach CEMS point", fontsize=9)
+a2 = ax[2]
+for x, y in [(-0.36, 0.25), (0.2, -0.14)]:
+    a2.scatter(x, y, marker="*", s=180, c="k", zorder=4)
+for x, y, hit in [(-0.45, 0.32, True), (0.1, -0.2, True), (0.5, 0.45, False), (-0.15, -0.6, False)]:
+    a2.add_patch(mp.Circle((x, y), R, fc="none", ec="grey", ls="--"))
+    a2.scatter(x, y, marker="s", s=70, c="tab:orange", zorder=3)
+    a2.annotate("TP" if hit else "FP (unmatched)", (x + 0.05, y + 0.13), fontsize=7.5,
+                color="#2e7d32" if hit else "#c62828", weight="bold")
+a2.set_title("3 · precision: check\neach product flag", fontsize=9)
+for a in ax:
+    a.set_xlim(-1.05, 1.05); a.set_ylim(-1.0, 0.9)
+    a.set_aspect("equal"); a.set_xticks([]); a.set_yticks([])
+h = [plt.Line2D([], [], marker="*", ls="", ms=13, c="k", label="CEMS damage point"),
+     plt.Line2D([], [], marker="s", ls="", ms=8, c="tab:orange", label="product-flagged building"),
+     plt.Line2D([], [], ls="--", c="grey", label="match radius r")]
+fig.legend(handles=h, loc="lower center", ncol=3, frameon=False, fontsize=8)
+fig.tight_layout(rect=(0, 0.09, 1, 0.98))
+plt.show()
+```
+
+- Products that delivered their own footprints are mapped onto the shared building base by one
+  rule: highest overlap, else nearest within 20 m, else no match. 
+- The matching radius chosen comes from the building spacing: the median distance between
+  neighbouring buildings in the core region is `{python} N["spacing_median_m"]` m, and
+  `{python} N["spacing_within20_pct"]` have a neighbour within 20 m.
+- Radii other than 10 m are used for two different purposes. Against ChatMap a more generous 20 m
+  is applied, to account for the GPS uncertainty in field-reported points. And 30 m is a *finding
+  distance*, close enough that a responder sent to a flag could plausibly find the damaged
+  building: it is what the coverage and visits-per-find columns of @tbl-dial report. Both radii are
+  also swept as sensitivity tests in [sensitivity to the matching radius](#app-radius).
+- Reference grades: *damaged* and *destroyed* count, *possibly damaged* does not. What happens
+  when that choice is relaxed is in [building-level performance against the benchmark](#app-null-building).
+
+[]{#app-reference}
+
+[]{#app-crowd}
+
+**How MapSwipe was used.** MapSwipe turns the single precision figure measured against CEMS into
+a range. A flag with no CEMS point near it is an unmatched flag: it may be a genuine false alarm or a
+gap in the reference, and the two look the same. MapSwipe is a HOT volunteer platform, and in this event its
+volunteers reviewed ~50 m cells for visible damage, which separates the two wherever they looked.
+
+- The first campaign was built to review Microsoft's flags, with a few dozen cells from HOT's fAIr,
+  so it is not spread evenly across the products. The others are covered only where their flags
+  happen to fall inside cells drawn for Microsoft. Coverage of each product's unmatched flags runs
+  from `{python} N["crowdcov_MS"]` for Microsoft and `{python} N["crowdcov_UNEP"]` for UNEP down to
+  `{python} N["crowdcov_OSU"]` for OSU and `{python} N["crowdcov_UH"]` for UH, so the adjustment says the most about
+  Microsoft and the least about UH.
+- The crowd only re-judges product flags that have no CEMS point within 10 m, which would otherwise
+  count against precision. If most volunteers who saw that flag's cell said damaged, the flag counts as
+  a hit; if they said no or not sure, or never saw the cell, it stays unmatched. Flags a CEMS
+  point already matches are never re-judged, and neither are buildings a product did not flag, so
+  the crowd can raise precision but never lower it, and leaves recall alone.
+- When crowd-adjusted precision is used in the paper, the CEMS-only precision is the bottom of the
+  range and the crowd-adjusted value sits above it.
+
+![How the MapSwipe crowd enters the precision calculation. Hexagons are the ~50 m crowd task
+cells in Catia La Mar, tinted by majority verdict. A flag matched by a CEMS point within 10 m
+is a true positive and the crowd plays no part (green). An unmatched flag in a cell the crowd
+judged damaged is counted as a hit and improves the adjusted precision (blue). In a cell
+judged undamaged or uncertain it stays an unmatched flag (orange), and a flag in a cell nobody voted
+on earns nothing.](figures/rq7_crowd_adjustment_explainer_r1.png){#fig-crowdmech}
+
+- Every crowd-adjusted number in this brief comes from this first round. A second campaign re-voted
+  the same cells in August 2026, after the numbers were frozen, with about sixteen votes per cell
+  instead of six. Swapping its verdicts in moves each product's crowd-adjusted precision by at most
+  `{python} N["r2_padj_maxdelta"]`, and no product overtakes another.
+
+[]{#app-chatmap}
+
+**How ChatMap was used.** ChatMap field teams reported damaged buildings from the ground,
+independently of any satellite imagery, which makes it one dataset that can check the CEMS
+reference itself.
+
+- CEMS captured `{python} N["cems_field_complete_pct"]` of field-reported destroyed buildings but only
+  `{python} N["cems_field_significant_pct"]` of those significantly damaged, and every product shows the
+  same slope.
+
+![ChatMap field reports are an independent dataset that helps evaluate both the products and
+the CEMS reference. Each line is one dataset's recall against those reports, at complete
+destruction versus significant damage. Every line slopes the same way: destruction is
+found far more often than damage, the products and the CEMS reference
+alike.](figures/rq2e_grade_slope.png){#fig-gradeslope}
+
+- ChatMap can also be added to the reference directly, since its points are building-level.
+  However, doing so raises measured precision minimally, by roughly
+  `{python} N["field_union_gain_range"]`, and it has not been included in the main text.
+- Recall against ChatMap is matched at 20 m rather than 10 m due to uncertainty in the accuracy of spatial information provided by ChatMap.
+
+### The geography benchmark {#app-null-brief .unnumbered}
+
+#### How the benchmark is built {#app-null-build .unnumbered} 
+
+- Every product is compared against a deliberately simple benchmark that uses no satellite imagery:
+  modelled shaking intensity, plus the vulnerability of the setting proxied by building density and
+  by terrain slope and elevation.
+- It is fitted with hindsight to this event's own damage labels and validated on spatial blocks it
+  never trained on. Its inputs are available on day zero anywhere; its coefficients are not. It is a
+  benchmark, not an operational alternative.
+- Validation is by spatial blocking: the map is cut into ~`{python} N["h3_res7_km2"]` km² zones and the model
+  is always scored on zones it never trained on, because neighbouring buildings resemble each other
+  in both features and damage.
+- It is fitted two ways, a logistic regression and a random forest, and both are reported. Every
+  paired comparison in this brief uses the logistic, so the whole brief rests on one model, even
+  though the forest is marginally stronger at building level in the core region
+  (`{python} N["null_rf_F1"]` against `{python} N["null_F1"]`).
+
+![How the geography benchmark is built](figures/rq8_dayzero_schematic.png){#fig-dayzero-build}
+
+#### Building-level performance against the benchmark {#app-null-building .unnumbered}
+
+![Precision of each product, the two combinations and the geography benchmark under three
+definitions of the CEMS reference. The vertical dashed line marks the paper's common reference definition.](figures/rq8c_basis_precision_r10.png){#fig-basis}
+
+- Widening the grade definition lifts every precision by `{python} N["possibly_lift_range"]`. But the
+  key findings stay largely the same: the combinations
+  stay well above every single product, and the geography benchmark stays inside the products' band
+  under every definition.
+
+#### Area ranking against the benchmark {#app-ranking-tables .unnumbered}
+
+- The same benchmark test applied to ranking: sum the model's predicted per-building risk over the
+  same cells, which needs no threshold, and correlate with the CEMS count (@fig-nullrank).
+
+![Each product's rank correlation with the
+CEMS damage ordering, beside the geography benchmark scored on the same cells. As delivered the
+benchmark is re-scored on the overlap of each product's footprint with the CEMS-mapped areas, so it takes a different value per row;
+in the core region every predictor shares one cell set, so it has a single score, drawn as the
+vertical rule.](figures/rq3f_null_ranking_both.png){#fig-nullrank}
+
+- Across the delivered footprints geography ranks these areas better than the products do, beating
+  `{python} N["null_beats_n_asd7"]` of six at the coarser scale, with large margins.
+
+- Within the known damage zone, the core region, the individual products rank much better than
+  across their full delivered scope.
+- So the products do know where within a damaged area to go first. What they do not add is which
+  area that is, which is the part geography already encodes.
+- The geography benchmark is fitted with hindsight to the known damage labels, so it is not a viable
+  alternative in real time. Its purpose here is solely as an informative benchmark.
+
+![Each product's rank correlation with the
+CEMS ordering across its delivered footprint, when cells are ranked by damaged-building count (filled circles, the
+paper's target) versus damage fraction (filled squares; cells with at least 20
+buildings). Open markers: the geography benchmark under each target. The benchmark is as strong
+under fractions as under counts, and only OSU beats it under
+either.](figures/rq3g_frac_vs_count_rho.png){#fig-fracrank}
+
+- Ranking by damage fraction instead of count moves some products up and others down, but the
+  benchmark is as strong either way.
+
+### Additional tests {#app-tests .unnumbered}
+
+#### Sensitivity to the matching radius {#app-radius .unnumbered}
+
+- Throughout the paper the common radius used is 10 m. Here we test at 20 m and at 30 m.
+
+```{python}
+#| label: tbl-dial-full
+#| tbl-cap: "Building-level performance across the six products and six agreement rules in the core region at matching radii of 10, 20 and 30 m. Parentheses at 10 m give each product's as-delivered value. Visits per find is the number of field visits per damage point reached, matched at 30 m on the assumption that a responder sent to a flag has a good chance of finding damage within that distance."
+
+import pandas as pd
+from great_tables import GT, html, style, loc
+from matplotlib import colormaps
+from matplotlib.colors import to_hex
+
+from brief_numbers import rq5b as five, asd  # both slices of artefacts/results.csv
+
+products = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"]
+rules = [f"{k}-of-6" for k in range(1, 7)]
+labels = {"MS": "Microsoft", "IMPACT": "IMPACT v2"}
+from brief_numbers import N_CEMS_CORE as N_CEMS
+
+disp, nums = [], []
+for key in products + rules:
+    d = {
+        "rule": labels.get(key, key),
+        "group": "Products" if key in products else "Voting rules (k of 6 agree)",
+    }
+    n = {}
+    d["flags"] = f"{int(five[10].loc[key]['flagged']):,}"
+    for r in (10, 20, 30):
+        row = five[r].loc[key]
+        for m, ml in (("P_cems", "P"), ("R_cems", "R"), ("F1_cems", "F1")):
+            col = f"{ml}{r}"
+            n[col] = float(row[m])
+            if r == 10 and key in products and m in ("P_cems", "R_cems"):
+                d[col] = f"{row[m]:.3f} ({float(asd.loc[key][m]):.3f})"
+            else:
+                d[col] = f"{row[m]:.3f}"
+    n["Padj"] = float(five[10].loc[key]["P_crowd"])
+    _cov = five[10].loc[key]["crowd_cov_of_fps"]
+    d["Padj"] = f"{n['Padj']:.3f}"
+    d["cov"] = (
+        f"{100 * _cov:.0f}%"  # coverage in its own column, so parentheses in this table mean "as delivered" only
+    )
+    visits = five[10].loc[key]["flagged"] / (five[30].loc[key]["R_cems"] * N_CEMS)
+    n["visits"] = -visits
+    d["visits"] = f"{visits:.1f}"
+    disp.append(d)
+    nums.append(n)
+
+cols = [
+    "rule",
+    "flags",
+    "P10",
+    "R10",
+    "F110",
+    "P20",
+    "R20",
+    "F120",
+    "P30",
+    "R30",
+    "F130",
+    "visits",
+]
+df = pd.DataFrame(disp)[["group"] + cols]
+nm = pd.DataFrame(nums)[[c for c in cols if c not in ("rule", "flags", "cov")]]  # cov is not shaded
+
+cmap = colormaps["Blues"]
+gt = (
+    GT(df, rowname_col="rule", groupname_col="group")
+    .tab_spanner("10 m", ["P10", "R10", "F110"])
+    .tab_spanner("20 m", ["P20", "R20", "F120"])
+    .tab_spanner("30 m", ["P30", "R30", "F130", "visits"])
+    .cols_label(
+        flags="flags",
+        P10="P",
+        R10="R",
+        F110="F1",
+        P20="P",
+        R20="R",
+        F120="F1",
+        P30="P",
+        R30="R",
+        F130="F1",
+        visits=html("visits<br>per find"),
+    )
+    .tab_options(
+        column_labels_font_weight="bold",
+        row_group_font_weight="bold",
+        table_font_size="13px",
+        data_row_padding="4px",
+    )
+)
+for col in nm.columns:
+    vals = nm[col]
+    lo, hi = vals.min(), vals.max()
+    for i, v in enumerate(vals):
+        t = 0.0 if hi == lo else (v - lo) / (hi - lo)
+        gt = gt.tab_style(
+            style.fill(color=to_hex(cmap(0.15 + 0.55 * t))),
+            loc.body(columns=[col], rows=[i]),
+        )
+gt
+```
+
+#### Bootstrapped confidence intervals {#app-ci .unnumbered}
+
+- Every interval is a 95% spatial block bootstrap: hexagonal cells resampled with replacement 2,000
+  times, each statistic recomputed from the frozen match indicators.
+- The same cell draw is shared by every predictor, so differences between predictors are paired.
+  Nothing is refitted inside the loop, so the intervals measure sampling noise around the reported
+  numbers, not a re-run of the threshold search.
+- Because whole neighbourhoods are resampled the intervals are wide: one damage cluster entering or
+  leaving the sample moves a product's precision by more than its decimals suggest.
+
+```{python}
+#| label: tbl-ci-core
+#| tbl-cap: "Core region, 95% block-bootstrap intervals, counted as in the main text (recall is the share of CEMS points found). P/R/F1 at 10 m, F1 at 30 m, and visits per find (30 m). The 20 m radius and the as-delivered region are in the frozen artefact (RQ9)."
+import pandas as pd
+from great_tables import GT
+
+from brief_numbers import ci   # rq9 core intervals, from artefacts/results.csv
+def cell(rule, radius, metric, dp=3):
+    r = ci[(ci["rule"] == rule) & (ci.radius == radius) & (ci.metric == metric)].iloc[0]
+    f = f"{{:.{dp}f}}"
+    return f"{f.format(r['point'])} ({f.format(r['lo'])}–{f.format(r['hi'])})"
+
+order = ["MS", "IMPACT", "OSU", "UH", "LIST", "UNEP"] + [f"{k}-of-6" for k in range(1, 7)]
+labels = {"MS": "Microsoft", "IMPACT": "IMPACT v2"}
+rows = [{"rule": labels.get(k, k),
+         "P10": cell(k, 10, "P"), "R10": cell(k, 10, "R"), "F110": cell(k, 10, "F1"),
+         "F130": cell(k, 30, "F1"),
+         "visits": cell(k, 30, "visits_per_find", dp=1)} for k in order]
+(GT(pd.DataFrame(rows), rowname_col="rule")
+ .tab_spanner("10 m", ["P10", "R10", "F110"])
+ .tab_spanner("30 m", ["F130", "visits"])
+ .cols_label(P10="P", R10="R", F110="F1", F130="F1",
+             visits="visits/find")
+ .tab_options(column_labels_font_weight="bold", table_font_size="12.5px",
+              data_row_padding="3px"))
+```
+
+### Product updates {#app-updates .unnumbered}
+
+- Three providers released later versions of their products after the response: Microsoft, OSU and
+  UH. None of them is a focus of this evaluation. The brief scores what was available in the first
+  weeks, which is what responders actually had.
+- Microsoft's later version removed `{python} N["ms_v3_dups"]` duplicate building footprints and
+  raised the damage threshold for its Catia La Mar scene, which covers the western part of the
+  Caraballeda area; that switched off `{python} N["ms_v3_switched_off"]` flags. In the core region it
+  flags `{python} N["ms_v3_flags"]` buildings instead of `{python} N["core_flags_MS"]`. Precision
+  rises from `{python} N["core_P_MS"]` to `{python} N["ms_v3_P"]` and recall falls from
+  `{python} N["core_R_MS"]` to `{python} N["ms_v3_R"]`, so F1 rises from `{python} N["core_F1_MS"]`
+  to `{python} N["ms_v3_F1"]`. In the western part the share of buildings flagged falls from
+  `{python} N["strip_share_MS_west"]` to `{python} N["ms_v3_strip_share_west"]`, but precision there
+  is still `{python} N["ms_v3_strip_P_west"]`, against `{python} N["ms_v3_strip_P_east"]` in the east.
+- UH's later version: **TBD.**
+- OSU's second version was evaluated, and the result is the same shape. It turned over more than
+  half the flag list and moved precision and recall barely at all (`{python} N["osu_v0_P"]` to
+  `{python} N["osu_v1_P"]` precision). We score the first version throughout, because that is what
+  responders had; the operational dashboard now uses the second.
+
+:::

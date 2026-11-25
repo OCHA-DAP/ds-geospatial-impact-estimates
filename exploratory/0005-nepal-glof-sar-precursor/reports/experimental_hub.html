@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Experimental analyses — Geospatial Impact Estimates</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- This document is served decrypted in place of pages/experimental/index.html, so the URL is
+     /experimental/ and the site stylesheet is one level up. The card links below are relative
+     for the same reason: they resolve to /experimental/<page>/. -->
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  /* No hero canvas here: this is a sub-landing, kept quieter than the front page. */
+  .hero.flat { padding:44px 44px 36px; }
+  @media (max-width:640px) { .hero.flat { padding:36px 22px 30px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero flat">
+    <div class="inner">
+      <p class="eyebrow">OCHA Centre for Humanitarian Data</p>
+      <h1>Experimental analyses</h1>
+      <p>Exploratory work that is not part of the damage-evaluation line: methods still being
+         tested, on data that has not been through the same review. Read them as experiments
+         with their caveats attached, not as products. None of them is a prediction.</p>
+    </div>
+  </header>
+
+  <main>
+    <p class="label">Nepal — glacier-collapse SAR precursors</p>
+    <div class="grid">
+
+      <a class="k" href="langtang-sar-precursors/">
+        <h2>Nepal glacier collapse — SAR precursor analysis</h2>
+        <p>Six years of Sentinel-1 radar over the Langtang Lirung face that collapsed on
+           26 Aug 2026: a morning-pass melt anomaly visible four months out, a 45-face
+           false-alarm test, and an offset-tracking null. One page, plain-language
+           walkthrough with expandable technical panels.</p>
+        <span class="foot"><em>/experimental/langtang-sar-precursors/</em></span>
+      </a>
+
+      <a class="k" href="langtang-facet-watch/">
+        <h2>Langtang facet watch — live status map</h2>
+        <p>580 computed steep-glacier faces in the Langtang region, each colored by its
+           recent morning-radar anomaly ranked against 2020–25 history. Snapshot dashboard
+           built on the SAR precursor analysis; a rank against the past, not a prediction.</p>
+        <span class="foot"><em>/experimental/langtang-facet-watch/</em></span>
+      </a>
+
+      <a class="k" href="himalaya-facet-watch/">
+        <h2>Central Himalaya — facet watch analyses</h2>
+        <p>2,576 computed steep-glacier faces across the central Himalaya (82–89°E), colored
+           by their 2026-season morning-radar anomaly ranked against 2020–25 history, with
+           the validated detector run on the worst-ranked faces. Built by GEE batch export;
+           a rank against the past, not a prediction.</p>
+        <span class="foot"><em>/experimental/himalaya-facet-watch/</em></span>
+      </a>
+
+    </div>
+  </main>
+
+  <div class="note">
+    <p><strong>Status.</strong> These pages are exploratory. The 26 Aug 2026 Langtang event was
+       an ice/rock avalanche and debris flow; the precursor signal was found looking back at
+       it, and the facet-watch maps rank faces against their own history. A high rank is a
+       reason to look, not a forecast.</p>
+    <p><strong>Access.</strong> You opened this with the experimental passphrase, which also
+       opens the three pages above for the rest of this browser tab. It is separate from the
+       passphrase on the damage-evaluation artefacts.</p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,5 @@
+source,dmg_in_region,recall,precision,f1,overdet_x,rank_rho
+Microsoft,7694,0.607,0.124,0.206,5.2,0.408
+IMPACT v2,10061,0.624,0.11,0.187,6.9,0.591
+OSU,22700,0.851,0.076,0.139,15.5,0.595
+UNEP debris,7393,0.425,0.118,0.185,5.0,0.311

@@ -7,6 +7,8 @@
     <link rel="icon" href="data:," />
   </head>
   <body>
+    <div id="landing" hidden></div>
+
     <div id="map"></div>
 
     <button id="methods-open" class="methods-fab" type="button" aria-label="Methodology &amp; sources">
@@ -19,14 +21,22 @@
 
     <div id="panel" class="floating">
       <img src="/ocha_logo.svg" alt="OCHA" class="panel-logo" width="117" height="28" />
-      <h1>Venezuela earthquake (EMSR884)</h1>
+      <h1 id="event-title"></h1>
       <p class="sub">Damage Exposure</p>
+
+      <div class="divider"></div>
+
+      <div class="group">
+        <div class="label">Event</div>
+        <select id="eventSwitch"></select>
+      </div>
 
       <div class="divider"></div>
 
       <div class="group">
         <div class="label">Sources
           <span class="help" tabindex="0" role="button" title="The satellite-derived damage sources compared here. Click for how each is measured and combined onto the shared footprint base.">?</span>
+          <span class="src-toggle"><button id="src-all" type="button">All</button><span>·</span><button id="src-none" type="button">None</button></span>
         </div>
         <div id="sources"></div>
       </div>
@@ -54,10 +64,12 @@
             <option value="overture" selected>Overture base</option>
             <option value="native">Native data</option>
           </select>
+          <p id="native-note" class="sub-note" hidden></p>
         </div>
 
         <label><input type="checkbox" data-layer="extent" checked /> Coverage extent</label>
         <label><input type="checkbox" data-layer="h3" /> H3 hexagons</label>
+        <label><input type="checkbox" data-layer="usgs" /> USGS shaking &amp; epicentre</label>
       </div>
 
       <div class="divider"></div>
@@ -75,23 +87,19 @@
 
       <div class="divider"></div>
 
-      <div class="group">
-        <div class="label">Current view</div>
-        <div id="status" class="status">Loading…</div>
-      </div>
-
-      <div class="divider"></div>
+      <!-- Transient load-progress / error line (empty when idle). -->
+      <div id="status" class="status"></div>
 
       <div id="legend"></div>
 
       <div class="group">
-        <a id="export" href="/api/export.xlsx" download="ven_earthquake_damage_compilation_by_admin.xlsx">⬇ Download spreadsheet (.xlsx)</a>
+        <a id="export" href="/api/export.xlsx" download="damage_compilation_by_admin.xlsx">⬇ Download spreadsheet (.xlsx)</a>
       </div>
 
       <div class="divider"></div>
 
       <div id="panel-about">
-        <p>An <b>exploratory</b> tool from the <b>OCHA Centre for Humanitarian Data</b>, consolidating satellite-derived damage assessments from <b>Microsoft</b>, <b>Copernicus EMS</b>, <b>IMPACT Initiatives</b> (SAR), <b>OSU</b> (Sentinel-1 coherence), and <b>HotOSM</b> (fAIr) into one harmonized view for side-by-side comparison.</p>
+        <p>An <b>exploratory</b> tool from the <b>OCHA Centre for Humanitarian Data</b>, consolidating satellite-derived damage assessments — expert-mapped, AI per-building, and SAR-based radar — into one harmonized view for side-by-side comparison.</p>
         <p class="about-contact">For additional information, please reach out to <a href="mailto:zachary.arno@un.org">zachary.arno@un.org</a> and <a href="mailto:leonardo.milano@un.org">leonardo.milano@un.org</a>.</p>
       </div>
     </div>
@@ -120,6 +128,7 @@
             <p class="methods-rollup">Per-building flags are aggregated to <b>OCHA COD admin units (0–3)</b> and an <b>H3 grid</b>, graded on the <b>Copernicus EMS</b> scale (<i>Possibly, Damaged, Destroyed</i>). When several sources are selected, each unit takes the <b>maximum</b> value across them, and the hover lists each source separately.</p>
           </header>
           <div class="methods-sub">Contributing sources</div>
+          <p id="methods-event-note" class="methods-event-note"></p>
           <div id="methods-cards" class="methods-cards"></div>
           <p class="methods-foot">An exploratory tool from the OCHA Centre for Humanitarian Data.</p>
         </div>

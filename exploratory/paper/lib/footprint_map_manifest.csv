@@ -1,0 +1,4 @@
+product,delivered,mapped_by_iou,mapped_by_snap,orphans,base_ids,collapsed,median_iou
+ms,8410,8410,0,0,8339,71,0.667
+unep,96046,92820,3067,159,75814,20073,0.413
+uh,76378,75329,1031,18,75294,1066,0.99

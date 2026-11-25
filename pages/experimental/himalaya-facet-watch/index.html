@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Central Himalaya facet watch — passphrase required</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/site.css">
+</head>
+<body class="gate-page">
+
+<!-- The dashboard itself is content.enc — AES-GCM ciphertext, not readable HTML. Built by
+     exploratory/0005-nepal-glof-sar-precursor/himalaya_build.py into the gitignored
+     data/himalaya-facet-watch.page.html, then encrypted here with the EXPERIMENTAL
+     passphrase (not the damage-evaluation one):
+
+       ./scripts/publish_experimental.sh                                                  -->
+
+<form class="gate" data-gate data-enc="content.enc">
+  <p class="eyebrow">OCHA Centre for Humanitarian Data · Experimental</p>
+  <h1>Central Himalaya — facet watch analyses</h1>
+  <p class="lede">2,576 computed steep-glacier faces across the central Himalaya, each ranked
+     against its 2020–25 history. A rank, not a prediction. Exploratory; enter the
+     experimental passphrase to open it.</p>
+
+  <label for="pass">Passphrase</label>
+  <input id="pass" type="password" autocomplete="current-password" data-gate-input
+         placeholder="Experimental passphrase">
+  <p class="msg" role="status" aria-live="polite" data-gate-message></p>
+  <button type="submit" data-gate-submit>Open</button>
+
+  <p class="back"><a href="../">← Experimental analyses</a></p>
+</form>
+
+<script type="module" src="../../assets/gate.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+product,"finds damage (field recall, ±20m)",flag trustworthiness (CEMS floor → crowd-adj),visits per verified find (r=30),"area-ranking skill (ρ, triage scale)",zones with systematic failure,zones verified reliable
+Microsoft,0.75,0.08 → 0.24,8.8,0.607,none observed,Caraballeda
+IMPACT v2,0.71,0.07 → 0.26,10.4,0.433,Caracas,"Caraballeda, San Felipe, Santa Cruz"
+OSU,0.92,0.04 → 0.23,19.4,0.54,none observed,"Caraballeda, Santa Cruz"
+UH,0.54,0.09 → 0.42,7.2,n/a (not in RQ3),"Caracas, Santa Cruz","Caraballeda, Moron"
+LIST,0.82,0.06 → 0.24,12.6,n/a (not in RQ3),none observed,—
+UNEP debris,0.6,0.09 → 0.25,6.8,n/a (not in RQ3),none observed,—

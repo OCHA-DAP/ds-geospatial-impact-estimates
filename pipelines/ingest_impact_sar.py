@@ -41,25 +41,27 @@ import sys
 
 from azure.storage.blob import ContainerClient
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE = "impact_initiatives"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DEFAULT_SRC = os.path.expanduser(
     "~/Downloads/IMPACT_VEN_20260625_Sentinel1_damage_proxy_gt0.70.tif"
 )
 
 
 def main() -> None:
+    events.require_event(EVENT)
     src_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SRC
     if not os.path.isfile(src_path):
         raise SystemExit(f"file not found: {src_path}")
 
     settings = load_settings(STAGE)
     name = os.path.basename(src_path)
-    blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name)
+    blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", name, event=EVENT)
     size = os.path.getsize(src_path)
 
     cc = ContainerClient.from_connection_string(

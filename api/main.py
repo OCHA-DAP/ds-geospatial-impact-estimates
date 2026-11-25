@@ -61,12 +61,14 @@ def _json(content: str) -> Response:
 
 @lru_cache(maxsize=1)
 def _sources(adm0: str) -> list[str]:
-    return list_sources(adm0)
+    # event=None: the App Service serving layer is PINNED to the legacy un-evented
+    # layout until its retirement (spec §4).
+    return list_sources(adm0, event=None)
 
 
 @lru_cache(maxsize=16)
 def _common_h3_json(source: str, adm0: str) -> str:
-    return load_common_h3(source, adm0).to_json(orient="records")
+    return load_common_h3(source, adm0, event=None).to_json(orient="records")
 
 
 @lru_cache(maxsize=32)
@@ -86,21 +88,16 @@ def _native_json(source: str, adm0: str) -> str:
 
 @lru_cache(maxsize=8)
 def _extent_json(source: str, adm0: str) -> str:
-    return load_source_extent(source, adm0).to_json()
+    return load_source_extent(source, adm0, event=None).to_json()
 
 
 @lru_cache(maxsize=2)
 def _agreement_json(adm0: str) -> str:
-    return load_agreement(adm0).to_json(orient="records")
+    return load_agreement(adm0, event=None).to_json(orient="records")
 
 
-# Metrics available on the common model, in display order (label shown in the UI).
-METRICS = [
-    {"key": "damaged_detected", "label": "Damaged buildings"},
-    {"key": "damaged_extrapolated", "label": "Damaged buildings (estimated)"},
-    {"key": "coverage_fraction", "label": "Coverage"},
-    {"key": "exposed_buildings", "label": "Total buildings"},
-]
+# Metrics definition lives in gie.serving (shared with the platinum meta export).
+from gie.serving import METRICS  # noqa: E402
 
 
 @app.get("/api/sources")
@@ -113,13 +110,38 @@ def sources(adm0: str = "VE") -> dict:
 # browser. That is fine BECAUSE it is scoped to this project's platinum/ directory
 # only (read+list): it grants nothing but the published map tiles the app already
 # shows everyone. We NEVER hand out the broad container SAS. Order of preference:
-#   1. a short-lived user-delegation SAS minted via the App Service managed identity
+#   1. the shared keyless token issuer (chd-ds-token-issuer Function): a fresh 24h
+#      user-delegation SAS per fetch, no secret stored anywhere;
+#   2. a user-delegation SAS minted via the App Service managed identity
 #      (when MI + Storage Blob Data Reader are in place) — keyless, auto-rotating;
-#   2. else GIE_PLATINUM_SAS — a long-lived account-key SAS scoped to platinum/, set
-#      as an app setting, used until (1) is wired up.
+#   3. else GIE_PLATINUM_SAS — a long-lived account-key SAS scoped to platinum/, set
+#      as an app setting — the legacy fallback if the issuer is unreachable.
 _SAS_HOURS = 24
 _SAS_REFRESH_UNDER = timedelta(hours=6)
 _token_cache: dict = {}
+
+# The shared token issuer (see token-issuer/ on the swa-static-web-app branch). Its
+# ?tier= maps to the same platinum dirs this app's GIE_TIER selects.
+_ISSUER_URL = os.getenv(
+    "GIE_TOKEN_ISSUER_URL", "https://chd-ds-token-issuer.azurewebsites.net/api/token"
+)
+
+
+def _issuer_token(s) -> tuple[str, datetime] | None:
+    """Fetch a fresh keyless delegation SAS from the shared issuer; None on any failure."""
+    import json
+
+    tier = "prod" if s.tier == "prod" else "staging"
+    try:
+        url = f"{_ISSUER_URL}?app=satellite-viewer&tier={tier}"
+        with urllib.request.urlopen(url, timeout=10) as r:
+            d = json.loads(r.read())
+        if d.get("mode") == "delegation-platinum" and d.get("sas"):
+            exp = datetime.fromisoformat(d["expires"].replace("Z", "+00:00"))
+            return d["sas"], exp
+    except Exception as e:
+        logging.warning("issuer token fetch failed (%s) — falling back", str(e)[:140])
+    return None
 
 
 def _se_expiry(sas: str) -> str | None:
@@ -174,8 +196,12 @@ def token() -> dict:
     now = datetime.now(timezone.utc)
     c = _token_cache.get("v")
     if not c or c["exp"] - now < _SAS_REFRESH_UNDER:
-        minted = _mint_scoped_sas(s)
-        if minted:
+        issued = _issuer_token(s)
+        minted = None if issued else _mint_scoped_sas(s)
+        if issued:
+            sas, exp = issued
+            c = {"sas": sas, "exp": exp, "mode": "delegation-platinum", "expires": exp.isoformat()}
+        elif minted:
             sas, exp = minted
             c = {"sas": sas, "exp": exp, "mode": "delegation-platinum", "expires": exp.isoformat()}
         elif os.getenv("GIE_PLATINUM_SAS"):
@@ -233,7 +259,7 @@ def agreement(adm0: str = "VE") -> Response:
 
 @lru_cache(maxsize=2)
 def _coverage_detail_json(adm0: str) -> str:
-    return load_coverage_detail(adm0).to_json()
+    return load_coverage_detail(adm0, event=None).to_json()
 
 
 @app.get("/api/coverage_detail")

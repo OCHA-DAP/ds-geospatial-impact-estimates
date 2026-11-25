@@ -36,12 +36,13 @@ import shapely
 from rasterio.transform import rowcol
 from shapely.geometry import Polygon, box
 
-from gie import db, ledger
+from gie import db, events, ledger
 from gie.config import load_settings
 
 SOURCE = "impact_initiatives"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 RASTER = "IMPACT_VEN_20260625_Sentinel1_damage_proxy_gt0.70.tif"
 DAMAGE_THRESHOLD = 0.7  # provided masked at this; class 2 at >= 1.0 (ADR-0008)
 FOOTPRINTS = "acquisition_footprints.parquet"  # bronze: 2 S1D acquisition outlines
@@ -58,7 +59,7 @@ def _analysed_extent(settings, b):
     raster-bounds stopgap (ADR-0008).
     """
     raw = stratus.load_blob_data(
-        settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", FOOTPRINTS),
+        settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", FOOTPRINTS, event=EVENT),
         stage=STAGE,
         container_name=settings.container,
     )
@@ -71,11 +72,12 @@ def _analysed_extent(settings, b):
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     con = db.connect()
 
     # pull the bronze raster to a temp file and read it fully (random-access sampling)
-    bpath = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", RASTER)
+    bpath = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", RASTER, event=EVENT)
     raw = stratus.load_blob_data(bpath, stage=STAGE, container_name=settings.container)
     with tempfile.NamedTemporaryFile(suffix=".tif", delete=False) as tf:
         tf.write(raw)
@@ -88,7 +90,9 @@ def main() -> None:
     os.unlink(tmp)
 
     # Overture centroids inside the raster extent (deduped base)
-    base = settings.az_path("silver", "source=overture", f"adm0={ADM0}", "region=*", "*.parquet")
+    base = settings.az_path(
+        "silver", "source=overture", f"adm0={ADM0}", "region=*", "*.parquet", event=EVENT
+    )
     df = con.execute(
         f"""
         SELECT id, ST_X(c) AS lon, ST_Y(c) AS lat FROM (
@@ -120,7 +124,9 @@ def main() -> None:
         }
     )
     out["ems_grade"] = np.where(out["damage_class"] == 2, "Damaged", "Possibly damaged")
-    sp = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "building_damage.parquet")
+    sp = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "building_damage.parquet", event=EVENT
+    )
     stratus.upload_parquet_to_blob(
         out, sp, stage=STAGE, container_name=settings.container, compression="zstd"
     )
@@ -134,7 +140,7 @@ def main() -> None:
     # analysed extent = raster box clipped to the validated swath (see _analysed_extent)
     fp = gpd.GeoDataFrame({"source": [SOURCE]}, geometry=[extent], crs="EPSG:4326")
     fpath = settings.blob_path(
-        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     stratus.upload_parquet_to_blob(
         fp, fpath, stage=STAGE, container_name=settings.container, compression="zstd"

@@ -1,0 +1,73 @@
+<canvas id="hdx-bg"></canvas>
+<div id="wm-layer" aria-hidden="true"></div>
+<script>
+/* ---------------------------------------------------------------------------
+   1. Animated particle-network title background (borrowed from
+      ds-aa-lac-dry-corridor/analysis/2026_cadc_drought_v3).
+      Now rendered at devicePixelRatio so it is sharp on retina/4K displays — the
+      original sized the canvas in CSS pixels and let the browser upscale it,
+      which is why it looked soft.
+   2. Diagonal "internal" watermark tiled across every slide. To label a copy for a
+      specific recipient, set window.GIE_WATERMARK in an earlier script tag, or just
+      edit WM_TEXT below and re-render.
+      (NB: never write a literal closing script tag in here — even inside a comment the
+      HTML parser ends the block there and the rest of this file becomes stray text.)
+--------------------------------------------------------------------------- */
+(function () {
+  // --- 1. animated canvas ---------------------------------------------------
+  var c = document.getElementById('hdx-bg');
+  if (c.parentNode !== document.body) document.body.appendChild(c);
+  var x = c.getContext('2d'), W, H, P;
+
+  function reset() {
+    var dpr = window.devicePixelRatio || 1;
+    W = window.innerWidth; H = window.innerHeight;
+    c.width = Math.round(W * dpr);          // backing store in DEVICE pixels
+    c.height = Math.round(H * dpr);
+    c.style.width = W + 'px';               // laid out in CSS pixels
+    c.style.height = H + 'px';
+    x.setTransform(dpr, 0, 0, dpr, 0, 0);   // draw using CSS-pixel coordinates
+    var n = Math.max(28, Math.min(110, Math.floor(W * H / 15000)));
+    P = []; for (var i = 0; i < n; i++) P.push({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.98, vy: (Math.random() - 0.5) * 0.98 });   // ~2.8x original drift speed
+  }
+
+  function frame() {
+    x.fillStyle = '#269777';                // --hdx-brand-5 (official CHD green)
+    x.fillRect(0, 0, W, H);
+    for (var i = 0; i < P.length; i++) { var p = P[i]; p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1; if (p.y < 0 || p.y > H) p.vy *= -1; }
+    for (var i = 0; i < P.length; i++) for (var j = i + 1; j < P.length; j++) {
+      var a = P[i], b = P[j], dx = a.x - b.x, dy = a.y - b.y, d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 145) { x.strokeStyle = 'rgba(255,255,255,' + (1 - d / 145) * 0.5 + ')';
+        x.lineWidth = 1; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke(); }
+    }
+    x.fillStyle = 'rgba(255,255,255,0.92)';
+    for (var i = 0; i < P.length; i++) { x.beginPath(); x.arc(P[i].x, P[i].y, 2.2, 0, 6.283); x.fill(); }
+    requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize', reset); reset(); frame();
+
+  function upd() {
+    var h = (window.Reveal && Reveal.getIndices) ? Reveal.getIndices().h : 0;
+    document.body.classList.toggle('on-title', h === 0);
+  }
+  (function hook() {
+    if (window.Reveal && Reveal.on) { Reveal.on('ready', upd); Reveal.on('slidechanged', upd); upd(); }
+    else { setTimeout(hook, 150); }
+  })();
+
+  // --- 2. diagonal watermark ------------------------------------------------
+  var WM_TEXT = window.GIE_WATERMARK || 'INTERNAL DRAFT · NOT FOR CIRCULATION';
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+  var svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="820" height="430">' +
+      '<text x="410" y="215" fill="#18614c" fill-opacity="0.055" font-size="25"' +
+      ' font-family="Helvetica,Arial,sans-serif" font-weight="700" letter-spacing="1.5"' +
+      ' text-anchor="middle" transform="rotate(-30 410 215)">' + esc(WM_TEXT) +
+      '</text></svg>';
+  document.getElementById('wm-layer').style.backgroundImage =
+    'url("data:image/svg+xml;utf8,' + encodeURIComponent(svg) + '")';
+})();
+</script>

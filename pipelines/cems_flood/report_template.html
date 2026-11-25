@@ -1,0 +1,208 @@
+<title>CEMS Flood Archive Ledger</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#faf9f6; --surface:#ffffff; --ink:#20242b; --ink-2:#5c636e; --ink-3:#8a8f98;
+  --line:#e4e1da; --line-strong:#cfcbc2; --accent:#0f62a8; --accent-ink:#0b4d85;
+  --code-bg:#f1efe9;
+  --s-uploaded:#2e7d4f; --s-pending:#0f62a8; --s-unavail:#a8721c; --s-excluded:#7461c9; --s-failed:#b3403a;
+  --chip-uploaded-bg:#e3f0e8; --chip-pending-bg:#e3edf7; --chip-unavail-bg:#f5ecdc; --chip-excluded-bg:#ece9f8; --chip-failed-bg:#f8e6e4;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10161d; --surface:#171f28; --ink:#e6e9ed; --ink-2:#a8b0ba; --ink-3:#7b828c;
+    --line:#2a333e; --line-strong:#3a4552; --accent:#3f8ed6; --accent-ink:#6cabe3;
+    --code-bg:#1c2530;
+    --s-uploaded:#4da375; --s-pending:#3f8ed6; --s-unavail:#bb8630; --s-excluded:#8d7bd0; --s-failed:#d1655e;
+    --chip-uploaded-bg:#1b2f24; --chip-pending-bg:#182a3b; --chip-unavail-bg:#332712; --chip-excluded-bg:#262038; --chip-failed-bg:#39201e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10161d; --surface:#171f28; --ink:#e6e9ed; --ink-2:#a8b0ba; --ink-3:#7b828c;
+  --line:#2a333e; --line-strong:#3a4552; --accent:#3f8ed6; --accent-ink:#6cabe3;
+  --code-bg:#1c2530;
+  --s-uploaded:#4da375; --s-pending:#3f8ed6; --s-unavail:#bb8630; --s-excluded:#8d7bd0; --s-failed:#d1655e;
+  --chip-uploaded-bg:#1b2f24; --chip-pending-bg:#182a3b; --chip-unavail-bg:#332712; --chip-excluded-bg:#262038; --chip-failed-bg:#39201e;
+}
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font:16px/1.55 "Source Sans 3",system-ui,sans-serif; margin:0}
+main{max-width:1060px; margin:0 auto; padding:48px 28px 80px}
+h1,h2,h3{font-family:Archivo,system-ui,sans-serif; text-wrap:balance; line-height:1.15}
+h1{font-size:2.1rem; font-weight:700; margin:.2rem 0 .4rem}
+h2{font-size:1.35rem; font-weight:600; margin:0 0 .35rem}
+h3{font-size:1.02rem; font-weight:600; margin:0 0 .3rem}
+p{max-width:68ch; margin:.4rem 0}
+.eyebrow{font-family:Archivo,sans-serif; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent-ink); font-weight:600}
+.lede{color:var(--ink-2); font-size:1.05rem; max-width:72ch}
+section{margin-top:52px}
+.file-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; border-bottom:2px solid var(--line-strong); padding-bottom:10px; margin-bottom:16px}
+.file-head code{font-size:1.05rem}
+.file-note{color:var(--ink-3); font-size:.88rem}
+code,pre,.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+code{background:var(--code-bg); padding:.08em .35em; border-radius:4px; font-size:.86em}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:16px 18px; overflow-x:auto; font-size:.82rem; line-height:1.5; margin:.6rem 0}
+pre code{background:none; padding:0}
+.tree .dim{color:var(--ink-3)} .tree .hl{color:var(--accent-ink); font-weight:500}
+.stats{display:flex; gap:0; flex-wrap:wrap; border:1px solid var(--line); border-radius:10px; background:var(--surface); margin:22px 0 0; overflow:hidden}
+.stat{flex:1 1 140px; padding:14px 18px; border-left:1px solid var(--line)}
+.stat:first-child{border-left:none}
+.stat .n{font-family:Archivo,sans-serif; font-size:1.55rem; font-weight:700; font-variant-numeric:tabular-nums}
+.stat .l{font-size:.78rem; color:var(--ink-2); text-transform:uppercase; letter-spacing:.07em}
+.bar{display:flex; height:34px; border-radius:6px; overflow:hidden; gap:2px; background:var(--bg); margin:14px 0 10px}
+.bar div{position:relative; min-width:3px}
+.bar div:hover{filter:brightness(1.12)}
+.seg-uploaded{background:var(--s-uploaded)} .seg-pending{background:var(--s-pending)}
+.seg-unavail{background:var(--s-unavail)} .seg-excluded{background:var(--s-excluded)}
+.seg-failed{background:var(--s-failed)}
+.legend{display:flex; gap:22px; flex-wrap:wrap; font-size:.9rem; color:var(--ink-2)}
+.legend b{color:var(--ink); font-variant-numeric:tabular-nums; font-weight:600}
+.dot{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:7px; vertical-align:baseline}
+#tip{position:fixed; pointer-events:none; background:var(--ink); color:var(--bg); font-size:.8rem; padding:5px 9px; border-radius:6px; opacity:0; transition:opacity .12s; z-index:10; font-variant-numeric:tabular-nums}
+.tblwrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--surface); margin:.7rem 0}
+table{border-collapse:collapse; width:100%; font-size:.85rem}
+th{font-family:Archivo,sans-serif; font-size:.72rem; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-2); text-align:left; padding:9px 14px; border-bottom:1px solid var(--line-strong); white-space:nowrap; background:var(--surface)}
+td{padding:8px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.mono{font-size:.78rem; white-space:nowrap}
+td.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+th.num{text-align:right}
+td.wrap{min-width:220px}
+.muted{color:var(--ink-3)}
+td.null{color:var(--ink-3); text-align:center}
+.chip{display:inline-flex; align-items:center; gap:6px; font-family:Archivo,sans-serif; font-size:.72rem; font-weight:600; letter-spacing:.03em; padding:2px 9px; border-radius:99px; white-space:nowrap}
+.chip::before{content:""; width:7px; height:7px; border-radius:50%}
+.chip-uploaded{background:var(--chip-uploaded-bg); color:var(--s-uploaded)} .chip-uploaded::before{background:var(--s-uploaded)}
+.chip-pending{background:var(--chip-pending-bg); color:var(--s-pending)} .chip-pending::before{background:var(--s-pending)}
+.chip-unavail{background:var(--chip-unavail-bg); color:var(--s-unavail)} .chip-unavail::before{background:var(--s-unavail)}
+.chip-excluded{background:var(--chip-excluded-bg); color:var(--s-excluded)} .chip-excluded::before{background:var(--s-excluded)}
+.chip-failed{background:var(--chip-failed-bg); color:var(--s-failed)} .chip-failed::before{background:var(--s-failed)}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:4px 18px; font-size:.85rem; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px 18px; margin:.7rem 0; overflow-x:auto}
+.kv dt{font-family:"IBM Plex Mono",monospace; font-size:.76rem; color:var(--ink-2); white-space:nowrap}
+.kv dd{margin:0; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+footer{margin-top:70px; border-top:1px solid var(--line); padding-top:16px; color:var(--ink-3); font-size:.82rem}
+.crumb{margin:0 0 18px; font-size:.88rem}
+.crumb a{color:var(--accent-ink); text-decoration:none}
+.crumb a:hover{text-decoration:underline}
+a{color:var(--accent-ink)}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<main>
+$crumb
+<div class="eyebrow">Copernicus EMS · Rapid Mapping · container <code>global</code> (dev) · generated $generated</div>
+<h1>CEMS Flood Archive Ledger</h1>
+<p class="lede">Rendered directly from <code>_meta/products.parquet</code> and friends — regenerate at any point (<code>report.py</code>) for the true current state of the harvest. Every row below is real.</p>
+
+<div class="stats">
+  <div class="stat"><div class="n">$n_activations</div><div class="l">flood activations</div></div>
+  <div class="stat"><div class="n">$n_rows</div><div class="l">ledger rows</div></div>
+  <div class="stat"><div class="n">$n_uploaded / $n_fetchable</div><div class="l">zips archived ($pct%)</div></div>
+  <div class="stat"><div class="n">$gb GB</div><div class="l">uploaded</div></div>
+  <div class="stat"><div class="n">$n_failed</div><div class="l">failures on ledger</div></div>
+</div>
+
+<section>
+<h2>Blob layout</h2>
+<pre class="tree"><code>global/
+└─ copernicus_ems/flood/
+   ├─ bronze/
+   │  ├─ code=EMSR009/ … code=EMSR927/     <span class="dim">← one folder per activation, original zip basenames</span>
+   │  └─ _meta/
+   │     ├─ <span class="hl">products.parquet</span>      <span class="dim">the ledger — one row per target, incl. what we can't get</span>
+   │     ├─ <span class="hl">zip_contents.parquet</span>  <span class="dim">one row per file inside every uploaded zip</span>
+   │     ├─ <span class="hl">transfers.jsonl</span>       <span class="dim">append-only journal of every attempt</span>
+   │     └─ <span class="hl">activations.parquet</span>   <span class="dim">all flood activations, both portals</span>
+   ├─ silver/    <span class="dim">harmonized GeoParquet — every polygon + acquisition datetimes</span>
+   ├─ gold/      <span class="dim">label_index + labels (dissolved flood + valid mask per label set)</span>
+   └─ platinum/  <span class="dim">Portolan catalog serving the labels viewer (PMTiles + index)</span></code></pre>
+</section>
+
+$funnel_section
+
+<section>
+<h2>The status model</h2>
+<p>Every ledger row carries exactly one status. Nothing is silently skipped — a target we chose not to fetch or physically cannot fetch keeps its row and says why. Pending by class: $pending_classes.</p>
+<div class="bar" id="bar" aria-label="Ledger rows by status group"></div>
+<div class="legend" id="legend"></div>
+<div class="tblwrap">
+<table>
+<thead><tr><th>Status</th><th>Set by</th><th>Meaning</th><th class="num">Rows</th></tr></thead>
+<tbody>
+$status_table
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="file-head"><h2><code>products.parquet</code></h2><span class="file-note">the ledger · one representative real row per status · re-running discovery merges, never drops</span></div>
+<div class="tblwrap">
+<table>
+<thead><tr><th>target_id</th><th>Status</th><th>class</th><th>source</th><th>aoi</th><th>delivery</th><th class="num">size</th><th class="num">files</th><th>sha256</th><th>error</th></tr></thead>
+<tbody>
+$sample_rows
+</tbody>
+</table>
+</div>
+<h3>Most recent fully-recorded upload, in full</h3>
+<div class="kv">$kv</div>
+</section>
+
+<section>
+<div class="file-head"><h2><code>zip_contents.parquet</code></h2><span class="file-note">member inventory, built during download · largest members of the upload above</span></div>
+<div class="tblwrap">
+<table>
+<thead><tr><th>member</th><th class="num">file_size</th><th class="num">compress_size</th></tr></thead>
+<tbody>
+$zip_rows
+</tbody>
+</table>
+</div>
+</section>
+
+<section>
+<div class="file-head"><h2><code>transfers.jsonl</code></h2><span class="file-note">append-only journal · $transfer_note · latest record:</span></div>
+<pre><code>$transfer_json</code></pre>
+</section>
+
+<section>
+<div class="file-head"><h2><code>activations.parquet</code></h2><span class="file-note">all EMSR flood activations, cross-validated across both portals · newest three:</span></div>
+<div class="tblwrap">
+<table>
+<thead><tr><th>code</th><th>name</th><th>countries</th><th>activated</th><th class="num">AOIs</th><th class="num">products</th><th>closed</th></tr></thead>
+<tbody>
+$activation_rows
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>
+Code: <span class="mono">pipelines/cems_flood/</span> on branch <span class="mono">cems-flood</span> · evidence: <span class="mono">exploratory/0005-cems-flood-feasibility/</span> · regenerate: <span class="mono">report.py</span> then republish. Local working copies in <span class="mono">/tmp/gie_cems_flood_archive/</span>, checkpointed to blob every 25 transfers.
+</footer>
+</main>
+
+<div id="tip" role="presentation"></div>
+<script>
+const groups = $segments_json;
+const clsMap = {};
+const total = groups.reduce((s,g)=>s+g.n,0);
+const bar = document.getElementById("bar"), leg = document.getElementById("legend"), tip = document.getElementById("tip");
+for (const g of groups){
+  const d = document.createElement("div");
+  d.className = g.cls;
+  d.style.flex = `$${g.n} 0 auto`;
+  d.setAttribute("aria-label", `$${g.label}: $${g.n} rows`);
+  d.addEventListener("mousemove", e => {
+    tip.textContent = `$${g.label} · $${g.n.toLocaleString()} rows ($${(100*g.n/total).toFixed(1)}%)`;
+    tip.style.left = Math.min(e.clientX + 12, innerWidth - 240) + "px";
+    tip.style.top = (e.clientY - 34) + "px";
+    tip.style.opacity = 1;
+  });
+  d.addEventListener("mouseleave", () => tip.style.opacity = 0);
+  bar.appendChild(d);
+  const s = document.createElement("span");
+  s.innerHTML = `<span class="dot $${g.cls}"></span>$${g.label} <b>$${g.n.toLocaleString()}</b>`;
+  leg.appendChild(s);
+}
+</script>

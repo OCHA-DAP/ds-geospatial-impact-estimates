@@ -1,0 +1,19 @@
+product,threshold,radius_m,cems_pts,recall,prod_bldgs,precision,f1
+Microsoft,dmg+destroyed,5,1455,0.546,7868,0.097,0.164
+Microsoft,dmg+destroyed,10,1455,0.614,7868,0.123,0.205
+Microsoft,dmg+destroyed,20,1455,0.704,7868,0.177,0.283
+Microsoft,incl_possibly,5,2769,0.463,7868,0.155,0.232
+Microsoft,incl_possibly,10,2769,0.542,7868,0.19,0.281
+Microsoft,incl_possibly,20,2769,0.657,7868,0.255,0.368
+IMPACT v2,dmg+destroyed,5,1487,0.571,22951,0.036,0.068
+IMPACT v2,dmg+destroyed,10,1487,0.619,22951,0.049,0.091
+IMPACT v2,dmg+destroyed,20,1487,0.693,22951,0.084,0.15
+IMPACT v2,incl_possibly,5,2863,0.52,22951,0.064,0.113
+IMPACT v2,incl_possibly,10,2863,0.568,22951,0.082,0.144
+IMPACT v2,incl_possibly,20,2863,0.633,22951,0.126,0.21
+OSU,dmg+destroyed,5,1475,0.808,31271,0.04,0.077
+OSU,dmg+destroyed,10,1475,0.856,31271,0.056,0.105
+OSU,dmg+destroyed,20,1475,0.906,31271,0.098,0.176
+OSU,incl_possibly,5,2976,0.756,31271,0.076,0.139
+OSU,incl_possibly,10,2976,0.794,31271,0.102,0.181
+OSU,incl_possibly,20,2976,0.841,31271,0.164,0.274

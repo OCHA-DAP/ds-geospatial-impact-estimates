@@ -1,0 +1,299 @@
+# Pages site
+
+**Live:** https://ocha-dap.github.io/ds-geospatial-impact-estimates/
+
+`pages/` **is** the site. The directory layout is the URL layout, so there is no build step and
+nothing is generated: `.github/workflows/deploy-pages.yml` uploads this tree as-is on push to
+`v1`. No Python, no dependencies, no credentials in the deploy path.
+
+```
+pages/
+  index.html                      landing page — hero and cards
+  assets/site.css                 HDX v2 tokens, cards, gate form
+  assets/hero.js                  particle-network hero canvas
+  assets/decrypt.js               envelope parsing + AES-GCM/PBKDF2 (pure, no DOM)
+  assets/gate.js                  the passphrase form + back-to-home link injection
+  venezuela-earthquake-2026/      -> /venezuela-earthquake-2026/          (hub: the publicised shortlist — ADR-0042)
+    story/                        -> /venezuela-earthquake-2026/story/    (scroll story, public)
+    brief/                        -> /venezuela-earthquake-2026/brief/    (technical brief, public; written by publish_pages.sh brief)
+    archive/                      -> /venezuela-earthquake-2026/archive/  (gated index of everything superseded, below; source in pages-src/)
+  slides/damage-evaluation/       -> /slides/damage-evaluation/ (archived; stays here — Hypothesis/links)
+  slides/aa-cell-briefing*/       -> /slides/aa-cell-briefing*/ (archived)
+  manuscript/                     -> /manuscript/            (archived; stays here — Hypothesis anchors)
+  story-v3/ story-v2/ story/      -> archived earlier scroll stories
+  cems-unosat/                    -> /cems-unosat/           (hub)
+    flood-labels/                 -> /cems-unosat/flood-labels/       (CEMS + UNOSAT viewer; reads global/flood_labels/platinum via the token issuer)
+    cems-flood-archive/           -> /cems-unosat/cems-flood-archive/ (harvest ledger; written by pipelines/cems_flood/report.py --pages)
+    cems-flood-labels/            -> /cems-unosat/cems-flood-labels/  (CEMS-only viewer, superseded, kept until retired)
+  vantor-activations/             -> /vantor-activations/  (tracker page + data.json snapshot)
+  story-v4/ brief/ flood-labels/ cems-flood-archive/ cems-flood-labels/ venezuela-2026/
+                                  -> forwarding pages only (old addresses; delete once unused)
+  experimental/                   -> /experimental/        (gated hub for exploratory work, own passphrase — ADR-0041)
+    langtang-sar-precursors/      -> /experimental/langtang-sar-precursors/   (gated)
+    langtang-facet-watch/         -> /experimental/langtang-facet-watch/      (gated)
+    himalaya-facet-watch/         -> /experimental/himalaya-facet-watch/      (gated)
+```
+
+One exception to "nothing is generated": `vantor-activations/data.json` (and its first-seen
+ledger `seen.json`, which makes publication dates independently observable) is rebuilt daily by
+`.github/workflows/update-vantor-tracker.yml` (running `scripts/vantor_activation_tracker.py`),
+which commits to `v1` only when the Vantor catalog actually changed and then dispatches the
+deploy. The page itself is still static and checks its snapshot against the live catalog in the
+browser, so a stalled cron shows up as a drift banner rather than silently stale numbers.
+
+## Adding a page
+
+Create a directory with an `index.html`, then add a card — copy an existing `<a class="k">`
+block and change the href, title, blurb and foot. Chips are optional: `chip-ext` for something
+hosted elsewhere, `chip-gate` for a passphrase-gated page; `k-muted` greys a card that is an
+aside (archive, superseded, experimental).
+
+**Where the card goes.** The landing grid is one card per line of work. New work gets its card
+in the hub it belongs to — `venezuela-earthquake-2026/index.html` for the Venezuela damage evaluation,
+`cems-unosat/index.html` for the flood-label corpora — and only on the landing page if it fits
+neither. **Current work lives under its hub** (`venezuela-earthquake-2026/story/`, `cems-unosat/flood-labels/`),
+so the address says where it belongs and `../` is the hub. **Archived work stays where it was**
+(`manuscript/`, `slides/*`, `story-v3/`…) and the archive page links out to it: moving those
+would break the Hypothesis annotations and the review links on them for no gain (ADR-0042).
+When something is superseded, move its card to the archive page; leave its directory alone.
+
+**Experimental work** is the one hub that differs: it is gated under its own passphrase, so
+its card goes in the hub's *source*
+(`exploratory/0005-nepal-glof-sar-precursor/reports/experimental_hub.html`) and is published
+encrypted — see "The experimental pages" below (ADR-0041).
+
+Every nested page links back to the landing page (team convention — KB
+`methods/static-data-apps.md` § "Nested pages link back home"). A plain page carries the link
+itself, with a **relative** href (`../`, never `/` — project sites live under `/<repo>/`). The
+gated artefacts don't need it in their source: `gate.js` injects a fixed back-to-home pill into
+the decrypted document at display time, so it survives republishes without a re-render and
+appears even when a cached passphrase skips the gate page. The two publicised Venezuela pages
+(the public story and the brief) are the deliberate exception (Zack, 2026-11-02): no back link,
+because a reader sent that link should stay on the page rather than be invited back to the hub.
+Neither page has a gate any more, so neither carries a link; the `data-no-home-link` opt-out
+in `gate.js` stays for any future gated page that wants the same.
+
+That shared edit to `index.html` is the deliberate trade-off for having no build system. The
+sibling repo `ds-storm-impact-harmonisation` discovers products by globbing `page.toml`
+manifests instead, which avoids the shared edit — worth revisiting if this site ever grows
+enough contributors for that to matter. See ADR-0026.
+
+## Checking locally
+
+```bash
+python3 -m http.server -d pages 8000
+```
+
+**Use a server, not `file://`** — WebCrypto only works in a secure context, so the gated pages
+cannot decrypt from the filesystem.
+
+## The gated pages
+
+`slides/damage-evaluation/` and `manuscript/` do not contain their artefact. They contain
+`content.enc`: the rendered document, gzipped and AES-GCM encrypted. The passphrase form derives
+the key with PBKDF2-SHA256 and decrypts in the browser, then the decrypted document replaces the
+gate page.
+
+### What this protects, and what it does not
+
+**Read this before assuming the gate makes anything confidential. It does not.**
+
+`exploratory/paper/manuscript_v2.qmd` and  `satellite_damage_evaluation_deck_v2.qmd` are **tracked in
+this public repository**. Anyone who finds them reads the prose, the numbers and the conclusions,
+with no passphrase involved. That is a deliberate choice — the sources are fine being public.
+
+So what the gate protects is the **publication surface**, not the findings:
+
+- **Does protect:** nobody can forward a link to a finished, citable-looking deck or manuscript;
+  search engines cannot index them; the polished artefact is not casually shareable before it is
+  ready to be. Browsing the repo gets you `content.enc`, which is ciphertext.
+- **Does not protect:** the findings themselves, which sit in the `.qmd` next door. Nor against
+  anyone who has the passphrase or is given it. There is no per-person access and no revocation
+  short of re-encrypting.
+
+It is the right tool for "not ready to *present*". It is the wrong tool for "these numbers must
+not get out" — that would additionally require the sources to stop being public, which is a
+separate decision from this one. For per-person access, use a host with server-side auth.
+
+Note the difference from `OCHA-DAP/ds-geospatial-impact-exposure`, which gates with a published
+SHA-256 hash and a CSS overlay — cosmetic by its own admission, and correctly so: that app
+fetches its data files separately at runtime, so encrypting the page would protect nothing.
+These artefacts are single self-contained documents, which is why real encryption is cheap here.
+
+### Re-publishing after a re-render
+
+**Editing a `.qmd` does not update the site.** The site serves `content.enc` — an encrypted
+snapshot of the *rendered* HTML — so a source change reaches readers only after someone
+re-renders, re-encrypts and lands it on `v1`. Nothing warns you if that is skipped; the site just
+keeps serving the older version.
+
+```bash
+./scripts/publish_pages.sh            # all four artefacts: render, encrypt/copy, commit
+./scripts/publish_pages.sh deck       # results deck only
+./scripts/publish_pages.sh paper      # manuscript only
+./scripts/publish_pages.sh brief      # technical brief only (public: plain HTML, no passphrase)
+./scripts/publish_pages.sh --ship     # ...and push + open a PR against v1
+./scripts/publish_pages.sh deck --no-commit
+```
+
+The brief and the story are **public**: `venezuela-earthquake-2026/brief/index.html` is the rendered
+document itself, not a gate, and carries no back-to-hub link (the deliberate exception noted
+above). The `brief` target copies it there directly; nothing is encrypted and no passphrase is
+read for it.
+
+`--ship` branches off `origin/v1`, commits, pushes and opens the PR, then prints the merge
+command. It stops there on purpose: **merging is what makes an artefact public**, so that stays a
+decision someone makes rather than a side effect of running a script.
+
+The passphrase comes from `$GIE_PAGE_PASS`, else `~/.gie-page-passphrase`, else a prompt. It is
+read up front, so a missing passphrase fails before you spend minutes rendering. The passphrase
+is not in this repository; it lives wherever the team keeps shared credentials.
+
+If the sources and `pages/` are on different worktrees — as they are while the paper branch is
+unmerged — set the paths once in `scripts/publish_pages.env`, which is gitignored and sourced
+automatically:
+
+```bash
+GIE_PAPER_DIR=/path/to/paper-branch/exploratory/paper
+```
+
+Delete that file once the paper branch merges and both live in one tree.
+
+Underneath it is the `quarto render` incantation from `exploratory/paper/README.md` followed by
+`scripts/encrypt_page.py`, which you can still run by hand.
+
+Two safeguards worth knowing about, because both protect against silent damage:
+
+- **`encrypt_page.py` refuses input containing the superseded `password.html` gate.** A document
+  carrying it decrypts correctly and then denies every reader with "Access denied", which looks
+  like a broken site rather than a stale include.
+- **`--skip-if-unchanged` leaves the file alone when the document is byte-identical.** Each run
+  draws a fresh salt and nonce, so re-encrypting unchanged input still yields entirely different
+  bytes; without this, a no-op republish commits several MB of incompressible blob that git cannot
+  delta, and "nothing changed" becomes undetectable. Real content changes still commit ~4 MB, so
+  republish deliberately rather than on every small edit.
+
+It also round-trips its own output before writing, so a format bug fails there rather than
+leaving a reader with an unopenable page, and it never invents a passphrase.
+
+### Rotating the passphrase
+
+Re-run step 2 for both artefacts with the new passphrase and commit. Readers with the old one
+get "Wrong passphrase". Cached passphrases live in `sessionStorage` and are dropped
+automatically when they stop working, so no one gets stuck on a stale value.
+
+## The Venezuela archive index
+
+`venezuela-earthquake-2026/archive/` is a gate page too: the listing of superseded artefacts
+names and links every pre-publication item, so it is published as `content.enc` under the
+**shared** passphrase — the same one the archived decks, write-up and earlier stories use, so a
+reader who opens the index meets no second prompt on them.
+
+Its source is `pages-src/venezuela-earthquake-2026/archive.html` (it cannot sit under `pages/`,
+where everything deploys). Edit the source, then:
+
+```bash
+./scripts/publish_archive_index.sh      # encrypts into archive/content.enc; commit, PR to v1
+```
+
+`pages-src/` is the home for any other gated index page that needs a tracked plaintext source.
+
+## The experimental pages
+
+`experimental/` is a second gated tree with its **own passphrase**, separate from the
+damage-evaluation one (ADR-0041). The hub (`experimental/index.html`) and each page under it
+are gate pages with a `content.enc`, exactly like the artefacts above. `gate.js` caches the
+passphrase for the tab, so a reader enters it once at the hub and the pages it lists open
+without prompting.
+
+The pages are build outputs of `exploratory/0005-nepal-glof-sar-precursor/`. The build scripts
+(`reports/build_reports.py`, `live_build.py`, `himalaya_build.py`) write the finished page
+document to that directory's gitignored `data/<name>.page.html` — **never into `pages/`**, so
+the plaintext is not in the repo. Publishing is then:
+
+```bash
+./scripts/publish_experimental.sh              # hub + all three pages
+./scripts/publish_experimental.sh langtang     # one of: hub | precursors | langtang | himalaya
+```
+
+It encrypts into `experimental/**/content.enc` with `--skip-if-unchanged`, and stops there:
+commit and open a PR against `v1` yourself. **Re-running a build script does not update the
+site** until this has run and merged — the same rule as the paper artefacts.
+
+Until a dashboard is rebuilt, the encrypt input in `data/` is a snapshot of the last page
+published in plaintext (the pre-ADR-0041 `pages/<name>/index.html`, with its inline back-home
+link stripped — the gate injects one, and two would overlap). If `data/` is gone, either
+rebuild, or recover the last plaintext from history and strip that link again:
+
+```bash
+git log --diff-filter=D --format=%h -- pages/langtang-facet-watch/index.html   # deletion commit
+git show <that>~1:pages/langtang-facet-watch/index.html > exploratory/0005-nepal-glof-sar-precursor/data/langtang-facet-watch.page.html
+```
+
+The passphrase is `GIE_PAGE_PASS_EXPERIMENTAL`, else `~/.gie-page-passphrase-experimental`.
+There is deliberately no fallback to the shared passphrase: external reviewers hold that one,
+and the experimental pages are not for them. The hub's own source,
+`reports/experimental_hub.html`, is tracked in git — it is only an index, and its cards are the
+place to add a new experimental page.
+
+The three pages carry no back-home link in their source; `gate.js` injects one into the
+decrypted document, pointing at the landing page. The hub is one click from there.
+
+One caveat worth knowing: the gate caches a single passphrase per tab. A reader who opens an
+experimental page and then a damage-evaluation page re-enters the latter's passphrase (the
+cached experimental one fails silently and the form appears). Accepted for now rather than
+changing `gate.js` for a rare path.
+
+## Review and annotation
+
+Reviewers comment on the **manuscript** with [Hypothesis](https://web.hypothes.is/), which
+anchors threaded annotations to selected text. Quarto supports it natively, so this is YAML in
+`manuscript_v2.qmd` rather than anything in this directory:
+
+```yaml
+format:
+  html:
+    comments:
+      hypothesis:
+        openSidebar: false
+        showHighlights: whenSidebarOpen
+```
+
+Quarto's schema has **no `group` key** under `comments.hypothesis` (the render fails with
+"property name group is invalid"), and the Hypothesis client has no such config option. The
+supported way to open the sidebar in a private group is the URL fragment
+`#annotations:group:<group-id>`. The brief sets it from an inline script in its
+`include-after-body` file (`exploratory/paper/appendix-fold.html`) when the URL carries no
+`#annotations:` fragment; copy that block for any new gated page. A reader who is not a member of
+the group still falls back to the public layer, so share the group join link with every reviewer.
+
+Then re-render and re-encrypt as above. The client loads inside the decrypted document, and
+because `document.write` leaves the URL unchanged, annotations anchor to `/manuscript/` stably
+across re-publishes.
+
+**Selecting the group is not optional, and the reason is the reviewers, not the manuscript.** Without it
+annotations land in Hypothesis's public layer, readable by anyone.
+
+Be precise about what is at stake, because it is easy to get backwards. The manuscript text is
+**already public** in `manuscript_v2.qmd`, so Hypothesis quoting a passage discloses nothing new.
+What would be newly public is the **reviewers' own commentary** — candid critique of the method,
+of how hard a named provider gets criticised, of which flags are still open. That is the thing a
+public annotation layer would expose, and it is why a private group is required.
+
+Annotations are stored on Hypothesis's servers either way. A private group controls who can read
+them; it does not put them inside our infrastructure. If a given review needs to stay entirely
+in-house, do it as a `.docx` (`quarto render manuscript_v2.qmd --to docx`) and leave `comments`
+out.
+
+**The deck cannot use this.** Quarto's `comments` is an HTML-format feature — its
+`hypothesis.ejs` lives under `formats/html/` — and does not apply to `revealjs`. Comments on the
+deck's content belong on the manuscript.
+
+## What is deliberately not published
+
+- `satellite_damage_evaluation_v1.qmd` — earlier deck whose numbers predate the corrections.
+- `findings.qmd` — the internal running register, including negative and superseded results.
+- `manuscript_draft.qmd` — superseded by `manuscript_v2`.
+
+Publishing any of these would put retracted numbers in circulation. They have no page here on
+purpose, rather than being published and marked deprecated.

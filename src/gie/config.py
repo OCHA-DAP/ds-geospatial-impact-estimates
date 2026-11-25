@@ -21,7 +21,44 @@ load_dotenv()
 # a reasonable city-scale default for an earthquake response; revisit per event.
 DEFAULT_H3_RESOLUTION = 8
 
+# Which OSU delivery version the common model + serving tier publish. Both OSU
+# silver versions are materialised side-by-side (silver/source=osu/.../version=<v>/)
+# for cross-version analysis; downstream reads exactly ONE via this pointer (ADR-0009).
+# Roll back by flipping to "v0" and rebuilding harmonize_common + build_platinum.
+OSU_PUBLISHED_VERSION = "v1"
+
 Stage = Literal["dev", "prod"]
+
+# The VE event tree predates event-keying and was copied to event= preserving
+# its historical adm0= segment (ADR-0027, as-built). New events file directly
+# under source= (country is a column, not a path segment).
+LEGACY_ADM0_SEGMENTS = {"20260624-ve-earthquake": "adm0=VE"}
+
+
+def source_segments(source: str, event: str | None) -> list[str]:
+    """Path segments for a source's silver/gold tree under an event.
+
+    ``["source=<source>"]`` for new events; the VE event additionally keeps its
+    legacy ``adm0=VE`` segment so re-runs keep writing the as-built layout.
+    (CEMS bronze ``code=`` paths never had adm0 — this is for silver/gold.)
+    """
+    segs = [f"source={source}"]
+    if event in LEGACY_ADM0_SEGMENTS:
+        segs.append(LEGACY_ADM0_SEGMENTS[event])
+    return segs
+
+
+def common_segments(event: str | None, adm0: str) -> list[str]:
+    """Path segments for the common-model gold tree (``model=common/...``).
+
+    New events file directly under ``model=common``; the legacy layouts — the
+    as-built VE event tree AND the un-evented tree the App Service reads
+    (``event=None``) — keep their ``adm0=`` segment.
+    """
+    segs = ["model=common"]
+    if event is None or event in LEGACY_ADM0_SEGMENTS:
+        segs.append(f"adm0={adm0}")
+    return segs
 
 
 @dataclass(frozen=True)
@@ -101,9 +138,19 @@ class Settings:
         )
 
     def blob_path(
-        self, layer: Literal["bronze", "silver", "gold", "platinum"], *parts: str
+        self,
+        layer: Literal["bronze", "silver", "gold", "platinum"],
+        *parts: str,
+        event: str | None,
     ) -> str:
         """Path within the container (no ``az://``/container) — for stratus writes.
+
+        ``event`` is required (keyword-only, no default — spec 2026-08-14 /
+        ADR-0027): pass the event id to write under ``<tier>/event=<id>/...``,
+        or ``event=None`` as the *explicit* opt-out for shared reference data
+        (CODAB) and the legacy layout the App Service is pinned to. There is
+        deliberately no default: a caller that doesn't name its event fails
+        loudly instead of silently writing the legacy tree.
 
         ``gold`` and ``platinum`` are tier-aware (``-prod`` suffix when
         ``tier=prod``); ``bronze``/``silver`` are the shared working copy.
@@ -114,13 +161,19 @@ class Settings:
             "gold": self._served(self.gold_prefix),
             "platinum": self.platinum_prefix,
         }[layer]
-        return "/".join([self.project_prefix, prefix, *parts])
+        segs = [self.project_prefix, prefix]
+        if event is not None:
+            segs.append(f"event={event}")
+        return "/".join([*segs, *parts])
 
     def az_path(
-        self, layer: Literal["bronze", "silver", "gold", "platinum"], *parts: str
+        self,
+        layer: Literal["bronze", "silver", "gold", "platinum"],
+        *parts: str,
+        event: str | None,
     ) -> str:
         """Build an ``az://`` path the DuckDB azure extension understands."""
-        return f"az://{self.container}/{self.blob_path(layer, *parts)}"
+        return f"az://{self.container}/{self.blob_path(layer, *parts, event=event)}"
 
 
 def load_settings(stage: Stage | None = None) -> Settings:

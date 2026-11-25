@@ -26,12 +26,13 @@ import tempfile
 import geopandas as gpd
 import ocha_stratus as stratus
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE = "hot_osm"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 RESOURCE = "fair_damage_points.geojson"
 
 # fAIr class -> (common-model damage_class, CEMS-aligned grade label)
@@ -45,9 +46,10 @@ _PROBS = re.compile(r"p\(minor/major/destroyed\):\s*([\d.]+)/([\d.]+)/([\d.]+)")
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
 
-    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", RESOURCE)
+    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", RESOURCE, event=EVENT)
     raw = stratus.load_blob_data(bronze, stage=STAGE, container_name=settings.container)
     with tempfile.NamedTemporaryFile(suffix=".geojson") as tf:
         tf.write(raw)
@@ -67,7 +69,9 @@ def main() -> None:
             "p_minor", "p_major", "p_destroyed", "geometry",
         ]
     ]
-    silver = settings.blob_path("silver", f"source={SOURCE}", f"adm0={ADM0}", "damage_points.parquet")
+    silver = settings.blob_path(
+        "silver", f"source={SOURCE}", f"adm0={ADM0}", "damage_points.parquet", event=EVENT
+    )
     stratus.upload_parquet_to_blob(
         out, silver, stage=STAGE, container_name=settings.container, compression="zstd"
     )

@@ -4,6 +4,17 @@ All reads go through DuckDB over blob (cloud-optimized). The FastAPI layer
 (api/) turns these into GeoJSON/JSON for the deck.gl + MapLibre front end.
 """
 
+# event scoping here is per-caller, not per-module: the functions build_platinum.py
+# consumes (list_sources, load_common_h3, load_export, load_source_extent,
+# load_coverage_detail, load_agreement) take a required `event` parameter so that
+# VE-event-scoped caller can pass event=EVENT. The App Service legacy pin (spec §4)
+# now lives at api/main.py's call sites, which pass event=None explicitly (one
+# comment at the first site there) — NOT hardcoded in this module. The remaining
+# functions here (load_h3_damage, load_admin_damage, load_footprints,
+# load_common_admin, load_buildings, load_native, export_workbook, and the _gold
+# helper) are used only by the pinned API (or are unused entirely) and keep a
+# hardcoded event=None — adding the parameter there would be dead generality.
+
 from __future__ import annotations
 
 import geopandas as gpd
@@ -11,11 +22,21 @@ import numpy as np
 import pandas as pd
 
 from gie import db
-from gie.config import load_settings
+from gie.config import common_segments, load_settings
+
+# Metrics available on the common model, in display order (label shown in the UI).
+# Single definition shared by the API (/api/sources) and the platinum meta export
+# (build_platinum export_meta -> meta/sources.json).
+METRICS = [
+    {"key": "damaged_detected", "label": "Damaged buildings"},
+    {"key": "damaged_extrapolated", "label": "Damaged buildings (estimated)"},
+    {"key": "coverage_fraction", "label": "Coverage"},
+    {"key": "exposed_buildings", "label": "Total buildings"},
+]
 
 
 def _gold(settings, source: str, adm0: str) -> str:
-    return settings.az_path("gold", f"source={source}", f"adm0={adm0}", "damage_facts.parquet")
+    return settings.az_path("gold", f"source={source}", f"adm0={adm0}", "damage_facts.parquet", event=None)
 
 
 def load_h3_damage(
@@ -49,7 +70,7 @@ def load_admin_damage(
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
     gold = _gold(settings, source, adm0)
-    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet")
+    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet", event=None)
     idcol, namecol = f"adm{level}_id", f"adm{level}_name"
 
     if level >= 3:
@@ -87,7 +108,7 @@ def load_footprints(
     """Raw building footprints with damage attributes, for the footprint layer."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    silver = settings.az_path("silver", f"source={source}", f"adm0={adm0}", "footprints.parquet")
+    silver = settings.az_path("silver", f"source={source}", f"adm0={adm0}", "footprints.parquet", event=None)
     df = con.execute(
         f"""
         SELECT damaged, damage_pct_10m, ST_AsWKB(geometry) AS wkb
@@ -116,22 +137,24 @@ _COMMON_PIVOT = """
 """
 
 
-def list_sources(adm0: str = "VE", stage: str = "dev") -> list[str]:
+def list_sources(adm0: str = "VE", *, event: str | None, stage: str = "dev") -> list[str]:
     """Distinct damage sources present in the common-model gold."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
+    gold = settings.az_path("gold", *common_segments(event, adm0), "facts.parquet", event=event)
     rows = con.execute(
         f"SELECT DISTINCT source FROM read_parquet('{gold}') ORDER BY source"
     ).fetchall()
     return [r[0] for r in rows]
 
 
-def load_common_h3(source: str, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+def load_common_h3(
+    source: str, adm0: str = "VE", *, event: str | None, stage: str = "dev"
+) -> pd.DataFrame:
     """Per-H3-cell common-model metrics for one source."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
+    gold = settings.az_path("gold", *common_segments(event, adm0), "facts.parquet", event=event)
     return con.execute(
         f"SELECT unit_id AS h3, {_COMMON_PIVOT} FROM read_parquet('{gold}') "
         f"WHERE unit_type='h3' AND source='{source}' GROUP BY unit_id"
@@ -144,8 +167,8 @@ def load_common_admin(
     """Admin units (with geometry) joined to one source's common-model metrics."""
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
-    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet")
+    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet", event=None)
+    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet", event=None)
     idcol = f"adm{level}_id"
     df = con.execute(
         f"""
@@ -163,7 +186,9 @@ def load_common_admin(
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
-def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+def load_export(
+    level: int, adm0: str = "VE", *, event: str | None, stage: str = "dev"
+) -> pd.DataFrame:
     """Tidy per-admin-unit, per-source damage table for spreadsheet export.
 
     One row per (admin unit x source): building counts, damage fraction (damaged
@@ -172,8 +197,10 @@ def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFram
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    gold = settings.az_path("gold", "model=common", f"adm0={adm0}", "facts.parquet")
-    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet")
+    gold = settings.az_path("gold", *common_segments(event, adm0), "facts.parquet", event=event)
+    # event=None: CODAB is shared, country-keyed REFERENCE data outside the
+    # event tree — reusable across events (spec §3).
+    adm = settings.az_path("bronze", "source=codab", f"adm0={adm0}", f"adm{level}.parquet", event=None)
     names = ", ".join(f"a.adm{i}_name" for i in range(1, level + 1))
     return con.execute(
         f"""
@@ -199,20 +226,174 @@ def load_export(level: int, adm0: str = "VE", stage: str = "dev") -> pd.DataFram
     ).df()
 
 
-# column -> (meaning / how it was derived), documented in the export README sheet
+# Per-source one-line descriptions, joined into the README's 'source' row dynamically
+# (export_workbook) so the sheet describes exactly the sources present in THIS export —
+# 5 on prod, +DISHA on the staging preview; never a source the data lacks. Copernicus is
+# version-agnostic (one product updated piece by piece); IMPACT notes v2 (it superseded v1).
+_SOURCE_DESC = {
+    "microsoft": "'microsoft' (AI per-building damage on Microsoft footprints)",
+    "copernicus_ems": "'copernicus_ems' (Copernicus EMS rapid-mapping damage grades)",
+    "impact_initiatives": "'impact_initiatives' (IMPACT Sentinel-1 SAR damage proxy, v2)",
+    "osu": "'osu' (OSU Sentinel-1 coherence damage)",
+    "hot_osm": "'hot_osm' (HOTOSM fAIr AI damage points — detected-only)",
+    "disha": "'disha' (DISHA — Data Insights for Social & Humanitarian Action; AI building-damage detection, NW Caracas; unvalidated)",
+    "unep_debris": "'unep_debris' (UNEP/OCHA JEU building debris — mass in tonnes; detected-only, SAR-derived)",
+    "list": "'list' (WFP/LIST/CERN deep-learning (ResNet) per-building damage from pre/post SAR imagery; class 2 only, preliminary)",
+    "uh": "'uh' (UH QuakeDamage — Singh & Hoskere, University of Houston; deep-learning graded damage on building footprints)",
+}
+# Methodology-panel source cards (the SPA "Methodology" view). Served per event as
+# platinum meta (build_platinum export_meta -> meta/methods.json) so the panel
+# always describes exactly the sources that event has, and wording can be
+# event-specific without an SPA redeploy. The base text is event-neutral where a
+# source spans events; per-event overrides carry event-specific sentences.
+_METHODS_BASE: dict[str, dict[str, str]] = {
+    "copernicus_ems": {
+        "tag": "Reference · expert-mapped",
+        "blurb": (
+            "Copernicus Emergency Management Service rapid mapping. Trained analysts grade "
+            "individual buildings from very-high-resolution satellite imagery."
+        ),
+        "note": "Most authoritative, but only where an activation was mapped.",
+    },
+    "impact_initiatives": {
+        "tag": "SAR-based (radar)",
+        "blurb": (
+            "A Sentinel-1 SAR damage proxy. A post-event change in radar backscatter intensity "
+            "(amplitude, not coherence) flags likely damage over a wide area."
+        ),
+        "note": "A wide-area screen, not confirmed damage.",
+    },
+    "microsoft": {
+        "tag": "AI · per-building",
+        "blurb": (
+            "Machine-learning damage labels on Microsoft's global building footprints, "
+            "classifying each footprint from post-event imagery."
+        ),
+        "note": "Dense automated coverage where imagery allows.",
+    },
+    "osu": {
+        "tag": "SAR-based (radar)",
+        "blurb": (
+            "Oregon State University Sentinel-1 coherence analysis (v1 product, published "
+            "11 Jul 2026). Loss of radar coherence indicates damage; the v1 update expanded "
+            "coverage of the strong-shaking zone."
+        ),
+        "note": "An independent radar signal alongside the SAR proxy.",
+    },
+    "hot_osm": {
+        "tag": "Community · ML",
+        "blurb": (
+            "The Humanitarian OpenStreetMap Team's fAIr model detects damaged buildings from "
+            "imagery, aligned to the OpenStreetMap community base."
+        ),
+        "note": "Open, community-driven detection.",
+    },
+    "disha": {
+        "tag": "AI · per-building",
+        "blurb": (
+            "DISHA (Data Insights for Social & Humanitarian Action) detects damaged buildings "
+            "from pre/post satellite imagery over NW Caracas, on Google Open Buildings "
+            "footprints."
+        ),
+        "note": "Preview over a small AOI; provider validation pending.",
+    },
+    "unep_debris": {
+        "tag": "SAR-based (radar)",
+        "blurb": (
+            "UNEP/OCHA Joint Environment Unit building-debris assessment. Sentinel-1 radar "
+            "change detection estimates the debris mass — in tonnes — generated by each "
+            "damaged building."
+        ),
+        "note": (
+            "The only source carrying debris mass: roughly 17 million tonnes across ~96,000 "
+            "damaged buildings."
+        ),
+    },
+    "uh": {
+        "tag": "AI · per-building",
+        "blurb": (
+            "Deep learning model by Singh and Hoskere classifying Overture building footprints "
+            "using pre- and post-event imagery (covers 478K individual buildings) — across "
+            "eight coastal AOIs, including Aragua/Carabobo towns no other per-building source "
+            "covers."
+        ),
+        "note": (
+            "Coverage and damage fraction come from its own per-building classifications (no "
+            "AOI polygon). More at <a href='https://quakedamage.github.io' target='_blank' "
+            "rel='noopener'>quakedamage.github.io</a>."
+        ),
+    },
+    "list": {
+        "tag": "AI · per-building",
+        "blurb": (
+            "A WFP collaboration with LIST and CERN: a deep-learning (ResNet) model predicting "
+            "per-building damage from pre/post SAR imagery, sampled onto Overture footprints. "
+            "Only the model's strongest damage class is shown."
+        ),
+        "note": (
+            "The methodology is still under refinement, and the results may be subject to "
+            "further improvements. A preliminary screen to triangulate, not a confirmed count."
+        ),
+    },
+}
+# event_id -> source -> partial override of the base card.
+_METHODS_OVERRIDES: dict[str, dict[str, dict[str, str]]] = {
+    "20260810-co-earthquake": {
+        "microsoft": {
+            "blurb": (
+                "Microsoft AI for Good Lab machine-learning damage labels on building "
+                "footprints (Overture base) from post-event Vantor and Airbus imagery over "
+                "Pereira and Cali, extended 13 Aug with a human-reviewed re-run over a 3x "
+                "larger Pereira area. Where the reviewed run looked, its verdicts replace "
+                "the original's; the original stays authoritative elsewhere."
+            ),
+            "note": (
+                "Dense automated coverage where imagery allows; cloud-covered buildings are "
+                "excluded from the assessed denominator."
+            ),
+        },
+    },
+}
+# Fixed display order (mirrors the SPA's SOURCE_ORDER).
+_METHODS_ORDER = [
+    "copernicus_ems", "microsoft", "disha", "hot_osm", "impact_initiatives",
+    "osu", "unep_debris", "uh", "list",
+]
+
+
+def methods_for(sources: list[str], event: str | None) -> list[dict[str, str]]:
+    """Methodology cards for the sources present in one event's gold, in display
+    order, with per-event wording applied. A present source with no card is an
+    error — the panel must never silently omit a live source."""
+    missing = [s for s in sources if s not in _METHODS_BASE]
+    if missing:
+        raise KeyError(
+            f"no methodology card for source(s) {missing} — add them to "
+            "gie.serving._METHODS_BASE before publishing."
+        )
+    ordered = sorted(sources, key=lambda s: _METHODS_ORDER.index(s) if s in _METHODS_ORDER else 99)
+    out = []
+    for src in ordered:
+        card = dict(_METHODS_BASE[src])
+        card.update((_METHODS_OVERRIDES.get(event or "", {})).get(src, {}))
+        out.append({"key": src, **card})
+    return out
+
+
+_SOURCE_SHORT = {
+    "microsoft": "Microsoft", "copernicus_ems": "Copernicus EMS",
+    "impact_initiatives": "IMPACT SAR", "osu": "OSU", "hot_osm": "HOTOSM fAIr", "disha": "DISHA",
+    "unep_debris": "UNEP debris", "list": "LIST", "uh": "UH QuakeDamage",
+}
+
+# column -> (meaning / how it was derived), for the README sheet. The 'source' row is
+# inserted dynamically in export_workbook (see _SOURCE_DESC).
 _EXPORT_GLOSSARY = [
     (
         "adm1_name / adm2_name / adm3_name",
         "OCHA COD administrative unit names — the hierarchy this row belongs to.",
     ),
     ("unit_id", "OCHA COD pcode of the admin unit."),
-    (
-        "source",
-        "Damage source (one row per source per unit): 'microsoft' (AI per-building damage on "
-        "Microsoft footprints), 'copernicus_ems' (Copernicus EMS rapid-mapping damage grades), "
-        "'impact_initiatives' (IMPACT Sentinel-1 SAR damage proxy), 'osu' (OSU Sentinel-1 "
-        "coherence damage), and 'hot_osm' (HOTOSM fAIr AI damage points — detected-only).",
-    ),
     (
         "total_buildings",
         "Total buildings in the unit: Overture footprints whose centroid is inside it "
@@ -221,11 +402,13 @@ _EXPORT_GLOSSARY = [
     ),
     (
         "analysed_buildings",
-        "Of total_buildings, those inside the source's valid analysed area — where it "
-        "actually assessed. Copernicus EMS: image footprint within the AOI, minus cloud / "
-        "no-data. Microsoft: its valid-area mask. IMPACT SAR / OSU: the source's analysed "
-        "coverage footprint. HOTOSM fAIr: blank — it ships only damage points with no "
-        "published analysed area (detected-only), so coverage and damage_fraction are empty.",
+        "Of total_buildings, those the source actually assessed. Copernicus EMS: image "
+        "footprint within the AOI, minus cloud / no-data. Microsoft: its valid-area mask. "
+        "IMPACT SAR / OSU: the source's analysed coverage footprint. DISHA, WFP-LIST-CERN "
+        "and UH QuakeDamage: the set of buildings the source itself classified (no separate "
+        "published analysed-area polygon). HOTOSM fAIr and UNEP debris: blank — they ship "
+        "only detections with no analysed set (detected-only), so coverage and "
+        "damage_fraction are empty.",
     ),
     (
         "pct_buildings_covered",
@@ -240,22 +423,37 @@ _EXPORT_GLOSSARY = [
         "point from its latest assessment (snapped to the nearest footprint within 20 m), or, "
         "where only the earlier coarse damage-area blocks exist, the buildings those blocks "
         "cover. IMPACT SAR / OSU: an Overture building flagged damaged by the source. "
-        "HOTOSM fAIr: an Overture building matched to a fAIr damage point (snapped within 20 m).",
+        "DISHA and HOTOSM fAIr: an Overture building matched to an AI damage point (snapped "
+        "within 20 m). WFP-LIST-CERN: a building the ResNet model classed damaged (class 2). "
+        "UH QuakeDamage: a footprint the model graded damaged. UNEP debris: an Overture "
+        "building matched to a detected-debris location (snapped within 20 m).",
     ),
     (
         "damage_fraction",
         "damaged / analysed_buildings — the observed damage rate within the assessed area "
-        "(NOT over the whole unit). Blank for detected-only sources with no analysed area "
-        "(HOTOSM fAIr).",
+        "(NOT over the whole unit). Blank for detected-only sources with no analysed set "
+        "(HOTOSM fAIr, UNEP debris).",
     ),
     (
         "analysed_area_km2",
-        "Area (km²) of the source's analysed extent that falls within the unit.",
+        "Area (km²) of the source's analysed extent that falls within the unit. Blank for "
+        "sources without a published areal extent (DISHA, HOTOSM fAIr, WFP-LIST-CERN, "
+        "UH QuakeDamage, UNEP debris).",
     ),
     ("unit_area_km2", "The admin unit's own area (km²)."),
     (
         "area_coverage_fraction",
-        "analysed_area_km2 / unit_area_km2 — share of the unit's land area the source imaged.",
+        "analysed_area_km2 / unit_area_km2 — share of the unit's land area the source imaged. "
+        "Blank where analysed_area_km2 is blank.",
+    ),
+    (
+        "⚠ Reading across sources",
+        "Each source row is an INDEPENDENT estimate of the same buildings — never sum "
+        "damaged (or any other column) across sources within a unit: that double-counts "
+        "the same damage. Compare sources side by side, or pick one source (or the maximum) "
+        "per unit. Counts are also not comparable between sources without minding coverage: "
+        "a low damaged count can simply mean the source assessed little of the unit (see "
+        "pct_buildings_covered), and detected-only sources set no denominator at all.",
     ),
 ]
 def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
@@ -282,9 +480,11 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
     rm.sheet_view.showGridLines = False
     rm["A1"] = "Venezuela Earthquake — Building Damage Exposure by Admin Unit"
     rm["A1"].font = Font(bold=True, size=22, color="3E8F6B")
+    # event=None: export_workbook is API-only, pinned to the legacy layout (spec §4).
+    present = list_sources(adm0, event=None, stage=stage)  # sources in THIS export (tier-aware)
     rm["A2"] = (
-        "Multi-source — Microsoft, Copernicus EMS, IMPACT SAR, OSU & HOTOSM fAIr — "
-        "buildings & damage by OCHA COD admin 1 / 2 / 3"
+        "Multi-source — " + ", ".join(_SOURCE_SHORT.get(s, s) for s in present)
+        + " — buildings & damage by OCHA COD admin 1 / 2 / 3"
     )
     rm["A2"].font = Font(italic=True, size=13, color="333333")
     rm["A3"] = (
@@ -303,7 +503,11 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
         cell.fill = header_fill
         cell.alignment = Alignment(vertical="center", indent=1)
         cell.border = border
-    for i, (col, desc) in enumerate(_EXPORT_GLOSSARY, 7):
+    src_desc = "Damage source (one row per source per unit): " + "; ".join(
+        _SOURCE_DESC[s] for s in present if s in _SOURCE_DESC
+    ) + "."
+    glossary = _EXPORT_GLOSSARY[:2] + [("source", src_desc)] + _EXPORT_GLOSSARY[2:]
+    for i, (col, desc) in enumerate(glossary, 7):
         rm[f"A{i}"], rm[f"B{i}"] = col, desc
         rm[f"A{i}"].font = Font(bold=True, color="333333")
         rm[f"B{i}"].font = Font(color="333333")
@@ -318,7 +522,7 @@ def export_workbook(adm0: str = "VE", stage: str = "dev") -> bytes:
 
     pct = {"pct_buildings_covered", "damage_fraction", "area_coverage_fraction"}
     for level in (1, 2, 3):
-        df = load_export(level, adm0, stage)
+        df = load_export(level, adm0, event=None, stage=stage)
         ws = wb.create_sheet(f"adm{level}")
         ws.append(list(df.columns))
         for _, row in df.iterrows():
@@ -357,7 +561,7 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
+    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet", event=None)
     if source == "microsoft":
         dmg, seen = "ms_dmg", "ms_analysed"
     elif source == "impact_initiatives":
@@ -370,6 +574,13 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     elif source == "osu":
         # OSU is the same shape (ADR-0009): damaged-only on building_flags.
         dmg, seen = "osu_dmg", "osu_dmg"
+    elif source == "unep_debris":
+        # detected-only (no analysed AOI): assessed set IS the damaged set.
+        dmg, seen = "debris_dmg", "debris_dmg"
+    elif source == "list":
+        # LIST carries damaged-only on building_flags (class 2), same shape as SAR/OSU:
+        # the analysed set (~all footprint buildings) is too large to materialise here.
+        dmg, seen = "list_dmg", "list_dmg"
     else:
         dmg, seen = "cems_dmg", "cems_analysed"
     return con.execute(
@@ -377,7 +588,9 @@ def load_buildings(source: str, adm0: str = "VE", stage: str = "dev") -> pd.Data
     ).df()
 
 
-def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
+def load_source_extent(
+    source: str, adm0: str = "VE", *, event: str | None, stage: str = "dev"
+) -> gpd.GeoDataFrame:
     """Each source's real analysis extent as labelling outlines, one per AOI /
     product (kept separate, not dissolved), carrying metadata for hover.
 
@@ -388,23 +601,27 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    if source == "hot_osm":
-        # detected-only: fAIr published no analysed extent — nothing to outline.
+    if source in ("hot_osm", "unep_debris", "uh"):
+        # detected-only: no analysed extent published — nothing to outline. (UH ships
+        # detected-only until the provider supplies its AOI polygons — ADR-0018.)
         return gpd.GeoDataFrame(
             {"aoi_name": [], "product": [], "acquired": [], "source": []},
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),
             crs="EPSG:4326",
         )
-    if source in ("impact_initiatives", "osu"):
-        # Single-polygon coverage extents keyed to Overture (SAR / OSU).
+    if source in ("impact_initiatives", "osu", "disha", "list"):
+        # Single-polygon coverage extents (SAR / OSU / DISHA / LIST), from the tiered
+        # gold copy (stage_serving) so it's promote-gated, not shared silver (ADR-0016).
         ext = settings.az_path(
-            "silver", f"source={source}", f"adm0={adm0}", "analysed_extent.parquet"
+            "gold", *common_segments(event, adm0), "serving", "extent", f"source={source}.parquet",
+            event=event,
         )
-        label, product = (
-            ("SAR analysed extent", "Sentinel-1 damage proxy")
-            if source == "impact_initiatives"
-            else ("OSU analyzed area", "Sentinel-1 coherence")
-        )
+        label, product = {
+            "impact_initiatives": ("SAR analysed extent", "Sentinel-1 damage proxy"),
+            "osu": ("OSU analyzed area", "Sentinel-1 coherence"),
+            "disha": ("DISHA AOI", "DISHA damage"),
+            "list": ("LIST analysed extent", "ResNet pre/post change detection"),
+        }[source]
         df = con.execute(
             f"SELECT '{label}' AS aoi_name, '{product}' AS product, NULL AS acquired, "
             f"ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
@@ -412,20 +629,36 @@ def load_source_extent(source: str, adm0: str = "VE", stage: str = "dev") -> gpd
         geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
         df["source"] = source
         return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
-    src = "microsoft" if source == "microsoft" else "copernicus_ems"
-    ext = settings.az_path("silver", f"source={src}", f"adm0={adm0}", "analysed_extent.parquet")
+    # Microsoft valid-area masks: one labelled outline per AOI (carries an `aoi` column).
     if source == "microsoft":
+        ext = settings.az_path(
+            "gold", *common_segments(event, adm0), "serving", "extent", "source=microsoft.parquet",
+            event=event,
+        )
         sql = (
             f"SELECT aoi AS aoi_name, 'Microsoft analysis' AS product, NULL AS acquired, "
             f"ST_AsWKB(geometry) AS wkb FROM read_parquet('{ext}')"
         )
-    else:
-        sql = (
-            f"SELECT any_value(aoi_name) AS aoi_name, any_value(product) AS product, "
-            f"any_value(acquired) AS acquired, "
-            f"ST_AsWKB(ST_Union_Agg(ST_MakeValid(geometry))) AS wkb "
-            f"FROM read_parquet('{ext}') WHERE is_latest GROUP BY src_zip"
-        )
+        df = con.execute(sql).df()
+        geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
+        df["source"] = source
+        return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
+    # Explicit — a source that reaches here without a branch is a wiring bug, NOT a
+    # reason to silently fall back to CEMS (which is how UH once rendered CEMS's AOI).
+    if source != "copernicus_ems":
+        raise ValueError(f"load_source_extent: no extent handler for source {source!r}")
+    # CEMS: one outline per product (dissolved within a product), from the tiered
+    # gold copy (promote-gated), not shared silver (ADR-0016).
+    ext = settings.az_path(
+        "gold", *common_segments(event, adm0), "serving", "extent", "source=copernicus_ems.parquet",
+        event=event,
+    )
+    sql = (
+        f"SELECT any_value(aoi_name) AS aoi_name, any_value(product) AS product, "
+        f"any_value(acquired) AS acquired, "
+        f"ST_AsWKB(ST_Union_Agg(ST_MakeValid(geometry))) AS wkb "
+        f"FROM read_parquet('{ext}') WHERE is_latest GROUP BY src_zip"
+    )
     df = con.execute(sql).df()
     geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
     df["source"] = source
@@ -441,9 +674,9 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    if source in ("impact_initiatives", "osu"):
-        # SAR / OSU are keyed to Overture with no own vector geometry; their
-        # building-level view is the damaged points (load_buildings).
+    if source in ("impact_initiatives", "osu", "disha", "unep_debris", "list"):
+        # SAR / OSU / LIST render from the Overture base; DISHA and UNEP debris have
+        # their own geometry but serve it client-side via PMTiles, not this loader.
         return gpd.GeoDataFrame(
             {"damaged": pd.Series([], dtype="int64")},
             geometry=gpd.GeoSeries([], crs="EPSG:4326"),
@@ -451,7 +684,7 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
         )
     if source == "hot_osm":
         # fAIr's native geometry IS its damage points (grade + confidence per point).
-        path = settings.az_path("silver", "source=hot_osm", f"adm0={adm0}", "damage_points.parquet")
+        path = settings.az_path("silver", "source=hot_osm", f"adm0={adm0}", "damage_points.parquet", event=None)
         df = con.execute(
             f"SELECT ems_grade, damage_class, confidence, ST_AsWKB(geometry) AS wkb "
             f"FROM read_parquet('{path}')"
@@ -459,11 +692,11 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
         geom = gpd.GeoSeries.from_wkb(df.pop("wkb").map(bytes), crs="EPSG:4326")
         return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
     if source == "microsoft":
-        path = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet")
+        path = settings.az_path("silver", "source=microsoft", f"adm0={adm0}", "footprints.parquet", event=None)
         cols, where = "damaged", ""
     else:
         path = settings.az_path(
-            "silver", "source=copernicus_ems", f"adm0={adm0}", "builtup_damage.parquet"
+            "silver", "source=copernicus_ems", f"adm0={adm0}", "builtup_damage.parquet", event=None
         )
         cols = "ems_grade, damage_class, layer_type"
         # Keep BOTH the latest detailed product (per-building points) AND the coarse
@@ -477,7 +710,9 @@ def load_native(source: str, adm0: str = "VE", stage: str = "dev") -> gpd.GeoDat
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
-def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFrame:
+def load_coverage_detail(
+    adm0: str = "VE", *, event: str | None, stage: str = "dev"
+) -> gpd.GeoDataFrame:
     """CEMS Area-of-Interest + Not-Analysed (cloud) shapes, for the native view.
 
     Shows what the assessment looked at (AOI) and the holes within it that
@@ -485,8 +720,9 @@ def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFra
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
+    # tiered gold copy (promote-gated), not shared silver (ADR-0016)
     path = settings.az_path(
-        "silver", "source=copernicus_ems", f"adm0={adm0}", "coverage_detail.parquet"
+        "gold", *common_segments(event, adm0), "serving", "coverage_detail.parquet", event=event
     )
     df = con.execute(
         f"SELECT kind, aoi_name, product, acquired, ST_AsWKB(geometry) AS wkb "
@@ -496,7 +732,7 @@ def load_coverage_detail(adm0: str = "VE", stage: str = "dev") -> gpd.GeoDataFra
     return gpd.GeoDataFrame(df, geometry=geom, crs="EPSG:4326")
 
 
-def load_agreement(adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
+def load_agreement(adm0: str = "VE", *, event: str | None, stage: str = "dev") -> pd.DataFrame:
     """Per-building source-agreement category (MS vs CEMS) for the agreement map.
 
     Where BOTH sources assessed a building (the overlap): both / ms_only /
@@ -506,7 +742,9 @@ def load_agreement(adm0: str = "VE", stage: str = "dev") -> pd.DataFrame:
     """
     settings = load_settings(stage)  # type: ignore[arg-type]
     con = db.connect()
-    flags = settings.az_path("gold", "model=common", f"adm0={adm0}", "building_flags.parquet")
+    flags = settings.az_path(
+        "gold", *common_segments(event, adm0), "building_flags.parquet", event=event
+    )
     return con.execute(
         f"""
         SELECT lon, lat,

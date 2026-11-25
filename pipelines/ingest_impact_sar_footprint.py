@@ -31,12 +31,13 @@ from pathlib import Path
 import geopandas as gpd
 import ocha_stratus as stratus
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 SOURCE = "impact_initiatives"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 DEFAULT_DIR = (
     "/Users/zackarno/Downloads/IMPACT_VEN_20260625_S1D_postevent_acquisition_footprints"
 )
@@ -46,6 +47,7 @@ PARQUET_NAME = "acquisition_footprints.parquet"
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     src_dir = Path(os.getenv("GIE_IMPACT_FOOTPRINT_DIR", DEFAULT_DIR))
     parts = sorted(src_dir.glob(f"{STEM}.*"))
@@ -57,12 +59,12 @@ def main() -> None:
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for p in parts:
             zf.write(p, p.name)
-    raw_blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", ZIP_NAME)
+    raw_blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", ZIP_NAME, event=EVENT)
     stratus.upload_blob_data(buf.getvalue(), raw_blob, stage=STAGE, container_name=settings.container)
 
     # 2) faithful GeoParquet (original geometry + attributes, EPSG:4326) -> bronze
     gdf = gpd.read_file(src_dir / f"{STEM}.shp").to_crs(4326)
-    pq_blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", PARQUET_NAME)
+    pq_blob = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", PARQUET_NAME, event=EVENT)
     stratus.upload_parquet_to_blob(
         gdf, pq_blob, stage=STAGE, container_name=settings.container, compression="zstd"
     )
@@ -75,7 +77,7 @@ def main() -> None:
         SOURCE,
         "bronze",
         "IMPACT Sentinel-1 acquisition footprints (2 S1D scenes, 2026-06-25) — email delivery",
-        settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}"),
+        settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", event=EVENT),
         f"{len(gdf)} S1D DV/IW/GRD footprints (acq {acq}); raw shp + GeoParquet; EPSG:4326; "
         "true AOI for tightening the raster-bounds analysed extent (ADR-0008)",
     )

@@ -71,6 +71,8 @@ unify multiple polled sources. Building it now would be guessing at that shape.
 * Neutral, because manifest snapshots in bronze are metadata, not raw product
   data, but are kept immutable (timestamped) to respect the bronze contract.
 
+Amended by ADR-0027: paths gain a leading event=<id> segment; the idempotency model is unchanged.
+
 ## Pros and Cons of the Options
 
 ### Option 1 — blob-native idempotency

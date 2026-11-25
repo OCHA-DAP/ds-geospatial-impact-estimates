@@ -1,0 +1,378 @@
+---
+title: "11 damage analysis products, one earthquake"
+subtitle: "3 references, 8 satellite damage products (6 evaluated) · A&A Cell - 11 August 2026"
+date: last-modified
+format:
+  revealjs:
+    theme: [default, gie_slides.scss]
+    slide-number: true
+    center: true
+    margin: 0.03
+    embed-resources: true
+    fig-align: center
+    include-after-body: hdx-bg.html
+---
+
+<!-- 5-slide briefing cut of satellite_damage_evaluation_deck_v2.qmd for the A&A Cell,
+     11 Aug 2026. Slides are reused VERBATIM from the v2 deck (assembled by script), so the
+     two cannot drift apart: edit the v2 deck, then rebuild/re-render this one. -->
+
+## What arrived, and where each product looked
+
+::: {.cols}
+::: {.col style="flex:1.35"}
+![](artefacts/RQ0-matching-basis/figs/fig_extents_map.png){style="max-height:600px"}
+:::
+::: {.col style="display:flex;flex-direction:column;justify-content:center"}
+![](timeline/timeline_products_slides.png)
+
+::: {.takeaway style="font-size:0.66em"}
+Everything landed within about eight days. But analysed extents span **three orders of
+magnitude**, so the like-for-like arena is the **red core region (61 km²)** where all
+five extents and the expert reference coincide.
+:::
+
+::: {.tiny style="font-size:0.5em"}
+M7.5, coastal Venezuela, 24 June 2026; we evaluated the 6 of 8 products that published an
+analysed extent; numbers frozen to the 2026-07-15 snapshot. Timeline x-axis is our ingest
+date, an upper bound on availability; UH and LIST provider
+release dates still to confirm.
+:::
+:::
+:::
+
+## Three questions
+
+Eight products arrived for the same earthquake within days of each other. A coordinator
+receiving several of them in the same week has no established way to decide which to
+trust, for what purpose, or at what spatial scale. So we asked:
+
+::: {.smaller}
+- **Can a responder act on a single flagged building?**
+- **Do they rank neighbourhoods well enough to prioritise?**
+- **What is the sensible way to use them** in the next event?
+:::
+
+## Performance metrics by model: building-level analysis
+
+![](artefacts/RQ8-learned-fusion/figs/rq8_best_f1_r10_slides.png){.r-stretch}
+
+## Precision & recall: single products vs combinations
+
+![](artefacts/RQ5-ensemble/figs/rq5b_frontier_r10.png){.r-stretch}
+
+## Can they rank the worst-hit neighbourhoods?
+
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3f_null_ranking_both_slides.png){.r-stretch}
+
+::: {.takeaway style="font-size:0.66em"}
+Yes: products can support neighbourhood-level prioritisation. In the core region every
+product ranks the worst-hit cells far better than chance (ρ 0.48–0.74, n = 133 cells,
+all p < 10⁻⁸). As delivered the correlations are much lower (−0.09 to 0.58), and UH is
+statistically indistinguishable from zero.
+:::
+
+## Three questions, three answers
+
+::: {.smaller}
+1. **Can a responder act on a single flagged building?** **No.** Precision runs
+   0.05–0.09 even in the damage-dense core region: most flags have nothing wrong
+   underneath them.
+2. **Do they rank neighbourhoods well enough to prioritise?** **Yes, with a condition.**
+   Where the damage zone is known and confined (our core region), most products show
+   real prioritisation value (ρ 0.48–0.74); as delivered the signal is much weaker
+   (ρ −0.09 to 0.58).
+3. **What is the sensible way to use them in the next event?** **Still open.** The
+   promising lines:
+   - **Combine products.** Counting agreement between independent products roughly
+     doubled the accuracy of the best single one here, with no reference data needed.
+   - **Match the operating point to the moment.** Different stages of a response may
+     favour precision or coverage differently; field and first-responder feedback
+     should establish where and when higher precision beats broader coverage (open).
+   - **Improve the models.** Evaluations like this one show providers where the
+     failures are.
+:::
+
+# Appendix {.smaller}
+
+::: {.tiny}
+Backup slides from the full results deck, in their original order. The complete deck and the
+technical write-up carry the detail.
+:::
+
+## What arrived, and when
+
+![](timeline/timeline_products_slides.png){.r-stretch}
+
+::: {.takeaway}
+Eight organisations put out damage products, and almost everything landed within eight days.
+Microsoft shipped scene by scene and merged at the end; IMPACT and OSU each revised once.
+:::
+
+::: {.tiny}
+x-axis is our ingest date, an upper bound on availability. Provider release dates for UH and
+LIST still to confirm.
+:::
+
+## Where each product looked
+
+::: {.cols}
+::: {.col style="flex:1.9"}
+![](artefacts/RQ0-matching-basis/figs/fig_extents_map.png)
+:::
+::: {.col style="display:flex;flex-direction:column;justify-content:center"}
+::: {.takeaway}
+Analysed extents span **three orders of magnitude**: LIST covered two whole Sentinel
+scenes, Microsoft one coastal strip.
+
+Scores only exist where a product overlaps the expert reference, and the like-for-like
+comparisons live in the **red core region: 61 km²**, where all five published extents and
+the reference coincide.
+:::
+:::
+:::
+
+## We scored against three references, not one
+
+![](artefacts/RQ0-matching-basis/figs/reference_architecture.png){.r-stretch}
+
+::: {.takeaway}
+Expert damage points from Copernicus EMS, crowd review of AI flags via MapSwipe, and 415
+reports from teams on the ground. Each is blind to something the others can see, which lets us
+turn them on **each other** as well as on the products.
+:::
+
+## The reference has its own blind spot
+
+::: {.cols}
+::: {.col}
+Copernicus EMS captured:
+
+::: {.bignum}
+94%
+:::
+::: {.bignum-sub}
+of field-reported **destroyed** buildings
+:::
+
+::: {.bignum}
+49%
+:::
+::: {.bignum-sub}
+of field-reported **damaged** buildings
+:::
+:::
+::: {.col}
+![](artefacts/RQ2-cems-footprint-points/figs/rq2e_grade_slope.png)
+:::
+:::
+
+::: {.takeaway}
+So the expert map is thorough about destruction and patchy about everything short of it.
+Any precision scored against it is therefore a **floor**: Microsoft's climbs from 0.08 to
+roughly 0.24 once the crowd confirms damage that CEMS never recorded.
+:::
+
+## What "right" and "wrong" mean here {.smaller}
+
+::: {.cols}
+::: {.col style="flex:1.35"}
+![](artefacts/RQ0-matching-basis/figs/fig_dual_anchor_matching.png)
+:::
+::: {.col}
+A few streets in Caraballeda, Microsoft against the expert map.
+
+- **Green**: a flagged building with expert-recorded damage within 10 m. A hit.
+- **Orange**: a flagged building with nothing recorded near it.
+- **Black dots**: expert damage points the product caught.
+- **Red circles**: expert damage points it missed. There are a lot of them.
+
+::: {.takeaway}
+**Precision** asks what share of the coloured footprints are green. **Recall** asks what share
+of the points are black rather than red. Neither needs a count of the grey buildings, which is
+why "how many did it get right out of everything" is the wrong question.
+:::
+:::
+:::
+
+## Building by building, precision is low across the board
+
+::: {.cols}
+::: {.col}
+::: {.bignum}
+0.01 – 0.08
+:::
+::: {.bignum-sub}
+precision **as delivered**, across everything the expert reference mapped
+:::
+
+::: {.bignum}
+0.05 – 0.09
+:::
+::: {.bignum-sub}
+precision in the **shared core region (61 km²)** where all five extents overlap, and
+where 96% of the reference sits
+:::
+:::
+::: {.col}
+![](artefacts/RQ2-cems-footprint-points/figs/rq2i_per_aoi_scorecard.png)
+:::
+:::
+
+::: {.takeaway}
+They do find damage: recall runs 0.31–0.69. What they also produce is an enormous number of
+flags with nothing wrong underneath them.
+:::
+
+## The benchmark we measured against
+
+![](artefacts/RQ8-learned-fusion/figs/rq8_dayzero_schematic.png){.r-stretch}
+
+::: {.takeaway-hot}
+Three things you know within hours of any earthquake: how far a building sits from the coast,
+how densely built its neighbourhood is, and how hard the ground shook. Fitting them into a model
+does require the damage map itself, so read the red caveat: this is a **yardstick we can only
+hold up afterwards**, not a tool anyone had on the day.
+:::
+
+## Zoom out, though, and they do a decent job
+
+![](artefacts/RQ3-prioritization-error-structure/figs/rq3_priority_map.png){.r-stretch}
+
+::: {.takeaway}
+Stop asking about individual buildings and ask which *neighbourhoods* to go to first, and the
+picture improves a lot. Microsoft and OSU each pick 6 of the 10 worst-hit sectors, and rank
+correlation with the expert damage count runs about 0.54–0.59. This is the scale at which the
+products are genuinely useful.
+:::
+
+## What actually works: their disagreement
+
+::: {.smaller}
+| rule | flags | precision floor | crowd-adjusted | damage coverage | visits per find |
+|---|---|---|---|---|---|
+| any of 6 | 37,644 | 0.03 | 0.21 | 0.97 | 26.4 |
+| 2 of 6 | 21,060 | 0.06 | 0.24 | 0.94 | 15.2 |
+| 3 of 6 | 9,409 | 0.10 | 0.28 | 0.86 | 7.5 |
+| **4 of 6** | **3,347** | **0.19** | **0.38** | **0.67** | **3.4** |
+| 5 of 6 | 1,005 | 0.34 | 0.56 | 0.41 | 1.7 |
+| all 6 | 214 | 0.64 | 0.93 | 0.18 | 0.8 |
+:::
+
+::: {.takeaway}
+The products fail in **different** places, so the number of them agreeing on a building tells
+you how much to believe it. That gives you a dial with a known price at every setting: choose
+by how many teams you have and how much a wasted trip costs you.
+:::
+
+## The one finding to take into the next event
+
+::: {.hero}
+2×
+:::
+::: {.hero-sub}
+Counting agreement **between independent products** roughly doubles the accuracy of any
+single one
+:::
+
+::: {.smaller}
+- It needs **no weights, no training data, no reference**; it is computable the hour the second
+  product lands.
+- A learned fusion scores 18% higher, **but its weights come from the damage map you are still
+  waiting for.** Like the geography yardstick, it explains an event afterwards; it cannot run
+  during one.
+:::
+
+::: {.takeaway-hot}
+**It is the only method we tested that is both effective and available on day one.**
+:::
+
+## Three honest caveats on that
+
+::: {.smaller}
+1. **"Flat" means equal trust.** UH, with as-delivered precision 0.009, casts a full vote. That
+   it *helped* is real, but we could only establish that with a reference in hand.
+2. **Count independent methods, not raw products.** Five products sharing one method would
+   inherit its bias no matter how many agreed; here the two coherence products already
+   agree for the wrong reason. Independence is what mattered, not the modality label: the
+   best pair was two optical products with nothing else in common.
+3. **Choosing *k* buys a workload, not a hit rate.** Flag counts are observable without labels;
+   the precision they deliver is not.
+:::
+
+::: {.takeaway}
+None of this changes the advice. It does change how carefully we should phrase it.
+:::
+
+## Why one product's failure could be diagnosed
+
+![](artefacts/RQ7-mapswipe-validation/figs/rq7_west_cluster_adjudication.png){.r-stretch}
+
+::: {.smaller}
+Top left: where Microsoft flags far more damage than the expert map records. Bottom left: where
+volunteers said there was nothing there. Across the **western strip as a whole**, reviewers
+judged **71%** of Microsoft's flags undamaged, against a roughly even split in the damage-dense
+east. Right: cell by cell the two do *not* track ($\rho$ = +0.09); the agreement is at the
+scale of the strip, not the individual hex. That strip sat under a **single satellite scene**,
+processed on its own with no cross-scene check. Cross-check: **UH ran on the same imagery
+vendor** over the same strip and flags just 3% there (Microsoft: 32%), so the failure travelled
+with the model, not the pixels.
+:::
+
+::: {.takeaway}
+Microsoft was alone in publishing **per-building acquisition metadata**, and that is exactly
+why it is the only product whose biggest failure we could explain instead of merely notice. The
+others may well have similar problems. We simply have no way to look.
+:::
+
+## What we would ask for
+
+::: {.smaller}
+**Responders**: do not spend time choosing a product; spend it counting agreement between
+independent products. Use area rankings for triage. Nothing here sees light damage reliably.
+
+**Providers**: publish an analysed extent (without one a product cannot be evaluated at all),
+publish per-building acquisition metadata, and validate where you deploy rather than where
+validation data happens to exist. The failing scene here was the unvalidated one.
+
+**Evaluators**: publish precision as a lower bound, or adjudicate against a second reference
+and publish the interval. Check new products against a geography-only yardstick.
+:::
+
+::: {.takeaway}
+And close the coverage gap: inland communities missed by **every** product were inside analysed
+extents, and nobody knew nobody was looking.
+:::
+
+## Where this is weakest
+
+::: {.smaller}
+- **One event, one coastal urban geography.** 96% of the reference sits in one coastal strip
+  (Caraballeda), so pooled numbers are effectively that strip's numbers.
+- **The geography yardstick is fitted on this event's labels**: an information-content claim,
+  not an operational one. A model trained on *previous* earthquakes is the honest next step and
+  is untested.
+- **Confidence intervals are wide.** Resampling whole neighbourhoods moves single-product
+  numbers a lot: no single product separates from the geography yardstick, while the
+  combination rules clear it decisively. The accuracy-versus-arrival-date analysis is pending.
+- Rankings and orderings are robust; absolute magnitudes inherit a thin reference.
+:::
+
+::: {.takeaway}
+Treat this as one carefully worked case and a method you can re-run, rather than a verdict on
+these products in general.
+:::
+
+## Appendix · how the crowd adjustment works, and its independent re-test
+
+![](artefacts/RQ7-mapswipe-validation/figs/rq7_crowd_adjustment_explainer.png){.r-stretch}
+
+::: {.tiny}
+Every "crowd-adjusted" number in this deck is this mechanism: an unmatched flag is adjudicated
+by its ~50 m crowd cell, and a majority-"Yes" cell adds it back to the precision numerator. In
+Jul–Aug 2026 an independent crowd re-voted the same 3,482 cells at 3× the vote depth: individual
+cells flip (purple), but the share of flags confirmed barely moves, from **13.2%** to **11.5%**, so the
+adjusted numbers hold as (mildly generous) upper estimates. Round 2 offered no "No damage"
+answer, so round 1's 71%-said-No statistic is not re-testable; the confirmation side is what
+replicates.
+:::

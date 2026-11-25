@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geospatial Impact Estimates — OCHA Centre for Humanitarian Data</title>
+<meta name="description" content="Rapid satellite damage estimates for sudden-onset disasters, the evaluation of how far they can be trusted, and the open flood-label corpora behind them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <canvas id="bg" aria-hidden="true"></canvas>
+    <div class="inner">
+      <p class="eyebrow">OCHA Centre for Humanitarian Data</p>
+      <h1>Geospatial Impact Estimates</h1>
+      <p>After a sudden-onset disaster, several agencies publish rapid satellite estimates of
+         what has been damaged — and they disagree. This work measures how far those estimates
+         can be trusted before they inform a response, assembles the open flood-label corpora
+         that training and evaluation depend on, and tracks the imagery that makes any of it
+         possible.</p>
+    </div>
+  </header>
+
+  <main>
+    <p class="label">Analysis &amp; tools</p>
+    <div class="grid">
+
+      <a class="k" href="venezuela-earthquake-2026/">
+        <h2>Venezuela Earthquake 2026</h2>
+        <p>The damage-product evaluation after the M7.5 earthquake: the scroll story, the
+           technical brief and the multi-event damage exposure viewer, with the briefings,
+           results deck, write-up and earlier versions one level down in an archive.</p>
+        <span class="foot"><em>/venezuela-earthquake-2026/</em></span>
+      </a>
+
+      <a class="k" href="vantor-activations/">
+        <h2>Vantor Open Data activation tracker</h2>
+        <p>Which disasters Vantor (formerly Maxar) has released open imagery for, and how many
+           pre- and post-event images each activation has. Rebuilt daily from the public STAC
+           catalog, with a live-drift check on every page load.</p>
+        <span class="foot"><em>/vantor-activations/</em></span>
+      </a>
+
+      <a class="k" href="cems-unosat/">
+        <h2>CEMS-UNOSAT</h2>
+        <p>The two public flood-label corpora, Copernicus EMS rapid mapping and UNOSAT, harvested
+           and catalogued: the combined label viewer, the CEMS archive ledger, and the
+           superseded CEMS-only viewer.</p>
+        <span class="foot"><em>/cems-unosat/</em></span>
+      </a>
+
+      <a class="k" href="damage-analysis-platform/">
+        <h2>Damage Analysis Platform</h2>
+        <p>How satellite damage assessments could be coordinated in the next event: what
+           partners do before and during a crisis, and the three outputs, a data registry,
+           interoperable assessments and a joint analysis. Draft for discussion.</p>
+        <span class="foot"><em>/damage-analysis-platform/</em></span>
+      </a>
+
+      <a class="k k-muted" href="experimental/">
+        <h2>Experimental analyses<span class="chip chip-gate">Passphrase</span></h2>
+        <p>Exploratory work outside the damage-evaluation line, kept behind its own
+           passphrase: methods still being tested, not products. Currently the Nepal
+           glacier-collapse radar-precursor pages.</p>
+        <span class="foot"><em>/experimental/</em></span>
+      </a>
+
+    </div>
+  </main>
+
+  <div class="note">
+    <p><strong>What is here.</strong> <em>Venezuela Earthquake 2026</em> is the damage-product
+       evaluation: a single-event case study, with its scope stated on its own page.
+       <em>CEMS-UNOSAT</em> is the flood-label corpora that evaluation and future training draw
+       on. <em>Damage Analysis Platform</em> is the coordination platform for the next event,
+       grown out of that evaluation. <em>Experimental analyses</em> is exploratory work that
+       has not been through review, kept behind its own gate.</p>
+    <p><strong>Access.</strong> Pre-publication items — the Venezuela archive and the
+       experimental pages — open with a passphrase and are stored encrypted, so this
+       repository being public does not expose them. A passphrase is
+       only as private as the people holding it; the experimental pages have one of their own.</p>
+    <p><strong>Adding a page?</strong> Create a directory under <code>pages/</code> with an
+       <code>index.html</code> and add a card to the hub it belongs to (Venezuela, CEMS-UNOSAT,
+       Damage Analysis Platform, experimental), or above if it fits none. See
+       <a href="https://github.com/OCHA-DAP/ds-geospatial-impact-estimates/blob/v1/pages/README.md">pages/README.md</a>.</p>
+  </div>
+
+</div>
+
+<script src="assets/hero.js" defer></script>
+</body>
+</html>

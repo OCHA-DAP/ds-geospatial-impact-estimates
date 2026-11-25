@@ -30,6 +30,7 @@ Run: uv run --group etl python pipelines/harmonize_common.py
 
 from __future__ import annotations
 
+import glob
 import os
 import threading
 import time
@@ -37,13 +38,14 @@ import time
 import ocha_stratus as stratus
 import pandas as pd
 
-from gie import ledger
+from gie import events, ledger
 from gie.blob import upload_parquet_staged
-from gie.config import DEFAULT_H3_RESOLUTION, load_settings
+from gie.config import DEFAULT_H3_RESOLUTION, OSU_PUBLISHED_VERSION, load_settings
 
 METHOD = "common_overture_v1"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 # CEMS per-building damage points (builtUpP) are snapped to the nearest Overture
 # footprint within this radius; 20 m matched 99.5% of points in EMSR884.
@@ -73,6 +75,25 @@ SOURCES = [
     # OSU Sentinel-1 coherence: pre-keyed to Overture (id-join); analysed =
     # inside the analyzed-area polygon (ADR-0009).
     ("osu", "osu_dmg", "sum(osu_analysed::INT)"),
+    # DISHA (UN Global Pulse) zero-shot damage POINTS + AOI; snapped to the base like
+    # HOT, analysed = inside the AOI. LICENCE-gated — staging preview only.
+    ("disha", "disha_dmg", "sum(disha_analysed::INT)"),
+    # UNEP debris: detected-only mass source. No AOI -> NULL analysed expr (like HOT),
+    # so rate / coverage / extrapolated fall out NULL, leaving damaged_detected (the
+    # Overture-snapped count). Native count is reported separately per ADR-0017.
+    ("unep_debris", "debris_dmg", "NULL"),
+    # UH damage predictions: graded footprints projected by centroid-containment (the
+    # impact_v2 rule, ADR-0015). Coverage-aware WITHOUT an AOI polygon: UH grades every
+    # footprint, so the buildings it CLASSIFIED (any grade) ARE the analysed set (uh_analysed);
+    # damage fraction = damaged / classified, computed straight from their layers (ADR-0018).
+    ("uh", "uh_dmg", "sum(uh_analysed::INT)"),
+    # LIST ResNet change-detection: raster sampled onto the base (id-keyed, class 2
+    # only = Damaged, validated vs IMPACT/OSU). Coverage-aware by building COUNT —
+    # the model classified every pixel in its footprint, so every base building in
+    # the footprint IS analysed (list_analysed via the footprint polygon). Areal
+    # coverage is intentionally omitted (footprint is an ocean-padded rectangle,
+    # would over-read) — see _area_facts.
+    ("list", "list_dmg", "sum(list_analysed::INT)"),
 ]
 GRAINS = [
     ("h3", "h3", None),
@@ -106,8 +127,10 @@ def _fetch(blob, dst, settings, stage, tries: int = 10, timeout_s: int = 45) -> 
         th.start()
         th.join(timeout_s)
         if "data" in result:
-            with open(dst, "wb") as f:
-                f.write(result["data"])
+            tmp = f"{dst}.tmp"  # atomic write: temp file, then rename, so an interrupted
+            with open(tmp, "wb") as f:  # write can never leave a truncated file that a later
+                f.write(result["data"])  # run skips-as-present and reads as complete.
+            os.replace(tmp, dst)
             return
         reason = "stalled" if th.is_alive() else str(result.get("err", ""))[:40]
         print(f"    {os.path.basename(dst)} retry {attempt + 1}/{tries} ({reason})", flush=True)
@@ -122,8 +145,12 @@ def _local_base(settings, stage: str = STAGE) -> str:
     base scan over this endpoint, and the read has no timeout, so it hangs at 0%
     CPU forever. The Azure SDK download (stratus) is robust here, so we pull the
     base to disk and let DuckDB read local files. Other inputs are small and read
-    fine straight from blob. Returns a local hive glob path."""
-    prefix = settings.blob_path("silver", "source=overture", f"adm0={ADM0}")
+    fine straight from blob. Returns a local hive glob path.
+
+    Integrity: writes are atomic (see _fetch) and the local set is verified against
+    blob before returning, so a partial cache fails loud rather than silently
+    serving a subset (an out-of-sync cache once produced badly wrong snap counts)."""
+    prefix = settings.blob_path("silver", "source=overture", f"adm0={ADM0}", event=EVENT)
     blobs = [
         b
         for b in stratus.list_container_blobs(
@@ -141,16 +168,23 @@ def _local_base(settings, stage: str = STAGE) -> str:
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         _fetch(b, dst, settings, stage)
         n += 1
+    have = {os.path.relpath(p, root) for p in glob.glob(os.path.join(root, "region=*", "*.parquet"))}
+    missing = {b[len(prefix) + 1 :] for b in blobs} - have
+    if missing:  # a partial cache must fail loud, never be read as the whole base
+        raise RuntimeError(
+            f"Overture base cache incomplete: {len(missing)}/{len(blobs)} region files "
+            f"missing (e.g. {sorted(missing)[:3]}). Delete {root} and re-run."
+        )
     print(f"  base: {len(blobs)} region files local ({n} newly downloaded)", flush=True)
     return os.path.join(root, "region=*", "*.parquet")
 
 
-def _local(settings, layer, *parts, stage: str = STAGE) -> str:
+def _local(settings, layer, *parts, event: str | None, stage: str = STAGE) -> str:
     """Download a single input blob to local and return its path (DuckDB then
     reads locally). ALWAYS re-fetched, never cached: these silver / codab inputs
     are small and change between runs, so caching them would serve stale data
     (only the large, stable Overture base is cached — see _local_base)."""
-    bp = settings.blob_path(layer, *parts)
+    bp = settings.blob_path(layer, *parts, event=event)
     dst = os.path.join("/tmp/gie_local", bp)
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     _fetch(bp, dst, settings, stage)
@@ -170,35 +204,64 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     con.execute("INSTALL h3 FROM community; LOAD h3;")
     con.execute("SET enable_progress_bar = false;")
     base = _local_base(settings)  # local disk — the blob read of the base stalls
-    ms = _local(settings,"silver", "source=microsoft", f"adm0={ADM0}", "footprints.parquet")
+    ms = _local(settings, "silver", "source=microsoft", f"adm0={ADM0}", "footprints.parquet", event=EVENT)
     cems = _local(settings,
-        "silver", "source=copernicus_ems", f"adm0={ADM0}", "builtup_damage.parquet"
+        "silver", "source=copernicus_ems", f"adm0={ADM0}", "builtup_damage.parquet", event=EVENT
     )
     analysed = _local(settings,
-        "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     ms_analysed = _local(settings,
-        "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     # IMPACT SAR: per-building damaged set (damaged-only, ADR-0008) + footprint extent.
     sar = _local(settings,
-        "silver", "source=impact_initiatives", f"adm0={ADM0}", "building_damage.parquet"
+        "silver", "source=impact_initiatives", f"adm0={ADM0}", "building_damage.parquet", event=EVENT
     )
     sar_ext = _local(settings,
-        "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
     )
     # HOT fAIr damage points (detected-only): snapped to the base like CEMS points.
     hot = _local(settings,
-        "silver", "source=hot_osm", f"adm0={ADM0}", "damage_points.parquet"
+        "silver", "source=hot_osm", f"adm0={ADM0}", "damage_points.parquet", event=EVENT
     )
     # OSU S1 coherence: per-building damaged set (id-keyed to Overture) + extent (ADR-0009).
+    # Reads the PUBLISHED version partition; both versions are materialised in silver
+    # for analysis, but the common model consumes exactly one (gie.config).
     osu = _local(settings,
-        "silver", "source=osu", f"adm0={ADM0}", "building_damage.parquet"
+        "silver", "source=osu", f"adm0={ADM0}", f"version={OSU_PUBLISHED_VERSION}", "building_damage.parquet",
+        event=EVENT,
     )
     osu_ext = _local(settings,
-        "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
+        "silver", "source=osu", f"adm0={ADM0}", f"version={OSU_PUBLISHED_VERSION}", "analysed_extent.parquet",
+        event=EVENT,
     )
-    adm3 = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet")
+    # DISHA (UN Global Pulse) damage points + AOI extent — snapped like HOT (LICENCE-gated).
+    disha = _local(settings,
+        "silver", "source=disha", f"adm0={ADM0}", "damage_points.parquet", event=EVENT
+    )
+    disha_ext = _local(settings,
+        "silver", "source=disha", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
+    )
+    # UNEP debris damaged BUILDINGS (detected-only, mass metric): snapped by centroid
+    # to the base like the HOT/CEMS points; no AOI, so detected-only (ADR-0017).
+    debris = _local(settings,
+        "silver", "source=unep_debris", f"adm0={ADM0}", "debris.parquet", event=EVENT
+    )
+    # UH graded predictions: footprints projected by containment (detected-only, ADR-0018).
+    uh = _local(settings,
+        "silver", "source=uh", f"adm0={ADM0}", "footprints.parquet", event=EVENT
+    )
+    # LIST ResNet change detection: per-building damaged set (id-keyed, class 2 only) + footprint extent.
+    list_dmg = _local(settings,
+        "silver", "source=list", f"adm0={ADM0}", "building_damage.parquet", event=EVENT
+    )
+    list_ext = _local(settings,
+        "silver", "source=list", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
+    )
+    # event=None: CODAB is shared, country-keyed REFERENCE data outside the
+    # event tree — reusable across events (spec §3).
+    adm3 = _local(settings, "bronze", "source=codab", f"adm0={ADM0}", "adm3.parquet", event=None)
     tol = SNAP_M / 111320.0  # ~degrees per metre (lat) for the snap buffer
 
     con.execute(
@@ -264,8 +327,24 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             JOIN read_parquet('{ms_analysed}') e ON ST_Within(b.c, e.geometry)
             WHERE NOT e.superseded
         ),
+        sar_dmg AS (
+            -- IMPACT v2: flag the base building that CONTAINS a v2 damaged
+            -- footprint's centroid. v2 footprints ARE Overture (identical geometry),
+            -- so centroid-containment is a clean 1:1 match onto the exact twin — no
+            -- edge-neighbour over-flag (ST_Intersects gave ~86k vs the product's
+            -- 81,437), and no id needed, so it still catches the 13,433 blank-id
+            -- national footprints an id-join would drop (ADR-0015). Use
+            -- ST_PointOnSurface (a point guaranteed INSIDE the footprint), not
+            -- ST_Centroid — the centroid can fall outside concave/multipart shapes and
+            -- miss an existing base twin. Any residual vs the product's 81,437 is now
+            -- footprints with no Overture base twin (national footprints absent from our
+            -- release); a base-flag count can't reach those — TODO count v2 rows
+            -- directly if that gap ever matters.
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{sar}') s ON ST_Contains(b.geom, ST_PointOnSurface(s.geometry))
+        ),
         sar_seen AS (
-            -- SAR-analysed = inside the raster's bounds footprint (ADR-0008)
+            -- IMPACT-analysed = inside the v2 analysed-area polygon (ADR-0015)
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{sar_ext}') e ON ST_Within(b.c, e.geometry)
         ),
@@ -285,6 +364,58 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             -- OSU-analysed = inside the analyzed-area polygon
             SELECT DISTINCT b.id FROM base b
             JOIN read_parquet('{osu_ext}') e ON ST_Within(b.c, e.geometry)
+        ),
+        list_seen AS (
+            -- LIST-analysed = inside the scene-footprint union (every pixel classified)
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{list_ext}') e ON ST_Within(b.c, e.geometry)
+        ),
+        disha_dmg AS (
+            -- DISHA damage POINTS snapped to the nearest base footprint within
+            -- {SNAP_M} m (same rule as HOT/CEMS points). LICENCE-gated preview.
+            SELECT id FROM (
+                SELECT b.id,
+                    row_number() OVER (PARTITION BY p.fid
+                                       ORDER BY ST_Distance(b.geom, p.g)) AS rn
+                FROM (SELECT row_number() OVER () AS fid, geometry AS g
+                      FROM read_parquet('{disha}')) p
+                JOIN base b ON ST_Intersects(ST_Buffer(p.g, {tol}), b.geom)
+            ) WHERE rn = 1
+        ),
+        disha_seen AS (
+            -- DISHA-analysed = inside its AOI polygon
+            SELECT DISTINCT b.id FROM base b
+            JOIN read_parquet('{disha_ext}') e ON ST_Within(b.c, e.geometry)
+        ),
+        debris_dmg AS (
+            -- UNEP debris BUILDINGS snapped by CENTROID to the nearest base footprint
+            -- within {SNAP_M} m (same rule as the HOT/CEMS points). GBA footprints are
+            -- finer than Overture, so several collapse onto one base building — the
+            -- snapped count is below the native count, reported on two bases (ADR-0017).
+            SELECT id FROM (
+                SELECT b.id,
+                    row_number() OVER (PARTITION BY p.fid
+                                       ORDER BY ST_Distance(b.geom, p.c)) AS rn
+                FROM (SELECT fid, ST_Centroid(geometry) AS c
+                      FROM read_parquet('{debris}')) p
+                JOIN base b ON ST_Intersects(ST_Buffer(p.c, {tol}), b.geom)
+            ) WHERE rn = 1
+        ),
+        uh_hit AS (
+            -- Project every UH footprint onto the base by point-on-surface containment (the
+            -- impact_v2 rule, ADR-0015): ST_PointOnSurface is inside the footprint, so it lands
+            -- on the exact Overture twin — no id, no edge-neighbour over-flag. UH grades EVERY
+            -- footprint, so a base building UH classified (ANY grade) is the ANALYSED unit — no
+            -- AOI polygon needed, UH's own classifications ARE the analysed set (ADR-0018). The
+            -- worst non-intact class (2/3) is the damage flag + grade. ~98% of footprints have a
+            -- twin; finer UH footprints collapse onto one base (ADR-0017, exploratory/0004).
+            SELECT b.id,
+                   max((u.grade <> 'intact')::INT) AS any_dmg,
+                   max(u.cls) FILTER (u.grade <> 'intact') AS uh_class
+            FROM base b
+            JOIN read_parquet('{uh}') u
+              ON ST_Contains(b.geom, ST_PointOnSurface(u.geometry))
+            GROUP BY b.id
         )
         SELECT b.id,
             round(ST_X(b.c), 6) AS lon, round(ST_Y(b.c), 6) AS lat,
@@ -297,18 +428,28 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
             cd.cems_class AS cems_class,
             (b.id IN (SELECT id FROM cems_coarse_set)) AS cems_coarse,
             (b.id IN (SELECT id FROM cems_seen)) AS cems_analysed,
-            (sd.id IS NOT NULL) AS sar_dmg,
-            sd.damage_class AS sar_class,
+            (b.id IN (SELECT id FROM sar_dmg)) AS sar_dmg,
+            IF(b.id IN (SELECT id FROM sar_dmg), 2, NULL) AS sar_class,
             (b.id IN (SELECT id FROM sar_seen)) AS sar_analysed,
             (b.id IN (SELECT id FROM hot_dmg)) AS hot_dmg,
             (od.id IS NOT NULL) AS osu_dmg,
             od.damage_class AS osu_class,
-            (b.id IN (SELECT id FROM osu_seen)) AS osu_analysed
+            (b.id IN (SELECT id FROM osu_seen)) AS osu_analysed,
+            (b.id IN (SELECT id FROM disha_dmg)) AS disha_dmg,
+            (b.id IN (SELECT id FROM disha_seen)) AS disha_analysed,
+            (b.id IN (SELECT id FROM debris_dmg)) AS debris_dmg,
+            (uh.id IS NOT NULL) AS uh_analysed,
+            (uh.any_dmg = 1) AS uh_dmg,
+            uh.uh_class AS uh_class,
+            (ld.id IS NOT NULL) AS list_dmg,
+            ld.damage_class AS list_class,
+            (b.id IN (SELECT id FROM list_seen)) AS list_analysed
         FROM base b
         LEFT JOIN read_parquet('{adm3}') a ON ST_Within(b.c, a.geometry)
         LEFT JOIN cems_dmg cd ON cd.id = b.id
-        LEFT JOIN read_parquet('{sar}') sd ON sd.id = b.id
         LEFT JOIN read_parquet('{osu}') od ON od.id = b.id
+        LEFT JOIN uh_hit uh ON uh.id = b.id
+        LEFT JOIN read_parquet('{list_dmg}') ld ON ld.id = b.id
         """
     )
     print("  located table built", flush=True)
@@ -356,14 +497,18 @@ def build_facts(res: int = DEFAULT_H3_RESOLUTION) -> pd.DataFrame:
     # DAMAGED buildings to the per-building layer, NOT their full analysed sets
     # (~1.9M / ~2.1M) — the untiled agreement view and a single blob write can't take that.
     # Rectify with PMTiles: then add `OR sar_analysed`/`OR osu_analysed` and carry
-    # the analysed flags through.
+    # the analysed flags through. (UH is detected-only, so uh_dmg is its full contribution.)
     flags = con.execute(
         "SELECT id, lon, lat, ms_dmg, ms_analysed, cems_dmg, cems_class, cems_analysed, "
-        "sar_dmg, sar_class, hot_dmg, osu_dmg, osu_class "
-        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR hot_dmg OR osu_dmg"
+        "sar_dmg, sar_class, hot_dmg, osu_dmg, osu_class, disha_dmg, debris_dmg, uh_dmg, uh_class, "
+        "list_dmg, list_class "
+        "FROM located WHERE ms_analysed OR cems_analysed OR sar_dmg OR hot_dmg OR osu_dmg "
+        "OR disha_dmg OR debris_dmg OR uh_dmg OR list_dmg"
     ).df()
     print(f"  building_flags computed ({len(flags):,} rows), uploading", flush=True)
-    fpath = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "building_flags.parquet")
+    fpath = settings.blob_path(
+        "gold", "model=common", f"adm0={ADM0}", "building_flags.parquet", event=EVENT
+    )
     _upload(flags, fpath, settings)
     print(f"building_flags <- {fpath} ({len(flags):,} buildings)")
 
@@ -385,35 +530,41 @@ def _area_facts(con, settings) -> pd.DataFrame:
     sources = {
         "microsoft": (
             _local(settings,
-                "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet"
+                "silver", "source=microsoft", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
             ),
             "WHERE NOT superseded",  # exclude AOIs enclosed by a newer assessment
         ),
         "copernicus_ems": (
             _local(settings,
-                "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet"
+                "silver", "source=copernicus_ems", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
             ),
             "",  # CEMS supersession is handled upstream (active_products)
         ),
         "impact_initiatives": (
             _local(settings,
-                "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet"
+                "silver", "source=impact_initiatives", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
             ),
             "",  # SAR footprint = raster bounds (ADR-0008)
         ),
         "osu": (
             _local(settings,
-                "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet"
+                "silver", "source=osu", f"adm0={ADM0}", "analysed_extent.parquet", event=EVENT
             ),
             "",  # OSU footprint = analyzed-area polygon (ADR-0009)
         ),
+        # UH is detected-only (no analysed extent) -> no areal coverage (ADR-0018).
+        # LIST has an analysed extent, but it is the raster's ocean-padded rectangle,
+        # so areal coverage would over-read (~100%); omitted until the footprint is
+        # clipped to land/built-up. Building-COUNT coverage (list_analysed) still flows.
     }
     parts = []
     for src, (ext, where) in sources.items():
         for unit_type, idcol, namecol in GRAINS:
             if namecol is None:  # skip h3
                 continue
-            adm = _local(settings,"bronze", "source=codab", f"adm0={ADM0}", f"{unit_type}.parquet")
+            # event=None: CODAB is shared, country-keyed REFERENCE data outside
+            # the event tree — reusable across events (spec §3).
+            adm = _local(settings, "bronze", "source=codab", f"adm0={ADM0}", f"{unit_type}.parquet", event=None)
             parts.append(
                 con.execute(
                     f"""
@@ -473,6 +624,7 @@ def _cems_breakdown(con) -> pd.DataFrame:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
     df = build_facts()
 
@@ -489,7 +641,7 @@ def main() -> None:
         ].round(2).head(6).to_string()
     )
 
-    gold = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet")
+    gold = settings.blob_path("gold", "model=common", f"adm0={ADM0}", "facts.parquet", event=EVENT)
     _upload(df, gold, settings)
     print(f"gold <- {gold} ({len(df):,} fact rows)")
     ledger.record(

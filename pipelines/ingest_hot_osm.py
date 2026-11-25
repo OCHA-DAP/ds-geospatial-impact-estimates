@@ -24,7 +24,7 @@ import json
 import ocha_stratus as stratus
 import requests
 
-from gie import ledger
+from gie import events, ledger
 from gie.config import load_settings
 
 HDX = "https://data.humdata.org/api/3/action/package_show?id={}"
@@ -35,6 +35,7 @@ RESOURCE = "fair_damage_points.geojson"
 SOURCE = "hot_osm"
 ADM0 = "VE"
 STAGE = "dev"
+EVENT = "20260624-ve-earthquake"  # validated against events.yaml in main()
 
 
 def _resource_url(slug: str, fmt: str = "GeoJSON") -> str:
@@ -44,10 +45,11 @@ def _resource_url(slug: str, fmt: str = "GeoJSON") -> str:
 
 
 def main() -> None:
+    events.require_event(EVENT)
     settings = load_settings(STAGE)
 
     raw = requests.get(_resource_url(HDX_SLUG), timeout=60).content
-    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", RESOURCE)
+    bronze = settings.blob_path("bronze", f"source={SOURCE}", f"adm0={ADM0}", RESOURCE, event=EVENT)
     stratus.upload_blob_data(raw, bronze, stage=STAGE, container_name=settings.container)
 
     # Light summary from the raw GeoJSON (stdlib only — no normalization here).

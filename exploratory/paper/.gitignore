@@ -1,0 +1,8 @@
+__pycache__/
+_audit/
+figures/
+pipeline/legacy/
+.snakemake/
+pipeline/results_*.csv
+pipeline/.tests_passed
+pipeline/.oracle_checked
