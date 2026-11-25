@@ -224,7 +224,7 @@ Relaxing the reference itself is the more generous test, and @fig-bounds runs it
 other reference data this study collected: first adding the points CEMS graded *possibly
 damaged*, then instead crediting the flags the MapSwipe crowd reviewed and judged
 damaged, and finally both together. The result is a range of possible precision values per
-product, with a realistic upper bound at the top. Even at that upper bound every product
+product, with the most inclusive reading at the top. Even there every product
 stays below `{python} N["P_upper_max"]`. Neither loosening changes the conclusion: none of
 these products is reliable enough to send a team to a single building it has flagged.
 
