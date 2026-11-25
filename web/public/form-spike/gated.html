@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gated page test</title>
+<link rel="stylesheet" href="/form-spike/_shared.css">
+<style>#who { font-size: 15px; } code { font-size: 13px; }</style>
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">throwaway spike · sign-in test</p>
+<h1>You are past the Microsoft sign-in</h1>
+<p>This page is served only to a signed-in user. The Static Web App enforced that before any of our code ran: the route is listed in <code>staticwebapp.config.json</code> with <code>allowedRoles: ["authenticated"]</code>, and an anonymous request is redirected to the built-in Microsoft login.</p></header>
+<main>
+<p id="who">reading /.auth/me …</p>
+<p class="help">Today the login is Microsoft's shared "common" endpoint, so any Microsoft account passes. Pointing it at the UN tenant is a config change plus the app registration from OICT; this page would not change.</p>
+<p class="topnav"><a href="/.auth/logout?post_logout_redirect_uri=/form-spike/providers.html">Sign out of Microsoft</a> · <a href="/form-spike/providers.html">← Spike sign-in</a></p>
+</main></div>
+<script>
+fetch("/.auth/me", { cache: "no-store" }).then(r => r.json()).then(d => {
+  const p = d.clientPrincipal;
+  const esc = v => String(v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  document.getElementById("who").innerHTML = p
+    ? `Signed in as <b>${esc(p.userDetails)}</b> via <b>${esc(p.identityProvider)}</b>, user id <code>${esc(p.userId)}</code>, roles <code>${esc(p.userRoles.join(", "))}</code>.`
+    : "No client principal: the gate did not run, so this build is not protected.";
+}).catch(e => { document.getElementById("who").textContent = "Could not read /.auth/me: " + e; });
+</script>
+</body></html>

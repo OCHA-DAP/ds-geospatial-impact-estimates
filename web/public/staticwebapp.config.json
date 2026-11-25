@@ -12,11 +12,17 @@
       "allowedRoles": [
         "provider"
       ]
+    },
+    {
+      "route": "/form-spike/gated.html",
+      "allowedRoles": [
+        "authenticated"
+      ]
     }
   ],
   "responseOverrides": {
     "401": {
-      "redirect": "/form-spike/providers.html?denied=1",
+      "redirect": "/.auth/login/aad?post_login_redirect_uri=.referrer",
       "statusCode": 302
     },
     "403": {
