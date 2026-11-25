@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# Publish the paper artefacts to the Pages site: render, encrypt, commit.
+# Publish the paper artefacts to the Pages site: render, encrypt (the brief: copy), commit.
 #
 #   ./scripts/publish_pages.sh            # both: render, encrypt, commit
 #   ./scripts/publish_pages.sh deck       # just the results deck
 #   ./scripts/publish_pages.sh paper      # just the manuscript
-#   ./scripts/publish_pages.sh brief      # just the technical brief
+#   ./scripts/publish_pages.sh brief      # just the technical brief (public: plain HTML, no passphrase)
 #   ./scripts/publish_pages.sh briefing   # just the A&A Cell 5-slide briefing
 #   ./scripts/publish_pages.sh --ship     # ...and push + open a PR against v1
 #   ./scripts/publish_pages.sh deck --no-commit
@@ -13,8 +13,9 @@
 # --ship stops at the PR. Merging is what makes an artefact public, so it stays a decision
 # someone makes on purpose rather than a side effect of running this.
 #
-# Why this script exists: the site serves `content.enc`, an encrypted snapshot of the *rendered*
-# HTML. Pushing .qmd changes does not update the site. Rendering cannot run in CI — the figure
+# Why this script exists: the site serves a snapshot of the *rendered* HTML — `content.enc`
+# (encrypted) for the gated pages, plain `index.html` for the public brief. Pushing .qmd changes
+# does not update the site. Rendering cannot run in CI — the figure
 # PNGs are gitignored and rebuilding them needs the Azure data lake — so publishing is a local,
 # deliberate act. Doing it by hand is a multi-line `uv run` incantation per artefact, which is
 # easy to get wrong or half-finish, leaving the site quietly showing an older version.
@@ -121,6 +122,28 @@ encrypt() {
   CHANGED+=("$out")
 }
 
+# A public page is the rendered document itself, copied as-is. No back-to-hub pill: the two
+# publicised Venezuela pages deliberately carry none (Zack, 2026-11-02; see pages/README.md).
+# Refuses the superseded password.html gate for the reason encrypt_page.py does: it would
+# publish a page that denies every reader. Leaves the file alone when nothing changed, so a
+# no-op run makes no commit.
+publish_plain() {
+  local html=$1 out=$2
+  step "Publishing $(basename "$html") as plain HTML"
+  grep -q 'password.html' "$PAPER_DIR/$html" \
+    && die "$html still carries the superseded password.html gate — the site is unchanged"
+  grep -qi '<body' "$PAPER_DIR/$html" \
+    || die "$html has no <body> tag — not a complete document; the site is unchanged"
+  mkdir -p "$(dirname "$out")"
+  if [[ -f $out ]] && cmp -s "$PAPER_DIR/$html" "$out"; then
+    echo "unchanged: byte-identical to what is published"
+  else
+    cp "$PAPER_DIR/$html" "$out" || die "copy failed for $html — the site is unchanged"
+    echo "wrote $out ($(du -h "$out" | cut -f1))"
+  fi
+  CHANGED+=("$out")
+}
+
 CHANGED=()
 
 if [[ $TARGET == all || $TARGET == deck ]]; then
@@ -140,20 +163,11 @@ fi
 
 if [[ $TARGET == all || $TARGET == brief ]]; then
   render manuscript_brief.qmd html
-  # The brief has its OWN passphrase (shared with providers), separate from the one the
-  # other gated pages use: GIE_PAGE_PASS_BRIEF, else ~/.gie-page-passphrase-brief, else
-  # fall through to the default. Without this, a routine republish would silently
-  # re-encrypt the brief under the default passphrase and lock out everyone holding the
-  # brief's link.
-  BRIEF_PASS="${GIE_PAGE_PASS_BRIEF:-}"
-  [[ -z $BRIEF_PASS && -r $HOME/.gie-page-passphrase-brief ]] \
-    && BRIEF_PASS="$(< "$HOME/.gie-page-passphrase-brief")"
-  if [[ -n $BRIEF_PASS ]]; then
-    echo "brief passphrase: its own (not the shared one)"
-    GIE_PAGE_PASS="$BRIEF_PASS" encrypt manuscript_brief.html "$PAGES_DIR/venezuela-earthquake-2026/brief/content.enc"
-  else
-    encrypt manuscript_brief.html "$PAGES_DIR/venezuela-earthquake-2026/brief/content.enc"
-  fi
+  # The brief is PUBLIC (since 2026-11-02, like the story): no passphrase, no content.enc. The
+  # rendered document is published as-is at the hub path. Do not reintroduce an encrypt call
+  # here — it would write a dead content.enc beside the plain page and the site would silently
+  # keep serving the old brief.
+  publish_plain manuscript_brief.html "$PAGES_DIR/venezuela-earthquake-2026/brief/index.html"
 fi
 
 step "Result"
@@ -183,7 +197,7 @@ step "Committing"
 git -C "$PAGES_REPO" add -- "$PAGES_DIR"
 git -C "$PAGES_REPO" commit -q -m "pages: republish $( [[ $TARGET == all ]] && echo 'deck, briefing, manuscript and brief' || echo "$TARGET" )
 
-Re-rendered from exploratory/paper and re-encrypted. Content only; no code change."
+Re-rendered from exploratory/paper and republished. Content only; no code change."
 git -C "$PAGES_REPO" --no-pager log --oneline -1
 
 BRANCH="$(git -C "$PAGES_REPO" rev-parse --abbrev-ref HEAD)"
@@ -210,7 +224,7 @@ step "Pushing and opening a PR"
 git -C "$PAGES_REPO" push -q origin "$BRANCH" || die "push failed — nothing is public"
 PR_URL="$(cd "$PAGES_REPO" && gh pr create --base v1 --head "$BRANCH" \
   --title "pages: republish $( [[ $TARGET == all ]] && echo 'deck, briefing, manuscript and brief' || echo "$TARGET" )" \
-  --body "Re-rendered from \`exploratory/paper\` and re-encrypted. Content only; no code change.
+  --body "Re-rendered from \`exploratory/paper\` and republished. Content only; no code change.
 
 Opened by \`scripts/publish_pages.sh --ship\`.")" \
   || die "could not open a PR — the branch is pushed, so finish it by hand"

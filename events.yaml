@@ -12,7 +12,7 @@ events:
     onset: 2026-06-24
     countries: [VE]
     bbox: [-68.2, 9.9, -66.0, 11.2]
-    status: active
+    status: closed
     external_ids:
       cems_activation: EMSR884
       usgs: us6000t7zp  # M7.5 mainshock (the reference event for the viewer)
@@ -23,7 +23,7 @@ events:
     onset: 2026-08-10
     countries: [CO]
     bbox: [-77.7, 3.3, -74.7, 6.3]
-    status: active
+    status: closed
     external_ids:
       usgs: us6000tjl2
       gdacs: "1557236"
