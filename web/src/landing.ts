@@ -26,6 +26,7 @@ const card = (ev: EventInfo) => `
 
 export function renderLanding(events: EventInfo[], container: HTMLElement): void {
   container.innerHTML = `
+    <a class="landing-providers" href="/form-spike/providers.html">For data providers: submit an analysis →</a>
     <div class="landing-inner">
       <img src="/ocha_logo.svg" alt="OCHA" width="117" height="28" />
       <h1>Damage Exposure Viewer</h1>

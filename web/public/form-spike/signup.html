@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Register as a provider</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/form-spike/_shared.css">
+<style>
+[data-show] { display:none; } [data-show].on { display:block; }
+.pick { border:2px solid var(--b5); background:var(--b05); padding:12px 18px 14px; margin:6px 0 14px; }
+.pick label { font-size:14px; font-weight:700; color:var(--b8); }
+.pick select { font-size:15px; padding:10px 11px; border:1px solid var(--b5); background:#fff; }
+.contact { border:1px solid var(--n2); background:#fff; padding:12px 18px 6px; margin:6px 0 10px; }
+.contact label { font-size:14px; font-weight:700; color:var(--b8); }
+#msg { font-size:14px; margin:10px 0; } #msg.ok { color:var(--b7); font-weight:500; } #msg.bad { color:var(--w6); }
+#listmsg { font-size:12.5px; margin:6px 0 0; } #listmsg.bad { color:var(--w6); }
+</style>
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">throwaway spike · registration</p>
+<h1 id="title">Register as a provider</h1>
+<p id="lead">Pick your organisation if it is already registered and ask its members to add you, or register a new organisation. Either way the sign-in link comes by email.</p></header>
+<main>
+<p class="topnav"><a href="/form-spike/providers.html">← Sign in</a> · <a href="/form-spike/dashboard.html">Your organisation</a></p>
+<div id="session" class="auth">checking for a session …</div>
+
+<form id="f" onsubmit="return false">
+<fieldset><legend>Organisation</legend>
+<div class="pick" id="pick">
+<label for="orgpick">Is your organisation already registered?</label>
+<select id="orgpick" name="orgpick"><option value="">loading registered organisations …</option></select>
+<p id="listmsg" class="help"></p>
+</div>
+<div id="newbox" data-show="mode=new">
+<div class="row">
+<div><label>Organisation name</label><input type="text" name="org_name" id="org_name" placeholder="as it should appear on the methods card"><p class="help">The registry derives the machine key from this (<code id="slugprev">…</code>); you never type identifiers.</p></div>
+<div><label>Organisation type</label><select name="org_type"><option>UN agency</option><option>NGO</option><option>academic</option><option>private sector</option><option>government</option><option>network</option></select></div>
+</div>
+<div class="row">
+<div><label>Default licence for your products</label><select name="licence" id="licence"><option>CC BY</option><option>CC BY-SA</option><option>ODbL</option><option value="terms">provider terms (link)</option><option value="restricted">restricted</option></select><p class="help">Each delivery confirms it is released under this licence; a product with a different licence is registered separately.</p></div>
+<div data-show="licence=terms"><label>Link to the terms</label><input type="url" name="licence_url" placeholder="https://…"></div>
+<div><label>May be shown publicly</label><select name="public" id="public"><option>yes</option><option>no</option></select><p class="help" data-show="licence=restricted">Forced to "no" while the licence is restricted; products stay on staging until cleared.</p></div>
+</div>
+</div>
+<p class="help" data-show="mode=join" id="joinhelp"></p>
+</fieldset>
+<fieldset><legend>You</legend>
+<div class="contact">
+<div class="row">
+<div><label for="contact_name">Your name</label><input type="text" name="contact_name" id="contact_name" placeholder="so colleagues know who is asking" required></div>
+<div><label for="contact">Your email · this becomes your sign-in address</label><input type="email" name="contact" id="contact" placeholder="you@organisation.org" required></div>
+</div>
+<p class="help">Use a mailbox you can open now: the sign-in link arrives there once you are a member.</p>
+</div>
+</fieldset>
+<button class="btn" id="go" type="submit">Continue</button>
+<p id="msg"></p>
+<p class="help" data-show="mode=new">What happens: the organisation record and your address are written to the registry (spike: a folder on dev storage), Listmonk gets a subscriber record for the address so it can relay mail to it (no list, no campaigns), and a sign-in link is sent to that one address. Spike shortcut: no staff approval before you can submit; the real build has one.</p>
+<p class="help" data-show="mode=join">What happens: each current member of the organisation gets one email with your name and address and a button to open the platform. When one of them adds you, your sign-in link arrives. Nothing is written until then.</p>
+</form>
+</main></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const F = $("f");
+const NEW = "__new";
+let ORGS = [], mode = "pick", editing = null;
+const val = (name) => { if (name === "mode") return mode; const e = F.querySelector(`[name=${name}]`); return e ? e.value : ""; };
+function apply() {
+  const pick = $("orgpick").value;
+  mode = editing ? "new" : pick === NEW ? "new" : pick ? "join" : "pick";
+  $("slugprev").textContent = (F.org_name.value || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "…";
+  for (const el of document.querySelectorAll("[data-show]")) { const [k, list] = el.dataset.show.split("="); el.classList.toggle("on", list.split("|").includes(val(k))); }
+  if (F.licence.value === "restricted") { F.public.value = "no"; F.public.disabled = true; } else { F.public.disabled = false; }
+  const org = ORGS.find((o) => o.slug === pick);
+  if (org) $("joinhelp").textContent = `${org.name} (${org.type}) is registered with ${org.members} ${org.members === 1 ? "member" : "members"}. Fill in your details and send them a request to add you.`;
+  $("go").textContent = editing ? "Save changes and email me a sign-in link" : mode === "join" ? `Request to join ${org ? org.name : ""}` : mode === "new" ? "Register and email me a sign-in link" : "Continue";
+  $("go").disabled = mode === "pick";
+}
+F.addEventListener("input", apply); F.addEventListener("change", apply);
+const pre = new URLSearchParams(location.search).get("email"); if (pre) F.contact.value = pre;
+async function loadOrgs() {
+  try {
+    const r = await fetch("/api/organisations", { cache: "no-store" }); if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 120)}`);
+    const d = await r.json(); ORGS = d.organisations;
+    $("orgpick").innerHTML = '<option value="">choose …</option>' + ORGS.map((o) => `<option value="${esc(o.slug)}">${esc(o.name)} · ${esc(o.type)}</option>`).join("") + `<option value="${NEW}">Not listed: register a new organisation</option>`;
+    $("listmsg").className = "help"; $("listmsg").textContent = ORGS.length ? `${ORGS.length} registered ${ORGS.length === 1 ? "organisation" : "organisations"}. Choose yours, or the last option to add a new one.` : "No organisations registered yet; yours would be the first.";
+  } catch (e) {
+    $("orgpick").innerHTML = `<option value="">(list unavailable)</option><option value="${NEW}">Register a new organisation</option>`;
+    $("listmsg").className = "bad"; $("listmsg").textContent = "Could not load the registered organisations (" + (e.message || e) + "). You can still register a new one; an exact duplicate name is refused by the server.";
+  }
+  apply();
+}
+let sess = null;
+fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
+  sess = d.email ? d : null;
+  if (sess && sess.org_error) { $("session").innerHTML = `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(sess.email)}</b>, but the organisation could not be looked up: ${esc(sess.org_error)}. Reload in a minute.`; return; }
+  if (sess && sess.org) {
+    editing = sess.org; const o = sess.org; $("title").textContent = "Edit your organisation"; $("lead").textContent = "Change the organisation's details. Members are managed on the organisation page.";
+    $("pick").hidden = true; F.org_name.value = o.name; F.org_type.value = o.type; F.licence.value = o.licence; F.licence_url.value = o.licence_url || ""; F.public.value = o.public;
+    F.contact.value = sess.email; if (sess.name) F.contact_name.value = sess.name;
+    $("session").innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(sess.email)}</b> · editing <b>${esc(o.name)}</b> · <a href="/form-spike/dashboard.html">back to the organisation page</a>`;
+    apply(); return;
+  }
+  $("session").innerHTML = '<span class="chip chip-info">registration</span> Your address is not registered yet. Already registered under another address? <a href="/form-spike/providers.html">Go back and use that one</a>.';
+  loadOrgs();
+}).catch((e) => { $("session").innerHTML = '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
+apply();
+async function post(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const text = await r.text(); try { return JSON.parse(text); } catch { return { ok: false, message: `non-JSON response (HTTP ${r.status}): ${text.slice(0, 200)}` }; }
+}
+F.addEventListener("submit", async (ev) => {
+  ev.preventDefault(); if (mode === "pick") return;
+  $("go").disabled = true; $("msg").className = ""; $("msg").textContent = mode === "join" ? "sending the request …" : "registering …";
+  try {
+    let d;
+    if (mode === "join") d = await post("/api/join", { slug: $("orgpick").value, email: F.contact.value, name: F.contact_name.value });
+    else {
+      const o = {}; for (const el of $("newbox").querySelectorAll("input, select")) if (el.name) o[el.name] = el.value;
+      o.public = F.public.value; o.contact = F.contact.value; o.contact_name = F.contact_name.value;
+      d = await post("/api/signup", o);
+      if (d.joinable && !editing) { const opt = [...$("orgpick").options].find((x) => x.value === d.slug); if (opt) { $("orgpick").value = d.slug; apply(); } }
+    }
+    $("msg").className = d.ok ? "ok" : "bad"; $("msg").textContent = d.message + (d.ok && mode === "new" ? " The link opens your organisation page." : "");
+  } catch (e) { $("msg").className = "bad"; $("msg").textContent = "Request failed: " + e; }
+  $("go").disabled = false;
+});
+</script>
+</body></html>

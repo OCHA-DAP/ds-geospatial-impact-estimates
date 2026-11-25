@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Submit an analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/form-spike/_shared.css">
+<style>
+.gate { border:2px solid var(--b5); background:var(--b05); padding:18px 20px 14px; margin:0 0 1.6rem; }
+.gate h2 { border:0; margin:0 0 4px; padding:0; }
+.gate .row { grid-template-columns:1fr auto; align-items:end; }
+.gate input[type=email] { font-size:16px; padding:11px 12px; border:1px solid var(--b5); }
+.gate button { font-size:15px; padding:11px 18px; margin:0 0 1px; white-space:nowrap; }
+#msg { font-size:14px; margin:10px 0 0; min-height:1.4em; } #msg.ok { color:var(--b7); font-weight:500; } #msg.bad { color:var(--w6); }
+.cont { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; font-size:14px; } .cont .btn { margin:0; } .cont[hidden] { display:none; }
+@media (max-width:640px) { .gate .row { grid-template-columns:1fr; } }
+</style>
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">OCHA Centre for Humanitarian Data · Data Science · throwaway spike</p>
+<h1>Submit a damage analysis</h1>
+<p>Enter the email address your organisation uses with us. Registered providers get a sign-in link; new providers are asked to register first.</p></header>
+<main>
+<p class="topnav"><a href="/">← Damage Exposure Viewer</a></p>
+<div id="session" class="auth">checking for a session …</div>
+
+<div class="gate" id="gate">
+<h2>Your email</h2>
+
+<form id="req" onsubmit="return false">
+<div class="row"><div><label for="email">Email address</label><input type="email" id="email" placeholder="you@organisation.org" required autocomplete="email"></div><div><button class="btn" id="send" type="submit">Continue</button></div></div>
+</form>
+<p id="msg"></p>
+<div class="cont" id="goreg" hidden><span>Register as a provider? You can join an organisation that is already registered, or add a new one.</span><a class="btn" id="reglink" href="/form-spike/signup.html">Yes, continue</a><button class="btn btn-2" id="noreg" type="button">No, try another address</button></div>
+</div>
+
+<p class="muted">Your files stay on the event's HDX crisis page; the form behind the link is where you describe the product and the delivery. No password: a one-time link is emailed to the address you enter, and this browser then stays signed in for 30 days.</p>
+</main></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const q = new URLSearchParams(location.search);
+const note = q.get("bad") ? '<p><span class="chip chip-warn">link rejected</span> That link is invalid or has expired. Enter your email below for a new one.</p>'
+  : q.get("signin") ? '<p><span class="chip chip-info">sign in first</span> The form needs a signed-in session. Enter your email below.</p>'
+  : q.get("denied") || q.get("forbidden") ? '<p><span class="chip chip-warn">not signed in</span> Enter your email below.</p>' : "";
+const s = $("session");
+fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).then((d) => {
+  if (!d.email) { s.innerHTML = note + '<span class="chip chip-info">not signed in</span> Enter your email to continue.'; return; }
+  if (d.org_error) { s.innerHTML = note + `<span class="chip chip-warn">registry unreachable</span> signed in as <b>${esc(d.email)}</b>, but the organisation could not be looked up: ${esc(d.org_error)}. Try again in a minute.`; return; }
+  if (d.org) { s.innerHTML = `<span class="chip chip-ok">signed in</span> <b>${esc(d.email)}</b> · ${esc(d.org.name)} · opening your organisation page …`; location.replace("/form-spike/dashboard.html"); return; }
+  // A session whose address is no longer in the registry (contact replaced): not a signed-in state. Sign it out.
+  s.innerHTML = note + `<span class="chip chip-warn">sign-in no longer valid</span> <b>${esc(d.email)}</b> is not a registered contact any more. Enter your email below. <a href="/api/logout">Clear the old sign-in</a>.`;
+}).catch((e) => { s.innerHTML = note + '<span class="chip chip-warn">session check failed</span> ' + esc(e.message || e) + '. This is a server problem, not a missing sign-in.'; });
+$("req").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const email = $("email").value.trim(), btn = $("send"), msg = $("msg");
+  btn.disabled = true; msg.className = ""; msg.textContent = "checking …"; $("goreg").hidden = true;
+  try {
+    const r = await fetch("/api/request-link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+    const text = await r.text(); let d; try { d = JSON.parse(text); } catch { d = { ok: false, message: `non-JSON response (HTTP ${r.status}): ${text.slice(0, 200)}` }; }
+    msg.className = d.ok ? (d.registered === false ? "bad" : "ok") : "bad"; msg.textContent = d.message;
+    if (d.ok && d.registered === false) { msg.textContent = "That address is not registered."; $("reglink").href = "/form-spike/signup.html?email=" + encodeURIComponent(email); $("goreg").hidden = false; }
+  } catch (e) { msg.className = "bad"; msg.textContent = "Request failed: " + e; }
+  btn.disabled = false;
+});
+$("noreg").onclick = () => { $("goreg").hidden = true; $("msg").textContent = ""; $("email").value = ""; $("email").focus(); };
+</script>
+</body></html>

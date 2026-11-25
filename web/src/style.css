@@ -337,3 +337,20 @@ table.tt td { font-size: 12px; padding: 2px 14px 2px 0; white-space: nowrap; ver
 }
 .event-status-active { background: #dcf3e6; color: #1e7a4c; }
 .event-status-closed { background: #e6e9ed; color: #6b7a8a; }
+
+/* Top-left entry point for data providers (spike: the submission hub lives under /form-spike/). */
+.landing-providers {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e795f;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  padding: 7px 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+.landing-providers:hover, .landing-providers:focus-visible { background: #e9f5f1; border-color: #269777; outline: none; }

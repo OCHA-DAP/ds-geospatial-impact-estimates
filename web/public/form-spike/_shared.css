@@ -1,0 +1,39 @@
+/* Throwaway spike. HDX v2 tokens copied from pages/assets/site.css; light only. */
+:root { --b5:#269777; --b6:#1e795f; --b7:#18614c; --b8:#0f3c30; --b05:#e9f5f1; --b1:#d4eae4;
+  --p1:#d1e0f7; --p6:#134ead; --w1:#f6e9d4; --w6:#aa7222; --w8:#553911;
+  --n9:#1f2324; --n8:#3f4748; --n7:#5e6a6b; --n2:#d8e0e1; --n1:#ebeff0; --n05:#f5f7f7; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--n05); color:var(--n9); font-family:'Roboto',system-ui,-apple-system,'Segoe UI',sans-serif; line-height:1.5; font-size:15px; }
+.wrap { max-width:880px; margin:0 auto; background:#fff; min-height:100vh; box-shadow:0 0 40px rgba(31,35,36,.06); }
+.hero { background:var(--b6); padding:28px 40px 24px; color:#fff; border-bottom:3px solid var(--b5); }
+.eyebrow { font-size:11px; letter-spacing:.15em; text-transform:uppercase; font-weight:700; color:var(--b1); margin:0 0 8px; }
+.hero h1 { font-family:'Merriweather',Georgia,serif; font-weight:900; font-size:26px; margin:0 0 6px; }
+.hero p { margin:0; color:#fff; font-size:14px; max-width:64ch; }
+main { padding:28px 40px 40px; }
+h2 { font-family:'Merriweather',Georgia,serif; font-weight:900; color:var(--b8); font-size:18px; border-bottom:1px solid var(--n2); padding-bottom:.3rem; margin:2rem 0 .8rem; }
+h2:first-child { margin-top:0; }
+p { margin:0 0 .9rem; max-width:72ch; }
+.muted { color:var(--n7); font-size:13.5px; }
+.chip { display:inline-block; font-size:11px; font-weight:500; padding:3px 8px; border-radius:4px; margin-right:6px; }
+.chip-ok { background:var(--b1); color:var(--b8); }
+.chip-warn { background:var(--w1); color:var(--w8); }
+.chip-info { background:var(--p1); color:var(--p6); border:1px dashed var(--p6); }
+.auth { border:1px solid var(--n1); background:var(--n05); padding:14px 16px; margin:0 0 1.4rem; font-size:14px; }
+.auth code, pre { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; }
+pre { background:var(--n05); border:1px solid var(--n1); padding:12px; overflow:auto; margin:0 0 1rem; }
+a.btn, button.btn { display:inline-block; background:var(--b6); color:#fff; text-decoration:none; padding:8px 14px; font-weight:500; font-size:14px; border:1px solid var(--b7); margin:0 8px 8px 0; cursor:pointer; font-family:inherit; }
+a.btn-2, button.btn-2 { background:#fff; color:var(--b7); border:1px solid var(--b5); }
+a.btn:hover, button.btn:hover { background:var(--b7); color:#fff; }
+fieldset { border:1px solid var(--n2); padding:14px 18px 6px; margin:0 0 1.2rem; }
+legend { font-weight:700; color:var(--b7); padding:0 6px; }
+label { display:block; font-size:13px; font-weight:500; color:var(--n8); margin:8px 0 3px; }
+input[type=text], input[type=email], input[type=url], input[type=date], input[type=number], select, textarea { width:100%; font:inherit; font-size:14px; padding:7px 9px; border:1px solid var(--n2); background:#fff; color:var(--n9); }
+textarea { min-height:60px; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
+.help { font-size:12px; color:var(--n7); margin:2px 0 0; }
+table { border-collapse:collapse; width:100%; font-size:13.5px; margin:8px 0 12px; }
+th, td { text-align:left; border-bottom:1px solid var(--n1); padding:6px 8px; vertical-align:top; }
+th { background:var(--n1); font-size:12px; }
+.nav { font-size:13px; margin:0 0 1rem; } .nav a { color:var(--b7); }
+@media (max-width:640px) { .hero, main { padding-left:18px; padding-right:18px; } .row { grid-template-columns:1fr; } }
+.topnav { font-size:13px; margin:0 0 1rem; } .topnav a { color:var(--b7); text-decoration:none; font-weight:500; } .topnav a:hover { text-decoration:underline; }

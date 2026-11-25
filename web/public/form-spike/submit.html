@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Submission form mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/form-spike/_shared.css">
+<style>
+[data-show] { display: none; } [data-show].on { display: block; }
+.row > [data-show].on { display: block; }
+.why { font-size:12px; color:var(--n7); border-left:3px solid var(--b1); padding:2px 8px; margin:6px 0 10px; }
+.steps { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px; font-size:12.5px; }
+.files { border:2px solid var(--b5); background:var(--b05); padding:14px 18px 10px; margin:10px 0 14px; }
+.files-h { font-family:'Merriweather',Georgia,serif; font-weight:900; color:var(--b8); font-size:16px; margin:0 0 8px; }
+.slot:not([data-show]), .slot[data-show].on { display:grid; grid-template-columns:34px 1fr; gap:0 10px; align-items:start; margin:0 0 10px; }
+.slot .num { width:28px; height:28px; margin-top:6px; background:var(--b6); color:#fff; font-weight:700; text-align:center; line-height:28px; font-size:14px; }
+.slot label { font-size:15px; font-weight:700; color:var(--b8); margin:4px 0 4px; }
+.slot input[type=url] { font-size:15px; padding:10px 11px; border:1px solid var(--b5); background:#fff; }
+.slot input.bad { border-color:var(--w6); background:var(--w1); }
+.slot .urlmsg { font-size:12.5px; margin:3px 0 0; }
+.slot .urlmsg.ok { color:var(--b7); } .slot .urlmsg.warn { color:var(--w6); }
+.slot-off { background:#fff; border:1px dashed var(--n2); padding:8px 10px 2px; } .slot-off .num { background:var(--n2); color:var(--n8); }
+.steps span { border:1px solid var(--n2); padding:3px 9px; color:var(--n7); } .steps span.done { background:var(--b1); color:var(--b8); border-color:var(--b1); }
+</style>
+</head><body><div class="wrap">
+<header class="hero"><p class="eyebrow">throwaway spike · step 2 of 2 · records go to a test folder</p>
+<h1>Damage analysis submission</h1>
+<p>Three levels. Each choice narrows the next, so a provider only sees the fields their product needs. Level 1 is your registration; level 2 is remembered between deliveries in the real build. Here levels 2 and 3 are on one page so the whole shape is visible.</p></header>
+<main>
+<div id="session" class="auth">checking for a session …</div>
+<p class="topnav"><a href="/form-spike/dashboard.html">← Your organisation</a></p>
+<div class="steps"><span id="st1">1 · organisation</span><span id="st2">2 · product</span><span id="st3">3 · delivery</span></div>
+
+<form id="f" onsubmit="return false">
+<fieldset><legend>1 · Organisation (from your registration)</legend>
+<div id="org" class="auth">looking up the organisation registered for this address …</div>
+</fieldset>
+
+<fieldset><legend>2 · Product definition (once per product)</legend>
+<div class="row">
+<div><label>Product name</label><input type="text" name="product" value="QuakeDamage graded footprints"></div>
+<div><label>Category</label><select name="category"><option value="analysis">analysis (automated or model-derived)</option><option value="reference">reference (human-made: expert, crowd, field)</option></select>
+<p class="help">Reference products can only use the human methods; analysis products the automated ones.</p></div>
+<div><label>Sensing method</label><select name="method" id="method"></select></div>
+<div data-show="method=optical_ml|expert|crowd"><label>Imagery source</label><select name="imagery"><option>Vantor / Maxar WorldView (30 cm)</option><option>Planet SkySat (50 cm)</option><option>Airbus Pléiades Neo (30 cm)</option><option>Copernicus contributing mission</option><option value="other">other optical</option></select></div>
+<div data-show="method=sar_change|sar_coherence"><label>SAR source</label><select name="imagery"><option>Sentinel-1 (10 m)</option><option>ICEYE (1 m)</option><option>Capella (0.5 m)</option><option>TerraSAR-X / TanDEM-X</option><option value="other">other SAR</option></select></div>
+<div data-show="imagery=other"><label>Which sensor and resolution</label><input type="text" name="imagery_other" placeholder="sensor, resolution"></div>
+<div><label>Geometry mode</label><select name="geom" id="geom">
+<option value="footprints">building footprints (polygons)</option><option value="points">points, one per building</option><option value="ids">building ids keyed to a base, no geometry</option><option value="blocks">damage areas or blocks</option><option value="raster">raster</option></select></div>
+<div data-show="geom=footprints|points|ids|blocks"><label>File format</label><select name="format"><option>GeoJSON</option><option>GeoPackage</option><option>zipped Shapefile</option><option>GeoParquet</option><option value="csv">CSV with lon/lat columns</option></select></div>
+<div data-show="geom=raster"><label>File format</label><select name="format"><option>GeoTIFF / COG</option></select></div>
+<div data-show="geom=footprints|ids"><label>Footprint base and release</label><select name="base"><option>Overture 2026-05</option><option>Overture 2025-11</option><option>Microsoft global footprints</option><option>Google Open Buildings v3</option><option>OpenStreetMap</option><option>Global Building Atlas</option><option value="own">own footprints</option></select>
+<p class="help" data-show="geom=ids">Required for id-keyed products: the ids are joined onto this base.</p></div>
+<div data-show="geom=raster"><label>Pixel values mean</label><select name="raster_values"><option value="class">a damage class per pixel</option><option value="prob">a damage probability per pixel</option></select></div>
+</div>
+<p class="why" data-show="geom=points|blocks">Points and blocks are snapped or projected onto the common base in our pipeline; no footprint base is needed from the provider.</p>
+<p class="why" data-show="geom=raster">Rasters are sampled at base building centroids. Supporting them in the first version is an open decision.</p>
+
+<div class="row">
+<div data-show="geom=footprints|points|ids|blocks"><label>Damage encoding</label><select name="enc" id="enc"><option value="class">categorical class</option><option value="flag">binary damaged flag</option><option value="score">continuous score</option><option value="mass">mass (tonnes)</option></select></div>
+<div data-show="enc=score"><label>Higher score means</label><select name="score_dir"><option>more likely damaged</option><option>less likely damaged</option></select></div>
+<div data-show="enc=mass"><label>Units</label><select name="mass_units"><option>tonnes</option><option>kilograms</option><option>cubic metres</option></select></div>
+<div data-show="geom=footprints|points|ids|blocks"><label>Rows in the file</label><select name="rows" id="rows"><option value="all">every assessed building</option><option value="damaged">damaged buildings only</option></select></div>
+<div><label>Analysed extent</label><select name="extent" id="extent">
+<option value="polygon">separate polygon, supplied with each delivery</option><option value="rows">every assessed building is in the file, so the rows are the extent</option><option value="none">none: damaged buildings only, no extent</option></select>
+<p class="help" data-show="extent=none">Without an extent the product is detected-only: no coverage, no rate, no extrapolation, and it cannot be evaluated.</p></div>
+<div><label>Confidence</label><select name="conf" id="conf"><option value="none">none</option><option value="cont">continuous, per building</option><option value="cat">categorical, ordered</option></select></div>
+<div data-show="conf=cont"><label>Higher confidence means</label><select name="conf_dir"><option>more certain it is damaged</option><option>less certain</option></select></div>
+<div data-show="conf=cat"><label>Ordered values, lowest first</label><input type="text" name="conf_values" placeholder="possible, probable, high_confidence"></div>
+</div>
+<label>Method description</label><textarea name="desc">Deep-learning model classifying building footprints from pre- and post-event imagery.</textarea>
+<label>Known limitations</label><textarea name="limits">Lighter damage under-detected; single-scene areas less reliable.</textarea>
+<label>Documentation link</label><input type="text" name="doc_url" placeholder="https://…">
+</fieldset>
+
+<fieldset><legend>3 · This delivery</legend>
+<div class="row">
+<div><label>Event</label><select name="event" id="event"><option value="20260624-ve-earthquake" data-onset="2026-06-24">20260624-ve-earthquake · Venezuela earthquake</option><option value="20260810-co-earthquake" data-onset="2026-08-10">20260810-co-earthquake · Colombia earthquake</option></select></div>
+</div>
+<div class="files">
+<p class="files-h">The two files this delivery points to</p>
+<p class="help" style="margin:0 0 10px">Publish both on the event's HDX crisis page first, then paste each resource link here. These two links are what the pipeline fetches; everything else on this page describes them.</p>
+<div class="slot"><span class="num">1</span><div>
+<label for="url">Analysis product · HDX resource link</label>
+<input type="url" name="url" id="url" value="/form-spike/sample.geojson" placeholder="https://data.humdata.org/dataset/…/resource/…">
+<p class="urlmsg" id="urlmsg"></p>
+<div data-show="geom=footprints|points|ids|blocks"><button class="btn btn-2" id="read" type="button" style="margin-top:8px">Read the file</button> <span id="readmsg" class="muted"></span></div>
+</div></div>
+<div class="slot" data-show="extent=polygon"><span class="num">2</span><div>
+<label for="extent_url">Analysed extent (AOI) · HDX resource link</label>
+<input type="url" name="extent_url" id="extent_url" value="/form-spike/sample_aoi.geojson" placeholder="https://data.humdata.org/dataset/…/resource/…">
+<p class="urlmsg" id="extmsg"></p>
+<p class="help">The polygon of everything your team looked at. Without it the product has no coverage, no rate and cannot be evaluated.</p>
+</div></div>
+<div class="slot slot-off" data-show="extent=rows|none"><span class="num">2</span><div>
+<p data-show="extent=rows" class="help" style="margin:8px 0">No separate extent file: level 2 says every assessed building is in the analysis file, so its rows are the extent.</p>
+<p data-show="extent=none" class="help" style="margin:8px 0">No extent file: level 2 declares this product detected-only. It will be shown without coverage or rates. If your team does have an AOI, change "Analysed extent" in level 2.</p>
+</div></div>
+</div>
+<div class="row">
+<div><label>Delivery</label><input type="text" name="delivery" id="delivery" readonly value=""><p class="help">Assigned by the registry: product, event, delivery number and the moment of submission. The file's checksum is recorded with it. This is the version; nothing the provider types can change it.</p></div>
+<div><label>Your own version name (optional)</label><input type="text" name="provider_version" placeholder="as it appears in your release notes, e.g. v1.2"></div>
+<div><label>Status</label><select name="status"><option>preliminary</option><option>final</option></select></div>
+<div data-show="prior=yes"><label>Earlier deliveries of this product for this event</label><select name="supersedes" id="supersedes"></select><p class="help">A new delivery supersedes the latest one by default; the earlier version stays available and the viewer shows the latest. Choose "alternate" only for a genuinely parallel product.</p></div>
+<div><label>Earliest post-event image</label><input type="date" name="post_from" id="post_from" value="2026-06-25"></div>
+<div><label>Latest post-event image</label><input type="date" name="post_to" id="post_to" value="2026-06-28"></div>
+<div data-show="method=optical_ml|sar_change|sar_coherence"><label>Pre-event imagery used</label><select name="pre" id="pre"><option value="yes">yes, dates below</option><option value="no">no, post-event only</option></select></div>
+<div data-show="pre=yes"><label>Earliest pre-event image</label><input type="date" name="pre_from" id="pre_from" value="2026-05-10"></div>
+<div data-show="pre=yes"><label>Latest pre-event image</label><input type="date" name="pre_to" id="pre_to" value="2026-06-20"></div>
+</div>
+<p class="help" id="datemsg"></p>
+<div data-show="geom=raster">
+<h2 style="font-size:15px;margin:1.2rem 0 .4rem">Map the raster's values to the spec</h2>
+<p class="help">This mockup cannot read rasters in the browser. The real form lists the band's unique values here, the way the vector path lists column values.</p>
+<div class="row">
+<div><label>Band</label><input type="number" name="band" value="1" min="1"></div>
+<div data-show="raster_values=class"><label>Pixel values that mean damaged (comma separated)</label><input type="text" name="raster_damaged" placeholder="2"></div>
+<div data-show="raster_values=class"><label>Pixel values that mean destroyed, if any</label><input type="text" name="raster_destroyed" placeholder="3"></div>
+<div data-show="raster_values=class"><label>Pixel value for not assessed / no data</label><input type="text" name="raster_nodata" placeholder="0 or nodata"></div>
+<div data-show="raster_values=prob"><label>Threshold: damaged at or above</label><input type="number" name="raster_threshold" step="any" placeholder="0.5"></div>
+</div></div>
+<div id="mapping" data-show="read=yes">
+<h2 style="font-size:15px;margin:1.2rem 0 .4rem">Map the file's columns to the spec</h2>
+<p class="help">Everything below is a dropdown of what the file actually contains. The choices in level 2 decide which roles need a column.</p>
+<div class="row">
+<div data-show="enc=class|flag|score|mass"><label id="dmg_label">Damage column</label><select name="dmg_col" id="dmg_col"></select></div>
+<div data-show="geom=ids"><label>Building id column</label><select name="id_col" id="id_col"></select></div>
+<div data-show="conf=cont|cat"><label>Confidence column</label><select name="conf_col" id="conf_col"></select></div>
+<div><label>Scene count column (optional)</label><select name="scene_col" id="scene_col"></select></div>
+<div><label>Scene date column (optional)</label><select name="date_col" id="date_col"></select></div>
+</div>
+<div data-show="enc=class">
+<label>Value mapping: each native value to our scale</label>
+<table id="map"><thead><tr><th>Native value</th><th>Count</th><th>Our class</th><th>Counts as damaged in the headline</th></tr></thead><tbody></tbody></table>
+</div>
+<div class="row" data-show="enc=flag"><div><label>Value that means damaged</label><select name="flag_value" id="flag_value"></select></div></div>
+<div class="row" data-show="enc=score"><div><label>Threshold: counts as damaged at or above</label><input type="number" name="threshold" id="threshold" step="any"><p class="help" id="range"></p></div></div>
+</div>
+<h2 style="font-size:15px;margin:1.2rem 0 .4rem">Your published headline numbers</h2>
+<p class="help">As you report them. We recount on the common building base and show both; a large gap is flagged for review, not rejected.</p>
+<div class="row">
+<div><label>Buildings analysed</label><input type="number" name="n_analysed" value="478000"></div>
+<div><label>Buildings damaged</label><input type="number" name="n_damaged" value="61000"></div>
+</div>
+<label><input type="checkbox" name="licence_ok" checked> This version is released under the organisation's default licence (<span id="licname">…</span>)</label>
+</fieldset>
+
+<button class="btn" id="show" type="button">Submit delivery</button>
+<p class="help">In this spike each submission is written as a JSON record to a test folder on the team's dev blob storage. The real build writes the registry rows and fetches the file into bronze.</p>
+<pre id="out" hidden></pre>
+<p id="after" hidden><a class="btn" href="/form-spike/dashboard.html">Back to your organisation page</a> <span class="muted">the new delivery is in the table there</span></p>
+</form>
+</main></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const F = $("f");
+let sess = null, ORG = null;
+let sessFail = null;
+fetch("/api/session", { cache: "no-store" }).then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0, 160)}`); return r.json(); }).catch((e) => { sessFail = e.message || String(e); return { email: null }; }).then((d) => {
+  sess = d.email ? d : null; ORG = (sess && sess.org) || null;
+  $("session").innerHTML = sess
+    ? `<span class="chip chip-ok">signed in by link</span> <b>${esc(sess.email)}</b> · session until ${new Date(sess.exp * 1000).toLocaleString()} · <a href="/api/logout">sign out</a>`
+    : sessFail ? `<span class="chip chip-warn">session check failed</span> ${esc(sessFail)}. This is a server problem, not a missing sign-in; the submit call will fail the same way.`
+    : '<span class="chip chip-warn">no session</span> redirecting to sign in …';
+  if (!sess && !sessFail) { location.replace("/form-spike/providers.html?signin=1"); return; }
+  if (sess && !ORG && !sess.org_error) { location.replace("/form-spike/providers.html?signin=1"); return; } // signed in means registered; anything else goes back to the door
+  $("org").innerHTML = sessFail ? `<span class="chip chip-warn">session check failed</span> ${esc(sessFail)}; the organisation cannot be looked up.`
+    : sess && sess.org_error ? `<span class="chip chip-warn">registry unreachable</span> ${esc(sess.org_error)}. Submit is blocked until the lookup works; this is not "unregistered".`
+    : ORG
+    ? `<span class="chip chip-ok">registered</span> <b>${esc(ORG.name)}</b> · ${esc(ORG.type)} · licence ${esc(ORG.licence)}${ORG.licence_url ? ` (<a href="${esc(ORG.licence_url)}" rel="noopener" target="_blank">terms</a>)` : ""} · public: ${esc(ORG.public)} · key <code>${esc(ORG.slug)}</code> · <a href="/form-spike/dashboard.html">organisation page</a>`
+    : sess ? '<span class="chip chip-warn">no organisation registered for this address</span> <a href="/form-spike/signup.html">Register it</a> first; the submit call is refused until then.'
+    : '<span class="chip chip-info">sign in to see it</span> The organisation comes from the registration behind the signed-in address, never from this form.';
+  applyConditions();
+});
+
+// ---- conditional visibility: data-show="field=v1|v2" shows the element when the named field has one of the values.
+const state = { read: "no" };
+function val(name) {
+  if (name in state) return state[name];
+  const els = [...F.querySelectorAll(`[name=${name}]`)].filter((e) => e.closest("[data-show]") === null || e.closest("[data-show]").classList.contains("on"));
+  const e = els[0]; return e ? e.value : "";
+}
+function applyConditions() {
+  // values other fields depend on, computed before visibility is evaluated
+  const slug = ORG ? ORG.slug : "unregistered";
+  $("licname").textContent = ORG ? ORG.licence : "from your registration";
+  const cat = F.category.value;
+  // one method per product, filtered by category: reference = human methods, analysis = automated
+  const LABELS = { optical_ml: "optical VHR machine learning", sar_change: "SAR change detection", sar_coherence: "SAR coherence", expert: "expert visual interpretation", crowd: "crowd mapping", field: "field survey" };
+  const allowed = Object.keys(LABELS).filter((m) => (cat === "reference") === ["expert", "crowd", "field"].includes(m));
+  const cur = $("method").value;
+  $("method").innerHTML = allowed.map((m) => `<option value="${m}">${LABELS[m]}</option>`).join("");
+  if (allowed.includes(cur)) $("method").value = cur;
+  const ev = $("event"), onset = ev.selectedOptions[0].dataset.onset;
+  const prior = PRIOR[`${slug}|${F.product.value}|${ev.value}`] || [];
+  state.prior = prior.length ? "yes" : "no";
+  for (let pass = 0; pass < 3; pass++) {
+    for (const el of document.querySelectorAll("[data-show]")) {
+      const [field, list] = el.dataset.show.split("=");
+      const on = list.split("|").includes(val(field)) && (el.parentElement.closest("[data-show]") === null || el.parentElement.closest("[data-show]").classList.contains("on"));
+      el.classList.toggle("on", on);
+    }
+  }
+  // dependent lists and rules
+  // extent follows the rows choice: damaged-only files cannot be their own extent
+  const rowsOpt = $("extent").querySelector('[value=rows]');
+  if (val("rows") === "damaged") { rowsOpt.disabled = true; if ($("extent").value === "rows") $("extent").value = "none"; } else { rowsOpt.disabled = false; }
+  $("dmg_label").textContent = { class: "Damage class column", flag: "Damaged flag column", score: "Damage score column", mass: "Mass column" }[F.enc.value] || "Damage column";
+  $("st1").classList.toggle("done", !!ORG); for (const [id, n] of [["st2", ["product"]], ["st3", ["url"]]]) $(id).classList.toggle("done", n.every((k) => F[k] && F[k].value));
+  // delivery identity and date constraints, keyed to the event's onset
+  const n = prior.length + 1;
+  $("delivery").value = `${slug} / ${ev.value} / delivery ${n} · timestamp and checksum assigned on submit`;
+  if (prior.length) $("supersedes").innerHTML = prior.map((d, i) => `<option value="${d.id}" ${i === prior.length - 1 ? "selected" : ""}>supersedes ${d.id} (${d.when}, latest image ${d.post_to})</option>`).join("") + '<option value="">alternate: supersedes nothing</option>';
+  const dayBefore = (d) => { const t = new Date(d); t.setUTCDate(t.getUTCDate() - 1); return t.toISOString().slice(0, 10); };
+  const today = new Date().toISOString().slice(0, 10);
+  $("post_from").min = onset; $("post_to").min = onset; $("post_from").max = today; $("post_to").max = today;
+  $("pre_from").max = dayBefore(onset); $("pre_to").max = dayBefore(onset);
+  const problems = [];
+  if (sessFail) problems.push("the session check failed (server problem)");
+  else if (sess && sess.org_error) problems.push("the registry could not be read, so the organisation is unknown");
+  else if (sess && !ORG) problems.push("no organisation is registered for this address (register first)");
+  if (F.post_from.value && F.post_from.value < onset) problems.push(`earliest post-event image is before the event onset (${onset})`);
+  if (F.post_to.value && F.post_from.value && F.post_to.value < F.post_from.value) problems.push("latest post-event image is before the earliest");
+  if (F.post_to.value && F.post_to.value > today) problems.push("latest post-event image is in the future");
+  if (val("pre") === "yes") {
+    if (F.pre_to.value && F.pre_to.value >= onset) problems.push(`latest pre-event image is on or after the onset (${onset})`);
+    if (F.pre_to.value && F.pre_from.value && F.pre_to.value < F.pre_from.value) problems.push("latest pre-event image is before the earliest");
+  }
+  // the two file links: HDX confirmed, other hosts accepted with a note, anything else blocks
+  const checkUrl = (input, msg, what) => {
+    const v = input.value.trim(); let cls = "", text = "", bad = false;
+    if (!v) { text = "required"; bad = true; }
+    else if (v.startsWith("/form-spike/")) { cls = "warn"; text = "spike sample file, stands in for an HDX resource in this mockup"; }
+    else if (/^https:\/\/data\.humdata\.org\/dataset\/[^/]+\/resource\/[^/]+/.test(v)) { cls = "ok"; text = "HDX resource link"; }
+    else if (/^https?:\/\/\S+$/.test(v)) { cls = "warn"; text = "not an HDX link: accepted, but the event's HDX crisis page is where products should be published"; }
+    else { text = "not a link"; bad = true; }
+    input.classList.toggle("bad", bad); msg.className = "urlmsg " + cls; msg.textContent = text;
+    if (bad) problems.push(`${what} link is ${text}`);
+  };
+  checkUrl($("url"), $("urlmsg"), "analysis product");
+  if (val("extent") === "polygon") checkUrl($("extent_url"), $("extmsg"), "analysed extent");
+  $("datemsg").textContent = problems.length ? "Cannot submit: " + problems.join("; ") + "." : "";
+  $("datemsg").style.color = problems.length ? "#aa7222" : "";
+  $("show").disabled = problems.length > 0;
+}
+// Earlier deliveries the registry would know about (mock). Key: slug|product|event.
+const PRIOR = { "example_lab|QuakeDamage graded footprints|20260624-ve-earthquake": [{ id: "delivery 1", when: "25 Jun 2026 14:02", post_to: "2026-06-25" }] };
+F.addEventListener("change", applyConditions); F.addEventListener("input", applyConditions);
+const once = () => applyConditions();
+
+// ---- mock introspection
+const CLASSES = ["0 no damage", "1 possibly damaged", "2 damaged", "3 destroyed", "not assessed"];
+let feats = [];
+function fill(sel, cols, none) { sel.innerHTML = (none ? '<option value="">(none)</option>' : "") + cols.map((c) => `<option>${esc(c)}</option>`).join(""); }
+function values(col) { const m = new Map(); for (const f of feats) { const v = String(f.properties?.[col]); m.set(v, (m.get(v) || 0) + 1); } return [...m.entries()].sort((a, b) => b[1] - a[1]); }
+$("read").onclick = async () => {
+  $("readmsg").textContent = "reading …";
+  let gj;
+  try { const r = await fetch(F.url.value); if (!r.ok) throw new Error("HTTP " + r.status); gj = await r.json(); }
+  catch (e) { $("readmsg").textContent = "Could not read it from the browser (" + e.message + "). The real form does this server-side."; return; }
+  feats = gj.features || [];
+  const cols = Object.keys(feats[0]?.properties || {});
+  $("readmsg").textContent = `${feats.length.toLocaleString()} features · columns: ${cols.join(", ")}`;
+  fill($("dmg_col"), cols); fill($("id_col"), cols, true); fill($("conf_col"), cols, true); fill($("scene_col"), cols, true); fill($("date_col"), cols, true);
+  $("dmg_col").value = cols.find((c) => /dmg|damage|grade|class|flag|score|mass/i.test(c)) || cols[0];
+  $("id_col").value = cols.find((c) => /^(b?id|gers|overture_id|fid)$/i.test(c)) || "";
+  $("conf_col").value = cols.find((c) => /conf|score|prob/i.test(c)) || "";
+  $("scene_col").value = cols.find((c) => /scene|n_obs|observ/i.test(c)) || "";
+  state.read = "yes"; onDamageColumn(); applyConditions();
+};
+function onDamageColumn() {
+  const vals = values($("dmg_col").value);
+  const tb = $("map").querySelector("tbody"); tb.innerHTML = "";
+  for (const [v, n] of vals.slice(0, 50)) tb.insertAdjacentHTML("beforeend", `<tr><td><code>${esc(v)}</code></td><td>${n.toLocaleString()}</td><td><select data-v="${esc(v)}">${CLASSES.map((c) => `<option>${c}</option>`).join("")}</select></td><td><input type="checkbox" data-d="${esc(v)}"></td></tr>`);
+  if (vals.length > 50) tb.insertAdjacentHTML("beforeend", `<tr><td colspan="4">${vals.length} distinct values: this looks continuous. Choose "continuous score" as the encoding and set a threshold.</td></tr>`);
+  fill($("flag_value"), vals.map(([v]) => v));
+  const nums = feats.map((f) => Number(f.properties?.[$("dmg_col").value])).filter((x) => !Number.isNaN(x));
+  $("range").textContent = nums.length ? `observed range ${Math.min(...nums)} to ${Math.max(...nums)}` : "column is not numeric";
+}
+$("dmg_col").addEventListener("change", onDamageColumn);
+
+$("show").onclick = () => {
+  const o = {};
+  for (const el of F.querySelectorAll("input, select, textarea")) {
+    if (!el.name || el.closest("[data-show]") && !el.closest("[data-show]").classList.contains("on")) continue; // only visible fields are sent
+    if (el.type === "checkbox") { if (el.checked) o[el.name] = [].concat(o[el.name] || [], el.value); continue; }
+    o[el.name] = el.value;
+  }
+  if (val("enc") === "class") o.value_mapping = [...$("map").querySelectorAll("tbody tr")].map((tr) => { const s = tr.querySelector("select"); const c = tr.querySelector("input"); return s ? { native: s.dataset.v, class: s.value, damaged: c.checked } : null; }).filter(Boolean);
+  $("out").hidden = false; $("out").textContent = "submitting …";
+  fetch("/api/submit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) })
+    .then(async (r) => { const text = await r.text(); let body; try { body = JSON.parse(text); } catch { body = { ok: false, message: `non-JSON response: ${text.slice(0, 300) || "(empty body)"}` }; } return { status: r.status, body }; })
+    .then((res) => { $("out").textContent = (res.body.ok ? `Saved: ${res.body.saved_to}\n\n` : `HTTP ${res.status}\n`) + JSON.stringify(res.body, null, 2); if (res.body.ok) $("after").hidden = false; })
+    .catch((e) => { $("out").textContent = "submit failed: " + e; });
+};
+const q = new URLSearchParams(location.search);
+if (["analysis", "reference"].includes(q.get("category"))) F.category.value = q.get("category");
+once();
+</script>
+</body></html>
