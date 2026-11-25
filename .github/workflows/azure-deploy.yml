@@ -16,21 +16,11 @@
 
 name: Deploy to Azure App Service
 
+# Manual only since 2026-11-25: the App Service is the fallback host (ADR-0023); the
+# Static Web App is what users see and swa-deploy.yml publishes it. Automatic pushes
+# had failed on every v1 commit since 2026-09-03 (staging slot returns 409), which
+# buried real failures in red noise. Use "Run workflow" to deploy the fallback.
 on:
-  push:
-    branches: [v1]
-    # Don't redeploy the app for changes that don't affect it (docs, diagrams,
-    # exploratory analysis, the workflow itself, local scripts). A push touching
-    # ONLY these is skipped; a push that also changes app code still deploys. Use
-    # "Run workflow" (workflow_dispatch) to deploy manually regardless.
-    paths-ignore:
-      - "docs/**"
-      - "exploratory/**"
-      - "**.md"
-      - ".gitignore"
-      - ".github/**"
-      - "scripts/**"
-      - ".env.example"
   workflow_dispatch:
 
 jobs:

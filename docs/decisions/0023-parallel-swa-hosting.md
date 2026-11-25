@@ -72,3 +72,13 @@ provides keylessly, and couples the token's lifecycle to one consumer app.
 * Relates: ADR-0011 (v2 serving + phases; amended 2026-07-15), ADR-0022 (keyless SAS
   issuer), ADR-0021 (default-load latency — its "don't gate initial render" and
   "cache/static meta" options were implemented as part of this work).
+
+## Amendment 2026-11-25: fallback no longer deployed automatically
+
+`azure-deploy.yml` now runs only on manual dispatch. The App Service had not deployed
+successfully since 2026-07-24: every push to `v1` from 2026-09-03 on failed at the
+staging-slot step with a 409 from Azure, while the SWA workflow kept publishing what
+users actually see. A workflow that fails on every commit hides real failures, so the
+automatic trigger is removed rather than repaired. The App Service stays up as the
+classic-URL fallback; deploying it is a deliberate "Run workflow" click. Retiring it
+(and the 409 itself) remains the open decision noted under Consequences.
