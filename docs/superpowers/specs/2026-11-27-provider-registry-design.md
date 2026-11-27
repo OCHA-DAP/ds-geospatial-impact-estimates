@@ -216,7 +216,7 @@ recorded per delivery; fixture content; the dev outbox page's look; test structu
 ## Where the sign-in research lives
 
 The comparison of the spike with the UN sign-in options, with diagrams, is the artifact
-"Spike versus Entra" (https://claude.ai/artifact/MmdWkEAgDv8XppNC4FqCwd, shared with the OCHA
+"Spike versus Entra" (https://claude.ai/artifact/MmdWkEAgDv8XppNC4FqCwd?sk=RrwZ-rC34nypLeDMstCEfA, shared with the OCHA
 Centre organisation on claude.ai). The catalogue research it rests on is kept out of this
 public repository on purpose; it lives beside the artifact source in the maintainer's clone
 (`docs/provider-sign-in/`, excluded from git) and can be shared on request.
