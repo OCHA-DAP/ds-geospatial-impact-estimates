@@ -14,7 +14,7 @@ developer can exercise the whole system alone.
 Companion decisions: [ADR-0043](../../decisions/0043-identity-seam-email-proof-now-un-idp-later.md)
 (identity seam), [ADR-0044](../../decisions/0044-registry-store-and-api-runtime.md) (registry
 store and API runtime), [ADR-0045](../../decisions/0045-provider-site-hosting-standard-static-web-app.md)
-(Standard plan, supersedes ADR-0023's Free choice).
+(where the provider site is hosted; proposed).
 
 ## Decisions
 
