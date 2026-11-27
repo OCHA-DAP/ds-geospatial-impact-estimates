@@ -9,15 +9,21 @@ deciders: Zack Arno
 ## Context and Problem Statement
 
 The provider side of the platform needs sign-in for mostly non-UN organisations. The UN
-offers two routes (tenant guests, or the UN B2C tenant), both gated on an OICT architecture review with
-no reply since 10 November and on an app registration we cannot create. The spike proved an
-emailed single-use link with our own session. How do we build now without either committing
-to home-grown auth as the final answer or waiting indefinitely?
+offers two routes (tenant guests, or the UN B2C tenant), both needing an app registration
+that only OICT creates. The platform's architecture review was approved on 23 November 2026
+(this record's first draft said it was pending; that was wrong); a test registration was
+requested on 25 November, and a production registration needs OICT Cybersecurity's
+assessment of a working non-production site and the task force's second approval. The
+approved architecture names the UN's Entra ID as the only user sign-in, so the spike's
+emailed single-use link can never be the production path. How do we build now without
+either committing to home-grown auth as the final answer or waiting on the registrations?
 
 ## Decision Drivers
 
-* Work must continue and be visible to colleagues while OICT is silent.
+* Work must continue and be visible to colleagues while the registrations are in progress.
 * The team's stance: auth is a solved problem; do not keep extending ad hoc auth.
+* The approved architecture allows only Entra sign-in in production; the interim must be
+  removable without touching records.
 * OICT may require a UN identity provider for an externally reachable site, or may make
   guests impractical for partners; either outcome must be absorbable.
 
@@ -45,8 +51,9 @@ membership, approvals and records are ours in every case and are built once.
 ### Permanent emailed link
 * Good, because it works today and proves control of an address, which is what open B2C
   sign-up proves too.
-* Bad, because OICT or Cybersecurity may refuse it for an externally reachable site, and
-  the team does not want to own password-less auth long term.
+* Bad, because the approved architecture names Entra ID as the only user sign-in, so it
+  would not pass the security assessment, and the team does not want to own password-less
+  auth long term.
 
 ### Wait for the UN provider
 * Good, because no throwaway code.
@@ -56,5 +63,6 @@ membership, approvals and records are ours in every case and are built once.
 ## More Information
 
 sign-in research of 2026-11-25 (options A and B, both need the Standard plan: ADR-0043).
-Design: `docs/superpowers/specs/2026-11-27-provider-registry-design.md`. Revisit when the
-review answer arrives.
+Design: `docs/superpowers/specs/2026-11-27-provider-registry-design.md`. Reviewed on issue
+#183 on 2026-11-27: the seam and the records keyed on our own user id were agreed. Revisit
+when the test registration arrives, and again before the production registration.
