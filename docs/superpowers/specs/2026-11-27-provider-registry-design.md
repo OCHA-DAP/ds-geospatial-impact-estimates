@@ -3,7 +3,7 @@
 **Date:** 2026-11-27
 **Status:** reviewed 2026-11-27 (a colleague's review on issue #183, with the factual points
 checked against Microsoft's documentation and the team's records). Decisions 1, 2, 3, 5 and 6
-below are taken; 4 and the hosting choice (ADR-0043) stay open. Nothing built from it yet.
+below are taken; 4 and the hosting choice (ADR-0045) stay open. Nothing built from it yet.
 **Driver:** the form spike (branch `spike/form-auth`, PR #174) proved the provider experience:
 organisation sign-up, members, emailed sign-in, the three-level submission form, records on
 blob. It was built as a throwaway. This document is the design for promoting it into the
@@ -11,9 +11,9 @@ platform's provider side, structured so the pieces that depend on IT (identity p
 database reachability, hosting plan) can be swapped in as they are granted, and so one
 developer can exercise the whole system alone.
 
-Companion decisions: [ADR-0041](../../decisions/0041-identity-seam-email-proof-now-un-idp-later.md)
-(identity seam), [ADR-0042](../../decisions/0042-registry-store-and-api-runtime.md) (registry
-store and API runtime), [ADR-0043](../../decisions/0043-static-web-app-standard-plan.md)
+Companion decisions: [ADR-0043](../../decisions/0043-identity-seam-email-proof-now-un-idp-later.md)
+(identity seam), [ADR-0044](../../decisions/0044-registry-store-and-api-runtime.md) (registry
+store and API runtime), [ADR-0045](../../decisions/0045-provider-site-hosting-standard-static-web-app.md)
 (Standard plan, supersedes ADR-0023's Free choice).
 
 ## Decisions
@@ -38,7 +38,7 @@ review's own wording is on the issue.
    are most of it) against a per-environment cap of 250 MB on Free and 500 MB on Standard.
    The interim repository therefore uses `azure-storage-blob` directly (about 50 MB with
    the Postgres driver included), and ocha-stratus arrives with the App Service target,
-   behind the same interface. ADR-0042.
+   behind the same interface. ADR-0044.
 3. **Approval model.** Taken, with three changes from the review and from the discussion on
    the artifact. An organisation is `pending` until a staff member approves it. There are no
    invitations: a person registers by picking their organisation from the list of registered
@@ -97,10 +97,10 @@ review's own wording is on the issue.
   Standard. A Standard Static Web App for the submission side already exists, created by
   OCHA's technical support on 26 November with a hostname under unocha.org attached and a
   placeholder deployed from another repository; whether the provider side deploys there or
-  the viewer's app is upgraded is ADR-0043.
+  the viewer's app is upgraded is ADR-0045.
 - **UN sign-in waits on app registrations, not on the architecture review.** The platform's
   architecture review was approved on 23 November 2026. (The first draft of this document
-  and of ADR-0041 said it was still pending; that was wrong.) Test registrations were
+  and of ADR-0043 said it was still pending; that was wrong.) Test registrations were
   requested on 25 November, one of them for the submission test site with guests in the
   audience. A production registration needs OICT Cybersecurity's assessment of a working
   non-production site and the task force's second approval. The UN tenant refuses consent
@@ -128,8 +128,8 @@ review's own wording is on the issue.
 |---|---|---|---|
 | Front end | Static Web App, Free, generated hostname | Same app, Standard, `<name>.datascience.unocha.org` | Plan and DNS only |
 | API | Python 3.11 managed Functions (HTTP only), `azure-storage-blob` directly | The same Python code on the App Service in the shared plan, VNet-integrated, linked as the SWA backend so `/api` stays same-origin, with ocha-stratus and Postgres behind the repository interface | Host and repository implementation; no port; URL paths unchanged |
-| Identity proof | Emailed single-use link, our session cookie | UN identity provider through the SWA custom provider; SWA session | The code behind one function (ADR-0041) |
-| Registry | Blob JSON repository with ETag concurrency, dev account | Postgres, team server, by private IP | Repository implementation (ADR-0042) |
+| Identity proof | Emailed single-use link, our session cookie | UN identity provider through the SWA custom provider; SWA session | The code behind one function (ADR-0043) |
+| Registry | Blob JSON repository with ETag concurrency, dev account | Postgres, team server, by private IP | Repository implementation (ADR-0044) |
 | Delivery files | Fetched into bronze on blob | Same | Nothing |
 | Mail | Listmonk transactional endpoint, one recipient | Same | Nothing |
 | Configuration | `secrets.json` written by the deploy workflow (dev credentials only) | App settings or Key Vault references | One config module |
@@ -221,7 +221,7 @@ to app settings (O1, O2).
 | Request | To whom | Unlocks |
 |---|---|---|
 | DNS record `<name>.datascience.unocha.org` → the app | OCHA technical support | Clean hostname; stable redirect URI for the app registration |
-| A Standard Static Web App for the provider site | Either the existing Standard test app (the team's), or upgrading the viewer's app ourselves via PIM Contributor (about USD 9/month) | Custom sign-in provider; linked backend; six domains. ADR-0043 |
+| A Standard Static Web App for the provider site | Either the existing Standard test app (the team's), or upgrading the viewer's app ourselves via PIM Contributor (about USD 9/month) | Custom sign-in provider; linked backend; six domains. ADR-0045 |
 | VNet integration of the App Service | OICT (to request now) | Python API reaching Postgres; the registry target |
 | Architecture review | Approved 23 November 2026 | App registrations (requested); the production registration also needs the security assessment and the second approval |
 | App registration (option A requested 25 November for the test site; B not requested) | OICT via Unite | UN sign-in through the custom provider: test first, production after the assessment |

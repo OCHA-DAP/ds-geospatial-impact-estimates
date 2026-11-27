@@ -48,7 +48,7 @@ object per record plus small indexes is adequate, and the dev storage account is
 from every runtime, including a laptop and the Azurite emulator. The spike's Node handlers
 (about 500 lines) are rewritten in Python before any feature is added, with the pages and URL
 paths unchanged. The target is the same Python code on the App Service, linked as the Static
-Web App's backend (needs Standard: ADR-0043) and VNet-integrated by OICT, with precedent in the
+Web App's backend (needs Standard: ADR-0045) and VNet-integrated by OICT, with precedent in the
 team's other apps.
 
 One constraint found while checking the review's open point: ocha-stratus does not fit on

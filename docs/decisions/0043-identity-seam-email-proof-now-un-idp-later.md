@@ -62,7 +62,7 @@ membership, approvals and records are ours in every case and are built once.
 
 ## More Information
 
-sign-in research of 2026-11-25 (options A and B, both need the Standard plan: ADR-0043).
+sign-in research of 2026-11-25 (options A and B, both need the Standard plan: ADR-0045).
 Design: `docs/superpowers/specs/2026-11-27-provider-registry-design.md`. Reviewed on issue
 #183 on 2026-11-27: the seam and the records keyed on our own user id were agreed. Revisit
 when the test registration arrives, and again before the production registration.
